@@ -1,4 +1,17 @@
+"use client";
+
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
   return (
     <div className="flex min-h-screen">
       <aside className="w-64 bg-[#1a1a2e] text-white p-6">
@@ -9,15 +22,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <ul>
             <li className="mb-4">
               <a href="/dashboard" className="flex items-center py-2 px-4 rounded hover:bg-white hover:text-[#1a1a2e]">
-                <span className="material-icons mr-2">dashboard</span>
                 Dashboard
               </a>
             </li>
-            <li>
+            <li className="mb-4">
               <a href="/catalogue" className="flex items-center py-2 px-4 rounded hover:bg-white hover:text-[#1a1a2e]">
-                <span className="material-icons mr-2">store</span>
                 Catalogue
               </a>
+            </li>
+            <li>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left flex items-center py-2 px-4 rounded hover:bg-white hover:text-[#1a1a2e]"
+              >
+                Se déconnecter
+              </button>
             </li>
           </ul>
         </nav>

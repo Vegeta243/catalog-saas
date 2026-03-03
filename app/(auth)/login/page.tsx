@@ -6,22 +6,31 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push('/dashboard');
+      console.log('Login response:', { data, error }); // Log the full response object
+
+      if (error) {
+        console.log('Login error:', JSON.stringify(error)); // Log the exact error
+        setError(error.message);
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred.');
+      console.error('Unexpected login error:', err);
     }
   };
 
