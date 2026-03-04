@@ -21,6 +21,9 @@ import {
   Clock,
   CreditCard,
   Crown,
+  Lightbulb,
+  ImageIcon,
+  Coins,
 } from 'lucide-react';
 
 const navItems = [
@@ -28,12 +31,15 @@ const navItems = [
   { href: '/dashboard/products', label: 'Modifier en masse', icon: PackageSearch },
   { href: '/dashboard/import', label: 'Import produits', icon: Download },
   { href: '/dashboard/ai', label: 'Optimisation IA', icon: Sparkles },
+  { href: '/dashboard/suggestions', label: 'Suggestions IA', icon: Lightbulb },
+  { href: '/dashboard/images', label: 'Éditeur d\'images', icon: ImageIcon },
+  { href: '/dashboard/shops', label: 'Mes boutiques', icon: Store },
   { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
   { href: '/dashboard/history', label: 'Historique', icon: Clock },
-  { href: '/connect', label: 'Connecter boutique', icon: Store },
 ];
 
 const bottomNavItems = [
+  { href: '/dashboard/credits', label: 'Crédits', icon: Coins },
   { href: '/dashboard/billing', label: 'Facturation', icon: CreditCard },
   { href: '#', label: 'Paramètres', icon: Settings },
   { href: '#', label: "Centre d'aide", icon: HelpCircle },
