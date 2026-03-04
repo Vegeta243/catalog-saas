@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server';
 
-console.log('DEBUG: Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log('DEBUG: Supabase ANON KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const shop = searchParams.get('shop');
 
   if (!shop) {
-    return NextResponse.json({ error: 'Missing shop parameter' }, { status: 400 });
+    return NextResponse.json({ error: 'Paramètre shop manquant' }, { status: 400 });
   }
 
   const redirectUri = `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/shopify/callback`;

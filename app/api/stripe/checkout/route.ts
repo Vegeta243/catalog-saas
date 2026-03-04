@@ -1,0 +1,58 @@
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2025-12-18.acacia" as Stripe.LatestApiVersion,
+});
+
+const PLANS = {
+  starter: {
+    monthly: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID,
+    yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID,
+  },
+  pro: {
+    monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+    yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID,
+  },
+  scale: {
+    monthly: process.env.STRIPE_SCALE_MONTHLY_PRICE_ID,
+    yearly: process.env.STRIPE_SCALE_YEARLY_PRICE_ID,
+  },
+};
+
+export async function POST(req: Request) {
+  try {
+    const { plan, billing, email } = await req.json();
+
+    if (!plan || !billing) {
+      return NextResponse.json({ error: "Plan ou période manquante." }, { status: 400 });
+    }
+
+    const planConfig = PLANS[plan as keyof typeof PLANS];
+    if (!planConfig) {
+      return NextResponse.json({ error: "Plan invalide." }, { status: 400 });
+    }
+
+    const priceId = billing === "yearly" ? planConfig.yearly : planConfig.monthly;
+    if (!priceId) {
+      return NextResponse.json({ error: "Configuration Stripe incomplète. Ajoutez les Price IDs dans .env.local" }, { status: 500 });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      payment_method_types: ["card"],
+      customer_email: email || undefined,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?checkout=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing?checkout=cancel`,
+      subscription_data: {
+        trial_period_days: 7,
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (error) {
+    console.error("Stripe checkout error:", error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
+}

@@ -1,0 +1,166 @@
+"use client";
+
+import { useState } from "react";
+import { Check, Zap, Crown, Rocket, ToggleLeft, ToggleRight } from "lucide-react";
+import Link from "next/link";
+
+const PLANS = [
+  {
+    id: "starter",
+    name: "Starter",
+    icon: Zap,
+    monthlyPrice: 49,
+    yearlyPrice: 39,
+    description: "Pour les petites boutiques qui démarrent",
+    features: [
+      "Jusqu'à 100 produits",
+      "Modification en masse",
+      "Export CSV",
+      "Import URL (5/jour)",
+      "Support email",
+    ],
+    cta: "Commencer l'essai gratuit",
+    popular: false,
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    icon: Crown,
+    monthlyPrice: 89,
+    yearlyPrice: 69,
+    description: "Pour les boutiques en croissance",
+    features: [
+      "Jusqu'à 1 000 produits",
+      "Tout Starter +",
+      "IA : titres, descriptions, tags",
+      "Import URL illimité + CSV",
+      "Automatisations (5 règles)",
+      "Historique 30 jours",
+      "Support prioritaire",
+    ],
+    cta: "Commencer l'essai gratuit",
+    popular: true,
+  },
+  {
+    id: "scale",
+    name: "Scale",
+    icon: Rocket,
+    monthlyPrice: 129,
+    yearlyPrice: 99,
+    description: "Pour les boutiques à grande échelle",
+    features: [
+      "Produits illimités",
+      "Tout Pro +",
+      "IA en masse illimitée",
+      "Automatisations illimitées",
+      "Historique illimité",
+      "API access",
+      "Support dédié + Slack",
+    ],
+    cta: "Commencer l'essai gratuit",
+    popular: false,
+  },
+];
+
+export default function PricingPage() {
+  const [yearly, setYearly] = useState(false);
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: "#f8fafc" }}>
+      {/* Header */}
+      <nav className="border-b border-gray-200 bg-white">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold" style={{ color: "#0f172a" }}>
+            Ecom<span style={{ color: "#2563eb" }}>Pilot</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-medium hover:underline" style={{ color: "#374151" }}>Connexion</Link>
+            <Link href="/signup" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>
+              S&apos;inscrire
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <div className="text-center pt-16 pb-12 px-6">
+        <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: "#0f172a" }}>
+          Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
+        </h1>
+        <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "#64748b" }}>
+          7 jours d&apos;essai gratuit. Aucune carte bancaire requise. Annulez à tout moment.
+        </p>
+
+        {/* Toggle */}
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <span className="text-sm font-medium" style={{ color: yearly ? "#94a3b8" : "#0f172a" }}>Mensuel</span>
+          <button onClick={() => setYearly(!yearly)} className="relative">
+            {yearly
+              ? <ToggleRight className="w-10 h-10" style={{ color: "#2563eb" }} />
+              : <ToggleLeft className="w-10 h-10" style={{ color: "#94a3b8" }} />}
+          </button>
+          <span className="text-sm font-medium" style={{ color: yearly ? "#0f172a" : "#94a3b8" }}>
+            Annuel <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100" style={{ color: "#059669" }}>-20%</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Plans */}
+      <div className="max-w-6xl mx-auto px-6 pb-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+        {PLANS.map((plan) => {
+          const Icon = plan.icon;
+          const price = yearly ? plan.yearlyPrice : plan.monthlyPrice;
+          return (
+            <div key={plan.id}
+              className={`relative bg-white rounded-2xl border-2 p-8 flex flex-col ${plan.popular ? "border-blue-500 shadow-xl shadow-blue-100" : "border-gray-200"}`}>
+              {plan.popular && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 rounded-full text-xs font-semibold" style={{ color: "#fff" }}>
+                  Le plus populaire
+                </div>
+              )}
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${plan.popular ? "bg-blue-100" : "bg-gray-100"}`}>
+                  <Icon className="w-5 h-5" style={{ color: plan.popular ? "#2563eb" : "#64748b" }} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>{plan.name}</h3>
+                  <p className="text-xs" style={{ color: "#64748b" }}>{plan.description}</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <span className="text-4xl font-extrabold" style={{ color: "#0f172a" }}>{price}€</span>
+                <span className="text-sm" style={{ color: "#64748b" }}>/mois</span>
+                {yearly && (
+                  <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                    Facturé {price * 12}€/an
+                  </p>
+                )}
+              </div>
+
+              <ul className="space-y-3 mb-8 flex-1">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "#374151" }}>
+                    <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#059669" }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Link href={`/signup?plan=${plan.id}&billing=${yearly ? "yearly" : "monthly"}`}
+                className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.popular ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-900 hover:bg-gray-800"}`}
+                style={{ color: "#fff" }}>
+                {plan.cta}
+              </Link>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-gray-200 py-8 text-center">
+        <p className="text-sm" style={{ color: "#94a3b8" }}>© 2026 EcomPilot — Tous droits réservés.</p>
+      </div>
+    </div>
+  );
+}

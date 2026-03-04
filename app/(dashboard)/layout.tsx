@@ -16,15 +16,25 @@ import {
   Search,
   Zap,
   User,
+  Download,
+  Sparkles,
+  Clock,
+  CreditCard,
+  Crown,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/products', label: 'Modifier en masse', icon: PackageSearch },
-  { href: '/connect', label: 'Connecter une boutique', icon: Store },
+  { href: '/dashboard/import', label: 'Import produits', icon: Download },
+  { href: '/dashboard/ai', label: 'Optimisation IA', icon: Sparkles },
+  { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
+  { href: '/dashboard/history', label: 'Historique', icon: Clock },
+  { href: '/connect', label: 'Connecter boutique', icon: Store },
 ];
 
 const bottomNavItems = [
+  { href: '/dashboard/billing', label: 'Facturation', icon: CreditCard },
   { href: '#', label: 'Paramètres', icon: Settings },
   { href: '#', label: "Centre d'aide", icon: HelpCircle },
 ];
@@ -111,6 +121,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             })}
           </nav>
         </div>
+
+        {/* Plan badge */}
+        {!sidebarCollapsed && (
+          <div className="mx-3 mb-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(96,165,250,0.1)' }}>
+            <div className="flex items-center gap-2 mb-1">
+              <Crown className="w-3.5 h-3.5" style={{ color: '#60a5fa' }} />
+              <span className="text-xs font-semibold" style={{ color: '#f1f5f9' }}>Plan Pro</span>
+            </div>
+            <p className="text-[10px]" style={{ color: '#64748b' }}>245 / 1 000 produits</p>
+            <div className="w-full h-1.5 rounded-full mt-1.5" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+              <div className="h-1.5 rounded-full" style={{ width: '24.5%', backgroundColor: '#60a5fa' }} />
+            </div>
+          </div>
+        )}
 
         {/* Bottom user area */}
         <div className="border-t border-slate-700/50 p-3">

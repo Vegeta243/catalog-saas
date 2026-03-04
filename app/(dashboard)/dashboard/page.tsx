@@ -14,7 +14,11 @@ import {
   ShoppingBag,
   BarChart3,
   Activity,
+  X,
+  Circle,
+  Sparkles,
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -25,6 +29,14 @@ export default function DashboardPage() {
     pendingUpdates: 0,
   });
   const [greeting, setGreeting] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [onboardingSteps] = useState([
+    { id: 1, label: "Créer votre compte", done: true, href: "#" },
+    { id: 2, label: "Connecter une boutique Shopify", done: false, href: "/connect" },
+    { id: 3, label: "Modifier un produit en masse", done: false, href: "/dashboard/products" },
+    { id: 4, label: "Générer un titre IA", done: false, href: "/dashboard/ai" },
+    { id: 5, label: "Créer une automatisation", done: false, href: "/dashboard/automation" },
+  ]);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -118,6 +130,37 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* Onboarding Checklist */}
+      {showOnboarding && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 mb-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 opacity-10">
+            <Sparkles className="w-full h-full" style={{ color: '#fff' }} />
+          </div>
+          <button onClick={() => setShowOnboarding(false)} className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-lg transition-colors">
+            <X className="w-4 h-4" style={{ color: '#fff' }} />
+          </button>
+          <h3 className="text-lg font-bold mb-1" style={{ color: '#fff' }}>Bienvenue sur EcomPilot ! 🚀</h3>
+          <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.8)' }}>Complétez ces étapes pour tirer le meilleur parti de votre outil</p>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex-1 h-2 bg-white/20 rounded-full overflow-hidden">
+              <div className="h-2 bg-white rounded-full transition-all" style={{ width: `${(onboardingSteps.filter(s => s.done).length / onboardingSteps.length) * 100}%` }} />
+            </div>
+            <span className="text-xs font-medium" style={{ color: '#fff' }}>{onboardingSteps.filter(s => s.done).length}/{onboardingSteps.length}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            {onboardingSteps.map((step) => (
+              <Link key={step.id} href={step.href}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${step.done ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}>
+                {step.done
+                  ? <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: '#86efac' }} />
+                  : <Circle className="w-4 h-4 shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }} />}
+                <span style={{ color: '#fff' }}>{step.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
