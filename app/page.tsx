@@ -117,7 +117,7 @@ export default function HomePage() {
               Se connecter
             </button>
             <button
-              onClick={() => handleNavigate("/signup")}
+              onClick={() => handleNavigate("/login?tab=signup")}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5"
               style={{ color: "#fff" }}
             >
@@ -146,7 +146,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <button
-              onClick={() => handleNavigate("/signup")}
+              onClick={() => handleNavigate("/login?tab=signup")}
               className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold flex items-center gap-3 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5"
               style={{ color: "#fff" }}
             >
@@ -252,7 +252,7 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-12">
             <button
-              onClick={() => handleNavigate("/signup")}
+              onClick={() => handleNavigate("/login?tab=signup")}
               className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-700 rounded-xl text-base font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-red-500/20"
               style={{ color: "#fff" }}
             >
@@ -322,7 +322,7 @@ export default function HomePage() {
           </div>
           <div className="text-center mt-12">
             <button
-              onClick={() => handleNavigate("/signup")}
+              onClick={() => handleNavigate("/login?tab=signup")}
               className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-xl text-base font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/20"
               style={{ color: "#fff" }}
             >
@@ -455,7 +455,7 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <button
-                  onClick={() => handleNavigate("/signup")}
+                  onClick={() => handleNavigate("/login?tab=signup")}
                   className="mt-6 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
                   style={{ backgroundColor: "rgba(96,165,250,0.15)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.3)" }}
                 >
@@ -467,7 +467,7 @@ export default function HomePage() {
 
           <div className="text-center mt-10">
             <button
-              onClick={() => handleNavigate("/signup")}
+              onClick={() => handleNavigate("/login?tab=signup")}
               className="inline-flex items-center gap-3 px-10 py-4 bg-blue-600 hover:bg-blue-700 rounded-xl text-base font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/30"
               style={{ color: "#fff" }}
             >
@@ -506,7 +506,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => handleNavigate("/signup")}
+              onClick={() => handleNavigate("/login?tab=signup")}
               className="inline-flex items-center gap-2 px-10 py-5 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/25"
               style={{ color: "#fff" }}
             >
@@ -595,7 +595,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => handleNavigate("/signup")}
+              onClick={() => handleNavigate("/login?tab=signup")}
               className="inline-flex items-center gap-3 px-10 py-5 bg-white hover:bg-gray-50 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg"
               style={{ color: "#0f172a" }}
             >
