@@ -1,8 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, TrendingUp, BarChart3, Sparkles, Package, Image, Calendar } from "lucide-react";
-import { getTasksColor, getResetDate, PLAN_TASKS } from "@/lib/credits";
+import { Zap, TrendingUp, BarChart3, Sparkles, Package, Image, Calendar, Crown, Rocket, Star, ArrowRight, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { getTasksColor, getResetDate, PLAN_TASKS, PLAN_PRICES } from "@/lib/credits";
+
+const PLAN_META: Record<string, { name: string; icon: typeof Zap; color: string; bg: string; features: string[] }> = {
+  free:    { name: "Free",    icon: Star,   color: "#6b7280", bg: "#f9fafb",  features: ["10 actions gratuites", "1 boutique", "Export CSV basique"] },
+  starter: { name: "Starter", icon: Zap,    color: "#2563eb", bg: "#eff6ff",  features: ["1 000 actions/mois", "2 boutiques", "Modification en masse", "Support email"] },
+  pro:     { name: "Pro",     icon: Crown,  color: "#8b5cf6", bg: "#faf5ff",  features: ["20 000 actions/mois", "5 boutiques", "Éditeur d'images IA", "Automatisations", "Support prioritaire"] },
+  scale:   { name: "Scale",   icon: Rocket, color: "#059669", bg: "#f0fdf4",  features: ["100 000 actions/mois", "Boutiques illimitées", "Automatisations illimitées", "API access", "Support dédié + Slack"] },
+};
 
 const taskHistory = [
   { action: "Génération titre IA", cost: 1, product: "T-shirt Premium", time: "Il y a 5 min" },
@@ -111,6 +119,68 @@ export default function TasksPage() {
           </div>
         </div>
       </div>
+
+      {/* Mon forfait */}
+      {(() => {
+        const meta = PLAN_META[plan] || PLAN_META.starter;
+        const PlanIcon = meta.icon;
+        const price = PLAN_PRICES[plan] || "—";
+        const nextPlans = ["free", "starter", "pro", "scale"];
+        const nextPlanKey = nextPlans[nextPlans.indexOf(plan) + 1];
+        const nextMeta = nextPlanKey ? PLAN_META[nextPlanKey] : null;
+        const NextIcon = nextMeta?.icon;
+        return (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+              <PlanIcon className="w-5 h-5" style={{ color: meta.color }} />
+              Mon forfait
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              {/* Plan badge + features */}
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: meta.bg }}>
+                  <PlanIcon className="w-7 h-7" style={{ color: meta.color }} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg font-bold" style={{ color: "#0f172a" }}>Plan {meta.name}</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: meta.bg, color: meta.color }}>
+                      {price}/mois
+                    </span>
+                  </div>
+                  <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                    {meta.features.map((f) => (
+                      <li key={f} className="flex items-center gap-1 text-xs" style={{ color: "#475569" }}>
+                        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#059669" }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              {/* CTA */}
+              <div className="flex gap-2 flex-shrink-0">
+                <Link
+                  href="/dashboard/billing"
+                  className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                  style={{ color: "#374151" }}
+                >
+                  Gérer
+                </Link>
+                {nextMeta && NextIcon && (
+                  <Link
+                    href={`/dashboard/upgrade`}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: nextMeta.color, color: "#fff" }}
+                  >
+                    Passer en {nextMeta.name} <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* History */}
       <div className="bg-white rounded-xl border border-gray-200">
