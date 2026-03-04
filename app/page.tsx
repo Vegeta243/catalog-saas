@@ -11,16 +11,11 @@ import {
 } from "lucide-react";
 
 const PAIN_POINTS = [
-  { emoji: "😩", title: "Modifier 200 prix un par un", desc: "Chaque changement de prix vous prend une éternité. Vous perdez des heures sur des tâches qu'un outil devrait faire en secondes." },
-  { emoji: "😴", title: "Écrire des descriptions produit", desc: "100 fiches produit sans description. Vous savez que ça plombe votre visibilité, mais qui a le temps d'écrire tout ça ?" },
-  { emoji: "😰", title: "Un catalogue en chaos total", desc: "Tags manquants, titres incohérents, images non optimisées. Votre catalogue ressemble à un brouillon permanent." },
-  { emoji: "💸", title: "Du chiffre d'affaires perdu", desc: "Chaque produit mal optimisé, c'est une vente perdue. Votre catalogue vous coûte de l'argent chaque jour." },
-  { emoji: "🔁", title: "Les mêmes tâches chaque semaine", desc: "Copier-coller, reformater, recompter. Vous passez 60% de votre temps sur des tâches qui ne génèrent rien." },
-  { emoji: "😤", title: "Reporter les optimisations", desc: "Vous savez qu'il faudrait améliorer vos fiches produit, mais il y a toujours plus urgent. Encore." },
-  { emoji: "🤯", title: "Tout gérer seul, la surcharge", desc: "Produits, stock, prix, descriptions, images, tags — tout repose sur vos épaules. La fatigue s'installe." },
-  { emoji: "📉", title: "Stagner sans comprendre pourquoi", desc: "Votre boutique ne décolle pas. Vous travaillez dur mais les résultats ne suivent pas. Le problème ? L'exécution manuelle." },
-  { emoji: "⏰", title: "Jamais assez de temps", desc: "Le temps passé à gérer votre catalogue, vous ne le passez pas à vendre, marketer ou développer votre business." },
-  { emoji: "🎯", title: "Aucun système en place", desc: "Vous gérez au jour le jour, sans processus. Chaque semaine recommence comme la précédente, sans progression." },
+  { emoji: "�", title: "Chaque jour sans optimisation, c'est une vente perdue", desc: "Un titre approximate, une description vide — et le client part chez un concurrent. Vous le savez. Vous n'avez juste pas le temps." },
+  { emoji: "😩", title: "3 mois que vous repoussez ces 200 descriptions", desc: "Elles ne s'écriront pas toutes seules. Et chaque semaine qui passe, c'est autant de visibilité et de revenus en moins." },
+  { emoji: "🤯", title: "Vous portez tout ça seul·e", desc: "Prix, stock, images, tags, descriptions — tout repose sur vous. Ce n'est pas de la gestion, c'est de l'épuisement." },
+  { emoji: "📉", title: "Vous bossez dur. La boutique ne décolle pas.", desc: "Ce n'est pas un manque d'effort. C'est un catalogue sous-optimisé qui freine chaque client à chaque page produit." },
+  { emoji: "⏰", title: "Le temps volé à votre vrai métier", desc: "Chaque heure passée à reformater, copier-coller ou corriger manuellement est une heure de moins pour vendre, créer et grandir." },
 ];
 
 const STEPS = [
@@ -44,24 +39,24 @@ const FEATURES = [
 const PLANS = [
   {
     id: "starter", name: "Starter", badge: "🥉",
-    monthlyPrice: 49, yearlyPrice: 41, popular: false,
+    monthlyPrice: 39, yearlyPrice: 29, popular: false,
     target: "Pour les petites boutiques qui démarrent",
     fit: "Vous avez moins de 500 produits et cherchez à gagner du temps sur les tâches répétitives.",
-    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "50 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "10 actions gratuites pour démarrer"],
+    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "1 000 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "10 actions gratuites pour démarrer"],
   },
   {
     id: "pro", name: "Pro", badge: "🥇",
-    monthlyPrice: 89, yearlyPrice: 74, popular: true,
+    monthlyPrice: 89, yearlyPrice: 69, popular: true,
     target: "Pour les boutiques en croissance",
     fit: "Vous gérez un catalogue important et voulez automatiser votre croissance avec l'IA.",
-    features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "300 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score visibilité par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Démarrage immédiat • sans engagement"],
+    features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "20 000 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score visibilité par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Démarrage immédiat • sans engagement"],
   },
   {
     id: "scale", name: "Scale", badge: "🏆",
-    monthlyPrice: 129, yearlyPrice: 107, popular: false,
+    monthlyPrice: 179, yearlyPrice: 139, popular: false,
     target: "Pour les boutiques à grande échelle",
     fit: "Vous gérez plusieurs boutiques et avez besoin de performances maximales.",
-    features: ["Boutiques illimitées", "Tout Pro +", "1 000 tâches IA/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (4h)", "Accès anticipé nouveautés", "Accès immédiat dès le paiement"],
+    features: ["Boutiques illimitées", "Tout Pro +", "100 000 tâches IA/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (4h)", "Accès anticipé nouveautés", "Accès immédiat dès le paiement"],
   },
 ];
 
@@ -238,10 +233,10 @@ export default function HomePage() {
               Vous reconnaissez-vous ?
             </h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: "#64748b" }}>
-              Si vous cochez ne serait-ce que 3 de ces cases, votre catalogue vous freine. Et il est temps que ça change.
+              Cochez une seule case — et vous savez déjà qu’EcomPilot est fait pour vous.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {PAIN_POINTS.map((p) => (
               <div key={p.title} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-red-200 hover:-translate-y-1 transition-all cursor-default group">
                 <span className="text-3xl mb-3 block group-hover:scale-110 transition-transform">{p.emoji}</span>

@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
           Politique de Confidentialité
         </h1>
         <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
-          Dernière mise à jour : 1er janvier 2026
+          Dernière mise à jour : 4 mars 2026
         </p>
 
         <div className="space-y-6 text-sm leading-relaxed" style={{ color: "#374151" }}>
