@@ -43,6 +43,17 @@ function GoogleIcon() {
 }
 
 /* ════════════════════════════════════════
+   Apple icon SVG
+   ════════════════════════════════════════ */
+function AppleIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.05 20.28c-.98.95-2.05.86-3.08.38-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.38C2.79 15.25 3.51 7.7 9.05 7.4c1.22.06 2.06.65 2.77.68.94-.19 1.84-.8 2.9-.68 1.24.16 2.17.73 2.79 1.76-2.5 1.54-1.87 5.17.77 6.25-.57 1.52-1.32 3.03-2.23 4.87zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+    </svg>
+  );
+}
+
+/* ════════════════════════════════════════
    Password strength helper
    ════════════════════════════════════════ */
 function getPasswordStrength(pwd: string): { score: number; label: string; color: string } {
@@ -99,6 +110,7 @@ function AuthContent() {
 
   /* ── Shared ── */
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const router = useRouter();
   const lockout = useLoginLockout();
 
@@ -202,6 +214,19 @@ function AuthContent() {
       });
     } catch {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleApple = async () => {
+    setAppleLoading(true);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+    } catch {
+      setAppleLoading(false);
     }
   };
 
@@ -507,16 +532,27 @@ function AuthContent() {
                     </div>
                   )}
 
-                  {/* Google OAuth */}
-                  <button
-                    onClick={handleGoogle}
-                    disabled={isLoginDisabled || googleLoading}
-                    className="w-full py-3 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl text-sm font-medium flex items-center justify-center gap-3 transition-colors mb-5 bg-white"
-                    style={{ color: "#374151" }}
-                  >
-                    <GoogleIcon />
-                    {googleLoading ? "Connexion..." : "Continuer avec Google"}
-                  </button>
+                  {/* OAuth buttons */}
+                  <div className="space-y-3 mb-5">
+                    <button
+                      onClick={handleGoogle}
+                      disabled={isLoginDisabled || googleLoading || appleLoading}
+                      className="w-full py-3 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl text-sm font-medium flex items-center justify-center gap-3 transition-colors bg-white"
+                      style={{ color: "#374151" }}
+                    >
+                      <GoogleIcon />
+                      {googleLoading ? "Connexion..." : "Continuer avec Google"}
+                    </button>
+                    <button
+                      onClick={handleApple}
+                      disabled={isLoginDisabled || appleLoading || googleLoading}
+                      className="w-full py-3 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl text-sm font-medium flex items-center justify-center gap-3 transition-colors bg-white"
+                      style={{ color: "#374151" }}
+                    >
+                      <AppleIcon />
+                      {appleLoading ? "Connexion..." : "Continuer avec Apple"}
+                    </button>
+                  </div>
 
                   <div className="flex items-center gap-3 mb-5">
                     <div className="flex-1 h-px bg-gray-200" />
@@ -647,16 +683,27 @@ function AuthContent() {
                     </div>
                   )}
 
-                  {/* Google OAuth */}
-                  <button
-                    onClick={handleGoogle}
-                    disabled={signupLoading || googleLoading}
-                    className="w-full py-3 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl text-sm font-medium flex items-center justify-center gap-3 transition-colors mb-5 bg-white"
-                    style={{ color: "#374151" }}
-                  >
-                    <GoogleIcon />
-                    {googleLoading ? "Inscription..." : "S'inscrire avec Google"}
-                  </button>
+                  {/* OAuth buttons */}
+                  <div className="space-y-3 mb-5">
+                    <button
+                      onClick={handleGoogle}
+                      disabled={signupLoading || googleLoading || appleLoading}
+                      className="w-full py-3 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl text-sm font-medium flex items-center justify-center gap-3 transition-colors bg-white"
+                      style={{ color: "#374151" }}
+                    >
+                      <GoogleIcon />
+                      {googleLoading ? "Inscription..." : "S'inscrire avec Google"}
+                    </button>
+                    <button
+                      onClick={handleApple}
+                      disabled={signupLoading || appleLoading || googleLoading}
+                      className="w-full py-3 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl text-sm font-medium flex items-center justify-center gap-3 transition-colors bg-white"
+                      style={{ color: "#374151" }}
+                    >
+                      <AppleIcon />
+                      {appleLoading ? "Inscription..." : "S'inscrire avec Apple"}
+                    </button>
+                  </div>
 
                   <div className="flex items-center gap-3 mb-5">
                     <div className="flex-1 h-px bg-gray-200" />
