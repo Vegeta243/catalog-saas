@@ -32,6 +32,7 @@ const NAV_SECTIONS = [
     items: [
       { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
       { href: '/dashboard/shops', label: 'Mes boutiques', icon: Store },
+      { href: '/dashboard/credits', label: 'Mon forfait', icon: Coins },
       { href: '/dashboard/history', label: 'Historique', icon: Clock },
     ],
   },
@@ -58,7 +59,6 @@ const NAV_SECTIONS = [
 ];
 
 const BOTTOM_ITEMS = [
-  { href: '/dashboard/credits', label: 'Mes tâches', icon: Coins },
   { href: '/dashboard/account', label: 'Mon compte', icon: User },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
   { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle },
