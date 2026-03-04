@@ -1,10 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Zap, Crown, Rocket, ToggleLeft, ToggleRight } from "lucide-react";
+import { Check, Zap, Crown, Rocket, ToggleLeft, ToggleRight, Star, CreditCard, Shield } from "lucide-react";
 import Link from "next/link";
 
 const PLANS = [
+  {
+    id: "free",
+    name: "Free",
+    icon: Star,
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    description: "Pour tester EcomPilot",
+    features: [
+      "Jusqu'à 50 produits",
+      "100 crédits IA/mois",
+      "1 boutique connectée",
+      "Export CSV basique",
+      "Support communautaire",
+    ],
+    cta: "Créer un compte gratuit",
+    popular: false,
+    isFree: true,
+  },
   {
     id: "starter",
     name: "Starter",
@@ -13,14 +31,17 @@ const PLANS = [
     yearlyPrice: 39,
     description: "Pour les petites boutiques qui démarrent",
     features: [
-      "Jusqu'à 100 produits",
+      "Jusqu'à 500 produits",
+      "500 crédits IA/mois",
+      "2 boutiques connectées",
       "Modification en masse",
-      "Export CSV",
+      "Export CSV complet",
       "Import URL (5/jour)",
       "Support email",
     ],
     cta: "Commencer l'essai gratuit",
     popular: false,
+    isFree: false,
   },
   {
     id: "pro",
@@ -30,16 +51,19 @@ const PLANS = [
     yearlyPrice: 69,
     description: "Pour les boutiques en croissance",
     features: [
-      "Jusqu'à 1 000 produits",
+      "Jusqu'à 2 000 produits",
+      "2 000 crédits IA/mois",
+      "5 boutiques connectées",
       "Tout Starter +",
       "IA : titres, descriptions, tags",
-      "Import URL illimité + CSV",
+      "Éditeur d'images IA",
       "Automatisations (5 règles)",
       "Historique 30 jours",
       "Support prioritaire",
     ],
     cta: "Commencer l'essai gratuit",
     popular: true,
+    isFree: false,
   },
   {
     id: "scale",
@@ -50,8 +74,11 @@ const PLANS = [
     description: "Pour les boutiques à grande échelle",
     features: [
       "Produits illimités",
+      "10 000 crédits IA/mois",
+      "20 boutiques connectées",
       "Tout Pro +",
       "IA en masse illimitée",
+      "Modèle GPT-4o (avancé)",
       "Automatisations illimitées",
       "Historique illimité",
       "API access",
@@ -59,6 +86,7 @@ const PLANS = [
     ],
     cta: "Commencer l'essai gratuit",
     popular: false,
+    isFree: false,
   },
 ];
 
@@ -106,13 +134,13 @@ export default function PricingPage() {
       </div>
 
       {/* Plans */}
-      <div className="max-w-6xl mx-auto px-6 pb-20 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-6 pb-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {PLANS.map((plan) => {
           const Icon = plan.icon;
           const price = yearly ? plan.yearlyPrice : plan.monthlyPrice;
           return (
             <div key={plan.id}
-              className={`relative bg-white rounded-2xl border-2 p-8 flex flex-col ${plan.popular ? "border-blue-500 shadow-xl shadow-blue-100" : "border-gray-200"}`}>
+              className={`relative bg-white rounded-2xl border-2 p-7 flex flex-col ${plan.popular ? "border-blue-500 shadow-xl shadow-blue-100" : "border-gray-200"}`}>
               {plan.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 rounded-full text-xs font-semibold" style={{ color: "#fff" }}>
                   Le plus populaire
@@ -129,12 +157,18 @@ export default function PricingPage() {
               </div>
 
               <div className="mb-6">
-                <span className="text-4xl font-extrabold" style={{ color: "#0f172a" }}>{price}€</span>
-                <span className="text-sm" style={{ color: "#64748b" }}>/mois</span>
-                {yearly && (
-                  <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
-                    Facturé {price * 12}€/an
-                  </p>
+                {plan.isFree ? (
+                  <span className="text-4xl font-extrabold" style={{ color: "#0f172a" }}>Gratuit</span>
+                ) : (
+                  <>
+                    <span className="text-4xl font-extrabold" style={{ color: "#0f172a" }}>{price}€</span>
+                    <span className="text-sm" style={{ color: "#64748b" }}>/mois</span>
+                    {yearly && (
+                      <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                        Facturé {price * 12}€/an
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -147,14 +181,31 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <Link href={`/signup?plan=${plan.id}&billing=${yearly ? "yearly" : "monthly"}`}
-                className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.popular ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-900 hover:bg-gray-800"}`}
-                style={{ color: "#fff" }}>
+              <Link href={plan.isFree ? "/signup" : `/signup?plan=${plan.id}&billing=${yearly ? "yearly" : "monthly"}`}
+                className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.popular ? "bg-blue-600 hover:bg-blue-700" : plan.isFree ? "bg-gray-100 hover:bg-gray-200" : "bg-gray-900 hover:bg-gray-800"}`}
+                style={{ color: plan.isFree ? "#374151" : "#fff" }}>
                 {plan.cta}
               </Link>
             </div>
           );
         })}
+      </div>
+
+      {/* Payment methods */}
+      <div className="max-w-2xl mx-auto px-6 pb-16 text-center">
+        <div className="flex items-center justify-center gap-6 flex-wrap">
+          <div className="flex items-center gap-2 text-sm" style={{ color: "#64748b" }}>
+            <CreditCard className="w-4 h-4" />
+            Visa / Mastercard
+          </div>
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "#003087" }}>
+            Pay<span style={{ color: "#009cde" }}>Pal</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm" style={{ color: "#64748b" }}>
+            <Shield className="w-4 h-4" />
+            Paiement sécurisé SSL
+          </div>
+        </div>
       </div>
 
       {/* Footer */}

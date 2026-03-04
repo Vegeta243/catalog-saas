@@ -1,29 +1,39 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Calendar, ArrowRight, Crown, Zap, Rocket, AlertTriangle } from "lucide-react";
+import { CreditCard, Calendar, ArrowRight, Crown, Zap, Rocket, AlertTriangle, ExternalLink, CheckCircle, Star } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; color: string }> = {
-  starter: { name: "Starter", icon: Zap, price: 49, color: "#2563eb" },
-  pro: { name: "Pro", icon: Crown, price: 89, color: "#8b5cf6" },
-  scale: { name: "Scale", icon: Rocket, price: 129, color: "#059669" },
+const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string }> = {
+  free: { name: "Free", icon: Star, price: 0, yearlyPrice: 0, color: "#6b7280" },
+  starter: { name: "Starter", icon: Zap, price: 49, yearlyPrice: 39, color: "#2563eb" },
+  pro: { name: "Pro", icon: Crown, price: 89, yearlyPrice: 69, color: "#8b5cf6" },
+  scale: { name: "Scale", icon: Rocket, price: 129, yearlyPrice: 99, color: "#059669" },
 };
 
-export default function BillingPage() {
+function BillingContent() {
   const { addToast } = useToast();
+  const searchParams = useSearchParams();
   const [plan, setPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
+    // Show checkout success message
+    if (searchParams.get("checkout") === "success") {
+      addToast("Abonnement activé avec succès ! Bienvenue 🎉", "success");
+    }
     // Simulate fetching user plan
     setTimeout(() => {
       setPlan("pro");
       setLoading(false);
     }, 500);
-  }, []);
+  }, [searchParams, addToast]);
 
   const handleCancel = async () => {
     if (!confirm("Êtes-vous sûr de vouloir annuler votre abonnement ? Vous garderez l'accès jusqu'à la fin de la période.")) return;
@@ -33,12 +43,30 @@ export default function BillingPage() {
     setCancelling(false);
   };
 
+  const handlePortal = async () => {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId: "cus_placeholder" }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else addToast("Erreur lors de l'accès au portail", "error");
+    } catch {
+      addToast("Erreur réseau", "error");
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
   const handleUpgrade = async (newPlan: string) => {
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: newPlan, billing: "monthly" }),
+        body: JSON.stringify({ plan: newPlan, billing }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -60,7 +88,7 @@ export default function BillingPage() {
     );
   }
 
-  if (!plan) {
+  if (!plan || plan === "free") {
     return (
       <div className="max-w-3xl mx-auto text-center py-12">
         <AlertTriangle className="w-12 h-12 mx-auto mb-4" style={{ color: "#f59e0b" }} />
@@ -75,13 +103,36 @@ export default function BillingPage() {
 
   const info = PLAN_INFO[plan] || PLAN_INFO.starter;
   const Icon = info.icon;
+  const displayPrice = billing === "yearly" ? info.yearlyPrice : info.price;
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Facturation</h1>
-        <p className="text-sm mt-1" style={{ color: "#64748b" }}>Gérez votre abonnement et vos paiements</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Facturation</h1>
+          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Gérez votre abonnement et vos paiements</p>
+        </div>
+        <button
+          onClick={handlePortal}
+          disabled={portalLoading}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+          style={{ color: "#374151" }}
+        >
+          <ExternalLink className="w-4 h-4" />
+          {portalLoading ? "Chargement..." : "Portail Stripe"}
+        </button>
       </div>
+
+      {/* Checkout success banner */}
+      {searchParams.get("checkout") === "success" && (
+        <div className="flex items-center gap-3 p-4 mb-6 rounded-xl border border-emerald-200" style={{ backgroundColor: "#ecfdf5" }}>
+          <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: "#059669" }} />
+          <div>
+            <p className="text-sm font-medium" style={{ color: "#065f46" }}>Paiement confirmé !</p>
+            <p className="text-xs" style={{ color: "#047857" }}>Votre abonnement {info.name} est maintenant actif. Profitez de toutes les fonctionnalités !</p>
+          </div>
+        </div>
+      )}
 
       {/* Current Plan */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
@@ -92,7 +143,7 @@ export default function BillingPage() {
             </div>
             <div>
               <h2 className="text-lg font-bold" style={{ color: "#0f172a" }}>Plan {info.name}</h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>{info.price}€/mois • Mensuel</p>
+              <p className="text-sm" style={{ color: "#64748b" }}>{displayPrice}€/mois • {billing === "yearly" ? "Annuel" : "Mensuel"}</p>
             </div>
           </div>
           <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100" style={{ color: "#059669" }}>Actif</span>
@@ -106,7 +157,7 @@ export default function BillingPage() {
             <Calendar className="w-4 h-4" style={{ color: "#64748b" }} />
             <span className="text-sm font-medium" style={{ color: "#374151" }}>Prochain paiement</span>
           </div>
-          <p className="text-xl font-bold" style={{ color: "#0f172a" }}>{info.price}€</p>
+          <p className="text-xl font-bold" style={{ color: "#0f172a" }}>{displayPrice}€</p>
           <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Le 03 avril 2026</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -119,23 +170,47 @@ export default function BillingPage() {
         </div>
       </div>
 
+      {/* Invoice history */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <h3 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>Historique des factures</h3>
+        <div className="space-y-3">
+          {[
+            { date: "03/03/2026", amount: `${displayPrice}€`, status: "Payée" },
+            { date: "03/02/2026", amount: `${displayPrice}€`, status: "Payée" },
+            { date: "03/01/2026", amount: `${displayPrice}€`, status: "Payée" },
+          ].map((invoice, i) => (
+            <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+              <div>
+                <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Facture - {invoice.date}</p>
+                <p className="text-xs" style={{ color: "#94a3b8" }}>Plan {info.name}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{invoice.amount}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100" style={{ color: "#059669" }}>{invoice.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Upgrade options */}
       {plan !== "scale" && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
           <h3 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>Passer à un plan supérieur</h3>
           <div className="space-y-3">
             {Object.entries(PLAN_INFO).filter(([key]) => {
-              const order = ["starter", "pro", "scale"];
+              const order = ["free", "starter", "pro", "scale"];
               return order.indexOf(key) > order.indexOf(plan);
             }).map(([key, p]) => {
               const PlanIcon = p.icon;
+              const planPrice = billing === "yearly" ? p.yearlyPrice : p.price;
               return (
                 <div key={key} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50">
                   <div className="flex items-center gap-3">
                     <PlanIcon className="w-5 h-5" style={{ color: p.color }} />
                     <div>
                       <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{p.name}</p>
-                      <p className="text-xs" style={{ color: "#64748b" }}>{p.price}€/mois</p>
+                      <p className="text-xs" style={{ color: "#64748b" }}>{planPrice}€/mois</p>
                     </div>
                   </div>
                   <button onClick={() => handleUpgrade(key)}
@@ -161,5 +236,13 @@ export default function BillingPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="max-w-3xl mx-auto"><div className="animate-pulse space-y-4"><div className="h-8 w-48 bg-gray-200 rounded" /><div className="h-64 bg-gray-100 rounded-xl" /></div></div>}>
+      <BillingContent />
+    </Suspense>
   );
 }

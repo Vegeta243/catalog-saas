@@ -37,7 +37,6 @@ export async function POST(req: Request) {
       const email = session.customer_email;
 
       if (email) {
-        // Determine plan from metadata or line items
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
         const priceId = subscription.items.data[0]?.price?.id;
 
@@ -54,8 +53,58 @@ export async function POST(req: Request) {
             plan,
             stripe_customer_id: session.customer,
             stripe_subscription_id: session.subscription,
+            subscription_status: "active",
           })
           .eq("email", email);
+      }
+    }
+
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const priceId = subscription.items.data[0]?.price?.id;
+
+      let plan = "starter";
+      if (priceId === process.env.STRIPE_PRO_MONTHLY_PRICE_ID || priceId === process.env.STRIPE_PRO_YEARLY_PRICE_ID) {
+        plan = "pro";
+      } else if (priceId === process.env.STRIPE_SCALE_MONTHLY_PRICE_ID || priceId === process.env.STRIPE_SCALE_YEARLY_PRICE_ID) {
+        plan = "scale";
+      }
+
+      const status = subscription.cancel_at_period_end ? "cancelling" : subscription.status;
+
+      const periodEnd = (subscription as unknown as { current_period_end: number }).current_period_end;
+
+      await supabase
+        .from("users")
+        .update({
+          plan,
+          subscription_status: status,
+          current_period_end: new Date(periodEnd * 1000).toISOString(),
+        })
+        .eq("stripe_subscription_id", subscription.id);
+    }
+
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscriptionId = (invoice as unknown as { subscription: string }).subscription;
+
+      if (subscriptionId) {
+        await supabase
+          .from("users")
+          .update({ subscription_status: "past_due" })
+          .eq("stripe_subscription_id", subscriptionId);
+      }
+    }
+
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscriptionId = (invoice as unknown as { subscription: string }).subscription;
+
+      if (subscriptionId) {
+        await supabase
+          .from("users")
+          .update({ subscription_status: "active" })
+          .eq("stripe_subscription_id", subscriptionId);
       }
     }
 
@@ -63,7 +112,7 @@ export async function POST(req: Request) {
       const subscription = event.data.object as Stripe.Subscription;
       await supabase
         .from("users")
-        .update({ plan: null, stripe_subscription_id: null })
+        .update({ plan: "free", stripe_subscription_id: null, subscription_status: "cancelled" })
         .eq("stripe_subscription_id", subscription.id);
     }
 
