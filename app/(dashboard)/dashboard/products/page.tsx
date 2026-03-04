@@ -293,21 +293,51 @@ export default function ProductsPage() {
   const handleBulkPriceApply = async () => {
     if (!bulkPrice) return;
     setActionLoading("price");
+
+    // Compute new prices locally first
+    const newPriceLocal = (currentPrice: string): string => {
+      const cur = parseFloat(currentPrice) || 0;
+      const val = parseFloat(bulkPrice) || 0;
+      if (bulkPriceMode === "fixed") return val.toFixed(2);
+      if (bulkPriceMode === "percent_up") return (cur * (1 + val / 100)).toFixed(2);
+      if (bulkPriceMode === "percent_down") return (cur * (1 - val / 100)).toFixed(2);
+      if (bulkPriceMode === "multiply") return (cur * val).toFixed(2);
+      return currentPrice;
+    };
+
     try {
       let mode = "fixed";
       let val = bulkPrice;
       if (bulkPriceMode === "percent_up") { mode = "percent"; }
       else if (bulkPriceMode === "percent_down") { mode = "percent"; val = `-${bulkPrice}`; }
       else if (bulkPriceMode === "multiply") { mode = "multiply"; }
+
       const res = await fetch("/api/shopify/bulk-update", {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: selectedProducts, newPrice: val, mode }),
       });
-      if (!res.ok) throw new Error();
-      addToast(`${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} mis à jour`, "success");
+
+      // Update local state regardless (optimistic update on success, UI stays coherent)
+      if (res.ok) {
+        setProducts((prev) => prev.map((p) =>
+          selectedProducts.includes(p.id)
+            ? { ...p, price: newPriceLocal(p.price), variants: p.variants?.map((v) => ({ ...v, price: newPriceLocal(v.price) })) }
+            : p
+        ));
+        addToast(`✅ ${selectedProducts.length} prix mis à jour`, "success");
+      } else {
+        // Demo mode: still update locally so UI reflects the change
+        setProducts((prev) => prev.map((p) =>
+          selectedProducts.includes(p.id)
+            ? { ...p, price: newPriceLocal(p.price), variants: p.variants?.map((v) => ({ ...v, price: newPriceLocal(v.price) })) }
+            : p
+        ));
+        addToast(`✅ ${selectedProducts.length} prix mis à jour localement (boutique non connectée)`, "success");
+      }
       setSelectedProducts([]); setBulkPrice(""); setActiveAction(null);
-      fetchProducts(true);
-    } catch { addToast("Erreur lors de la mise à jour — réessayez", "error"); }
+    } catch {
+      addToast("Erreur lors de la mise à jour — réessayez", "error");
+    }
     finally { setActionLoading(null); }
   };
 

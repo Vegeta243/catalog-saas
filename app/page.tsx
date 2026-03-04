@@ -1,60 +1,43 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Zap,
-  PackageSearch,
-  Sparkles,
-  Bot,
-  BarChart3,
-  Image as ImageIcon,
-  FileDown,
-  Bell,
-  Clock,
-  ArrowRight,
-  Check,
-  Shield,
-  Import,
-  ChevronDown,
-  Star,
-  TrendingUp,
-  Rocket,
-  Heart,
-  Target,
-  Users,
+  Zap, PackageSearch, Sparkles, Bot, BarChart3, Image as ImageIcon,
+  FileDown, Bell, Clock, ArrowRight, Check, Shield, Import,
+  ChevronDown, Star, TrendingUp, Rocket, Heart, Target, Users,
+  Crown, ChevronRight, Play, Lock,
 } from "lucide-react";
-
-/* ═══════════════════════════════════════ DATA ═══════════════════════════════════════ */
 
 const PAIN_POINTS = [
   { emoji: "😩", title: "Modifier 200 prix un par un", desc: "Chaque changement de prix vous prend une éternité. Vous perdez des heures sur des tâches qu'un outil devrait faire en secondes." },
-  { emoji: "😴", title: "Écrire des descriptions produit", desc: "100 fiches produit sans description. Vous savez que ça plombe votre SEO, mais qui a le temps d'écrire tout ça ?" },
+  { emoji: "😴", title: "Écrire des descriptions produit", desc: "100 fiches produit sans description. Vous savez que ça plombe votre visibilité, mais qui a le temps d'écrire tout ça ?" },
   { emoji: "😰", title: "Un catalogue en chaos total", desc: "Tags manquants, titres incohérents, images non optimisées. Votre catalogue ressemble à un brouillon permanent." },
-  { emoji: "💸", title: "Du chiffre d'affaires qui s'envole", desc: "Chaque produit mal optimisé, c'est une vente perdue. Votre catalogue vous coûte de l'argent chaque jour." },
+  { emoji: "💸", title: "Du chiffre d'affaires perdu", desc: "Chaque produit mal optimisé, c'est une vente perdue. Votre catalogue vous coûte de l'argent chaque jour." },
   { emoji: "🔁", title: "Les mêmes tâches chaque semaine", desc: "Copier-coller, reformater, recompter. Vous passez 60% de votre temps sur des tâches qui ne génèrent rien." },
-  { emoji: "😤", title: "Reporter les optimisations", desc: "Vous savez qu'il faudrait optimiser vos fiches produit, mais il y a toujours plus urgent. Le SEO attendra... encore." },
-  { emoji: "🤯", title: "Tout gérer seul, la surcharge", desc: "Produits, stock, prix, descriptions, images, tags — tout repose sur vos épaules. La fatigue décisionnelle s'installe." },
+  { emoji: "😤", title: "Reporter les optimisations", desc: "Vous savez qu'il faudrait améliorer vos fiches produit, mais il y a toujours plus urgent. Encore." },
+  { emoji: "🤯", title: "Tout gérer seul, la surcharge", desc: "Produits, stock, prix, descriptions, images, tags — tout repose sur vos épaules. La fatigue s'installe." },
   { emoji: "📉", title: "Stagner sans comprendre pourquoi", desc: "Votre boutique ne décolle pas. Vous travaillez dur mais les résultats ne suivent pas. Le problème ? L'exécution manuelle." },
-  { emoji: "⏰", title: "Jamais assez de temps", desc: "Le temps que vous passez à gérer votre catalogue, vous ne le passez pas à vendre, marketer ou développer votre business." },
+  { emoji: "⏰", title: "Jamais assez de temps", desc: "Le temps passé à gérer votre catalogue, vous ne le passez pas à vendre, marketer ou développer votre business." },
   { emoji: "🎯", title: "Aucun système en place", desc: "Vous gérez au jour le jour, sans processus. Chaque semaine recommence comme la précédente, sans progression." },
 ];
 
 const STEPS = [
   { step: "1", title: "Connectez votre boutique Shopify", desc: "Installation en 30 secondes. Vos produits se synchronisent automatiquement. Aucune donnée n'est modifiée sans votre validation.", icon: Zap },
-  { step: "2", title: "L'IA analyse et optimise tout", desc: "Descriptions SEO, titres percutants, tags pertinents — générés en un clic. Vous validez avant d'appliquer, produit par produit ou en masse.", icon: Bot },
-  { step: "3", title: "Votre catalogue travaille pour vous", desc: "Automatisations, alertes, suivi SEO. Plus de tâches manuelles. Vous vous concentrez sur ce qui compte : vendre et grandir.", icon: Rocket },
+  { step: "2", title: "L'IA analyse et optimise tout", desc: "Descriptions percutantes, titres recherchés, tags pertinents — générés en un clic. Vous validez avant d'appliquer.", icon: Bot },
+  { step: "3", title: "Votre catalogue travaille pour vous", desc: "Automatisations, alertes, suivi visibilité. Plus de tâches manuelles. Concentrez-vous sur ce qui compte : vendre.", icon: Rocket },
 ];
 
 const FEATURES = [
   { icon: PackageSearch, title: "Édition en masse ultra-rapide", desc: "Modifiez prix, titres, descriptions et tags sur des centaines de produits en quelques clics. Fini le copier-coller." },
   { icon: Import, title: "Import AliExpress & CJ en 1 clic", desc: "Importez des produits depuis n'importe quelle URL fournisseur. Marge automatique, description IA incluse." },
-  { icon: Sparkles, title: "Descriptions IA optimisées SEO", desc: "Générez des descriptions percutantes qui vendent, optimisées pour Google. Par lot de 10, 50 ou 200 produits." },
-  { icon: BarChart3, title: "Score SEO par produit", desc: "Visualisez la santé de chaque fiche produit. Identifiez en un coup d'œil ce qui manque et ce qu'il faut améliorer." },
+  { icon: Sparkles, title: "Descriptions IA percutantes", desc: "Générez des descriptions qui vendent, adaptées à votre audience. Par lot de 10, 50 ou 200 produits." },
+  { icon: BarChart3, title: "Score visibilité par produit", desc: "Visualisez la santé de chaque fiche produit. Identifiez en un coup d'œil ce qui manque." },
   { icon: Zap, title: "Automatisations intelligentes", desc: "Règles de prix, promotions programmées, ajustements automatiques. Votre catalogue s'optimise pendant que vous dormez." },
   { icon: ImageIcon, title: "Traitement d'images en masse", desc: "Compression, redimensionnement, watermark — en un seul clic sur toutes vos images produit." },
   { icon: FileDown, title: "Export CSV complet", desc: "Exportez votre catalogue entier en un fichier structuré. Sauvegarde, analyse, migration — tout est possible." },
-  { icon: Bell, title: "Alertes stock et performance", desc: "Soyez prévenu quand un produit est en rupture ou quand un score SEO chute. Ne ratez plus aucune opportunité." },
+  { icon: Bell, title: "Alertes stock et performance", desc: "Soyez prévenu quand un produit est en rupture ou quand un score chute. Ne ratez plus aucune opportunité." },
   { icon: Clock, title: "Historique de toutes les actions", desc: "Retrouvez chaque modification, chaque optimisation. Traçabilité complète de votre catalogue." },
 ];
 
@@ -71,7 +54,7 @@ const PLANS = [
     monthlyPrice: 89, yearlyPrice: 74, popular: true,
     target: "Pour les boutiques en croissance",
     fit: "Vous gérez un catalogue important et voulez automatiser votre croissance avec l'IA.",
-    features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "300 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score SEO par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Essai gratuit 7 jours"],
+    features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "300 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score visibilité par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Essai gratuit 7 jours"],
   },
   {
     id: "scale", name: "Scale", badge: "🏆",
@@ -83,47 +66,33 @@ const PLANS = [
 ];
 
 const FAQ_ITEMS = [
-  {
-    q: "Est-ce que mes produits sont modifiés sans mon accord ?",
-    a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer. Chaque modification passe par votre approbation — produit par produit ou en masse. Vous gardez le contrôle total.",
-  },
-  {
-    q: "Combien de temps faut-il pour tout mettre en place ?",
-    a: "30 secondes pour connecter votre boutique. Vos produits se synchronisent automatiquement. En 5 minutes, vous pouvez déjà générer vos premières descriptions IA et modifier vos prix en masse.",
-  },
-  {
-    q: "C'est quoi exactement une « tâche IA » ?",
-    a: "Une tâche IA = une action d'intelligence artificielle (générer un titre, une description, des tags). Le nombre de tâches dépend de votre plan. Les actions manuelles (édition en masse, export, filtres) sont illimitées et gratuites.",
-  },
-  {
-    q: "Est-ce que ça fonctionne bien pour le dropshipping ?",
-    a: "Absolument. EcomPilot est conçu pour les dropshippers : import direct depuis AliExpress/CJ, génération IA de descriptions uniques (pas de copier-coller fournisseur), ajustement automatique des marges.",
-  },
-  {
-    q: "Puis-je annuler à tout moment ?",
-    a: "Oui, en 1 clic depuis votre tableau de bord. Pas d'engagement, pas de frais cachés. Si vous annulez, vous gardez accès jusqu'à la fin de votre période payée. On ne rend pas les choses compliquées.",
-  },
-  {
-    q: "Quelle est la différence avec les apps Shopify classiques ?",
-    a: "Les apps Shopify font une seule chose. EcomPilot centralise tout : édition en masse, IA, images, import, automatisations, SEO. Un seul outil au lieu de 5 apps séparées. Moins cher, plus rapide, plus cohérent.",
-  },
+  { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer. Chaque modification passe par votre approbation — produit par produit ou en masse. Vous gardez le contrôle total." },
+  { q: "Combien de temps faut-il pour tout mettre en place ?", a: "30 secondes pour connecter votre boutique. Vos produits se synchronisent automatiquement. En 5 minutes, vous pouvez déjà générer vos premières descriptions IA et modifier vos prix en masse." },
+  { q: "C'est quoi exactement une « tâche IA » ?", a: "Une tâche IA = une action d'intelligence artificielle (générer un titre, une description, des tags). Le nombre de tâches dépend de votre plan. Les actions manuelles (édition en masse, export, filtres) sont illimitées et gratuites." },
+  { q: "Est-ce que ça fonctionne bien pour le dropshipping ?", a: "Absolument. EcomPilot est conçu pour les dropshippers : import direct depuis AliExpress/CJ, génération IA de descriptions uniques, ajustement automatique des marges." },
+  { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic depuis votre tableau de bord. Pas d'engagement, pas de frais cachés. Si vous annulez, vous gardez accès jusqu'à la fin de votre période payée." },
+  { q: "Quelle est la différence avec les apps Shopify classiques ?", a: "Les apps Shopify font une seule chose. EcomPilot centralise tout : édition en masse, IA, images, import, automatisations, visibilité. Un seul outil au lieu de 5 apps séparées." },
+  { q: "Comment fonctionne la validation de carte à l'inscription ?", a: "Nous utilisons Stripe, le leader mondial du paiement en ligne, pour sécuriser votre carte. Votre carte est vérifiée mais aucun montant n'est débité pendant les 7 jours d'essai. Vous recevrez un email de rappel avant la fin de la période." },
 ];
 
 const TESTIMONIALS = [
-  { name: "Sophie M.", role: "Boutique mode — exemple illustratif", quote: "Optimiser des centaines de fiches produit en quelques heures, pas en en plusieurs semaines : voilà ce qu’EcomPilot permet.", stars: 5 },
-  { name: "Marc L.", role: "Dropshipping multi-boutiques — exemple illustratif", quote: "L’import fournisseur couplé à la génération IA de descriptions uniques change complètement la gestion d’un catalogue.", stars: 5 },
-  { name: "Camille D.", role: "Artisanat — exemple illustratif", quote: "Le score SEO par produit permet d’identifier exactement ce qui manque pour améliorer sa visibilité sur Google.", stars: 5 },
+  { name: "Sophie M.", role: "Boutique mode — exemple illustratif", quote: "Optimiser des centaines de fiches produit en quelques heures, pas en plusieurs semaines : voilà ce qu'EcomPilot permet.", stars: 5 },
+  { name: "Marc L.", role: "Dropshipping multi-boutiques — exemple illustratif", quote: "L'import fournisseur couplé à la génération IA de descriptions uniques change complètement la gestion d'un catalogue.", stars: 5 },
+  { name: "Camille D.", role: "Artisanat — exemple illustratif", quote: "Le score visibilité par produit permet d'identifier exactement ce qui manque pour améliorer sa présence en ligne.", stars: 5 },
 ];
-
-/* ═══════════════════════════════════════ COMPONENT ═══════════════════════════════════════ */
 
 export default function HomePage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const router = useRouter();
+
+  const handleNavigate = (path: string) => {
+    router.push(path);
+  };
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ══════ HEADER FIXE ══════ */}
+      {/* ══════ HEADER ══════ */}
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -137,11 +106,23 @@ export default function HomePage() {
             <a href="#fonctionnalites" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Fonctionnalités</a>
             <a href="#tarifs" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Tarifs</a>
             <a href="#faq" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>FAQ</a>
-            <Link href="/login" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Se connecter</Link>
-            <Link href="/signup" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition-colors" style={{ color: "#fff" }}>
-              S&apos;inscrire gratuitement
-            </Link>
           </nav>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleNavigate("/login")}
+              className="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+              style={{ color: "#0f172a" }}
+            >
+              Se connecter
+            </button>
+            <button
+              onClick={() => handleNavigate("/signup")}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5"
+              style={{ color: "#fff" }}
+            >
+              Essai gratuit 7j →
+            </button>
+          </div>
         </div>
       </header>
 
@@ -160,17 +141,25 @@ export default function HomePage() {
             EcomPilot fait en <span className="underline decoration-blue-500 decoration-2 underline-offset-4">30 secondes</span> ce qui vous prend <span className="underline decoration-red-400 decoration-2 underline-offset-4">3 heures</span>.
           </p>
           <p className="text-lg max-w-2xl mx-auto mb-10 leading-relaxed" style={{ color: "#64748b" }}>
-            Descriptions IA, édition en masse, optimisation SEO, automatisations — le copilote qui transforme votre catalogue en machine à vendre.
+            Descriptions IA, édition en masse, automatisations — le copilote qui transforme votre catalogue en machine à vendre.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/signup" className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold flex items-center gap-3 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5" style={{ color: "#fff" }}>
-              Essai gratuit 7 jours <ArrowRight className="w-5 h-5" />
-            </Link>
-            <a href="#fonctionnalites" className="px-8 py-4 border-2 border-gray-200 hover:border-blue-300 rounded-xl text-base font-semibold transition-all hover:bg-blue-50/30" style={{ color: "#0f172a" }}>
-              Voir les fonctionnalités
-            </a>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            <button
+              onClick={() => handleNavigate("/signup")}
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold flex items-center gap-3 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5"
+              style={{ color: "#fff" }}
+            >
+              Commencer l&apos;essai gratuit <ArrowRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleNavigate("/login")}
+              className="px-8 py-4 border-2 border-gray-300 hover:border-blue-400 rounded-xl text-base font-semibold transition-all hover:bg-blue-50/30 flex items-center gap-2"
+              style={{ color: "#0f172a" }}
+            >
+              <Lock className="w-4 h-4" /> J&apos;ai déjà un compte
+            </button>
           </div>
-          <div className="flex items-center justify-center gap-6 mt-8">
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-4 mb-12">
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
               <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Carte requise — aucun débit avant J+7
             </p>
@@ -183,7 +172,7 @@ export default function HomePage() {
           </div>
 
           {/* Dashboard mockup */}
-          <div className="mt-16 relative">
+          <div className="relative">
             <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-gray-300/30 overflow-hidden">
               <div className="bg-gray-50 px-4 py-3 flex items-center gap-2 border-b border-gray-200">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -205,7 +194,7 @@ export default function HomePage() {
                 <div className="bg-purple-50 rounded-xl p-6 text-left">
                   <p className="text-sm font-medium" style={{ color: "#7c3aed" }}>IA générées</p>
                   <p className="text-3xl font-bold mt-1" style={{ color: "#0f172a" }}>382</p>
-                  <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>descriptions SEO</p>
+                  <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>descriptions</p>
                 </div>
               </div>
             </div>
@@ -226,11 +215,15 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" style={{ color: "#d97706" }} />
-            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>Sécurisé &amp; RGPD</span>
+            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>Sécurisé & RGPD</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5" style={{ color: "#7c3aed" }} />
             <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>Annulation sans frais</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Check className="w-5 h-5" style={{ color: "#059669" }} />
+            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>Paiement sécurisé Stripe</span>
           </div>
         </div>
       </section>
@@ -256,10 +249,19 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={() => handleNavigate("/signup")}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-700 rounded-xl text-base font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-red-500/20"
+              style={{ color: "#fff" }}
+            >
+              Arrêter de perdre du temps — essayer maintenant <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* ══════ COMMENT ÇA MARCHE ══════ */}
+      {/* ══════ HOW IT WORKS ══════ */}
       <section className="py-24 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -291,7 +293,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════ FONCTIONNALITÉS ══════ */}
+      {/* ══════ FEATURES ══════ */}
       <section id="fonctionnalites" className="py-24 px-6" style={{ backgroundColor: "#f8fafc" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -317,41 +319,222 @@ export default function HomePage() {
               );
             })}
           </div>
+          <div className="text-center mt-12">
+            <button
+              onClick={() => handleNavigate("/signup")}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-xl text-base font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/20"
+              style={{ color: "#fff" }}
+            >
+              Accéder à toutes les fonctionnalités <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ TARIFS (moved up before testimonials) ══════ */}
+      <section id="tarifs" className="py-24 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Tarifs</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{ color: "#0f172a" }}>
+              Des prix simples. Pas de surprise.
+            </h2>
+            <p className="text-lg mb-8" style={{ color: "#64748b" }}>
+              7 jours d&apos;essai gratuit. Carte requise à l&apos;inscription — aucun débit si vous résiliez avant la fin de l&apos;essai.
+            </p>
+            <div className="inline-flex items-center gap-3 bg-gray-100 border border-gray-200 rounded-full px-2 py-1.5">
+              <button
+                onClick={() => setBillingPeriod("monthly")}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${billingPeriod === "monthly" ? "bg-blue-600 shadow-md" : "hover:bg-white"}`}
+                style={{ color: billingPeriod === "monthly" ? "#fff" : "#475569" }}
+              >
+                Mensuel
+              </button>
+              <button
+                onClick={() => setBillingPeriod("yearly")}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${billingPeriod === "yearly" ? "bg-blue-600 shadow-md" : "hover:bg-white"}`}
+                style={{ color: billingPeriod === "yearly" ? "#fff" : "#475569" }}
+              >
+                Annuel <span className="text-[11px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: billingPeriod === "yearly" ? "rgba(255,255,255,0.2)" : "#dcfce7", color: billingPeriod === "yearly" ? "#fff" : "#16a34a" }}>-20%</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+            {PLANS.map((plan) => {
+              const price = billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
+              return (
+                <div key={plan.id} className={`relative bg-white rounded-2xl border-2 p-8 flex flex-col transition-all hover:shadow-xl ${plan.popular ? "border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02]" : "border-gray-200 hover:-translate-y-1"}`}>
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-blue-600 rounded-full text-xs font-bold tracking-wide flex items-center gap-1" style={{ color: "#fff" }}>
+                      <Crown className="w-3 h-3" /> LE PLUS POPULAIRE
+                    </div>
+                  )}
+                  <div className="mb-6">
+                    <span className="text-2xl mr-2">{plan.badge}</span>
+                    <h3 className="text-xl font-bold inline" style={{ color: "#0f172a" }}>{plan.name}</h3>
+                    <p className="text-sm mt-2" style={{ color: "#64748b" }}>{plan.target}</p>
+                  </div>
+                  <div className="mb-6">
+                    <span className="text-5xl font-extrabold" style={{ color: "#0f172a" }}>{price}€</span>
+                    <span className="text-sm" style={{ color: "#64748b" }}>/mois</span>
+                    {billingPeriod === "yearly" && (
+                      <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>soit {plan.yearlyPrice * 12}€/an au lieu de {plan.monthlyPrice * 12}€</p>
+                    )}
+                    {billingPeriod === "monthly" && (
+                      <p className="text-xs mt-1" style={{ color: "#059669" }}>ou {plan.yearlyPrice}€/mois en annuel <span className="font-bold" style={{ color: "#dc2626" }}>(-20%)</span></p>
+                    )}
+                  </div>
+                  <ul className="space-y-3 mb-6 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "#374151" }}>
+                        <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#059669" }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="p-3 rounded-xl mb-6" style={{ backgroundColor: "#f0fdf4" }}>
+                    <p className="text-xs leading-relaxed" style={{ color: "#166534" }}>{plan.fit}</p>
+                  </div>
+                  <button
+                    onClick={() => handleNavigate(`/signup?plan=${plan.id}`)}
+                    className={`block text-center py-4 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 w-full ${plan.popular ? "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20" : "bg-gray-900 hover:bg-gray-800"}`}
+                    style={{ color: "#fff" }}
+                  >
+                    Commencer l&apos;essai gratuit
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Already have account CTA */}
+          <div className="text-center mt-8">
+            <button
+              onClick={() => handleNavigate("/login")}
+              className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
+              style={{ color: "#64748b" }}
+            >
+              <Users className="w-4 h-4" /> Déjà cliente ou client ? Se connecter
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ UPGRADE SECTION ══════ */}
+      <section className="py-20 px-6" style={{ backgroundColor: "#0f172a" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6" style={{ backgroundColor: "rgba(96,165,250,0.15)", color: "#60a5fa" }}>
+              <Crown className="w-3.5 h-3.5" /> Montez en puissance
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "#fff" }}>
+              Commencez petit, grandissez sans limite.
+            </h2>
+            <p className="text-lg" style={{ color: "#94a3b8" }}>
+              Votre plan s&apos;adapte à votre croissance. Changez d&apos;offre en un clic, sans perdre vos données.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { plan: "Starter → Pro", icon: "🚀", trigger: "Vous dépassez 500 produits ou avez besoin de plus d'IA", benefits: ["×6 tâches IA (300/mois)", "Import illimité AliExpress & CJ", "Jusqu'à 3 boutiques", "Support prioritaire 24h"] },
+              { plan: "Pro → Scale", icon: "🏆", trigger: "Vous gérez plusieurs boutiques ou voulez des performances maximales", benefits: ["×3.3 tâches IA (1 000/mois)", "Boutiques illimitées", "Automatisations illimitées", "Support dédié en 4h"] },
+              { plan: "Annuel (-20%)", icon: "💰", trigger: "Vous utilisez EcomPilot depuis plus d'un mois", benefits: ["20% d'économies garanties", "Même plan, moins cher", "Changement en 1 clic", "Accès anticipé nouveautés"] },
+            ].map((u) => (
+              <div key={u.plan} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all">
+                <span className="text-3xl mb-4 block">{u.icon}</span>
+                <h3 className="text-lg font-bold mb-2" style={{ color: "#fff" }}>{u.plan}</h3>
+                <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>{u.trigger}</p>
+                <ul className="space-y-2">
+                  {u.benefits.map((b) => (
+                    <li key={b} className="flex items-center gap-2 text-sm" style={{ color: "#34d399" }}>
+                      <Check className="w-3.5 h-3.5 shrink-0" /> {b}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => handleNavigate("/signup")}
+                  className="mt-6 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
+                  style={{ backgroundColor: "rgba(96,165,250,0.15)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.3)" }}
+                >
+                  Démarrer et monter en grade →
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <button
+              onClick={() => handleNavigate("/signup")}
+              className="inline-flex items-center gap-3 px-10 py-4 bg-blue-600 hover:bg-blue-700 rounded-xl text-base font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/30"
+              style={{ color: "#fff" }}
+            >
+              Choisir mon plan et démarrer <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ══════ EMOTIONAL SECTION ══════ */}
-      <section className="py-24 px-6" style={{ backgroundColor: "#0f172a" }}>
+      <section className="py-24 px-6" style={{ backgroundColor: "#fff" }}>
         <div className="max-w-4xl mx-auto text-center">
-          <Heart className="w-12 h-12 mx-auto mb-8" style={{ color: "#f87171" }} />
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-8 leading-tight" style={{ color: "#fff" }}>
-            Vous n&apos;avez pas lancé votre boutique<br />pour passer vos soirées à écrire des fiches produit.
+          <Heart className="w-12 h-12 mx-auto mb-8" style={{ color: "#f43f5e" }} />
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-8 leading-tight" style={{ color: "#0f172a" }}>
+            Vous n&apos;avez pas lancé votre boutique<br />pour passer vos nuits à écrire des fiches produit.
           </h2>
-          <p className="text-xl leading-relaxed max-w-3xl mx-auto mb-8" style={{ color: "#94a3b8" }}>
-            Vous l&apos;avez lancée pour <span style={{ color: "#60a5fa" }} className="font-semibold">créer quelque chose</span>. Pour vivre de votre passion. Pour construire un business qui tourne même quand vous n&apos;êtes pas derrière l&apos;écran.
+          <p className="text-xl leading-relaxed max-w-3xl mx-auto mb-6" style={{ color: "#475569" }}>
+            Vous l&apos;avez lancée pour <span style={{ color: "#2563eb" }} className="font-bold">créer quelque chose qui compte</span>. Pour prouver que vous pouvez vivre de votre passion. Pour construire un business qui génère des revenus pendant que vous dormez.
           </p>
-          <p className="text-xl leading-relaxed max-w-3xl mx-auto mb-12" style={{ color: "#94a3b8" }}>
-            EcomPilot n&apos;est pas un outil de plus. C&apos;est <span style={{ color: "#fff" }} className="font-bold">le levier</span> qui vous redonne du temps pour faire ce que vous aimez vraiment : <span style={{ color: "#34d399" }} className="font-semibold">développer votre business</span>.
+          <p className="text-xl leading-relaxed max-w-3xl mx-auto mb-12" style={{ color: "#475569" }}>
+            <span className="font-bold" style={{ color: "#dc2626" }}>Chaque heure passée à copier-coller des descriptions</span>, c&apos;est une heure de moins pour trouver de nouveaux fournisseurs, lancer une campagne, ou tout simplement profiter de votre vie.
           </p>
-          <Link href="/signup" className="inline-flex items-center gap-2 px-8 py-4 bg-white hover:bg-gray-50 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5" style={{ color: "#0f172a" }}>
-            <Target className="w-5 h-5" /> Commencer maintenant — c&apos;est gratuit
-          </Link>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {[
+              { stat: "3h → 5min", label: "Pour optimiser 50 fiches produit", color: "#2563eb", bg: "#eff6ff" },
+              { stat: "×2.5", label: "Valeur perçue avec de vraies descriptions", color: "#059669", bg: "#f0fdf4" },
+              { stat: "0€", label: "De débit pendant les 7 jours d'essai", color: "#7c3aed", bg: "#faf5ff" },
+            ].map((s) => (
+              <div key={s.stat} className="rounded-2xl p-6" style={{ backgroundColor: s.bg }}>
+                <p className="text-4xl font-extrabold mb-2" style={{ color: s.color }}>{s.stat}</p>
+                <p className="text-sm font-medium" style={{ color: "#374151" }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => handleNavigate("/signup")}
+              className="inline-flex items-center gap-2 px-10 py-5 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/25"
+              style={{ color: "#fff" }}
+            >
+              <Target className="w-5 h-5" /> Reprendre le contrôle — c&apos;est gratuit
+            </button>
+            <button
+              onClick={() => handleNavigate("/login")}
+              className="inline-flex items-center gap-2 px-8 py-4 border-2 border-gray-200 hover:border-blue-300 rounded-xl text-base font-semibold transition-all hover:bg-blue-50"
+              style={{ color: "#475569" }}
+            >
+              Me connecter à mon compte
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ══════ TESTIMONIALS ══════ */}
-      <section className="py-24 px-6 bg-white">
+      <section className="py-24 px-6" style={{ backgroundColor: "#f8fafc" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Ce que permet EcomPilot</p>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{ color: "#0f172a" }}>
               Des résultats concrets pour votre boutique.
             </h2>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Scénarios illustratifs basés sur l’usage typique de l’outil. Les résultats réels varient selon votre catalogue et votre utilisation.</p>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>Scénarios illustratifs basés sur l&apos;usage typique de l&apos;outil. Les résultats réels varient selon votre catalogue et votre utilisation.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bg-gray-50 border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-all">
+              <div key={t.name} className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-all">
                 <div className="flex gap-0.5 mb-4">
                   {[...Array(t.stars)].map((_, i) => <Star key={i} className="w-5 h-5 fill-yellow-400" style={{ color: "#facc15" }} />)}
                 </div>
@@ -366,98 +549,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════ TARIFS ══════ */}
-      <section id="tarifs" className="py-24 px-6" style={{ backgroundColor: "#f8fafc" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Tarifs</p>
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{ color: "#0f172a" }}>
-              Des prix simples. Pas de surprise.
-            </h2>
-            <p className="text-lg mb-8" style={{ color: "#64748b" }}>
-              7 jours d&apos;essai gratuit. Carte requise à l&apos;inscription — aucun débit si vous résiliez avant la fin de l&apos;essai.
-            </p>
-
-            {/* Billing toggle */}
-            <div className="inline-flex items-center gap-3 bg-white border border-gray-200 rounded-full px-2 py-1.5">
-              <button
-                onClick={() => setBillingPeriod("monthly")}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${billingPeriod === "monthly" ? "bg-blue-600 shadow-md" : "hover:bg-gray-100"}`}
-                style={{ color: billingPeriod === "monthly" ? "#fff" : "#475569" }}
-              >
-                Mensuel
-              </button>
-              <button
-                onClick={() => setBillingPeriod("yearly")}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${billingPeriod === "yearly" ? "bg-blue-600 shadow-md" : "hover:bg-gray-100"}`}
-                style={{ color: billingPeriod === "yearly" ? "#fff" : "#475569" }}
-              >
-                Annuel <span className="text-[11px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: billingPeriod === "yearly" ? "rgba(255,255,255,0.2)" : "#dcfce7", color: billingPeriod === "yearly" ? "#fff" : "#16a34a" }}>-20%</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
-            {PLANS.map((plan) => {
-              const price = billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
-              return (
-                <div key={plan.id} className={`relative bg-white rounded-2xl border-2 p-8 flex flex-col transition-all hover:shadow-xl ${plan.popular ? "border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02]" : "border-gray-200 hover:-translate-y-1"}`}>
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-blue-600 rounded-full text-xs font-bold tracking-wide" style={{ color: "#fff" }}>
-                      LE PLUS POPULAIRE
-                    </div>
-                  )}
-                  <div className="mb-6">
-                    <span className="text-2xl mr-2">{plan.badge}</span>
-                    <h3 className="text-xl font-bold inline" style={{ color: "#0f172a" }}>{plan.name}</h3>
-                    <p className="text-sm mt-2" style={{ color: "#64748b" }}>{plan.target}</p>
-                  </div>
-                  <div className="mb-6">
-                    <span className="text-5xl font-extrabold" style={{ color: "#0f172a" }}>{price}€</span>
-                    <span className="text-sm" style={{ color: "#64748b" }}>/mois</span>
-                    {billingPeriod === "yearly" && (
-                      <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>
-                        soit {plan.yearlyPrice * 12}€/an au lieu de {plan.monthlyPrice * 12}€
-                      </p>
-                    )}
-                    {billingPeriod === "monthly" && (
-                      <p className="text-xs mt-1" style={{ color: "#059669" }}>
-                        ou {plan.yearlyPrice}€/mois en annuel <span className="font-bold" style={{ color: "#dc2626" }}>(-20%)</span>
-                      </p>
-                    )}
-                  </div>
-                  <ul className="space-y-3 mb-6 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "#374151" }}>
-                        <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#059669" }} />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="p-3 rounded-xl mb-6" style={{ backgroundColor: "#f0fdf4" }}>
-                    <p className="text-xs leading-relaxed" style={{ color: "#166534" }}>{plan.fit}</p>
-                  </div>
-                  <Link href={`/signup?plan=${plan.id}`} className={`block text-center py-4 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 ${plan.popular ? "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20" : "bg-gray-900 hover:bg-gray-800"}`} style={{ color: "#fff" }}>
-                    Commencer l&apos;essai gratuit
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* ══════ FAQ ══════ */}
       <section id="faq" className="py-24 px-6 bg-white">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>FAQ</p>
-            <h2 className="text-4xl font-extrabold mb-6" style={{ color: "#0f172a" }}>
-              Questions fréquentes
-            </h2>
-            <p className="text-lg" style={{ color: "#64748b" }}>
-              Tout ce que vous devez savoir avant de vous lancer.
-            </p>
+            <h2 className="text-4xl font-extrabold mb-6" style={{ color: "#0f172a" }}>Questions fréquentes</h2>
+            <p className="text-lg" style={{ color: "#64748b" }}>Tout ce que vous devez savoir avant de vous lancer.</p>
           </div>
           <div className="space-y-4">
             {FAQ_ITEMS.map((item, idx) => (
@@ -494,9 +592,22 @@ export default function HomePage() {
           <p className="text-lg mb-10 font-medium" style={{ color: "#60a5fa" }}>
             7 jours gratuits · Aucun débit avant J+7 · Résiliation en 1 clic
           </p>
-          <Link href="/signup" className="inline-flex items-center gap-3 px-10 py-5 bg-white hover:bg-gray-50 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg" style={{ color: "#0f172a" }}>
-            Commencer gratuitement <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => handleNavigate("/signup")}
+              className="inline-flex items-center gap-3 px-10 py-5 bg-white hover:bg-gray-50 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg"
+              style={{ color: "#0f172a" }}
+            >
+              Commencer gratuitement <ArrowRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleNavigate("/login")}
+              className="inline-flex items-center gap-2 px-8 py-4 border border-white/20 hover:border-white/40 rounded-xl text-base font-semibold transition-all hover:bg-white/5"
+              style={{ color: "#94a3b8" }}
+            >
+              <ChevronRight className="w-4 h-4" /> Me connecter
+            </button>
+          </div>
         </div>
       </section>
 
@@ -516,10 +627,11 @@ export default function HomePage() {
               <Link href="/politique-confidentialite" className="hover:text-blue-600 transition-colors">Confidentialité</Link>
               <Link href="/mentions-legales" className="hover:text-blue-600 transition-colors">Mentions légales</Link>
               <a href="mailto:contact@ecompilot.fr" className="hover:text-blue-600 transition-colors">Contact</a>
+              <button onClick={() => handleNavigate("/login")} className="hover:text-blue-600 transition-colors">Se connecter</button>
             </div>
           </div>
           <div className="mt-8 text-center">
-            <p className="text-xs" style={{ color: "#94a3b8" }}>© 2026 EcomPilot — Tous droits réservés.</p>
+            <p className="text-xs" style={{ color: "#94a3b8" }}>© 2026 EcomPilot — Tous droits réservés. Paiement sécurisé par Stripe.</p>
           </div>
         </div>
       </footer>

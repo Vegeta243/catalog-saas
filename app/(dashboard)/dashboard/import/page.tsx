@@ -11,12 +11,14 @@ interface ImportPreview {
   supplierPrice: number;
   sellingPrice: string;
   margin: number;
+  note?: string;
 }
 
 interface ImportResult {
   url: string;
   status: "pending" | "scraping" | "preview" | "importing" | "done" | "error";
   preview?: ImportPreview;
+  isDemo?: boolean;
   error?: string;
 }
 
@@ -50,7 +52,7 @@ export default function ImportPage() {
         if (!res.ok) throw new Error("Échec du scraping");
         const data = await res.json();
 
-        setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "preview", preview: data.preview } : r));
+        setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "preview", preview: data.preview, isDemo: data.demo === true } : r));
       } catch {
         setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: "Impossible de charger cette URL" } : r));
       }
@@ -192,13 +194,24 @@ export default function ImportPage() {
                 <div key={idx} className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4">
                   {/* Image */}
                   <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
-                    {r.preview?.imageUrl ? <img src={r.preview.imageUrl} alt="" className="w-full h-full object-cover" />
-                      : <ImageOff className="w-6 h-6" style={{ color: "#cbd5e1" }} />}
+                    {r.preview?.imageUrl ? (
+                      <img
+                        src={r.preview.imageUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    ) : <ImageOff className="w-6 h-6" style={{ color: "#cbd5e1" }} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="text-sm font-medium truncate" style={{ color: "#0f172a" }}>{r.preview?.title || r.url}</p>
+                        {r.isDemo && (
+                          <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-semibold mb-1" style={{ backgroundColor: "#fef3c7", color: "#92400e" }}>
+                            DEMO — données illustratives
+                          </span>
+                        )}
                         {r.preview && (
                           <div className="flex items-center gap-3 mt-1">
                             <span className="text-xs" style={{ color: "#94a3b8" }}>Fournisseur: {r.preview.supplierPrice.toFixed(2)}€</span>
