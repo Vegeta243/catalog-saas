@@ -30,7 +30,19 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "Clé API OpenAI non configurée. Ajoutez OPENAI_API_KEY dans .env.local" }, { status: 500 });
+      // Démo mode — réponses simulées quand OPENAI_API_KEY est absent
+      const mockResult: Record<string, string> = {};
+      if (mode === "title") {
+        mockResult.title = `${product.title} — Édition Premium Optimisée SEO`;
+      } else if (mode === "tags") {
+        const words = (product.title || "").toLowerCase().split(" ").slice(0, 4);
+        mockResult.tags = [...words, "shopify", "premium", "tendance", "qualité", "livraison-rapide", "promo"].join(", ");
+      } else {
+        mockResult.title = `${product.title} — Qualité Premium | Livraison Rapide`;
+        mockResult.description = `<ul><li><strong>Qualité exceptionnelle</strong> — Ce produit est conçu pour durer et satisfaire vos clients.</li><li><strong>Design élégant</strong> — Un style moderne qui séduit du premier regard.</li><li><strong>Livraison express</strong> — Réception en 24-48h pour toute commande en France.</li><li><strong>Satisfaction garantie</strong> — Retours acceptés sous 30 jours sans condition.</li><li><strong>Service client</strong> — Notre équipe répond en moins de 2h du lundi au vendredi.</li></ul>`;
+        mockResult.keywords = `${product.title?.toLowerCase()}, boutique, qualité premium, livraison gratuite, france, shopify, tendance, mode, promo, achat sécurisé`;
+      }
+      return NextResponse.json({ success: true, demo: true, taskCost: 0, ...mockResult });
     }
 
     // Task cost

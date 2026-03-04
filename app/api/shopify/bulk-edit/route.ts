@@ -60,3 +60,6 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
+
+// Alias POST → PUT pour compatibilité ascendante
+export { PUT as POST };

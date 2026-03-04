@@ -15,10 +15,12 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Clé API OpenAI non configurée. Ajoutez OPENAI_API_KEY dans .env.local" },
-        { status: 500 }
-      );
+      // Démo mode — descriptions simulées
+      const mockDescriptions = products.map((p: { id: string; title: string }) => ({
+        id: p.id,
+        description: `<ul><li><strong>Produit populaire</strong> — ${p.title} est l'un de nos best-sellers apprécié par des milliers de clients.</li><li><strong>Fabrication de qualité</strong> — Matériaux sélectionnés pour leur durabilité et leur confort.</li><li><strong>Livraison rapide</strong> — Expédié sous 24h, livré en 48h en France métropolitaine.</li><li><strong>Satisfaction garantie</strong> — Retour gratuit sous 30 jours si vous nêtes pas satisfait.</li><li><strong>Support dédié</strong> — Notre équipe est disponible 7j/7 pour répondre à vos questions.</li></ul>`,
+      }));
+      return NextResponse.json({ success: true, demo: true, taskCost: 0, descriptions: mockDescriptions });
     }
 
     const taskCost = getCreditCost("ai.generate.description") * products.length;

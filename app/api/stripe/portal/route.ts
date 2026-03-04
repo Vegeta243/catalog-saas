@@ -11,8 +11,18 @@ function getStripe() {
 
 export async function POST(req: Request) {
   try {
-    const stripe = getStripe();
     const { customerId } = await req.json();
+
+    // Démo mode quand STRIPE_SECRET_KEY n'est pas configuré
+    if (!process.env.STRIPE_SECRET_KEY) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      return NextResponse.json({
+        url: `${siteUrl}/dashboard/billing?portal=demo`,
+        demo: true,
+      });
+    }
+
+    const stripe = getStripe();
 
     if (!customerId) {
       return NextResponse.json(

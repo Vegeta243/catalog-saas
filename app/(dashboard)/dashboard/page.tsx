@@ -156,20 +156,27 @@ export default function DashboardPage() {
 
   const applyAIResults = async () => {
     setWorkflowLoading(true);
-    const updates = Object.entries(aiResults).map(([id, data]) => ({
-      id: Number(id),
-      title: data.title,
-      body_html: data.description,
-    }));
+    const entries = Object.entries(aiResults);
     try {
-      await fetch("/api/shopify/bulk-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ products: updates }),
-      });
+      await Promise.all(
+        entries.map(async ([id, data]) => {
+          const calls: Promise<Response>[] = [];
+          if (data.title) calls.push(fetch("/api/shopify/bulk-edit", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [Number(id)], field: "title", value: data.title }),
+          }));
+          if (data.description) calls.push(fetch("/api/shopify/bulk-edit", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [Number(id)], field: "body_html", value: data.description }),
+          }));
+          await Promise.all(calls);
+        })
+      );
       setWorkflowStep(4);
       setOnboardingSteps((prev) => prev.map((s) => s.id === 3 || s.id === 4 ? { ...s, done: true } : s));
-      addToast(`${updates.length} produits optimisés !`, "success");
+      addToast(`${entries.length} produit${entries.length > 1 ? "s" : ""} optimisé${entries.length > 1 ? "s" : ""} !`, "success");
     } catch {
       addToast("Erreur lors de l'application", "error");
     }
@@ -180,27 +187,20 @@ export default function DashboardPage() {
     setWorkflowLoading(true);
     const selected = products.filter((p) => selectedProducts.includes(p.id));
     const val = parseFloat(priceValue);
-    const updates = selected.map((p) => {
-      const currentPrice = parseFloat(p.variants?.[0]?.price || "0");
-      let newPrice = currentPrice;
-      if (priceMode === "increase") newPrice = currentPrice * (1 + val / 100);
-      else if (priceMode === "decrease") newPrice = currentPrice * (1 - val / 100);
-      else newPrice = val;
-      return { id: p.id, variants: [{ price: newPrice.toFixed(2) }] };
-    });
+    const productIds = selected.map((p) => String(p.id));
+    let mode = "fixed";
+    let newPrice = priceValue;
+    if (priceMode === "increase") { mode = "percent"; }
+    else if (priceMode === "decrease") { mode = "percent"; newPrice = String(-val); }
     try {
-      await Promise.all(
-        updates.map((u) =>
-          fetch("/api/shopify/bulk-edit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId: u.id, fields: { variants: u.variants } }),
-          })
-        )
-      );
+      await fetch("/api/shopify/bulk-update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds, newPrice, mode }),
+      });
       setWorkflowStep(4);
       setOnboardingSteps((prev) => prev.map((s) => s.id === 3 ? { ...s, done: true } : s));
-      addToast(`Prix mis à jour sur ${updates.length} produits`, "success");
+      addToast(`Prix mis à jour sur ${selected.length} produit${selected.length > 1 ? "s" : ""}`, "success");
     } catch {
       addToast("Erreur lors de la mise à jour", "error");
     }
@@ -217,8 +217,8 @@ export default function DashboardPage() {
         body: JSON.stringify({ url: importUrl }),
       });
       const data = await res.json();
-      if (data.product) {
-        setAiResults({ 0: { title: data.product.title, description: data.product.description } });
+      if (data.preview) {
+        setAiResults({ 0: { title: data.preview.title, description: data.preview.description } });
         setWorkflowStep(2);
       } else {
         addToast("Impossible d'analyser ce lien", "error");

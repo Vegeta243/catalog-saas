@@ -26,7 +26,16 @@ function BillingContent() {
   useEffect(() => {
     // Show checkout success message
     if (searchParams.get("checkout") === "success") {
-      addToast("Abonnement activé avec succès ! Bienvenue 🎉", "success");
+      const isDemo = searchParams.get("demo") === "true";
+      addToast(
+        isDemo
+          ? "✅ [DÉMO] Abonnement simulé activé — Ajoutez STRIPE_SECRET_KEY pour activer les vrais paiements"
+          : "Abonnement activé avec succès ! Bienvenue 🎉",
+        "success"
+      );
+    }
+    if (searchParams.get("portal") === "demo") {
+      addToast("ℹ️ [DÉMO] Portail de facturation — Configurez STRIPE_SECRET_KEY pour accéder au portail Stripe réel", "info");
     }
     // Simulate fetching user plan
     setTimeout(() => {

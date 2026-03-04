@@ -197,7 +197,13 @@ export default function ProductsPage() {
     });
     await Promise.all(batch);
     setAiSuggestions((prev) => ({ ...prev, ...results }));
-    addToast(`IA: ${Object.keys(results).length} suggestion${Object.keys(results).length > 1 ? "s" : ""} générée${Object.keys(results).length > 1 ? "s" : ""}`, "success");
+    const anyDemo = Object.values(results).some((r: unknown) => (r as Record<string, unknown>).demo === true);
+    addToast(
+      anyDemo
+        ? `[DEMO] ${Object.keys(results).length} suggestion${Object.keys(results).length > 1 ? "s" : ""} simulée${Object.keys(results).length > 1 ? "s" : ""} — ajoutez OPENAI_API_KEY pour l'IA réelle`
+        : `IA: ${Object.keys(results).length} suggestion${Object.keys(results).length > 1 ? "s" : ""} générée${Object.keys(results).length > 1 ? "s" : ""}`,
+      "success"
+    );
     setAiBatchLoading(false);
   };
 

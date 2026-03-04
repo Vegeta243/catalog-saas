@@ -26,12 +26,22 @@ const PLANS = {
 
 export async function POST(req: Request) {
   try {
-    const stripe = getStripe();
     const { plan, billing, email, paymentMethod } = await req.json();
 
     if (!plan || !billing) {
       return NextResponse.json({ error: "Plan ou période manquante." }, { status: 400 });
     }
+
+    // Démo mode quand STRIPE_SECRET_KEY n'est pas configuré
+    if (!process.env.STRIPE_SECRET_KEY) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      return NextResponse.json({
+        url: `${siteUrl}/dashboard/billing?checkout=success&demo=true&plan=${plan}`,
+        demo: true,
+      });
+    }
+
+    const stripe = getStripe();
 
     const planConfig = PLANS[plan as keyof typeof PLANS];
     if (!planConfig) {
