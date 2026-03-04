@@ -6,6 +6,7 @@ import { useToast } from "@/lib/toast";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string }> = {
   free: { name: "Free", icon: Star, price: 0, yearlyPrice: 0, color: "#6b7280" },
@@ -18,6 +19,9 @@ function BillingContent() {
   const { addToast } = useToast();
   const searchParams = useSearchParams();
   const [plan, setPlan] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [periodEnd, setPeriodEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -37,19 +41,50 @@ function BillingContent() {
     if (searchParams.get("portal") === "demo") {
       addToast("ℹ️ [DÉMO] Portail de facturation — Configurez STRIPE_SECRET_KEY pour accéder au portail Stripe réel", "info");
     }
-    // Simulate fetching user plan
-    setTimeout(() => {
-      setPlan("pro");
-      setLoading(false);
-    }, 500);
+
+    // Fetch real subscription data from Supabase
+    const fetchSubscription = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setPlan("free"); setLoading(false); return; }
+
+        const { data } = await supabase
+          .from("users")
+          .select("plan, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end")
+          .eq("id", user.id)
+          .single();
+
+        setPlan(data?.plan || "free");
+        setCustomerId(data?.stripe_customer_id || null);
+        setSubscriptionStatus(data?.subscription_status || null);
+        setPeriodEnd(data?.current_period_end || null);
+      } catch {
+        setPlan("free");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSubscription();
   }, [searchParams, addToast]);
 
   const handleCancel = async () => {
     if (!confirm("Êtes-vous sûr de vouloir annuler votre abonnement ? Vous garderez l'accès jusqu'à la fin de la période.")) return;
     setCancelling(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    addToast("Abonnement annulé. Vous aurez accès jusqu'au 03/04/2026.", "info");
-    setCancelling(false);
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else addToast("Accédez au portail Stripe pour annuler votre abonnement.", "info");
+    } catch {
+      addToast("Erreur réseau", "error");
+    } finally {
+      setCancelling(false);
+    }
   };
 
   const handlePortal = async () => {
@@ -58,7 +93,7 @@ function BillingContent() {
       const res = await fetch("/api/stripe/portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId: "cus_placeholder" }),
+        body: JSON.stringify({ customerId }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -72,10 +107,12 @@ function BillingContent() {
 
   const handleUpgrade = async (newPlan: string) => {
     try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: newPlan, billing }),
+        body: JSON.stringify({ plan: newPlan, billing, email: user?.email }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -155,7 +192,9 @@ function BillingContent() {
               <p className="text-sm" style={{ color: "#64748b" }}>{displayPrice}€/mois • {billing === "yearly" ? "Annuel" : "Mensuel"}</p>
             </div>
           </div>
-          <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100" style={{ color: "#059669" }}>Actif</span>
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100" style={{ color: "#059669" }}>
+            {subscriptionStatus === "trialing" ? "Essai gratuit" : subscriptionStatus === "past_due" ? "Paiement en retard" : "Actif"}
+          </span>
         </div>
       </div>
 
@@ -167,38 +206,44 @@ function BillingContent() {
             <span className="text-sm font-medium" style={{ color: "#374151" }}>Prochain paiement</span>
           </div>
           <p className="text-xl font-bold" style={{ color: "#0f172a" }}>{displayPrice}€</p>
-          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Le 03 avril 2026</p>
+          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+            {periodEnd ? `Le ${new Date(periodEnd).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}` : "—"}
+          </p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard className="w-4 h-4" style={{ color: "#64748b" }} />
             <span className="text-sm font-medium" style={{ color: "#374151" }}>Moyen de paiement</span>
           </div>
-          <p className="text-sm font-medium" style={{ color: "#0f172a" }}>•••• •••• •••• 4242</p>
-          <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Expire 12/2028</p>
+          <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Géré via Stripe</p>
+          <button onClick={handlePortal} className="text-xs mt-1 underline" style={{ color: "#2563eb" }}>
+            Modifier la carte
+          </button>
         </div>
       </div>
 
       {/* Invoice history */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h3 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>Historique des factures</h3>
-        <div className="space-y-3">
-          {[
-            { date: "03/03/2026", amount: `${displayPrice}€`, status: "Payée" },
-            { date: "03/02/2026", amount: `${displayPrice}€`, status: "Payée" },
-            { date: "03/01/2026", amount: `${displayPrice}€`, status: "Payée" },
-          ].map((invoice, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-              <div>
-                <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Facture - {invoice.date}</p>
-                <p className="text-xs" style={{ color: "#94a3b8" }}>Plan {info.name}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{invoice.amount}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100" style={{ color: "#059669" }}>{invoice.status}</span>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold" style={{ color: "#0f172a" }}>Historique des factures</h3>
+          <button
+            onClick={handlePortal}
+            disabled={portalLoading}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            style={{ color: "#374151" }}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            {portalLoading ? "Chargement..." : "Voir toutes les factures"}
+          </button>
+        </div>
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
+          <CreditCard className="w-5 h-5 flex-shrink-0" style={{ color: "#2563eb" }} />
+          <div>
+            <p className="text-sm font-medium" style={{ color: "#1e40af" }}>Factures disponibles dans le portail Stripe</p>
+            <p className="text-xs mt-0.5" style={{ color: "#3b82f6" }}>
+              Téléchargez vos factures et gérez votre moyen de paiement directement depuis le portail Stripe sécurisé.
+            </p>
+          </div>
         </div>
       </div>
 
