@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import CookieBanner from "@/components/cookie-banner";
 
 export const metadata: Metadata = {
   title: "EcomPilot — Gestion de catalogue Shopify",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="fr">
       <body className="antialiased">
         {children}
+        <CookieBanner />
       </body>
     </html>
   );

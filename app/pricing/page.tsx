@@ -209,8 +209,15 @@ export default function PricingPage() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 py-8 text-center">
-        <p className="text-sm" style={{ color: "#94a3b8" }}>© 2026 EcomPilot — Tous droits réservés.</p>
+      <div className="border-t border-gray-200 py-8">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-4">
+          <div className="flex items-center gap-6 text-xs" style={{ color: "#94a3b8" }}>
+            <Link href="/cgu" className="hover:underline">CGU</Link>
+            <Link href="/politique-confidentialite" className="hover:underline">Confidentialité</Link>
+            <Link href="/mentions-legales" className="hover:underline">Mentions légales</Link>
+          </div>
+          <p className="text-xs" style={{ color: "#94a3b8" }}>© 2026 EcomPilot — Tous droits réservés.</p>
+        </div>
       </div>
     </div>
   );
