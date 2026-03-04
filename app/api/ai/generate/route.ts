@@ -30,17 +30,50 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      // Démo mode — réponses simulées quand OPENAI_API_KEY est absent
+      // Démo mode — contenu simulé réaliste, jamais de termes "SEO"/"optimisé" dans le contenu
+      const base = (product.title || "Produit").trim();
+
+      // Titre : vise 50-70 caractères pour score maximum
+      const buildTitle = (t: string): string => {
+        if (t.length >= 50 && t.length <= 70) return t;
+        if (t.length > 70) return t.slice(0, 67) + "...";
+        const suffixes = [
+          " — Meilleur prix garanti, livraison offerte",
+          " | Collection 2026, découvrez nos prix exclusifs",
+          " — Référence incontournable à prix imbattable",
+          " | Qualité assurée, retour gratuit 30 jours",
+          " — Le choix des e-commerçants, expédié en 24h",
+          " | Meilleur rapport qualité-prix du marché",
+        ];
+        for (const s of suffixes) {
+          const c = t + s;
+          if (c.length >= 50 && c.length <= 70) return c;
+          if (c.length <= 70 && c.length > t.length) { /* keep looking for >=50 */ }
+        }
+        // Construire à exactement 60 chars minimum
+        const base = t + " — Découvrez notre sélection du moment maintenant";
+        return base.length <= 70 ? base : base.slice(0, 70);
+      };
+
+      // Tags : 8 mots-clés métier sans "seo" ni "shopify" générique
+      const buildTags = (t: string): string => {
+        const words = t.toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9\s-]/g, "")
+          .split(/\s+/).filter((w) => w.length > 3).slice(0, 4);
+        const generics = ["livraison-france", "achat-en-ligne", "nouveaute", "tendance", "promotion", "qualite"];
+        return [...new Set([...words, ...generics])].slice(0, 10).join(", ");
+      };
+
       const mockResult: Record<string, string> = {};
       if (mode === "title") {
-        mockResult.title = `${product.title} — Édition Premium Optimisée SEO`;
+        mockResult.title = buildTitle(base);
       } else if (mode === "tags") {
-        const words = (product.title || "").toLowerCase().split(" ").slice(0, 4);
-        mockResult.tags = [...words, "shopify", "premium", "tendance", "qualité", "livraison-rapide", "promo"].join(", ");
+        mockResult.tags = buildTags(base);
       } else {
-        mockResult.title = `${product.title} — Qualité Premium | Livraison Rapide`;
-        mockResult.description = `<ul><li><strong>Qualité exceptionnelle</strong> — Ce produit est conçu pour durer et satisfaire vos clients.</li><li><strong>Design élégant</strong> — Un style moderne qui séduit du premier regard.</li><li><strong>Livraison express</strong> — Réception en 24-48h pour toute commande en France.</li><li><strong>Satisfaction garantie</strong> — Retours acceptés sous 30 jours sans condition.</li><li><strong>Service client</strong> — Notre équipe répond en moins de 2h du lundi au vendredi.</li></ul>`;
-        mockResult.keywords = `${product.title?.toLowerCase()}, boutique, qualité premium, livraison gratuite, france, shopify, tendance, mode, promo, achat sécurisé`;
+        mockResult.title = buildTitle(base);
+        mockResult.description = `<ul><li><strong>Fabrication soignée</strong> — ${base} est conçu pour répondre aux exigences les plus élevées. Chaque détail est pensé pour vous offrir une expérience durable et agréable au quotidien.</li><li><strong>Design contemporain</strong> — Lignes épurées et matériaux de choix : un produit qui s'intègre naturellement dans votre environnement et séduit dès le premier regard.</li><li><strong>Expédition rapide</strong> — Commandez aujourd'hui et recevez votre colis sous 48 à 72 heures en France métropolitaine. Numéro de suivi fourni automatiquement.</li><li><strong>Retour sans souci</strong> — Vous disposez de 30 jours pour retourner votre article si vous n'êtes pas entièrement satisfait. Simple et sans condition.</li><li><strong>Équipe disponible</strong> — Notre service client est joignable du lundi au vendredi pour répondre à toutes vos questions et vous accompagner.</li></ul>`;
+        mockResult.keywords = buildTags(base);
       }
       return NextResponse.json({ success: true, demo: true, taskCost: 0, ...mockResult });
     }
@@ -52,20 +85,38 @@ export async function POST(req: Request) {
     let prompt = "";
 
     if (mode === "title") {
-      prompt = `Tu es un expert SEO e-commerce. Génère un titre optimisé SEO pour ce produit Shopify. Le titre actuel est: "${product.title}". Le titre doit faire entre 50 et 70 caractères, être accrocheur et contenir des mots-clés pertinents. Langue: ${language}. Réponds uniquement avec le nouveau titre, sans guillemets ni explication.`;
+      prompt = `Tu es un expert e-commerce. Génère un titre accrocheur pour ce produit Shopify.
+Titre actuel : "${product.title}"
+Contraintes :
+- Exactement entre 50 et 70 caractères
+- Commence par le mot-clé principal du produit
+- Naturel et commercial, donne envie d'acheter
+- INTERDIT : les mots "SEO", "optimisé", "optimisée", "référencement", "livraison rapide" (sauf si déjà dans le titre)
+Langue : ${language}. Réponds uniquement avec le titre, sans guillemets ni explication.`;
     } else if (mode === "tags") {
-      prompt = `Tu es un expert SEO e-commerce. Génère exactement 10 tags pertinents pour ce produit Shopify. Titre: "${product.title}". Description: "${product.description || ""}". Langue: ${language}. Réponds uniquement avec les tags séparés par des virgules, sans numérotation ni explication.`;
+      prompt = `Tu es un expert e-commerce. Génère exactement 10 mots-clés pour ce produit Shopify.
+Titre : "${product.title}". Description : "${product.description || ""}"
+Contraintes :
+- Mots-clés que les acheteurs tapent réellement dans Google ou sur Shopify
+- Variez entre : terme générique, spécifique, cas d'usage, audience
+- INTERDIT : les mots "SEO", "optimisé", "shopify", "boutique" isolés, "premium" seul
+Langue : ${language}. Réponds uniquement avec les mots-clés séparés par des virgules, sans numérotation.`;
     } else {
-      prompt = `Tu es un expert copywriter e-commerce. Pour ce produit Shopify:
-Titre: "${product.title}"
-Description actuelle: "${product.description || "Aucune"}"
+      prompt = `Tu es un copywriter e-commerce expert. Pour ce produit Shopify :
+Titre : "${product.title}"
+Description actuelle : "${product.description || "Aucune"}"
 
-Génère:
-1. Un titre SEO optimisé (50-70 caractères)
-2. Une description commerciale percutante (150-300 mots), structurée avec des puces HTML (<ul><li>)
-3. 10 mots-clés SEO pertinents séparés par des virgules
+Génère :
+1. Un titre accrocheur de 50 à 70 caractères exact, qui commence par le mot-clé principal
+2. Une description de vente (150-300 mots) en HTML avec puces <ul><li>, mettant en avant les bénéfices concrets pour l'acheteur
+3. 10 mots-clés que les acheteurs tapent réellement, séparés par des virgules
 
-Langue: ${language}. Réponds en JSON avec ce format exact: {"title":"...","description":"...","keywords":"..."}`;
+Règles STRICTES pour tout le contenu :
+- N'utilise JAMAIS les mots : "SEO", "optimisé", "optimisée", "référencement", "strategiquement"
+- La description doit parler du produit, pas de la boutique
+- Ton direct, bénéfices concrets, pas de superlatifs vides
+
+Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","keywords":"..."}`;
     }
 
     // Use gpt-4o-mini by default (10x cheaper than gpt-4o)

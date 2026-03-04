@@ -128,7 +128,17 @@ export default function AIPage() {
             body: JSON.stringify({ productIds: [product.id], field: "tags", value: data.keywords || data.tags }) }),
         ] as Promise<Response>[])
       );
-      addToast("⚡ Contenu IA généré et appliqué sur Shopify !", "success");
+      // Mise à jour locale du produit pour recalculer le score SEO immédiatement
+      setProducts((prev) => prev.map((p) => {
+        if (p.id !== product.id) return p;
+        return {
+          ...p,
+          ...(data.title ? { title: data.title } : {}),
+          ...(data.description ? { body_html: data.description } : {}),
+          ...((data.keywords || data.tags) ? { tags: data.keywords || data.tags } : {}),
+        };
+      }));
+      addToast("⚡ Appliqué ! Score SEO mis à jour.", "success");
     } catch { addToast("Erreur lors de l'application IA directe", "error"); }
     setGenerating(null);
   };
@@ -146,7 +156,17 @@ export default function AIPage() {
         await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ productIds: [productId], field: apiField, value }) });
       }));
-      addToast("Contenu appliqué sur Shopify", "success");
+      // Mise à jour locale pour recalculer le score SEO immédiatement
+      setProducts((prev) => prev.map((p) => {
+        if (p.id !== productId) return p;
+        return {
+          ...p,
+          ...(toApply.includes("title") && content.title ? { title: content.title } : {}),
+          ...(toApply.includes("description") && content.description ? { body_html: content.description } : {}),
+          ...((toApply.includes("tags") && (content.keywords || content.tags)) ? { tags: content.keywords || content.tags } : {}),
+        };
+      }));
+      addToast("✅ Appliqué ! Score SEO mis à jour.", "success");
       setGeneratedContent((prev) => { const n = { ...prev }; delete n[productId]; return n; });
     } catch { addToast("Erreur lors de l'application", "error"); }
     setGenerating(null);

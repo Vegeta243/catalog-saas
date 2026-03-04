@@ -15,10 +15,10 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      // Démo mode — descriptions simulées
+      // Démo mode — descriptions détaillées centrées sur le produit
       const mockDescriptions = products.map((p: { id: string; title: string }) => ({
         id: p.id,
-        description: `<ul><li><strong>Produit populaire</strong> — ${p.title} est l'un de nos best-sellers apprécié par des milliers de clients.</li><li><strong>Fabrication de qualité</strong> — Matériaux sélectionnés pour leur durabilité et leur confort.</li><li><strong>Livraison rapide</strong> — Expédié sous 24h, livré en 48h en France métropolitaine.</li><li><strong>Satisfaction garantie</strong> — Retour gratuit sous 30 jours si vous nêtes pas satisfait.</li><li><strong>Support dédié</strong> — Notre équipe est disponible 7j/7 pour répondre à vos questions.</li></ul>`,
+        description: `<ul><li><strong>Fabrication soignée</strong> — ${p.title} est conçu pour répondre aux exigences les plus élevées. Chaque détail compte pour vous garantir une expérience durable et agréable à chaque utilisation.</li><li><strong>Matériaux sélectionnés</strong> — Nous avons choisi des matériaux de premier choix pour ce produit, alliant résistance, confort et esthétique. Un investissement qui tient dans le temps.</li><li><strong>Expédition sous 24h</strong> — Votre commande est préparée en 24 heures et livrée en 48 à 72 heures en France métropolitaine. Numéro de suivi inclus.</li><li><strong>Retour gratuit</strong> — Vous disposez de 30 jours pour retourner l'article si vous n'êtes pas entièrement satisfait. Procédure simple, sans conditions.</li><li><strong>Équipe disponible</strong> — Notre service client est joignable du lundi au vendredi pour répondre à toutes vos questions avant ou après achat.</li></ul>`,
       }));
       return NextResponse.json({ success: true, demo: true, taskCost: 0, descriptions: mockDescriptions });
     }
@@ -32,20 +32,20 @@ export async function POST(req: Request) {
       )
       .join("\n\n");
 
-    const prompt = `Tu es un expert copywriter e-commerce spécialisé Shopify. Génère des descriptions commerciales optimisées SEO pour ces ${products.length} produit(s).
+    const prompt = `Tu es un copywriter e-commerce expert en vente en ligne. Génère des descriptions commerciales pour ces ${products.length} produit(s) Shopify.
 
 ${productsList}
 
 Règles pour chaque description :
 - 150 à 250 mots
-- Structure avec des puces HTML (<ul><li>)
-- Mets en avant les AVANTAGES, pas les caractéristiques techniques
-- Ton professionnel mais engageant, qui donne envie d'acheter
-- Inclure un appel à l'action subtil
-- Optimisé pour le référencement naturel (SEO)
+- Structure HTML avec puces (<ul><li>)
+- Commence chaque puce par un AVANTAGE concret pour l'acheteur, pas une caractéristique technique
+- Ton direct et engageant, vocabulaire de tous les jours
+- Appel à l'action naturel sur la dernière puce
+- STRICTEMENT INTERDIT dans le texte généré : "SEO", "optimisé", "optimisée", "référencement", "stratégie", le mot "qualité" seul sans contexte spécifique
 
-Langue: ${language}
-Réponds UNIQUEMENT en JSON valide avec ce format exact, sans texte avant ni après :
+Langue : ${language}
+Réponds UNIQUEMENT en JSON valide sans texte avant ni après :
 [{"id":"...","description":"..."},...]`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
