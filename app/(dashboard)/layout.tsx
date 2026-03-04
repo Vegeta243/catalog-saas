@@ -42,12 +42,16 @@ const bottomNavItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [notifications] = useState(3);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Supabase not configured, just redirect
+    }
     router.push('/login');
   };
 

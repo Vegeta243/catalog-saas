@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-12-18.acacia" as Stripe.LatestApiVersion,
-});
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY non configurée.");
+  return new Stripe(key, {
+    apiVersion: "2025-12-18.acacia" as Stripe.LatestApiVersion,
+  });
+}
 
 export async function POST(req: Request) {
   try {
+    const stripe = getStripe();
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
 

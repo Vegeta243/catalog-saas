@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-12-18.acacia" as Stripe.LatestApiVersion,
-});
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY non configurée. Ajoutez-la dans .env.local");
+  return new Stripe(key, {
+    apiVersion: "2025-12-18.acacia" as Stripe.LatestApiVersion,
+  });
+}
 
 const PLANS = {
   starter: {
@@ -22,6 +26,7 @@ const PLANS = {
 
 export async function POST(req: Request) {
   try {
+    const stripe = getStripe();
     const { plan, billing, email } = await req.json();
 
     if (!plan || !billing) {
