@@ -116,7 +116,7 @@ export default function PricingPage() {
           Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
         </h1>
         <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "#64748b" }}>
-          7 jours d&apos;essai gratuit. Aucune carte bancaire requise. Annulez à tout moment.
+          7 jours d&apos;essai gratuit. Carte requise — aucun débit avant la fin de l&apos;essai. Résiliez en 1 clic.
         </p>
 
         {/* Toggle */}

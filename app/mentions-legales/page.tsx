@@ -30,15 +30,13 @@ export default function MentionsLegalesPage() {
             <ul className="mt-2 space-y-1">
               <li><strong>Raison sociale</strong> : EcomPilot SAS</li>
               <li><strong>Forme juridique</strong> : Société par Actions Simplifiée (SAS)</li>
-              <li><strong>Capital social</strong> : 10 000 €</li>
-              <li><strong>Siège social</strong> : 42 rue de l&apos;Innovation, 75001 Paris, France</li>
-              <li><strong>RCS</strong> : Paris B 123 456 789</li>
-              <li><strong>SIRET</strong> : 123 456 789 00012</li>
-              <li><strong>N° TVA intracommunautaire</strong> : FR 12 345678901</li>
-              <li><strong>Directeur de la publication</strong> : [Nom du dirigeant]</li>
-              <li><strong>Email</strong> : <a href="mailto:contact@ecompilot.com" className="underline" style={{ color: "#2563eb" }}>contact@ecompilot.com</a></li>
-              <li><strong>Téléphone</strong> : +33 1 23 45 67 89</li>
+              <li><strong>Siège social</strong> : France</li>
+              <li><strong>Directeur de la publication</strong> : À compléter</li>
+              <li><strong>Email</strong> : <a href="mailto:contact@ecompilot.fr" className="underline" style={{ color: "#2563eb" }}>contact@ecompilot.fr</a></li>
             </ul>
+            <p className="mt-2 text-xs p-2 rounded border" style={{ color: "#d97706", backgroundColor: "#fffbeb", borderColor: "#fde68a" }}>
+              ⚠️ Ces informations sont provisoires. Les mentions légales doivent être complétées avec les données réelles de la société avant toute mise en ligne commerciale (SIRET, RCS, capital, dirigeant).
+            </p>
           </section>
 
           <section>

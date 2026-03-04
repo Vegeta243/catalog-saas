@@ -110,9 +110,9 @@ const FAQ_ITEMS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Sophie M.", role: "Boutique mode — 1 200 produits", quote: "J'ai optimisé 800 fiches produit en une après-midi. Avant, ça m'aurait pris 3 semaines.", stars: 5 },
-  { name: "Marc L.", role: "Dropshipping — 3 boutiques", quote: "L'import AliExpress + les descriptions IA, c'est un game changer. Je gagne 15h par semaine minimum.", stars: 5 },
-  { name: "Camille D.", role: "Artisanat — 350 produits", quote: "Le score SEO m'a ouvert les yeux. Mes produits sont enfin visibles sur Google. +40% de trafic en 2 mois.", stars: 5 },
+  { name: "Sophie M.", role: "Boutique mode — exemple illustratif", quote: "Optimiser des centaines de fiches produit en quelques heures, pas en en plusieurs semaines : voilà ce qu’EcomPilot permet.", stars: 5 },
+  { name: "Marc L.", role: "Dropshipping multi-boutiques — exemple illustratif", quote: "L’import fournisseur couplé à la génération IA de descriptions uniques change complètement la gestion d’un catalogue.", stars: 5 },
+  { name: "Camille D.", role: "Artisanat — exemple illustratif", quote: "Le score SEO par produit permet d’identifier exactement ce qui manque pour améliorer sa visibilité sur Google.", stars: 5 },
 ];
 
 /* ═══════════════════════════════════════ COMPONENT ═══════════════════════════════════════ */
@@ -150,7 +150,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/30" />
         <div className="max-w-5xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
-            <Sparkles className="w-3.5 h-3.5" /> +2 000 marchands Shopify nous font confiance
+            <Sparkles className="w-3.5 h-3.5" /> Le copilote IA de votre catalogue Shopify
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold leading-[1.1] mb-8" style={{ color: "#0f172a" }}>
             Arrêtez de <span style={{ color: "#dc2626" }}>galérer</span> avec<br />
@@ -172,13 +172,13 @@ export default function HomePage() {
           </div>
           <div className="flex items-center justify-center gap-6 mt-8">
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
-              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Sans carte bancaire
+              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Carte requise — aucun débit avant J+7
             </p>
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
-              <Check className="w-4 h-4" style={{ color: "#059669" }} /> Annulation en 1 clic
+              <Check className="w-4 h-4" style={{ color: "#059669" }} /> Résiliation en 1 clic
             </p>
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
-              <Clock className="w-4 h-4" style={{ color: "#059669" }} /> Setup en 30 secondes
+              <Clock className="w-4 h-4" style={{ color: "#059669" }} /> Configuration en 30 secondes
             </p>
           </div>
 
@@ -217,20 +217,20 @@ export default function HomePage() {
       <section className="py-6 border-y border-gray-100" style={{ backgroundColor: "#f8fafc" }}>
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-8 px-6">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5" style={{ color: "#2563eb" }} />
-            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>+2 000 marchands</span>
+            <Zap className="w-5 h-5" style={{ color: "#2563eb" }} />
+            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>IA GPT-4o intégrée</span>
           </div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" style={{ color: "#059669" }} />
-            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>3M+ de produits optimisés</span>
+            <Shield className="w-5 h-5" style={{ color: "#059669" }} />
+            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>Compatible Shopify</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5" style={{ color: "#d97706" }} />
-            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>120 000h économisées</span>
+            <TrendingUp className="w-5 h-5" style={{ color: "#d97706" }} />
+            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>Sécurisé &amp; RGPD</span>
           </div>
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-yellow-400" style={{ color: "#facc15" }} />)}
-            <span className="text-sm font-semibold ml-1" style={{ color: "#0f172a" }}>4.9/5</span>
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5" style={{ color: "#7c3aed" }} />
+            <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>Annulation sans frais</span>
           </div>
         </div>
       </section>
@@ -343,10 +343,11 @@ export default function HomePage() {
       <section className="py-24 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Témoignages</p>
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Ce que permet EcomPilot</p>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{ color: "#0f172a" }}>
-              Ils ont fait le choix de l&apos;automatisation.
+              Des résultats concrets pour votre boutique.
             </h2>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>Scénarios illustratifs basés sur l’usage typique de l’outil. Les résultats réels varient selon votre catalogue et votre utilisation.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {TESTIMONIALS.map((t) => (
@@ -374,7 +375,7 @@ export default function HomePage() {
               Des prix simples. Pas de surprise.
             </h2>
             <p className="text-lg mb-8" style={{ color: "#64748b" }}>
-              7 jours d&apos;essai gratuit. Aucune carte bancaire requise. Annulez en 1 clic.
+              7 jours d&apos;essai gratuit. Carte requise à l&apos;inscription — aucun débit si vous résiliez avant la fin de l&apos;essai.
             </p>
 
             {/* Billing toggle */}
@@ -491,7 +492,7 @@ export default function HomePage() {
             Rejoignez les marchands qui ont choisi de travailler plus intelligemment.
           </p>
           <p className="text-lg mb-10 font-medium" style={{ color: "#60a5fa" }}>
-            7 jours gratuits · Sans carte bancaire · Annulation en 1 clic
+            7 jours gratuits · Aucun débit avant J+7 · Résiliation en 1 clic
           </p>
           <Link href="/signup" className="inline-flex items-center gap-3 px-10 py-5 bg-white hover:bg-gray-50 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg" style={{ color: "#0f172a" }}>
             Commencer gratuitement <ArrowRight className="w-5 h-5" />

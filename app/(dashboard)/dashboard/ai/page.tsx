@@ -102,8 +102,34 @@ export default function AIPage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setGeneratedContent((prev) => ({ ...prev, [product.id]: { ...prev[product.id], ...data } }));
-      addToast("Contenu IA généré", "success");
+      setExpandedId(product.id); // auto-expand pour accès immédiat
+      addToast("✅ Contenu IA prêt — cliquez \"Tout appliquer\" ci-dessous", "success");
     } catch { addToast("Erreur IA — vérifiez votre clé OpenAI", "error"); }
+    setGenerating(null);
+  };
+
+  const generateAndApply = async (product: Product) => {
+    if (!confirm(`Générer et appliquer directement le contenu IA pour « ${product.title} » ?\nCette action modifie immédiatement votre fiche Shopify.`)) return;
+    setGenerating(product.id);
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "full" }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      await Promise.all(
+        ([
+          data.title && fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [product.id], field: "title", value: data.title }) }),
+          data.description && fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [product.id], field: "body_html", value: data.description }) }),
+          (data.keywords || data.tags) && fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [product.id], field: "tags", value: data.keywords || data.tags }) }),
+        ] as Promise<Response>[])
+      );
+      addToast("⚡ Contenu IA généré et appliqué sur Shopify !", "success");
+    } catch { addToast("Erreur lors de l'application IA directe", "error"); }
     setGenerating(null);
   };
 
@@ -375,8 +401,20 @@ export default function AIPage() {
                     <button onClick={() => generateForProduct(product)} disabled={isGenerating}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 rounded-lg text-xs font-medium disabled:opacity-50">
                       {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#8b5cf6" }} /> : <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />}
-                      <span style={{ color: "#6d28d9" }}>Optimiser</span>
+                      <span style={{ color: "#6d28d9" }}>Prévisualiser</span>
                     </button>
+                    <button onClick={() => generateAndApply(product)} disabled={!!generating}
+                      title="Génère et applique directement sans prévisualisation"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 rounded-lg text-xs font-semibold disabled:opacity-50">
+                      {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#059669" }} /> : <Zap className="w-3.5 h-3.5" style={{ color: "#059669" }} />}
+                      <span style={{ color: "#065f46" }}>Appliquer direct</span>
+                    </button>
+                    {gen && (
+                      <button onClick={() => applyGenerated(product.id)} disabled={generating === product.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-xs font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Appliquer</span>
+                      </button>
+                    )}
                     {gen && (
                       <button onClick={() => setPreviewId(product.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-medium">
                         <Eye className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /><span style={{ color: "#1e40af" }}>Avant/Après</span>
