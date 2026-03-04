@@ -5,7 +5,7 @@ function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY non configurée. Ajoutez-la dans .env.local");
   return new Stripe(key, {
-    apiVersion: "2025-12-18.acacia" as Stripe.LatestApiVersion,
+    apiVersion: "2026-02-25.clover" as Stripe.LatestApiVersion,
   });
 }
 

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-12-18.acacia" as Stripe.LatestApiVersion,
+    apiVersion: "2026-02-25.clover" as Stripe.LatestApiVersion,
   });
 
   const result: Record<string, Record<string, string>> = {};
@@ -39,9 +39,10 @@ export async function POST(req: Request) {
   for (const plan of PLANS) {
     // Create or retrieve product
     let product: Stripe.Product;
-    const existing = await stripe.products.search({ query: `metadata['plan_id']:'${plan.id}'`, limit: 1 });
-    if (existing.data.length > 0) {
-      product = existing.data[0];
+    const allProducts = await stripe.products.list({ limit: 100, active: true });
+    const foundProduct = allProducts.data.find(p => p.metadata?.plan_id === plan.id);
+    if (foundProduct) {
+      product = foundProduct;
     } else {
       product = await stripe.products.create({
         name: plan.name,
@@ -51,33 +52,33 @@ export async function POST(req: Request) {
     }
 
     // Create monthly price
-    const monthlyPrices = await stripe.prices.list({ product: product.id, lookup_keys: [`${plan.id}_monthly`] });
+    const allPricesMonthly = await stripe.prices.list({ product: product.id, recurring: { interval: "month" }, limit: 10 });
+    const foundMonthly = allPricesMonthly.data.find(p => p.metadata?.plan === plan.id && p.metadata?.period === "monthly" && p.active);
     let monthlyPrice: Stripe.Price;
-    if (monthlyPrices.data.length > 0) {
-      monthlyPrice = monthlyPrices.data[0];
+    if (foundMonthly) {
+      monthlyPrice = foundMonthly;
     } else {
       monthlyPrice = await stripe.prices.create({
         product: product.id,
         unit_amount: plan.monthly,
         currency: "eur",
         recurring: { interval: "month" },
-        lookup_key: `${plan.id}_monthly`,
         metadata: { plan: plan.id, period: "monthly" },
       });
     }
 
     // Create yearly price
-    const yearlyPrices = await stripe.prices.list({ product: product.id, lookup_keys: [`${plan.id}_yearly`] });
+    const allPricesYearly = await stripe.prices.list({ product: product.id, recurring: { interval: "year" }, limit: 10 });
+    const foundYearly = allPricesYearly.data.find(p => p.metadata?.plan === plan.id && p.metadata?.period === "yearly" && p.active);
     let yearlyPrice: Stripe.Price;
-    if (yearlyPrices.data.length > 0) {
-      yearlyPrice = yearlyPrices.data[0];
+    if (foundYearly) {
+      yearlyPrice = foundYearly;
     } else {
       yearlyPrice = await stripe.prices.create({
         product: product.id,
         unit_amount: plan.yearly * 12,
         currency: "eur",
         recurring: { interval: "year" },
-        lookup_key: `${plan.id}_yearly`,
         metadata: { plan: plan.id, period: "yearly" },
       });
     }
