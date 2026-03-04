@@ -4,20 +4,20 @@ import * as cheerio from "cheerio";
 /* --- CJ demo products for when scraping fails --- */
 const CJ_DEMO_PRODUCTS = [
   {
-    title: "Montre Connectée Sport Étanche IP68 — Suivi Activité & Cardiaque",
-    description: `<p>Montre connectée haute performance conçue pour les sportifs. Étanche IP68, résiste à la pluie et la transpiration.</p><ul><li><strong>Suivi santé avancé</strong> — fréquence cardiaque, SpO2, sommeil</li><li><strong>GPS intégré</strong> — traçage précis de vos parcours</li><li><strong>Autonomie 7 jours</strong> — recharge magnétique rapide</li><li><strong>Compatible iOS &amp; Android</strong> — notifications intelligentes</li><li><strong>Design premium</strong> — verre trempé, bracelet silicone respirant</li></ul>`,
+    title: "Montre ConnectÃ©e Sport Ã‰tanche IP68 Â— Suivi ActivitÃ© & Cardiaque",
+    description: `<p>Montre connectÃ©e haute performance conÃ§ue pour les sportifs. Ã‰tanche IP68, rÃ©siste Ã  la pluie et la transpiration.</p><ul><li><strong>Suivi santÃ© avancÃ©</strong> Â— frÃ©quence cardiaque, SpO2, sommeil</li><li><strong>GPS intÃ©grÃ©</strong> Â— traÃ§age prÃ©cis de vos parcours</li><li><strong>Autonomie 7 jours</strong> Â— recharge magnÃ©tique rapide</li><li><strong>Compatible iOS &amp; Android</strong> Â— notifications intelligentes</li><li><strong>Design premium</strong> Â— verre trempÃ©, bracelet silicone respirant</li></ul>`,
     imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80",
     supplierPrice: 8.50,
   },
   {
-    title: "Écouteurs Sans Fil TWS Bluetooth 5.3 — Réduction de Bruit Active",
-    description: `<p>Écouteurs intra-auriculaires avec ANC (Active Noise Cancellation). Immersion sonore totale, qualité Hi-Fi cristalline.</p><ul><li><strong>Bluetooth 5.3</strong> — connexion stable, latence ultra-faible</li><li><strong>ANC active</strong> — annulation du bruit jusqu'à -35dB</li><li><strong>30h d'autonomie</strong> — 8h + boîtier de charge portable</li><li><strong>Micro double</strong> — appels cristallins en environnement bruyant</li><li><strong>IPX5</strong> — résistant à la transpiration</li></ul>`,
+    title: "Ã‰couteurs Sans Fil TWS Bluetooth 5.3 Â— RÃ©duction de Bruit Active",
+    description: `<p>Ã‰couteurs intra-auriculaires avec ANC (Active Noise Cancellation). Immersion sonore totale, qualitÃ© Hi-Fi cristalline.</p><ul><li><strong>Bluetooth 5.3</strong> Â— connexion stable, latence ultra-faible</li><li><strong>ANC active</strong> Â— annulation du bruit jusqu'Ã  -35dB</li><li><strong>30h d'autonomie</strong> Â— 8h + boÃ®tier de charge portable</li><li><strong>Micro double</strong> Â— appels cristallins en environnement bruyant</li><li><strong>IPX5</strong> Â— rÃ©sistant Ã  la transpiration</li></ul>`,
     imageUrl: "https://images.unsplash.com/photo-1572917840629-35c75cf7cf4a?w=800&q=80",
     supplierPrice: 5.20,
   },
   {
-    title: "Lampe LED Solaire Extérieure 120 LEDs — Détecteur Mouvement IP65",
-    description: `<p>Éclairage solaire intelligent pour terrasse, jardin, façade. Installation sans câble, fonctionnement autonome.</p><ul><li><strong>120 LEDs 1200 lumens</strong> — éclairage blanc froid puissant</li><li><strong>Détecteur PIR</strong> — activation automatique jusqu'à 8 mètres</li><li><strong>Panneau solaire intégré</strong> — charge complète en 6-8h</li><li><strong>Étanche IP65</strong> — résiste aux intempéries, gel, chaleur</li><li><strong>Installation facile</strong> — fixation murale incluse</li></ul>`,
+    title: "Lampe LED Solaire ExtÃ©rieure 120 LEDs Â— DÃ©tecteur Mouvement IP65",
+    description: `<p>Ã‰clairage solaire intelligent pour terrasse, jardin, faÃ§ade. Installation sans cÃ¢ble, fonctionnement autonome.</p><ul><li><strong>120 LEDs 1200 lumens</strong> Â— Ã©clairage blanc froid puissant</li><li><strong>DÃ©tecteur PIR</strong> Â— activation automatique jusqu'Ã  8 mÃ¨tres</li><li><strong>Panneau solaire intÃ©grÃ©</strong> Â— charge complÃ¨te en 6-8h</li><li><strong>Ã‰tanche IP65</strong> Â— rÃ©siste aux intempÃ©ries, gel, chaleur</li><li><strong>Installation facile</strong> Â— fixation murale incluse</li></ul>`,
     imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
     supplierPrice: 4.80,
   },
@@ -80,10 +80,10 @@ export async function POST(req: Request) {
     // --- CJ Dropshipping ---
     if (isCjUrl(url)) {
       const result = await scrapePage(url, multiplier);
-      if (result && result.title && result.title !== "Produit importé") {
+      if (result && result.title && result.title !== "Produit importÃ©") {
         return NextResponse.json({ success: true, preview: result });
       }
-      // Demo fallback — CJ pages are JS-rendered so often scraping fails
+      // Demo fallback Â— CJ pages are JS-rendered so often scraping fails
       const demo = CJ_DEMO_PRODUCTS[Math.floor(Math.random() * CJ_DEMO_PRODUCTS.length)];
       return NextResponse.json({
         success: true,
@@ -148,7 +148,7 @@ async function scrapePage(url: string, multiplier: number) {
       $('meta[property="og:title"]').attr("content") ||
       $('meta[name="title"]').attr("content") ||
       $("title").text().trim() ||
-      "Produit importé";
+      "Produit importÃ©";
   }
   if (!description) {
     description = $('meta[property="og:description"]').attr("content") ||
@@ -193,7 +193,7 @@ async function scrapePage(url: string, multiplier: number) {
   }
 
   // Clean title
-  title = title.replace(/\s*[|–-]\s*(AliExpress|Amazon|Cdiscount|CJDropshipping|eBay|AliExpress\.com).*$/i, "").trim();
+  title = title.replace(/\s*[|Â–-]\s*(AliExpress|Amazon|Cdiscount|CJDropshipping|eBay|AliExpress\.com).*$/i, "").trim();
 
   return {
     title: title.substring(0, 200),

@@ -38,12 +38,12 @@ export async function POST(req: Request) {
         if (t.length >= 50 && t.length <= 70) return t;
         if (t.length > 70) return t.slice(0, 67) + "...";
         const suffixes = [
-          " — Meilleur prix garanti, livraison offerte",
-          " | Collection 2026, découvrez nos prix exclusifs",
-          " — Référence incontournable à prix imbattable",
-          " | Qualité assurée, retour gratuit 30 jours",
+          " — Collection 2026, découvrez nos prix exclusifs",
+          " | Référence incontournable à prix imbattable",
           " — Le choix des e-commerçants, expédié en 24h",
-          " | Meilleur rapport qualité-prix du marché",
+          " | Profitez de notre sélection du moment",
+          " — Conçu pour durer, testé par nos clients",
+          " | Disponible maintenant, expédition rapide",
         ];
         for (const s of suffixes) {
           const c = t + s;
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
           .replace(/[^a-z0-9\s-]/g, "")
           .split(/\s+/).filter((w) => w.length > 3).slice(0, 4);
-        const generics = ["livraison-france", "achat-en-ligne", "nouveaute", "tendance", "promotion", "qualite"];
+        const generics = ["achat-en-ligne", "nouveaute", "tendance", "promotion", "boutique-en-ligne", "made-in-france"];
         return [...new Set([...words, ...generics])].slice(0, 10).join(", ");
       };
 
@@ -91,7 +91,7 @@ Contraintes :
 - Exactement entre 50 et 70 caractères
 - Commence par le mot-clé principal du produit
 - Naturel et commercial, donne envie d'acheter
-- INTERDIT : les mots "SEO", "optimisé", "optimisée", "référencement", "livraison rapide" (sauf si déjà dans le titre)
+- INTERDIT absolu : les mots "SEO", "optimisé", "optimisée", "référencement", "livraison gratuite", "livraison offerte", "qualité premium", "premium", "meilleur rapport qualité-prix"
 Langue : ${language}. Réponds uniquement avec le titre, sans guillemets ni explication.`;
     } else if (mode === "tags") {
       prompt = `Tu es un expert e-commerce. Génère exactement 10 mots-clés pour ce produit Shopify.
@@ -99,7 +99,7 @@ Titre : "${product.title}". Description : "${product.description || ""}"
 Contraintes :
 - Mots-clés que les acheteurs tapent réellement dans Google ou sur Shopify
 - Variez entre : terme générique, spécifique, cas d'usage, audience
-- INTERDIT : les mots "SEO", "optimisé", "shopify", "boutique" isolés, "premium" seul
+- INTERDIT absolu : "SEO", "optimisé", "shopify", "boutique" seul, "premium" seul, "livraison gratuite", "livraison offerte", "qualité premium"
 Langue : ${language}. Réponds uniquement avec les mots-clés séparés par des virgules, sans numérotation.`;
     } else {
       prompt = `Tu es un copywriter e-commerce expert. Pour ce produit Shopify :
@@ -112,7 +112,7 @@ Génère :
 3. 10 mots-clés que les acheteurs tapent réellement, séparés par des virgules
 
 Règles STRICTES pour tout le contenu :
-- N'utilise JAMAIS les mots : "SEO", "optimisé", "optimisée", "référencement", "strategiquement"
+- N'utilise JAMAIS : "SEO", "optimisé", "optimisée", "référencement", "strategiquement", "livraison gratuite", "livraison offerte", "qualité premium", "premium", "meilleur rapport qualité-prix"
 - La description doit parler du produit, pas de la boutique
 - Ton direct, bénéfices concrets, pas de superlatifs vides
 

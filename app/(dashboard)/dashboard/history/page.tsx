@@ -15,7 +15,7 @@ interface HistoryEntry {
 
 const MOCK_HISTORY: HistoryEntry[] = [
   { id: "1", date: "2026-03-03 14:30", action: "Modification prix", type: "price", productTitle: "T-Shirt Premium", details: "29.99€ → 34.49€ (+15%)", user: "admin" },
-  { id: "2", date: "2026-03-03 14:25", action: "Titre IA généré", type: "ai", productTitle: "Sneakers Urban", details: "Titre optimisé SEO par IA", user: "admin" },
+  { id: "2", date: "2026-03-03 14:25", action: "Titre IA généré", type: "ai", productTitle: "Sneakers Urban", details: "Nouveau titre généré par IA", user: "admin" },
   { id: "3", date: "2026-03-03 13:10", action: "Produit dupliqué", type: "duplicate", productTitle: "Hoodie Classic", details: "Copie créée: Hoodie Classic (copie)", user: "admin" },
   { id: "4", date: "2026-03-03 12:45", action: "Tags modifiés", type: "edit", productTitle: "Casquette Sport", details: "Ajout tags: sport, cap, outdoor", user: "admin" },
   { id: "5", date: "2026-03-02 18:00", action: "Import URL", type: "import", productTitle: "Montre Digital", details: "Importé depuis amazon.fr", user: "admin" },

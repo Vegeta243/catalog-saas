@@ -42,7 +42,7 @@ Règles pour chaque description :
 - Commence chaque puce par un AVANTAGE concret pour l'acheteur, pas une caractéristique technique
 - Ton direct et engageant, vocabulaire de tous les jours
 - Appel à l'action naturel sur la dernière puce
-- STRICTEMENT INTERDIT dans le texte généré : "SEO", "optimisé", "optimisée", "référencement", "stratégie", le mot "qualité" seul sans contexte spécifique
+- STRICTEMENT INTERDIT dans le texte généré : "SEO", "optimisé", "optimisée", "référencement", "stratégie", "livraison gratuite", "livraison offerte", "qualité premium", "premium" seul, "meilleur rapport qualité-prix", le mot "qualité" seul sans contexte spécifique
 
 Langue : ${language}
 Réponds UNIQUEMENT en JSON valide sans texte avant ni après :

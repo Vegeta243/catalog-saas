@@ -1,15 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Zap } from "lucide-react";
+
+export default function ShopifyEmbedPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: "#0f172a" }}>
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm" style={{ color: "#94a3b8" }}>Chargement…</p>
+        </div>
+      </div>
+    }>
+      <ShopifyEmbedContent />
+    </Suspense>
+  );
+}
 
 /**
  * Entry point for Shopify Admin embedded app.
  * Shopify opens this URL inside their iframe after OAuth.
  * We detect the `host` + `shop` params and initialize App Bridge.
  */
-export default function ShopifyEmbedPage() {
+function ShopifyEmbedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "error" | "ok">("loading");

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -94,7 +94,7 @@ export default function LoginPage() {
           <div className="space-y-5">
             {[
               { icon: BarChart3, title: "Modification en masse", desc: "Prix, titres, tags â€” modifiez des centaines de produits en un clic" },
-              { icon: Sparkles, title: "IA intÃ©grÃ©e", desc: "GÃ©nÃ©ration automatique de titres et descriptions SEO optimisÃ©s" },
+              { icon: Sparkles, title: "IA intégrée", desc: "Génération automatique de titres accrocheurs et descriptions de vente" },
               { icon: Zap, title: "Automatisations", desc: "CrÃ©ez des rÃ¨gles pour piloter votre catalogue automatiquement" },
               { icon: ShieldCheck, title: "SÃ©curisÃ©", desc: "Connexion OAuth Shopify, donnÃ©es chiffrÃ©es, RGPD compliant" },
             ].map((f) => {
