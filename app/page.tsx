@@ -398,7 +398,7 @@ export default function HomePage() {
                     <p className="text-xs leading-relaxed" style={{ color: "#166534" }}>{plan.fit}</p>
                   </div>
                   <button
-                    onClick={() => handleNavigate(`/signup?plan=${plan.id}`)}
+                    onClick={() => handleNavigate("/login?tab=signup")}
                     className={`block text-center py-4 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 w-full ${plan.popular ? "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20" : "bg-gray-900 hover:bg-gray-800"}`}
                     style={{ color: "#fff" }}
                   >
