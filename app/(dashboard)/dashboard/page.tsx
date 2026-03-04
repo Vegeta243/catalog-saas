@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState("");
 
   // Tasks
-  const plan = "pro";
+  const plan: string = "pro";
   const tasksUsed = 16;
   const tasksTotal = PLAN_TASKS[plan] || 300;
   const tasksRemaining = tasksTotal - tasksUsed;
@@ -95,6 +95,22 @@ export default function DashboardPage() {
     else setGreeting("Bonsoir");
     fetchProducts();
   }, [fetchProducts]);
+
+  // Sync onboarding steps with real app state
+  useEffect(() => {
+    if (loading) return;
+    const optimized = products.filter((p) => seoScore(p) >= 50).length;
+    const shopifyConnected = products.length > 0;
+    const workflowDone = typeof window !== "undefined" && localStorage.getItem("ecompilot_workflow_done") === "1";
+    const enoughOptimized = optimized >= 5;
+    setOnboardingSteps([
+      { id: 1, label: "Créer votre compte", done: true },
+      { id: 2, label: "Connecter votre boutique Shopify", done: shopifyConnected },
+      { id: 3, label: "Lancer votre premier workflow", done: workflowDone },
+      { id: 4, label: "Optimiser 5 produits avec l'IA", done: enoughOptimized },
+      { id: 5, label: "Activer votre abonnement", done: plan !== "free" },
+    ]);
+  }, [loading, products, plan]);
 
   // Health Score calculations
   const avgScore = products.length > 0
@@ -175,6 +191,7 @@ export default function DashboardPage() {
         })
       );
       setWorkflowStep(4);
+      localStorage.setItem("ecompilot_workflow_done", "1");
       setOnboardingSteps((prev) => prev.map((s) => s.id === 3 || s.id === 4 ? { ...s, done: true } : s));
       addToast(`${entries.length} produit${entries.length > 1 ? "s" : ""} optimisé${entries.length > 1 ? "s" : ""} !`, "success");
     } catch {
@@ -199,6 +216,7 @@ export default function DashboardPage() {
         body: JSON.stringify({ productIds, newPrice, mode }),
       });
       setWorkflowStep(4);
+      localStorage.setItem("ecompilot_workflow_done", "1");
       setOnboardingSteps((prev) => prev.map((s) => s.id === 3 ? { ...s, done: true } : s));
       addToast(`Prix mis à jour sur ${selected.length} produit${selected.length > 1 ? "s" : ""}`, "success");
     } catch {
