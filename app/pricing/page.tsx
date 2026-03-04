@@ -14,7 +14,7 @@ const PLANS = [
     description: "Pour tester EcomPilot",
     features: [
       "Jusqu'à 50 produits",
-      "100 crédits IA/mois",
+      "50 tâches IA/mois",
       "1 boutique connectée",
       "Export CSV basique",
       "Support communautaire",
@@ -32,7 +32,7 @@ const PLANS = [
     description: "Pour les petites boutiques qui démarrent",
     features: [
       "Jusqu'à 500 produits",
-      "500 crédits IA/mois",
+      "50 tâches IA/mois",
       "2 boutiques connectées",
       "Modification en masse",
       "Export CSV complet",
@@ -52,7 +52,7 @@ const PLANS = [
     description: "Pour les boutiques en croissance",
     features: [
       "Jusqu'à 2 000 produits",
-      "2 000 crédits IA/mois",
+      "300 tâches IA/mois",
       "5 boutiques connectées",
       "Tout Starter +",
       "IA : titres, descriptions, tags",
@@ -74,7 +74,7 @@ const PLANS = [
     description: "Pour les boutiques à grande échelle",
     features: [
       "Produits illimités",
-      "10 000 crédits IA/mois",
+      "1 000 tâches IA/mois",
       "20 boutiques connectées",
       "Tout Pro +",
       "IA en masse illimitée",

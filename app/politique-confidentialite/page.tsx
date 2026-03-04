@@ -38,7 +38,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-6 mt-2 space-y-1">
               <li><strong>Données d&apos;identification</strong> : prénom, nom, adresse email</li>
               <li><strong>Données de connexion</strong> : adresse IP, type de navigateur, date et heure de connexion</li>
-              <li><strong>Données d&apos;utilisation</strong> : actions effectuées sur la plateforme, crédits utilisés, fonctionnalités utilisées</li>
+              <li><strong>Données d&apos;utilisation</strong> : actions effectuées sur la plateforme, tâches utilisées, fonctionnalités utilisées</li>
               <li><strong>Données de paiement</strong> : traitées directement par Stripe et PayPal (nous ne stockons pas les numéros de carte)</li>
               <li><strong>Données e-commerce</strong> : catalogues produits, boutiques connectées, URLs de boutiques</li>
             </ul>

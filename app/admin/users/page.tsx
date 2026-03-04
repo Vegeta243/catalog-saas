@@ -4,14 +4,14 @@ import { useState } from "react";
 import { Search, Filter, MoreHorizontal, Mail, Ban, CheckCircle, Crown, Download } from "lucide-react";
 
 const mockUsers = [
-  { id: "1", name: "Marie Dupont", email: "marie@example.com", plan: "Pro", status: "active", credits: 750, products: 342, joined: "2025-12-15" },
-  { id: "2", name: "Jean Martin", email: "jean@example.com", plan: "Starter", status: "active", credits: 200, products: 89, joined: "2026-01-20" },
-  { id: "3", name: "Sophie Bernard", email: "sophie@example.com", plan: "Scale", status: "active", credits: 2800, products: 1250, joined: "2025-11-03" },
-  { id: "4", name: "Lucas Petit", email: "lucas@example.com", plan: "Free", status: "inactive", credits: 0, products: 12, joined: "2026-02-14" },
-  { id: "5", name: "Emma Leroy", email: "emma@example.com", plan: "Pro", status: "active", credits: 430, products: 567, joined: "2025-10-28" },
-  { id: "6", name: "Thomas Richard", email: "thomas@example.com", plan: "Starter", status: "suspended", credits: 100, products: 45, joined: "2026-01-05" },
-  { id: "7", name: "Camille Moreau", email: "camille@example.com", plan: "Pro", status: "active", credits: 620, products: 234, joined: "2025-09-12" },
-  { id: "8", name: "Alexandre Simon", email: "alex@example.com", plan: "Free", status: "active", credits: 50, products: 8, joined: "2026-03-01" },
+  { id: "1", name: "Marie Dupont", email: "marie@example.com", plan: "Pro", status: "active", tasks: 250, products: 342, joined: "2025-12-15" },
+  { id: "2", name: "Jean Martin", email: "jean@example.com", plan: "Starter", status: "active", tasks: 30, products: 89, joined: "2026-01-20" },
+  { id: "3", name: "Sophie Bernard", email: "sophie@example.com", plan: "Scale", status: "active", tasks: 800, products: 1250, joined: "2025-11-03" },
+  { id: "4", name: "Lucas Petit", email: "lucas@example.com", plan: "Starter", status: "inactive", tasks: 0, products: 12, joined: "2026-02-14" },
+  { id: "5", name: "Emma Leroy", email: "emma@example.com", plan: "Pro", status: "active", tasks: 180, products: 567, joined: "2025-10-28" },
+  { id: "6", name: "Thomas Richard", email: "thomas@example.com", plan: "Starter", status: "suspended", tasks: 15, products: 45, joined: "2026-01-05" },
+  { id: "7", name: "Camille Moreau", email: "camille@example.com", plan: "Pro", status: "active", tasks: 210, products: 234, joined: "2025-09-12" },
+  { id: "8", name: "Alexandre Simon", email: "alex@example.com", plan: "Starter", status: "active", tasks: 10, products: 8, joined: "2026-03-01" },
 ];
 
 const planColors: Record<string, { bg: string; text: string }> = {
@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
               <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Utilisateur</th>
               <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Plan</th>
               <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Statut</th>
-              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Crédits</th>
+              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Tâches</th>
               <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Produits</th>
               <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Inscription</th>
               <th className="text-right text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Actions</th>
@@ -119,7 +119,7 @@ export default function AdminUsersPage() {
                     {statusLabels[u.status]}
                   </span>
                 </td>
-                <td className="px-5 py-3 text-sm font-medium" style={{ color: "#0f172a" }}>{u.credits}</td>
+                <td className="px-5 py-3 text-sm font-medium" style={{ color: "#0f172a" }}>{u.tasks}</td>
                 <td className="px-5 py-3 text-sm" style={{ color: "#64748b" }}>{u.products}</td>
                 <td className="px-5 py-3 text-sm" style={{ color: "#64748b" }}>{u.joined}</td>
                 <td className="px-5 py-3 text-right">

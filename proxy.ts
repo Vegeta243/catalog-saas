@@ -54,3 +54,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|auth/callback|api/).*)'],
 };
+
+export default function proxy(request: NextRequest) {
+  return middleware(request);
+}

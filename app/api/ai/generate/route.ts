@@ -33,9 +33,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Clé API OpenAI non configurée. Ajoutez OPENAI_API_KEY dans .env.local" }, { status: 500 });
     }
 
-    // Credit cost preview
+    // Task cost
     const actionKey = `ai.generate.${mode || "description"}`;
-    const creditCost = getCreditCost(actionKey);
+    const taskCost = getCreditCost(actionKey);
 
     let prompt = "";
 
@@ -98,7 +98,7 @@ Langue: ${language}. Réponds en JSON avec ce format exact: {"title":"...","desc
 
     return NextResponse.json({
       success: true,
-      creditCost,
+      taskCost,
       ...result,
       ...getRateLimitHeaders(rateResult),
     });

@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { shopifyCache, shopifyCacheKey } from '@/lib/cache';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { parse } from 'url';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const page = url.searchParams.get('page') || '1';
   const limit = url.searchParams.get('limit') || '50';
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,7 +18,6 @@ export async function GET(request: Request) {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    // Get the current user's shop
     const { data: shop, error } = await supabase
       .from('shops')
       .select('shop_domain, access_token, user_id')
@@ -31,7 +30,6 @@ export async function GET(request: Request) {
 
     const { shop_domain, access_token, user_id } = shop;
 
-    // Rate limiting
     const rateResult = checkRateLimit(user_id || 'anonymous', 'shopify.products');
     if (!rateResult.allowed) {
       return NextResponse.json(
@@ -40,37 +38,43 @@ export async function GET(request: Request) {
       );
     }
 
-    // Check cache first
-    const cacheKey = shopifyCacheKey(shop_domain, 'products', { page, limit });
+    const cacheKey = shopifyCacheKey(shop_domain, 'products', { limit });
     const cached = shopifyCache.get(cacheKey);
     if (cached) {
       return NextResponse.json({ ...cached as object, cached: true });
     }
 
-    // Fetch products from Shopify
-    const response = await fetch(
-      `https://${shop_domain}/admin/api/2026-01/products.json?limit=${limit}&page=${page}&fields=id,title,body_html,vendor,product_type,tags,status,variants,images,created_at,updated_at`,
-      {
+    let products = [];
+    let nextPageUrl = `https://${shop_domain}/admin/api/2026-01/products.json?limit=${limit}&fields=id,title,body_html,vendor,product_type,tags,status,variants,images,created_at,updated_at`;
+
+    while (nextPageUrl) {
+      const response = await fetch(nextPageUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-Shopify-Access-Token': access_token,
         },
-      }
-    );
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to fetch products from Shopify:', errorText);
-      return NextResponse.json({ error: 'Failed to fetch products from Shopify' }, { status: 500 });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch products from Shopify:', errorText);
+        return NextResponse.json({ error: 'Failed to fetch products from Shopify' }, { status: 500 });
+      }
+
+      const data = await response.json();
+      products = products.concat(data.products);
+
+      // Check for next page in Link header
+      const linkHeader = response.headers.get('link');
+      const nextLinkMatch = linkHeader?.match(/<([^>]+)>; rel="next"/);
+      nextPageUrl = nextLinkMatch ? nextLinkMatch[1] : null;
     }
 
-    const products = await response.json();
-
     // Cache results for 5 minutes
-    shopifyCache.set(cacheKey, products);
+    shopifyCache.set(cacheKey, { products });
 
-    return NextResponse.json(products);
+    return NextResponse.json({ products });
   } catch (err) {
     console.error('Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

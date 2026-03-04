@@ -81,9 +81,9 @@ export default function CGUPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>5. Crédits IA</h2>
+            <h2 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>5. Tâches IA</h2>
             <p>
-              Chaque plan inclut un nombre de crédits IA mensuels. Les crédits non consommés ne sont pas reportés au mois
+              Chaque plan inclut un nombre de tâches mensuelles. Les tâches non utilisées ne sont pas reportées au mois
               suivant. L&apos;Utilisateur peut suivre sa consommation depuis son tableau de bord.
             </p>
           </section>

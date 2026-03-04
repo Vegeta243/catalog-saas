@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
-  ImageIcon,
-  Upload,
-  Wand2,
-  Download,
-  RotateCcw,
-  Crop,
-  SunMedium,
-  Contrast,
-  Palette,
-  Sparkles,
-  Trash2,
-  ZoomIn,
-  Lock,
+  ImageIcon, Upload, Wand2, Download, RotateCcw, Crop, SunMedium,
+  Contrast, Palette, Sparkles, Trash2, ZoomIn, Loader2, X,
+  CheckCircle2, FileImage, ArrowRight, Plus,
 } from "lucide-react";
+import { useToast } from "@/lib/toast";
+
+interface ImageFile {
+  id: string;
+  name: string;
+  originalUrl: string;
+  processedUrl?: string;
+  size: number;
+  processedSize?: number;
+  compression?: number;
+}
 
 const filters = [
   { id: "none", label: "Original", css: "" },
@@ -28,40 +29,97 @@ const filters = [
   { id: "vivid", label: "Vif", css: "saturate(1.5) contrast(1.1)" },
 ];
 
-const aiActions = [
-  { id: "remove-bg", label: "Supprimer l'arrière-plan", icon: Wand2, credits: 3, description: "Détourage automatique par IA" },
-  { id: "enhance", label: "Améliorer la qualité", icon: Sparkles, credits: 2, description: "Upscale et amélioration IA" },
-  { id: "recolor", label: "Recoloriser", icon: Palette, credits: 3, description: "Modifier les couleurs du produit" },
-  { id: "resize", label: "Redimensionner", icon: Crop, credits: 1, description: "Adapter aux formats e-commerce" },
-];
-
 const presetSizes = [
   { label: "Shopify", width: 2048, height: 2048 },
   { label: "Instagram", width: 1080, height: 1080 },
   { label: "Facebook", width: 1200, height: 630 },
   { label: "Miniature", width: 400, height: 400 },
+  { label: "Banner", width: 1920, height: 600 },
+  { label: "Carré HD", width: 1500, height: 1500 },
 ];
 
 export default function ImagesPage() {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { addToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [images, setImages] = useState<ImageFile[]>([]);
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState("none");
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
   const [processing, setProcessing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [outputFormat, setOutputFormat] = useState("webp");
+  const [quality, setQuality] = useState(80);
+  const [batchProcessing, setBatchProcessing] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
 
-  const handleUpload = () => {
-    // Simulated upload
-    setSelectedImage("/placeholder-product.jpg");
+  const selectedImage = selectedIdx !== null ? images[selectedIdx] : null;
+
+  const handleFiles = useCallback((files: FileList | File[]) => {
+    const newImages: ImageFile[] = [];
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) return;
+      const url = URL.createObjectURL(file);
+      newImages.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: file.name,
+        originalUrl: url,
+        size: file.size,
+      });
+    });
+    setImages((prev) => [...prev, ...newImages]);
+    if (newImages.length > 0 && selectedIdx === null) setSelectedIdx(images.length);
+    addToast(`${newImages.length} image${newImages.length > 1 ? "s" : ""} ajoutée${newImages.length > 1 ? "s" : ""}`, "success");
+  }, [images.length, selectedIdx, addToast]);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleFiles(e.dataTransfer.files);
   };
 
-  const handleAIAction = (actionId: string) => {
+  const processImage = async (imageFile: ImageFile, action: string, width = 0, height = 0) => {
     setProcessing(true);
-    setTimeout(() => {
-      setProcessing(false);
-    }, 2000);
-    console.log("AI action:", actionId);
+    try {
+      // Fetch the original file blob
+      const blob = await fetch(imageFile.originalUrl).then((r) => r.blob());
+      const formData = new FormData();
+      formData.append("file", blob, imageFile.name);
+      formData.append("action", action);
+      formData.append("format", outputFormat);
+      formData.append("quality", quality.toString());
+      formData.append("brightness", (brightness / 100).toString());
+      formData.append("contrast", (contrast / 100).toString());
+      formData.append("saturation", (saturation / 100).toString());
+      if (width) formData.append("width", width.toString());
+      if (height) formData.append("height", height.toString());
+
+      const res = await fetch("/api/images/process", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Erreur serveur");
+      const data = await res.json();
+
+      setImages((prev) => prev.map((img) =>
+        img.id === imageFile.id
+          ? { ...img, processedUrl: data.image, processedSize: data.processedSize, compression: data.compression }
+          : img
+      ));
+      addToast(`Image traitée — ${data.compression}% de compression`, "success");
+    } catch (err) {
+      addToast("Erreur de traitement — réessayez", "error");
+    }
+    setProcessing(false);
+  };
+
+  const handleBatchProcess = async (action: string, width = 0, height = 0) => {
+    setBatchProcessing(true);
+    setBatchProgress({ current: 0, total: images.length });
+    for (let i = 0; i < images.length; i++) {
+      setBatchProgress({ current: i + 1, total: images.length });
+      await processImage(images[i], action, width, height);
+    }
+    addToast(`${images.length} image${images.length > 1 ? "s" : ""} traitée${images.length > 1 ? "s" : ""}`, "success");
+    setBatchProcessing(false);
   };
 
   const handleReset = () => {
@@ -71,58 +129,105 @@ export default function ImagesPage() {
     setSaturation(100);
   };
 
+  const downloadImage = (img: ImageFile) => {
+    const url = img.processedUrl || img.originalUrl;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = img.name.replace(/\.[^.]+$/, `.${outputFormat}`);
+    a.click();
+  };
+
+  const downloadAll = () => {
+    images.forEach((img) => downloadImage(img));
+    addToast(`${images.length} image${images.length > 1 ? "s" : ""} téléchargée${images.length > 1 ? "s" : ""}`, "success");
+  };
+
+  const removeImage = (idx: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+    if (selectedIdx === idx) setSelectedIdx(null);
+    else if (selectedIdx !== null && selectedIdx > idx) setSelectedIdx(selectedIdx - 1);
+  };
+
   const adjustmentStyle = {
-    filter: `brightness(${brightness / 100}) contrast(${contrast / 100}) saturate(${saturation / 100}) ${filters.find(f => f.id === activeFilter)?.css || ""}`.trim(),
+    filter: `brightness(${brightness / 100}) contrast(${contrast / 100}) saturate(${saturation / 100}) ${filters.find((f) => f.id === activeFilter)?.css || ""}`.trim(),
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      <input type="file" ref={fileInputRef} multiple accept="image/*" className="hidden"
+        onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>
-            Éditeur d&apos;images
-          </h1>
+          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Éditeur d&apos;images</h1>
           <p className="text-sm mt-1" style={{ color: "#64748b" }}>
-            Retouchez et optimisez vos images produits avec l&apos;IA
+            Retouchez, redimensionnez et optimisez vos images en masse
+            {images.length > 0 && <span className="ml-1 font-medium">· {images.length} image{images.length > 1 ? "s" : ""}</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: "#dbeafe", color: "#2563eb" }}>
-            Plan Pro requis
-          </span>
+          {images.length > 0 && (
+            <>
+              <button onClick={() => handleBatchProcess("adjust")} disabled={batchProcessing}
+                className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                {batchProcessing ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#fff" }} />}
+                <span style={{ color: "#fff" }}>{batchProcessing ? `${batchProgress.current}/${batchProgress.total}` : "Traiter tout"}</span>
+              </button>
+              <button onClick={downloadAll} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50" style={{ color: "#374151" }}>
+                <Download className="w-4 h-4" /> Tout télécharger
+              </button>
+            </>
+          )}
+          <button onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium">
+            <Plus className="w-4 h-4" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Ajouter</span>
+          </button>
         </div>
       </div>
 
+      {/* Image thumbnails strip */}
+      {images.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {images.map((img, idx) => (
+            <div key={img.id} onClick={() => setSelectedIdx(idx)}
+              className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${selectedIdx === idx ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200 hover:border-gray-300"}`}>
+              <img src={img.processedUrl || img.originalUrl} alt={img.name} className="w-full h-full object-cover" />
+              {img.processedUrl && (
+                <div className="absolute top-0.5 right-0.5"><CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#059669" }} /></div>
+              )}
+              <button onClick={(e) => { e.stopPropagation(); removeImage(idx); }}
+                className="absolute bottom-0.5 right-0.5 p-0.5 bg-black/50 rounded hover:bg-black/70">
+                <X className="w-2.5 h-2.5" style={{ color: "#fff" }} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Zone de travail */}
+        {/* Canvas */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Canvas */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             {!selectedImage ? (
-              <div
-                className={`flex flex-col items-center justify-center p-16 border-2 border-dashed rounded-xl m-4 transition-colors ${
-                  dragOver ? "border-blue-400 bg-blue-50" : "border-gray-300"
-                }`}
+              <div className={`flex flex-col items-center justify-center p-16 border-2 border-dashed rounded-xl m-4 transition-colors ${dragOver ? "border-blue-400 bg-blue-50" : "border-gray-300"}`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleUpload(); }}
-              >
+                onDrop={handleDrop}>
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                   <Upload className="w-7 h-7" style={{ color: "#94a3b8" }} />
                 </div>
-                <p className="font-medium" style={{ color: "#0f172a" }}>
-                  Glissez une image ici
-                </p>
-                <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>
-                  ou cliquez pour sélectionner (PNG, JPG, WebP — max 10 MB)
-                </p>
-                <button
-                  onClick={handleUpload}
-                  className="mt-4 px-4 py-2 rounded-lg text-sm font-medium text-white"
-                  style={{ backgroundColor: "#2563eb" }}
-                >
-                  Choisir un fichier
+                <p className="font-medium" style={{ color: "#0f172a" }}>Glissez des images ici</p>
+                <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>ou cliquez pour sélectionner (PNG, JPG, WebP — max 10 MB)</p>
+                <button onClick={() => fileInputRef.current?.click()}
+                  className="mt-4 px-4 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: "#2563eb", color: "#fff" }}>
+                  Choisir des fichiers
                 </button>
               </div>
             ) : (
@@ -130,44 +235,36 @@ export default function ImagesPage() {
                 {/* Toolbar */}
                 <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100" style={{ backgroundColor: "#fafafa" }}>
                   <div className="flex items-center gap-2">
-                    <button onClick={handleReset} className="p-1.5 rounded hover:bg-gray-200 transition-colors" title="Réinitialiser">
+                    <button onClick={handleReset} className="p-1.5 rounded hover:bg-gray-200" title="Réinitialiser">
                       <RotateCcw className="w-4 h-4" style={{ color: "#64748b" }} />
                     </button>
-                    <button className="p-1.5 rounded hover:bg-gray-200 transition-colors" title="Zoom">
-                      <ZoomIn className="w-4 h-4" style={{ color: "#64748b" }} />
-                    </button>
-                    <button className="p-1.5 rounded hover:bg-gray-200 transition-colors" title="Recadrer">
-                      <Crop className="w-4 h-4" style={{ color: "#64748b" }} />
-                    </button>
+                    <span className="text-xs truncate max-w-[200px]" style={{ color: "#64748b" }}>{selectedImage.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded" style={{ color: "#94a3b8" }}>{formatSize(selectedImage.size)}</span>
+                    {selectedImage.compression !== undefined && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 rounded font-medium" style={{ color: "#059669" }}>-{selectedImage.compression}%</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors" style={{ color: "#64748b" }}>
-                      <Download className="w-4 h-4" />
-                      Exporter
+                    <button onClick={() => downloadImage(selectedImage)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-200" style={{ color: "#64748b" }}>
+                      <Download className="w-4 h-4" /> Exporter
                     </button>
-                    <button
-                      onClick={() => { setSelectedImage(null); handleReset(); }}
-                      className="p-1.5 rounded hover:bg-red-100 transition-colors"
-                      title="Supprimer"
-                    >
+                    <button onClick={() => removeImage(selectedIdx!)} className="p-1.5 rounded hover:bg-red-100" title="Supprimer">
                       <Trash2 className="w-4 h-4" style={{ color: "#ef4444" }} />
                     </button>
                   </div>
                 </div>
 
-                {/* Image preview area */}
+                {/* Preview */}
                 <div className="flex items-center justify-center p-8 min-h-[400px]" style={{ backgroundColor: "#f1f5f9" }}>
-                  <div className="relative rounded-lg overflow-hidden shadow-lg" style={adjustmentStyle}>
-                    <div className="w-80 h-80 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                      <ImageIcon className="w-16 h-16" style={{ color: "#94a3b8" }} />
-                    </div>
+                  <div className="relative rounded-lg overflow-hidden shadow-lg max-w-full max-h-[400px]" style={adjustmentStyle}>
+                    <img src={selectedImage.processedUrl || selectedImage.originalUrl} alt={selectedImage.name}
+                      className="max-w-full max-h-[400px] object-contain" />
                   </div>
-
                   {processing && (
                     <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Traitement IA en cours...</p>
+                        <Loader2 className="w-10 h-10 animate-spin" style={{ color: "#2563eb" }} />
+                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Traitement en cours...</p>
                       </div>
                     </div>
                   )}
@@ -176,30 +273,18 @@ export default function ImagesPage() {
             )}
           </div>
 
-          {/* Filtres */}
+          {/* Filters */}
           {selectedImage && (
             <div className="bg-white rounded-xl border border-gray-200 p-4">
               <h3 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Filtres rapides</h3>
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {filters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    onClick={() => setActiveFilter(filter.id)}
-                    className={`flex-shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-lg border transition-all ${
-                      activeFilter === filter.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div
-                      className="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
-                      style={{ filter: filter.css || undefined }}
-                    >
-                      <ImageIcon className="w-5 h-5" style={{ color: "#94a3b8" }} />
+                  <button key={filter.id} onClick={() => setActiveFilter(filter.id)}
+                    className={`flex-shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-lg border transition-all ${activeFilter === filter.id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
+                    <div className="w-14 h-14 rounded-lg overflow-hidden" style={{ filter: filter.css || undefined }}>
+                      <img src={selectedImage.originalUrl} alt="" className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-[11px] font-medium" style={{ color: activeFilter === filter.id ? "#2563eb" : "#64748b" }}>
-                      {filter.label}
-                    </span>
+                    <span className="text-[11px] font-medium" style={{ color: activeFilter === filter.id ? "#2563eb" : "#64748b" }}>{filter.label}</span>
                   </button>
                 ))}
               </div>
@@ -207,128 +292,93 @@ export default function ImagesPage() {
           )}
         </div>
 
-        {/* Panneau latéral */}
+        {/* Sidebar */}
         <div className="space-y-4">
           {/* Actions IA */}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-4 h-4" style={{ color: "#2563eb" }} />
-              <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Actions IA</h3>
+              <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Traitement serveur</h3>
             </div>
             <div className="space-y-2">
-              {aiActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={action.id}
-                    onClick={() => handleAIAction(action.id)}
-                    disabled={!selectedImage || processing}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#eff6ff" }}>
-                      <Icon className="w-4 h-4" style={{ color: "#2563eb" }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{action.label}</p>
-                      <p className="text-[11px]" style={{ color: "#94a3b8" }}>{action.description}</p>
-                    </div>
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#fef3c7", color: "#92400e" }}>
-                      {action.credits} cr
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Ajustements */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold mb-4" style={{ color: "#0f172a" }}>Ajustements</h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "#64748b" }}>
-                    <SunMedium className="w-3.5 h-3.5" /> Luminosité
-                  </label>
-                  <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{brightness}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="50"
-                  max="150"
-                  value={brightness}
-                  onChange={(e) => setBrightness(Number(e.target.value))}
-                  className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "#64748b" }}>
-                    <Contrast className="w-3.5 h-3.5" /> Contraste
-                  </label>
-                  <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{contrast}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="50"
-                  max="150"
-                  value={contrast}
-                  onChange={(e) => setContrast(Number(e.target.value))}
-                  className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "#64748b" }}>
-                    <Palette className="w-3.5 h-3.5" /> Saturation
-                  </label>
-                  <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{saturation}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="200"
-                  value={saturation}
-                  onChange={(e) => setSaturation(Number(e.target.value))}
-                  className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Formats prédéfinis */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Formats d&apos;export</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {presetSizes.map((preset) => (
-                <button
-                  key={preset.label}
-                  disabled={!selectedImage}
-                  className="p-2.5 rounded-lg border border-gray-200 hover:border-blue-300 transition-all text-left disabled:opacity-50"
-                >
-                  <p className="text-xs font-medium" style={{ color: "#0f172a" }}>{preset.label}</p>
-                  <p className="text-[10px]" style={{ color: "#94a3b8" }}>{preset.width}×{preset.height}</p>
+              {[
+                { id: "enhance", label: "Améliorer la qualité", icon: Sparkles, desc: "Netteté et couleurs améliorées" },
+                { id: "adjust", label: "Appliquer ajustements", icon: SunMedium, desc: "Luminosité, contraste, saturation" },
+                { id: "grayscale", label: "Noir et blanc", icon: Palette, desc: "Conversion N&B serveur" },
+              ].map((action) => (
+                <button key={action.id} onClick={() => selectedImage && processImage(selectedImage, action.id)}
+                  disabled={!selectedImage || processing}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#eff6ff" }}>
+                    <action.icon className="w-4 h-4" style={{ color: "#2563eb" }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{action.label}</p>
+                    <p className="text-[11px]" style={{ color: "#94a3b8" }}>{action.desc}</p>
+                  </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Gating */}
-          <div className="rounded-xl border border-amber-200 p-4" style={{ backgroundColor: "#fffbeb" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="w-4 h-4" style={{ color: "#d97706" }} />
-              <h3 className="text-sm font-semibold" style={{ color: "#92400e" }}>Fonctionnalité Pro</h3>
+          {/* Adjustments */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <h3 className="text-sm font-semibold mb-4" style={{ color: "#0f172a" }}>Ajustements</h3>
+            <div className="space-y-4">
+              {[
+                { label: "Luminosité", icon: SunMedium, value: brightness, set: setBrightness, min: 50, max: 150 },
+                { label: "Contraste", icon: Contrast, value: contrast, set: setContrast, min: 50, max: 150 },
+                { label: "Saturation", icon: Palette, value: saturation, set: setSaturation, min: 0, max: 200 },
+              ].map((adj) => (
+                <div key={adj.label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "#64748b" }}>
+                      <adj.icon className="w-3.5 h-3.5" /> {adj.label}
+                    </label>
+                    <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{adj.value}%</span>
+                  </div>
+                  <input type="range" min={adj.min} max={adj.max} value={adj.value}
+                    onChange={(e) => adj.set(Number(e.target.value))}
+                    className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600" />
+                </div>
+              ))}
             </div>
-            <p className="text-xs" style={{ color: "#a16207" }}>
-              L&apos;édition d&apos;images IA est disponible à partir du plan Pro. Passez au niveau supérieur pour débloquer le détourage automatique, l&apos;amélioration et la recolorisation.
-            </p>
-            <a
-              href="/dashboard/billing"
-              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white"
-              style={{ backgroundColor: "#d97706" }}
-            >
-              Passer au Pro
-            </a>
+          </div>
+
+          {/* Output settings */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <h3 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Format de sortie</h3>
+            <div className="flex gap-2 mb-3">
+              {["webp", "png", "jpeg"].map((fmt) => (
+                <button key={fmt} onClick={() => setOutputFormat(fmt)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${outputFormat === fmt ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                  style={{ color: outputFormat === fmt ? "#2563eb" : "#64748b" }}>{fmt.toUpperCase()}</button>
+              ))}
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-medium" style={{ color: "#64748b" }}>Qualité</label>
+                <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{quality}%</span>
+              </div>
+              <input type="range" min="10" max="100" value={quality} onChange={(e) => setQuality(Number(e.target.value))}
+                className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600" />
+            </div>
+          </div>
+
+          {/* Preset sizes */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <h3 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Redimensionner</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {presetSizes.map((preset) => (
+                <button key={preset.label}
+                  onClick={() => selectedImage && processImage(selectedImage, "resize", preset.width, preset.height)}
+                  disabled={!selectedImage || processing}
+                  className="p-2.5 rounded-lg border border-gray-200 hover:border-blue-300 transition-all text-left disabled:opacity-50">
+                  <p className="text-xs font-medium" style={{ color: "#0f172a" }}>{preset.label}</p>
+                  <p className="text-[10px]" style={{ color: "#94a3b8" }}>{preset.width}×{preset.height}</p>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -1,20 +1,68 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Sparkles, RefreshCw, CheckCircle2, Wand2, Tag, FileText, ArrowRight } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Sparkles, RefreshCw, CheckCircle2, Wand2, Tag, FileText, ArrowRight,
+  Search, X, BarChart3, TrendingUp, Eye, ChevronDown, ChevronUp, Loader2,
+  AlertTriangle, Zap, Target, Award,
+} from "lucide-react";
 import { useToast } from "@/lib/toast";
+import AIPreviewModal, { type AIPreviewItem } from "@/components/AIPreviewModal";
 
-interface Product { id: string; title: string; body_html?: string; tags?: string; price: string; images?: { src: string }[]; variants?: { price: string }[] }
+interface Product {
+  id: string;
+  title: string;
+  body_html?: string;
+  tags?: string;
+  price: string;
+  images?: { src: string }[];
+  variants?: { price: string }[];
+}
+
+interface GeneratedContent {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  tags?: string;
+}
+
+function seoScore(p: Product): number {
+  let s = 0;
+  if (p.title.length >= 50 && p.title.length <= 70) s += 30;
+  else if (p.title.length >= 30) s += 15;
+  if (p.body_html && p.body_html.length > 300) s += 30;
+  else if (p.body_html && p.body_html.length > 100) s += 15;
+  if (p.tags && p.tags.split(",").length >= 5) s += 20;
+  else if (p.tags) s += 10;
+  if (p.images && p.images.length > 0) s += 10;
+  if (parseFloat(p.price) > 0) s += 10;
+  return s;
+}
+
+function ScoreBadge({ score, size = "sm" }: { score: number; size?: "sm" | "lg" }) {
+  const color = score >= 70 ? "#059669" : score >= 40 ? "#d97706" : "#dc2626";
+  const bg = score >= 70 ? "bg-emerald-50" : score >= 40 ? "bg-amber-50" : "bg-red-50";
+  const label = score >= 70 ? "Excellent" : score >= 40 ? "Moyen" : "Faible";
+  const cls = size === "lg" ? "text-sm font-bold px-3 py-1.5" : "text-[11px] font-semibold px-2 py-1";
+  return <span className={`${cls} rounded-full ${bg}`} style={{ color }}>{label} {score}%</span>;
+}
 
 export default function AIPage() {
   const { addToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [scoreFilter, setScoreFilter] = useState<"all" | "low" | "medium" | "high">("all");
   const [selected, setSelected] = useState<string[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
-  const [generatedContent, setGeneratedContent] = useState<Record<string, { title?: string; description?: string; keywords?: string }>>({});
+  const [generatedContent, setGeneratedContent] = useState<Record<string, GeneratedContent>>({});
   const [massMode, setMassMode] = useState(false);
   const [massProgress, setMassProgress] = useState({ current: 0, total: 0 });
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewItems, setPreviewItems] = useState<AIPreviewItem[]>([]);
+  const [applyingPreview, setApplyingPreview] = useState(false);
 
   useEffect(() => {
     fetch("/api/shopify/products").then((r) => r.json()).then((d) => {
@@ -23,61 +71,58 @@ export default function AIPage() {
     }).catch(() => setLoading(false));
   }, []);
 
-  const generateForProduct = async (product: Product) => {
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const matchSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const score = seoScore(p);
+      const matchScore = scoreFilter === "all"
+        || (scoreFilter === "low" && score < 40)
+        || (scoreFilter === "medium" && score >= 40 && score < 70)
+        || (scoreFilter === "high" && score >= 70);
+      return matchSearch && matchScore;
+    });
+  }, [products, searchQuery, scoreFilter]);
+
+  const stats = useMemo(() => {
+    const scores = products.map(seoScore);
+    const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const low = scores.filter((s) => s < 40).length;
+    const medium = scores.filter((s) => s >= 40 && s < 70).length;
+    const high = scores.filter((s) => s >= 70).length;
+    return { avg, low, medium, high, total: scores.length };
+  }, [products]);
+
+  const generateForProduct = async (product: Product, mode: "full" | "title" | "tags" = "full") => {
     setGenerating(product.id);
     try {
       const res = await fetch("/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "full" }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setGeneratedContent((prev) => ({ ...prev, [product.id]: data }));
-      addToast("Contenu IA généré avec succès", "success");
-    } catch {
-      addToast("Erreur IA — vérifiez votre clé OpenAI", "error");
-    }
+      setGeneratedContent((prev) => ({ ...prev, [product.id]: { ...prev[product.id], ...data } }));
+      addToast("Contenu IA généré", "success");
+    } catch { addToast("Erreur IA — vérifiez votre clé OpenAI", "error"); }
     setGenerating(null);
   };
 
-  const applyGenerated = async (productId: string) => {
+  const applyGenerated = async (productId: string, fields?: string[]) => {
     const content = generatedContent[productId];
     if (!content) return;
     setGenerating(productId);
     try {
-      if (content.title) {
+      const toApply = fields || ["title", "description", "tags"];
+      for (const field of toApply) {
+        const value = field === "title" ? content.title : field === "description" ? content.description : (content.keywords || content.tags);
+        if (!value) continue;
+        const apiField = field === "description" ? "body_html" : field === "tags" ? "tags" : field;
         await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productIds: [productId], field: "title", value: content.title }) });
-      }
-      if (content.description) {
-        await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productIds: [productId], field: "body_html", value: content.description }) });
-      }
-      if (content.keywords) {
-        await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productIds: [productId], field: "tags", value: content.keywords }) });
+          body: JSON.stringify({ productIds: [productId], field: apiField, value }) });
       }
       addToast("Contenu appliqué sur Shopify", "success");
-    } catch {
-      addToast("Erreur lors de l'application", "error");
-    }
-    setGenerating(null);
-  };
-
-  const generateTags = async (product: Product) => {
-    setGenerating(`tags-${product.id}`);
-    try {
-      const res = await fetch("/api/ai/generate", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "tags" }) });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (data.tags) {
-        await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productIds: [product.id], field: "tags", value: data.tags }) });
-        addToast("Tags IA appliqués", "success");
-      }
-    } catch { addToast("Erreur IA", "error"); }
+      setGeneratedContent((prev) => { const n = { ...prev }; delete n[productId]; return n; });
+    } catch { addToast("Erreur lors de l'application", "error"); }
     setGenerating(null);
   };
 
@@ -85,7 +130,6 @@ export default function AIPage() {
     if (selected.length === 0) return;
     setMassMode(true);
     setMassProgress({ current: 0, total: selected.length });
-
     for (let i = 0; i < selected.length; i++) {
       setMassProgress({ current: i + 1, total: selected.length });
       const product = products.find((p) => p.id === selected[i]);
@@ -95,112 +139,310 @@ export default function AIPage() {
           body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "full" }) });
         if (!res.ok) continue;
         const data = await res.json();
-        if (data.description) {
-          await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productIds: [product.id], field: "body_html", value: data.description }) });
-        }
+        setGeneratedContent((prev) => ({ ...prev, [product.id]: data }));
       } catch { /* continue */ }
     }
-
-    addToast(`${selected.length} produit${selected.length > 1 ? "s" : ""} optimisé${selected.length > 1 ? "s" : ""} par l'IA`, "success");
+    addToast(`${selected.length} produit${selected.length > 1 ? "s" : ""} analysé${selected.length > 1 ? "s" : ""} par l'IA`, "success");
     setMassMode(false);
+  };
+
+  const handleMassApply = async () => {
+    // Build preview items for human-in-the-loop
+    const ids = Object.keys(generatedContent);
+    const items: AIPreviewItem[] = ids.map((id) => {
+      const product = products.find((p) => p.id === id);
+      const content = generatedContent[id];
+      return {
+        id: Number(id) || parseInt(id),
+        productTitle: product?.title || "Produit",
+        productImage: product?.images?.[0]?.src,
+        original: {
+          title: product?.title,
+          description: product?.body_html,
+          tags: product?.tags,
+        },
+        suggested: {
+          title: content?.title,
+          description: content?.description,
+          tags: content?.keywords || content?.tags,
+        },
+        accepted: true,
+      };
+    });
+    setPreviewItems(items);
+    setShowPreviewModal(true);
+  };
+
+  const handlePreviewApply = async (acceptedItems: AIPreviewItem[]) => {
+    setApplyingPreview(true);
+    for (const item of acceptedItems) {
+      const id = String(item.id);
+      const updates: string[] = [];
+      if (item.suggested.title) updates.push("title");
+      if (item.suggested.description) updates.push("description");
+      if (item.suggested.tags) updates.push("tags");
+      // Update generatedContent with possibly edited values
+      setGeneratedContent((prev) => ({
+        ...prev,
+        [id]: {
+          title: item.suggested.title,
+          description: item.suggested.description,
+          keywords: item.suggested.tags,
+        },
+      }));
+      await applyGenerated(id, updates);
+    }
+    addToast(`${acceptedItems.length} produit${acceptedItems.length > 1 ? "s" : ""} optimisé${acceptedItems.length > 1 ? "s" : ""}`, "success");
+    setShowPreviewModal(false);
+    setApplyingPreview(false);
     setSelected([]);
   };
 
+  const previewProduct = previewId ? products.find((p) => p.id === previewId) : null;
+  const previewContent = previewId ? generatedContent[previewId] : null;
+
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-6xl mx-auto">
+      {/* Before/After Modal */}
+      {previewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setPreviewId(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 p-6 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>Comparaison Avant / Après</h3>
+                <p className="text-sm mt-0.5" style={{ color: "#64748b" }}>{previewProduct.title}</p>
+              </div>
+              <button onClick={() => setPreviewId(null)}><X className="w-5 h-5" style={{ color: "#94a3b8" }} /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Before */}
+              <div className="p-4 bg-red-50/50 rounded-xl border border-red-100">
+                <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#dc2626" }}>Avant</p>
+                <div className="space-y-3">
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre</p><p className="text-sm" style={{ color: "#0f172a" }}>{previewProduct.title}</p></div>
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description</p>
+                    {previewProduct.body_html ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html.slice(0, 500) }} />
+                      : <p className="text-sm italic" style={{ color: "#94a3b8" }}>Aucune description</p>}
+                  </div>
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Tags</p><p className="text-xs" style={{ color: "#374151" }}>{previewProduct.tags || "Aucun"}</p></div>
+                  <ScoreBadge score={seoScore(previewProduct)} size="lg" />
+                </div>
+              </div>
+              {/* After */}
+              <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#059669" }}>Après (IA)</p>
+                {previewContent ? (
+                  <div className="space-y-3">
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre</p><p className="text-sm font-medium" style={{ color: "#0f172a" }}>{previewContent.title || previewProduct.title}</p></div>
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description</p>
+                      {previewContent.description ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewContent.description.slice(0, 500) }} />
+                        : <p className="text-sm italic" style={{ color: "#94a3b8" }}>Non générée</p>}
+                    </div>
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Mots-clés</p><p className="text-xs" style={{ color: "#374151" }}>{previewContent.keywords || "—"}</p></div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Sparkles className="w-8 h-8 mb-2" style={{ color: "#d1d5db" }} />
+                    <p className="text-sm" style={{ color: "#64748b" }}>Générez le contenu IA d'abord</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            {previewContent && (
+              <div className="mt-4 flex justify-end gap-3">
+                <button onClick={() => { setPreviewId(null); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "#374151" }}>Fermer</button>
+                <button onClick={() => { applyGenerated(previewProduct.id); setPreviewId(null); }} disabled={generating === previewProduct.id}
+                  className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                  <ArrowRight className="w-4 h-4" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Appliquer sur Shopify</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Optimisation IA</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Générez des titres SEO, descriptions et tags avec l'intelligence artificielle</p>
+          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Analysez et optimisez le SEO de votre catalogue avec l'intelligence artificielle</p>
         </div>
-        {selected.length > 0 && (
-          <button onClick={handleMassGenerate} disabled={massMode}
-            className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-            {massMode ? <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#fff" }} />}
-            <span style={{ color: "#fff" }}>{massMode ? `${massProgress.current}/${massProgress.total}...` : `Optimiser ${selected.length} produit${selected.length > 1 ? "s" : ""}`}</span>
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {Object.keys(generatedContent).length > 0 && (
+            <button onClick={handleMassApply} disabled={massMode}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+              {massMode ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <CheckCircle2 className="w-4 h-4" style={{ color: "#fff" }} />}
+              <span style={{ color: "#fff" }}>Appliquer tout ({Object.keys(generatedContent).length})</span>
+            </button>
+          )}
+          {selected.length > 0 && (
+            <button onClick={handleMassGenerate} disabled={massMode}
+              className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+              {massMode ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#fff" }} />}
+              <span style={{ color: "#fff" }}>{massMode ? `${massProgress.current}/${massProgress.total}...` : `Optimiser ${selected.length} produit${selected.length > 1 ? "s" : ""}`}</span>
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Stats cards */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {[
+          { label: "Score moyen", value: `${stats.avg}%`, icon: BarChart3, color: "#2563eb", bg: "#eff6ff" },
+          { label: "SEO Faible", value: stats.low.toString(), icon: AlertTriangle, color: "#dc2626", bg: "#fef2f2" },
+          { label: "SEO Moyen", value: stats.medium.toString(), icon: Target, color: "#d97706", bg: "#fffbeb" },
+          { label: "SEO Excellent", value: stats.high.toString(), icon: Award, color: "#059669", bg: "#ecfdf5" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: stat.bg }}>
+                <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{stat.value}</p>
+                <p className="text-xs" style={{ color: "#64748b" }}>{stat.label}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+          <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20" style={{ color: "#0f172a" }} />
+        </div>
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          {[{ key: "all", label: "Tous" }, { key: "low", label: "Faible" }, { key: "medium", label: "Moyen" }, { key: "high", label: "Excellent" }].map((f) => (
+            <button key={f.key} onClick={() => setScoreFilter(f.key as typeof scoreFilter)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium ${scoreFilter === f.key ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
+              style={{ color: scoreFilter === f.key ? "#0f172a" : "#64748b" }}>{f.label}</button>
+          ))}
+        </div>
+        <button onClick={() => setSelected(selected.length === filteredProducts.length ? [] : filteredProducts.map((p) => p.id))}
+          className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50" style={{ color: "#374151" }}>
+          {selected.length === filteredProducts.length && filteredProducts.length > 0 ? "Désélectionner tout" : "Tout sélectionner"}
+        </button>
+      </div>
+
+      {/* Products list */}
       {loading ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center">
           <RefreshCw className="w-8 h-8 animate-spin mb-3" style={{ color: "#8b5cf6" }} />
           <p className="text-sm" style={{ color: "#64748b" }}>Chargement des produits...</p>
         </div>
-      ) : products.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <Sparkles className="w-12 h-12 mx-auto mb-4" style={{ color: "#cbd5e1" }} />
           <h3 className="text-lg font-semibold mb-2" style={{ color: "#0f172a" }}>Aucun produit</h3>
-          <p className="text-sm" style={{ color: "#64748b" }}>Connectez votre boutique et importez des produits d'abord</p>
+          <p className="text-sm" style={{ color: "#64748b" }}>Connectez votre boutique et importez des produits</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {products.map((product) => {
+        <div className="space-y-3">
+          {filteredProducts.map((product) => {
             const gen = generatedContent[product.id];
             const isGenerating = generating === product.id;
             const isSelected = selected.includes(product.id);
+            const score = seoScore(product);
+            const isExpanded = expandedId === product.id;
 
             return (
-              <div key={product.id} className={`bg-white rounded-xl border ${isSelected ? "border-violet-300 ring-2 ring-violet-100" : "border-gray-200"} p-5`}>
-                <div className="flex items-start gap-4">
+              <div key={product.id} className={`bg-white rounded-xl border ${isSelected ? "border-violet-300 ring-2 ring-violet-100" : "border-gray-200"} overflow-hidden transition-all`}>
+                <div className="flex items-center gap-4 p-4">
                   <button onClick={() => setSelected((p) => p.includes(product.id) ? p.filter((i) => i !== product.id) : [...p, product.id])}
-                    className={`w-5 h-5 rounded border-2 flex-shrink-0 mt-1 ${isSelected ? "bg-violet-600 border-violet-600" : "border-gray-300"} flex items-center justify-center`}>
+                    className={`w-5 h-5 rounded border-2 flex-shrink-0 ${isSelected ? "bg-violet-600 border-violet-600" : "border-gray-300"} flex items-center justify-center`}>
                     {isSelected && <CheckCircle2 className="w-3 h-3" style={{ color: "#fff" }} />}
                   </button>
-                  <div className="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                  <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                     {product.images?.[0]?.src ? <img src={product.images[0].src} alt="" className="w-full h-full object-cover" /> : null}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>{product.title}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{parseFloat(product.price).toFixed(2)} € · {product.tags || "Aucun tag"}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{product.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                      {parseFloat(product.price).toFixed(2)} € · {product.tags?.split(",").length || 0} tags · {product.body_html ? `${product.body_html.length} car.` : "Pas de description"}
+                    </p>
                   </div>
+                  <ScoreBadge score={score} />
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => generateTags(product)} disabled={generating === `tags-${product.id}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg text-xs font-medium" title="Générer des tags IA">
-                      {generating === `tags-${product.id}` ? <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ color: "#d97706" }} /> : <Tag className="w-3.5 h-3.5" style={{ color: "#d97706" }} />}
-                      <span style={{ color: "#92400e" }}>Tags IA</span>
+                    <button onClick={() => generateForProduct(product, "tags")} disabled={!!generating}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg text-xs font-medium disabled:opacity-50">
+                      <Tag className="w-3.5 h-3.5" style={{ color: "#d97706" }} /><span style={{ color: "#92400e" }}>Tags</span>
                     </button>
                     <button onClick={() => generateForProduct(product)} disabled={isGenerating}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 rounded-lg text-xs font-medium" title="Générer titre + description + mots-clés">
-                      {isGenerating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ color: "#8b5cf6" }} /> : <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 rounded-lg text-xs font-medium disabled:opacity-50">
+                      {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#8b5cf6" }} /> : <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />}
                       <span style={{ color: "#6d28d9" }}>Optimiser</span>
+                    </button>
+                    {gen && (
+                      <button onClick={() => setPreviewId(product.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-medium">
+                        <Eye className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /><span style={{ color: "#1e40af" }}>Avant/Après</span>
+                      </button>
+                    )}
+                    <button onClick={() => setExpandedId(isExpanded ? null : product.id)} className="p-1.5 hover:bg-gray-100 rounded-lg">
+                      {isExpanded ? <ChevronUp className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#94a3b8" }} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Generated content preview */}
-                {gen && (
-                  <div className="mt-4 p-4 bg-violet-50/50 rounded-lg border border-violet-100">
-                    {gen.title && (
-                      <div className="mb-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#8b5cf6" }}>Titre SEO</p>
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{gen.title}</p>
+                {/* Expanded: generated content */}
+                {isExpanded && gen && (
+                  <div className="px-4 pb-4">
+                    <div className="p-4 bg-violet-50/50 rounded-xl border border-violet-100">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {gen.title && (
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Titre SEO</p>
+                              <button onClick={() => applyGenerated(product.id, ["title"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                            </div>
+                            <p className="text-sm" style={{ color: "#0f172a" }}>{gen.title}</p>
+                          </div>
+                        )}
+                        {gen.description && (
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Description</p>
+                              <button onClick={() => applyGenerated(product.id, ["description"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                            </div>
+                            <div className="text-xs max-h-20 overflow-hidden" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: gen.description.slice(0, 300) }} />
+                          </div>
+                        )}
+                        {(gen.keywords || gen.tags) && (
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Mots-clés</p>
+                              <button onClick={() => applyGenerated(product.id, ["tags"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                            </div>
+                            <p className="text-xs" style={{ color: "#374151" }}>{gen.keywords || gen.tags}</p>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {gen.description && (
-                      <div className="mb-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#8b5cf6" }}>Description</p>
-                        <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: gen.description }} />
+                      <div className="mt-3 flex justify-end">
+                        <button onClick={() => applyGenerated(product.id)} disabled={generating === product.id}
+                          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                          {generating === product.id ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <ArrowRight className="w-4 h-4" style={{ color: "#fff" }} />}
+                          <span style={{ color: "#fff" }}>Tout appliquer</span>
+                        </button>
                       </div>
-                    )}
-                    {gen.keywords && (
-                      <div className="mb-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: "#8b5cf6" }}>Mots-clés</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>{gen.keywords}</p>
-                      </div>
-                    )}
-                    <button onClick={() => applyGenerated(product.id)} disabled={generating === product.id}
-                      className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium mt-2">
-                      {generating === product.id ? <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <ArrowRight className="w-4 h-4" style={{ color: "#fff" }} />}
-                      <span style={{ color: "#fff" }}>Appliquer sur Shopify</span>
-                    </button>
+                    </div>
                   </div>
                 )}
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Human-in-the-loop Preview Modal */}
+      {showPreviewModal && previewItems.length > 0 && (
+        <AIPreviewModal
+          items={previewItems}
+          onApply={handlePreviewApply}
+          onClose={() => setShowPreviewModal(false)}
+          loading={applyingPreview}
+        />
       )}
     </div>
   );

@@ -1,40 +1,59 @@
-// Credits system — tracks API usage per user
-// Plan limits: Free=100, Starter=500, Pro=2000, Scale=10000 credits/month
+// Système de tâches — suivi d'utilisation par utilisateur
+// Tâches mensuelles par plan (serveur uniquement)
 
-export const PLAN_CREDITS: Record<string, number> = {
-  free: 100,
-  starter: 500,
-  pro: 2000,
-  scale: 10000,
+export const PLAN_TASKS: Record<string, number> = {
+  starter: 50,
+  pro: 300,
+  scale: 1000,
 };
 
+export const PLAN_PRICES: Record<string, string> = {
+  starter: "49€",
+  pro: "89€",
+  scale: "129€",
+};
+
+// Coût en tâches par action (invisible pour l'utilisateur)
 export const ACTION_COSTS: Record<string, number> = {
   "ai.generate.title": 1,
-  "ai.generate.description": 2,
-  "ai.generate.seo": 3,
+  "ai.generate.description": 3,
+  "ai.generate.full": 3,
   "ai.generate.tags": 1,
-  "ai.generate.batch": 5,
-  "shopify.import": 0,        // free
-  "shopify.bulk_edit": 0,     // free
-  "shopify.product.update": 0, // free
-  "scrape.product": 1,
-  "image.edit": 3,
+  "ai.generate.batch": 2,       // par produit dans le lot
+  "import.product": 2,
+  "image.optimize": 1,
+  "seo.score": 0,
+  "bulk.edit": 0,
+  "shopify.bulk_edit": 0,
+  "shopify.product.update": 0,
 };
 
-export function getCreditCost(action: string): number {
+export function getTaskCost(action: string): number {
   return ACTION_COSTS[action] ?? 1;
 }
 
-export function canAfford(currentCredits: number, action: string): boolean {
-  return currentCredits >= getCreditCost(action);
+// Backward compatibility alias
+export function getCreditCost(action: string): number {
+  return getTaskCost(action);
 }
 
-export function getRemainingCredits(used: number, plan: string): number {
-  const limit = PLAN_CREDITS[plan] || PLAN_CREDITS.free;
+export function canAffordTask(tasksUsed: number, tasksTotal: number, action: string): boolean {
+  return (tasksTotal - tasksUsed) >= getTaskCost(action);
+}
+
+export function getRemainingTasks(used: number, plan: string): number {
+  const limit = PLAN_TASKS[plan] || PLAN_TASKS.starter;
   return Math.max(0, limit - used);
 }
 
-export function getUsagePercentage(used: number, plan: string): number {
-  const limit = PLAN_CREDITS[plan] || PLAN_CREDITS.free;
-  return Math.min(100, (used / limit) * 100);
+export function getTasksColor(remaining: number): string {
+  if (remaining > 20) return "#059669"; // vert
+  if (remaining > 5) return "#d97706";  // orange
+  return "#dc2626";                      // rouge
+}
+
+export function getResetDate(): string {
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return nextMonth.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 }

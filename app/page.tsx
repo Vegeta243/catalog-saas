@@ -55,7 +55,7 @@ const plans = [
     cta: "Commencer l'essai gratuit",
     target: "Pour les petites boutiques qui démarrent",
     fit: "Ce plan est fait pour vous si vous avez moins de 500 produits et cherchez à gagner du temps sur les tâches répétitives.",
-    features: ["1 boutique Shopify connectée", "Jusqu'à 500 produits gérés", "Bulk editing prix, titres, descriptions, tags", "Import produits : 20/mois", "Génération IA : 100 crédits/mois", "Export CSV", "Alertes stock bas basiques", "Support email (sous 48h)", "Essai gratuit 7 jours"],
+    features: ["1 boutique Shopify connectée", "Jusqu'à 500 produits gérés", "Bulk editing prix, titres, descriptions, tags", "Import produits : 20/mois", "50 tâches IA/mois", "Export CSV", "Alertes stock bas basiques", "Support email (sous 48h)", "Essai gratuit 7 jours"],
   },
   {
     id: "pro", name: "Pro", badge: "🥇",
@@ -63,7 +63,7 @@ const plans = [
     cta: "Commencer l'essai gratuit",
     target: "Pour les boutiques en croissance",
     fit: "Ce plan est fait pour vous si vous gérez un catalogue important et voulez automatiser votre croissance avec l'IA.",
-    features: ["Jusqu'à 3 boutiques Shopify", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "Génération IA : 500 crédits/mois", "Automatisations avancées", "Modification images en masse", "Score SEO par produit", "Alertes personnalisées", "Support prioritaire (sous 24h)", "Essai gratuit 7 jours"],
+    features: ["Jusqu'à 3 boutiques Shopify", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "300 tâches IA/mois", "Automatisations avancées", "Modification images en masse", "Score SEO par produit", "Alertes personnalisées", "Support prioritaire (sous 24h)", "Essai gratuit 7 jours"],
   },
   {
     id: "scale", name: "Scale", badge: "🏆",
@@ -71,7 +71,7 @@ const plans = [
     cta: "Commencer l'essai gratuit",
     target: "Pour les boutiques à grande échelle",
     fit: "Ce plan est fait pour vous si vous gérez plusieurs boutiques et avez besoin de performances maximales.",
-    features: ["Boutiques illimitées", "Tout Pro +", "Génération IA : 1500 crédits/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (sous 4h)", "Accès anticipé nouveautés", "Essai gratuit 7 jours"],
+    features: ["Boutiques illimitées", "Tout Pro +", "1 000 tâches IA/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (sous 4h)", "Accès anticipé nouveautés", "Essai gratuit 7 jours"],
   },
 ];
 

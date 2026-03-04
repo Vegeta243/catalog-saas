@@ -21,28 +21,47 @@ import {
   Clock,
   CreditCard,
   Crown,
-  Lightbulb,
   ImageIcon,
   Coins,
 } from 'lucide-react';
+import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 
-const navItems = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/dashboard/products', label: 'Modifier en masse', icon: PackageSearch },
-  { href: '/dashboard/import', label: 'Import produits', icon: Download },
-  { href: '/dashboard/ai', label: 'Optimisation IA', icon: Sparkles },
-  { href: '/dashboard/suggestions', label: 'Suggestions IA', icon: Lightbulb },
-  { href: '/dashboard/images', label: 'Éditeur d\'images', icon: ImageIcon },
-  { href: '/dashboard/shops', label: 'Mes boutiques', icon: Store },
-  { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
-  { href: '/dashboard/history', label: 'Historique', icon: Clock },
+const NAV_SECTIONS = [
+  {
+    label: "PRINCIPAL",
+    items: [
+      { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+      { href: '/dashboard/shops', label: 'Mes boutiques', icon: Store },
+      { href: '/dashboard/history', label: 'Historique', icon: Clock },
+    ],
+  },
+  {
+    label: "OPTIMISATION",
+    items: [
+      { href: '/dashboard/products', label: 'Modifier en masse', icon: PackageSearch },
+      { href: '/dashboard/ai', label: 'Optimisation IA', icon: Sparkles },
+      { href: '/dashboard/images', label: 'Éditeur d\'images', icon: ImageIcon },
+    ],
+  },
+  {
+    label: "AUTOMATISATION",
+    items: [
+      { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
+    ],
+  },
+  {
+    label: "IMPORT",
+    items: [
+      { href: '/dashboard/import', label: 'Import produits', icon: Download },
+    ],
+  },
 ];
 
-const bottomNavItems = [
-  { href: '/dashboard/credits', label: 'Crédits', icon: Coins },
-  { href: '/dashboard/billing', label: 'Facturation', icon: CreditCard },
-  { href: '#', label: 'Paramètres', icon: Settings },
-  { href: '#', label: "Centre d'aide", icon: HelpCircle },
+const BOTTOM_ITEMS = [
+  { href: '/dashboard/credits', label: 'Mes tâches', icon: Coins },
+  { href: '/dashboard/account', label: 'Mon compte', icon: User },
+  { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
+  { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -50,6 +69,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [notifications] = useState(3);
+
+  // Tasks data (would come from context/API in production)
+  const plan = "pro";
+  const tasksUsed = 16;
+  const tasksTotal = PLAN_TASKS[plan] || 300;
+  const tasksRemaining = tasksTotal - tasksUsed;
 
   const handleLogout = async () => {
     try {
@@ -65,9 +90,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen bg-[#f8fafc]">
       {/* Sidebar */}
       <aside className={`${sidebarCollapsed ? 'w-[68px]' : 'w-[260px]'} bg-[#0f172a] flex flex-col justify-between transition-all duration-300 relative`}>
-        {/* Logo */}
+        {/* Logo — links to landing page */}
         <div>
-          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50`}>
+          <a href="/" className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors`}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                 <Zap className="w-4 h-4" style={{ color: '#ffffff' }} />
@@ -76,73 +101,94 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span className="text-lg font-bold tracking-tight" style={{ color: '#ffffff' }}>EcomPilot</span>
               )}
             </div>
+          </a>
+
+          {/* Navigation sections */}
+          <div className={`${sidebarCollapsed ? 'px-2' : 'px-3'} pt-3 space-y-4`}>
+            {NAV_SECTIONS.map((section) => (
+              <div key={section.label}>
+                {!sidebarCollapsed && (
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-3" style={{ color: '#475569' }}>
+                    {section.label}
+                  </p>
+                )}
+                <nav className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
+                    const isExactDashboard = item.href === '/dashboard' && pathname === '/dashboard';
+                    const active = isActive || isExactDashboard;
+                    const Icon = item.icon;
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'} py-2 rounded-lg text-[13px] font-medium transition-all ${
+                          active
+                            ? 'bg-blue-600/20 border border-blue-500/30'
+                            : 'hover:bg-slate-700/50 border border-transparent'
+                        }`}
+                        title={sidebarCollapsed ? item.label : undefined}
+                      >
+                        <Icon className="w-[17px] h-[17px] flex-shrink-0" style={{ color: active ? '#60a5fa' : '#94a3b8' }} />
+                        {!sidebarCollapsed && (
+                          <span style={{ color: active ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
+                        )}
+                      </a>
+                    );
+                  })}
+                </nav>
+              </div>
+            ))}
           </div>
 
-          {/* Navigation principale */}
+          {/* Bottom nav separator */}
           {!sidebarCollapsed && (
-            <div className="px-4 pt-5 pb-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#64748b' }}>Navigation</p>
+            <div className="px-4 pt-5 pb-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest px-3" style={{ color: '#475569' }}>COMPTE</p>
             </div>
           )}
-          <nav className={`${sidebarCollapsed ? 'px-2 pt-4' : 'px-3'} space-y-1`}>
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          <nav className={`${sidebarCollapsed ? 'px-2 pt-2' : 'px-3 pt-1'} space-y-0.5`}>
+            {BOTTOM_ITEMS.map((item) => {
               const Icon = item.icon;
+              const isActive = pathname === item.href;
               return (
                 <a
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
-                  className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'} py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'} py-2 rounded-lg text-[13px] font-medium transition-all ${
                     isActive
                       ? 'bg-blue-600/20 border border-blue-500/30'
                       : 'hover:bg-slate-700/50 border border-transparent'
                   }`}
                   title={sidebarCollapsed ? item.label : undefined}
                 >
-                  <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: isActive ? '#60a5fa' : '#94a3b8' }} />
-                  {!sidebarCollapsed && (
-                    <span style={{ color: isActive ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
-                  )}
-                </a>
-              );
-            })}
-          </nav>
-
-          {/* Separator */}
-          {!sidebarCollapsed && (
-            <div className="px-4 pt-6 pb-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#64748b' }}>Support</p>
-            </div>
-          )}
-          <nav className={`${sidebarCollapsed ? 'px-2 pt-2' : 'px-3'} space-y-1`}>
-            {bottomNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'} py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700/50 transition-all`}
-                  title={sidebarCollapsed ? item.label : undefined}
-                >
-                  <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: '#94a3b8' }} />
-                  {!sidebarCollapsed && <span style={{ color: '#cbd5e1' }}>{item.label}</span>}
+                  <Icon className="w-[17px] h-[17px] flex-shrink-0" style={{ color: isActive ? '#60a5fa' : '#94a3b8' }} />
+                  {!sidebarCollapsed && <span style={{ color: isActive ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>}
                 </a>
               );
             })}
           </nav>
         </div>
 
-        {/* Plan badge */}
+        {/* Tasks counter + plan */}
         {!sidebarCollapsed && (
           <div className="mx-3 mb-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(96,165,250,0.1)' }}>
-            <div className="flex items-center gap-2 mb-1">
-              <Crown className="w-3.5 h-3.5" style={{ color: '#60a5fa' }} />
-              <span className="text-xs font-semibold" style={{ color: '#f1f5f9' }}>Plan Pro</span>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <Crown className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
+                <span className="text-xs font-semibold" style={{ color: '#f1f5f9' }}>Plan {plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
+              </div>
+              <span className="text-[10px] font-medium" style={{ color: getTasksColor(tasksRemaining) }}>
+                {tasksRemaining} tâches
+              </span>
             </div>
-            <p className="text-[10px]" style={{ color: '#64748b' }}>245 / 1 000 produits</p>
-            <div className="w-full h-1.5 rounded-full mt-1.5" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-              <div className="h-1.5 rounded-full" style={{ width: '24.5%', backgroundColor: '#60a5fa' }} />
+            <div className="w-full h-1.5 rounded-full mt-1" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+              <div className="h-1.5 rounded-full transition-all" style={{
+                width: `${(tasksRemaining / tasksTotal) * 100}%`,
+                backgroundColor: getTasksColor(tasksRemaining),
+              }} />
             </div>
+            <p className="text-[10px] mt-1.5" style={{ color: '#64748b' }}>{tasksUsed} / {tasksTotal} tâches utilisées</p>
           </div>
         )}
 
@@ -202,9 +248,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </span>
               )}
             </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center cursor-pointer">
+            <a href="/dashboard/account" className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center cursor-pointer">
               <User className="w-4 h-4" style={{ color: '#ffffff' }} />
-            </div>
+            </a>
           </div>
         </header>
 
@@ -214,7 +260,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Footer */}
         <footer className="border-t border-gray-200 bg-white px-6 py-3 flex items-center justify-between">
           <p className="text-xs" style={{ color: '#94a3b8' }}>© 2026 EcomPilot. Tous droits réservés.</p>
-          <p className="text-xs" style={{ color: '#94a3b8' }}>v1.0.0</p>
+          <p className="text-xs" style={{ color: '#94a3b8' }}>v6.0.0</p>
         </footer>
       </div>
     </div>

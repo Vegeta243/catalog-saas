@@ -5,7 +5,7 @@ import {
   Search, RefreshCw, Download, Upload, ChevronLeft, ChevronRight, Package,
   CheckSquare, Square, ImageOff, ArrowUpDown, DollarSign,
   X, Copy, Archive, CheckCircle2, Tag, Type, FileText, Sparkles,
-  AlertTriangle,
+  AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { ConfirmModal } from "@/lib/confirm-modal";
@@ -24,8 +24,41 @@ interface Product {
   body_html?: string;
 }
 
-type SortKey = "title" | "price" | "status";
+interface AISuggestion {
+  productId: string;
+  title?: string;
+  description?: string;
+  tags?: string;
+  price?: string;
+}
+
+type SortKey = "title" | "price" | "status" | "seo";
 type SortDir = "asc" | "desc";
+
+/* ── SEO Scoring ─────────────────────────────── */
+function seoScore(p: Product): number {
+  let s = 0;
+  if (p.title.length >= 50 && p.title.length <= 70) s += 30;
+  else if (p.title.length >= 30) s += 15;
+  if (p.body_html && p.body_html.length > 300) s += 30;
+  else if (p.body_html && p.body_html.length > 100) s += 15;
+  if (p.tags && p.tags.split(",").length >= 5) s += 20;
+  else if (p.tags) s += 10;
+  if (p.images && p.images.length > 0) s += 10;
+  if (parseFloat(p.price) > 0) s += 10;
+  return s;
+}
+
+function ScoreBadge({ score }: { score: number }) {
+  const color = score >= 70 ? "#059669" : score >= 40 ? "#d97706" : "#dc2626";
+  const bg = score >= 70 ? "bg-emerald-50" : score >= 40 ? "bg-amber-50" : "bg-red-50";
+  const label = score >= 70 ? "Excellent" : score >= 40 ? "Moyen" : "Faible";
+  return (
+    <span className={`text-[11px] font-semibold px-2 py-1 rounded-full ${bg}`} style={{ color }}>
+      {label} {score}%
+    </span>
+  );
+}
 
 export default function ProductsPage() {
   const { addToast } = useToast();
@@ -51,8 +84,13 @@ export default function ProductsPage() {
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; action: () => void }>({
     open: false, title: "", message: "", action: () => {}
   });
+  /* ── AI state ── */
+  const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
+  const [aiBatchLoading, setAiBatchLoading] = useState(false);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const itemsPerPage = 50;
 
+  /* ──────── Fetch ──────── */
   const fetchProducts = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     else setLoading(true);
@@ -77,6 +115,7 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
+  /* ──────── Filter / Sort ──────── */
   const filteredProducts = useMemo(() => {
     let result = products.filter((p) => {
       const matchSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -91,6 +130,7 @@ export default function ProductsPage() {
       if (sortKey === "title") cmp = a.title.localeCompare(b.title);
       else if (sortKey === "price") cmp = parseFloat(a.price) - parseFloat(b.price);
       else if (sortKey === "status") cmp = a.status.localeCompare(b.status);
+      else if (sortKey === "seo") cmp = seoScore(a) - seoScore(b);
       return sortDir === "asc" ? cmp : -cmp;
     });
     return result;
@@ -99,11 +139,11 @@ export default function ProductsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
   const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Keyboard shortcuts
+  /* ──────── Shortcuts ──────── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === "a") { e.preventDefault(); selectAll(); }
-      if (e.key === "Escape") { setSelectedProducts([]); setActiveAction(null); }
+      if (e.key === "Escape") { setSelectedProducts([]); setActiveAction(null); setPreviewProduct(null); }
       if (e.key === "ArrowLeft" && currentPage > 1) setCurrentPage((p) => p - 1);
       if (e.key === "ArrowRight" && currentPage < totalPages) setCurrentPage((p) => p + 1);
     };
@@ -111,6 +151,7 @@ export default function ProductsPage() {
     return () => window.removeEventListener("keydown", handler);
   });
 
+  /* ──────── Selection ──────── */
   const toggleSelectProduct = (id: string) => {
     setSelectedProducts((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   };
@@ -126,27 +167,75 @@ export default function ProductsPage() {
 
   const getStatusBadge = (status: string) => {
     const m: Record<string, { label: string; cls: string }> = {
-      active: { label: "Actif", cls: "badge-active" },
-      archived: { label: "Archivé", cls: "badge-archived" },
-      draft: { label: "Brouillon", cls: "badge-draft" },
+      active: { label: "Actif", cls: "text-[11px] font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700" },
+      archived: { label: "Archivé", cls: "text-[11px] font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600" },
+      draft: { label: "Brouillon", cls: "text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700" },
     };
-    const s = m[status] || { label: status, cls: "badge-archived" };
+    const s = m[status] || { label: status, cls: "text-[11px] font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600" };
     return <span className={s.cls}>{s.label}</span>;
   };
 
-  const getSeoScore = (p: Product) => {
-    let score = 0;
-    if (p.title.length >= 50 && p.title.length <= 70) score += 40;
-    else if (p.title.length >= 30) score += 20;
-    if (p.body_html && p.body_html.length > 300) score += 30;
-    else if (p.body_html && p.body_html.length > 100) score += 15;
-    if (p.tags && p.tags.split(",").length >= 5) score += 30;
-    else if (p.tags) score += 15;
-    if (score >= 70) return { label: "Excellent", color: "#059669", bg: "bg-emerald-50" };
-    if (score >= 40) return { label: "Moyen", color: "#d97706", bg: "bg-amber-50" };
-    return { label: "Faible", color: "#dc2626", bg: "bg-red-50" };
+  /* ──────── AI batch generation ──────── */
+  const aiBatchGenerate = async (mode: "title" | "tags" | "full" | "price") => {
+    if (selectedProducts.length === 0) return;
+    setAiBatchLoading(true);
+    const results: Record<string, AISuggestion> = {};
+    const batch = selectedProducts.map(async (id) => {
+      const p = products.find((x) => x.id === id);
+      if (!p) return;
+      try {
+        const res = await fetch("/api/ai/generate", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product: { title: p.title, description: p.body_html, price: p.price }, mode }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        results[id] = { productId: id, ...data };
+      } catch { /* continue */ }
+    });
+    await Promise.all(batch);
+    setAiSuggestions((prev) => ({ ...prev, ...results }));
+    addToast(`IA: ${Object.keys(results).length} suggestion${Object.keys(results).length > 1 ? "s" : ""} générée${Object.keys(results).length > 1 ? "s" : ""}`, "success");
+    setAiBatchLoading(false);
   };
 
+  const applyAISuggestion = async (productId: string, field: string) => {
+    const sug = aiSuggestions[productId];
+    if (!sug) return;
+    const value = field === "title" ? sug.title : field === "tags" ? sug.tags : field === "body_html" ? sug.description : sug.price;
+    if (!value) return;
+    setActionLoading(`ai-apply-${productId}`);
+    try {
+      const res = await fetch("/api/shopify/bulk-edit", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: [productId], field, value }),
+      });
+      if (!res.ok) throw new Error();
+      addToast("Suggestion IA appliquée", "success");
+      fetchProducts(true);
+    } catch { addToast("Erreur — réessayez", "error"); }
+    finally { setActionLoading(null); }
+  };
+
+  const applyAllAISuggestions = async () => {
+    setAiBatchLoading(true);
+    const ids = Object.keys(aiSuggestions);
+    for (const id of ids) {
+      const sug = aiSuggestions[id];
+      if (!sug) continue;
+      try {
+        if (sug.title) await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "title", value: sug.title }) });
+        if (sug.description) await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "body_html", value: sug.description }) });
+        if (sug.tags) await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "tags", value: sug.tags }) });
+      } catch { /* continue */ }
+    }
+    addToast(`${ids.length} produit${ids.length > 1 ? "s" : ""} mis à jour avec l'IA`, "success");
+    setAiSuggestions({});
+    setAiBatchLoading(false);
+    fetchProducts(true);
+  };
+
+  /* ──────── Bulk actions ──────── */
   const handleBulkPriceApply = async () => {
     if (!bulkPrice) return;
     setActionLoading("price");
@@ -157,8 +246,7 @@ export default function ProductsPage() {
       else if (bulkPriceMode === "percent_down") { mode = "percent"; val = `-${bulkPrice}`; }
       else if (bulkPriceMode === "multiply") { mode = "multiply"; }
       const res = await fetch("/api/shopify/bulk-update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: selectedProducts, newPrice: val, mode }),
       });
       if (!res.ok) throw new Error();
@@ -174,8 +262,7 @@ export default function ProductsPage() {
     setActionLoading(field);
     try {
       const res = await fetch("/api/shopify/bulk-edit", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: selectedProducts, field, value }),
       });
       if (!res.ok) throw new Error();
@@ -191,8 +278,7 @@ export default function ProductsPage() {
     setActionLoading(status);
     try {
       const res = await fetch("/api/shopify/bulk-edit", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: selectedProducts, field: "status", value: status }),
       });
       if (!res.ok) throw new Error();
@@ -221,19 +307,16 @@ export default function ProductsPage() {
         body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "title" }) });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      if (data.title) {
-        await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productIds: [product.id], field: "title", value: data.title }) });
-        addToast("Titre SEO appliqué", "success");
-        fetchProducts(true);
-      }
+      setAiSuggestions((prev) => ({ ...prev, [product.id]: { productId: product.id, title: data.title } }));
+      addToast("Suggestion IA générée", "success");
     } catch { addToast("Erreur IA — réessayez", "error"); }
     finally { setActionLoading(null); }
   };
 
+  /* ──────── Export CSV ──────── */
   const exportCSV = () => {
-    const headers = ["Titre", "Prix", "Statut", "Tags", "Image URL"];
-    const rows = filteredProducts.map((p) => [p.title, p.price, p.status, p.tags || "", p.images?.[0]?.src || ""]);
+    const headers = ["Titre", "Prix", "Statut", "Tags", "Score SEO", "Image URL"];
+    const rows = filteredProducts.map((p) => [p.title, p.price, p.status, p.tags || "", seoScore(p).toString(), p.images?.[0]?.src || ""]);
     const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n");
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -251,13 +334,71 @@ export default function ProductsPage() {
 
   const lowStockCount = useMemo(() => products.filter((p) => p.variants?.some((v) => (v.inventory_quantity ?? 999) < 5)).length, [products]);
 
+  const avgSeo = useMemo(() => {
+    if (products.length === 0) return 0;
+    return Math.round(products.reduce((acc, p) => acc + seoScore(p), 0) / products.length);
+  }, [products]);
+
   return (
     <div className="max-w-7xl mx-auto">
       <ConfirmModal open={confirmModal.open} title={confirmModal.title} message={confirmModal.message} variant="danger"
         onConfirm={() => { confirmModal.action(); setConfirmModal({ ...confirmModal, open: false }); }}
         onCancel={() => setConfirmModal({ ...confirmModal, open: false })} />
 
-      {/* Header */}
+      {/* ── Preview Modal ── */}
+      {previewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setPreviewProduct(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>Aperçu produit</h3>
+              <button onClick={() => setPreviewProduct(null)}><X className="w-5 h-5" style={{ color: "#94a3b8" }} /></button>
+            </div>
+            {previewProduct.images?.[0]?.src && <img src={previewProduct.images[0].src} alt="" className="w-full h-48 object-cover rounded-xl mb-4" />}
+            <p className="font-semibold text-base mb-1" style={{ color: "#0f172a" }}>{previewProduct.title}</p>
+            <p className="text-sm font-bold mb-2" style={{ color: "#059669" }}>{parseFloat(previewProduct.price).toFixed(2)} €</p>
+            <div className="flex items-center gap-2 mb-3">
+              {getStatusBadge(previewProduct.status)}
+              <ScoreBadge score={seoScore(previewProduct)} />
+            </div>
+            {previewProduct.tags && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {previewProduct.tags.split(",").map((t, i) => (
+                  <span key={i} className="text-[11px] px-2 py-0.5 bg-blue-50 rounded-full" style={{ color: "#2563eb" }}>{t.trim()}</span>
+                ))}
+              </div>
+            )}
+            {previewProduct.body_html && (
+              <div className="text-sm prose prose-sm max-w-none mt-2" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} />
+            )}
+            {/* AI suggestion for this product */}
+            {aiSuggestions[previewProduct.id] && (
+              <div className="mt-4 p-4 bg-violet-50 rounded-xl border border-violet-200">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#8b5cf6" }}>Suggestions IA</p>
+                {aiSuggestions[previewProduct.id].title && (
+                  <div className="mb-2">
+                    <p className="text-[11px] font-medium mb-0.5" style={{ color: "#64748b" }}>Titre suggéré :</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium flex-1" style={{ color: "#0f172a" }}>{aiSuggestions[previewProduct.id].title}</p>
+                      <button onClick={() => applyAISuggestion(previewProduct.id, "title")} className="text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                    </div>
+                  </div>
+                )}
+                {aiSuggestions[previewProduct.id].tags && (
+                  <div className="mb-2">
+                    <p className="text-[11px] font-medium mb-0.5" style={{ color: "#64748b" }}>Tags suggérés :</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs flex-1" style={{ color: "#374151" }}>{aiSuggestions[previewProduct.id].tags}</p>
+                      <button onClick={() => applyAISuggestion(previewProduct.id, "tags")} className="text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Catalogue produits</h1>
@@ -268,17 +409,20 @@ export default function ProductsPage() {
                 <AlertTriangle className="w-3 h-3" /> {lowStockCount} stock bas
               </span>
             )}
+            <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: avgSeo >= 70 ? "#ecfdf5" : avgSeo >= 40 ? "#fffbeb" : "#fef2f2", color: avgSeo >= 70 ? "#059669" : avgSeo >= 40 ? "#d97706" : "#dc2626" }}>
+              <BarChart3 className="w-3 h-3" /> SEO moyen {avgSeo}%
+            </span>
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => fetchProducts(true)} disabled={refreshing}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm disabled:opacity-50"
-            style={{ color: "#374151" }} title="Rafraîchir les produits depuis Shopify">
+            style={{ color: "#374151" }}>
             <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#374151" }} /> Synchroniser
           </button>
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm"
-            style={{ color: "#374151" }} title="Télécharger un fichier CSV de tous les produits">
-            <Download className="w-4 h-4" style={{ color: "#374151" }} /> Exporter CSV
+            style={{ color: "#374151" }}>
+            <Download className="w-4 h-4" style={{ color: "#374151" }} /> CSV
           </button>
           <a href="/dashboard/import" className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium shadow-sm">
             <Upload className="w-4 h-4" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Importer</span>
@@ -286,7 +430,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Status tabs */}
+      {/* ── Status tabs ── */}
       <div className="flex items-center gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
         {[{ key: "all", label: "Tous" }, { key: "active", label: "Actifs" }, { key: "draft", label: "Brouillons" }, { key: "archived", label: "Archivés" }].map((tab) => (
           <button key={tab.key} onClick={() => { setStatusFilter(tab.key); setCurrentPage(1); }}
@@ -297,7 +441,7 @@ export default function ProductsPage() {
         ))}
       </div>
 
-      {/* Search + price filter */}
+      {/* ── Search + price filter ── */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
@@ -316,12 +460,13 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Bulk bar */}
+      {/* ── Bulk bar with integrated AI ── */}
       {selectedProducts.length > 0 && (
         <div className="mb-4 px-5 py-3 bg-blue-50 border border-blue-200 rounded-xl">
           <div className="flex flex-wrap items-center gap-3 mb-3">
             <p className="text-sm font-semibold" style={{ color: "#1e40af" }}>{selectedProducts.length} sélectionné{selectedProducts.length > 1 ? "s" : ""}</p>
             <div className="flex items-center gap-2 ml-auto flex-wrap">
+              {/* Manual bulk actions */}
               {[{ key: "price", icon: DollarSign, label: "Prix" }, { key: "title", icon: Type, label: "Titre" },
                 { key: "description", icon: FileText, label: "Description" }, { key: "tags", icon: Tag, label: "Tags" }].map((a) => (
                 <button key={a.key} onClick={() => setActiveAction(activeAction === a.key ? null : a.key)}
@@ -330,6 +475,24 @@ export default function ProductsPage() {
                   <span style={{ color: activeAction === a.key ? "#fff" : "#1e40af" }}>{a.label}</span>
                 </button>
               ))}
+              {/* AI batch buttons */}
+              <div className="w-px h-6 bg-blue-200 mx-1" />
+              <button onClick={() => aiBatchGenerate("title")} disabled={aiBatchLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
+                <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                <span style={{ color: "#6d28d9" }}>IA Titres</span>
+              </button>
+              <button onClick={() => aiBatchGenerate("tags")} disabled={aiBatchLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
+                <Sparkles className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                <span style={{ color: "#6d28d9" }}>IA Tags</span>
+              </button>
+              <button onClick={() => aiBatchGenerate("full")} disabled={aiBatchLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 rounded-lg text-xs font-medium disabled:opacity-50">
+                {aiBatchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} /> : <TrendingUp className="w-3.5 h-3.5" style={{ color: "#fff" }} />}
+                <span style={{ color: "#fff" }}>IA Complète</span>
+              </button>
+              <div className="w-px h-6 bg-blue-200 mx-1" />
               <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver ${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} ?`, action: () => handleBulkStatus("archived") })}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100">
                 <Archive className="w-3.5 h-3.5" style={{ color: "#d97706" }} /><span style={{ color: "#92400e" }}>Archiver</span>
@@ -342,6 +505,23 @@ export default function ProductsPage() {
                 className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
             </div>
           </div>
+
+          {/* AI suggestions banner */}
+          {Object.keys(aiSuggestions).length > 0 && (
+            <div className="flex items-center gap-3 p-3 mb-3 bg-violet-50 rounded-lg border border-violet-200">
+              <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: "#8b5cf6" }} />
+              <p className="text-xs font-medium flex-1" style={{ color: "#6d28d9" }}>
+                {Object.keys(aiSuggestions).length} suggestion{Object.keys(aiSuggestions).length > 1 ? "s" : ""} IA prête{Object.keys(aiSuggestions).length > 1 ? "s" : ""} — vérifiez dans le tableau puis appliquez
+              </p>
+              <button onClick={applyAllAISuggestions} disabled={aiBatchLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 rounded-lg text-xs font-medium disabled:opacity-50">
+                {aiBatchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} /> : <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#fff" }} />}
+                <span style={{ color: "#fff" }}>Tout appliquer</span>
+              </button>
+              <button onClick={() => setAiSuggestions({})} className="text-xs font-medium px-2 py-1 rounded hover:bg-violet-100" style={{ color: "#8b5cf6" }}>Ignorer</button>
+            </div>
+          )}
+
           {activeAction === "price" && (
             <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
               <select value={bulkPriceMode} onChange={(e) => setBulkPriceMode(e.target.value as typeof bulkPriceMode)}
@@ -362,7 +542,7 @@ export default function ProductsPage() {
           )}
           {activeAction === "title" && (
             <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-              <input type="text" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)} placeholder="Nouveau titre"
+              <input type="text" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)} placeholder="Nouveau titre pour tous"
                 className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
               <button onClick={() => handleBulkFieldApply("title", bulkTitle)} disabled={!bulkTitle || actionLoading === "title"}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
@@ -393,7 +573,7 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Table */}
+      {/* ── Table ── */}
       {loading ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center">
           <RefreshCw className="w-8 h-8 animate-spin mb-3" style={{ color: "#3b82f6" }} />
@@ -430,7 +610,8 @@ export default function ProductsPage() {
                   <th className="px-4 py-3 text-left"><button onClick={() => handleSort("title")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Titre <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-4 py-3 text-left"><button onClick={() => handleSort("price")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Prix <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-4 py-3 text-left"><button onClick={() => handleSort("status")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Statut <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>SEO</th>
+                  <th className="px-4 py-3 text-left"><button onClick={() => handleSort("seo")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>SEO <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>IA</th>
                   <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Actions</th>
                 </tr>
               </thead>
@@ -438,8 +619,9 @@ export default function ProductsPage() {
                 {paginatedProducts.map((product) => {
                   const isSelected = selectedProducts.includes(product.id);
                   const imageUrl = product.images?.[0]?.src;
-                  const seo = getSeoScore(product);
+                  const score = seoScore(product);
                   const hasLowStock = product.variants?.some((v) => (v.inventory_quantity ?? 999) < 5);
+                  const suggestion = aiSuggestions[product.id];
                   return (
                     <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}>
                       <td className="px-4 py-3"><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
@@ -451,21 +633,46 @@ export default function ProductsPage() {
                         <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{product.title}</p>
                         {product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
                         {hasLowStock && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 bg-red-50 rounded mt-1" style={{ color: "#dc2626" }}><AlertTriangle className="w-2.5 h-2.5" /> Stock bas</span>}
+                        {suggestion?.title && (
+                          <div className="mt-1 flex items-center gap-1">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-violet-50 rounded" style={{ color: "#8b5cf6" }}>IA: {suggestion.title.slice(0, 40)}...</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3"><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
                       <td className="px-4 py-3">{getStatusBadge(product.status)}</td>
-                      <td className="px-4 py-3"><span className={`text-[11px] font-semibold px-2 py-1 rounded-full ${seo.bg}`} style={{ color: seo.color }}>{seo.label}</span></td>
+                      <td className="px-4 py-3"><ScoreBadge score={score} /></td>
+                      <td className="px-4 py-3">
+                        {suggestion ? (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => applyAISuggestion(product.id, "title")} disabled={!suggestion.title || actionLoading === `ai-apply-${product.id}`} className="p-1 hover:bg-violet-50 rounded" title="Appliquer titre IA">
+                              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                            </button>
+                            <button onClick={() => { setAiSuggestions((prev) => { const n = { ...prev }; delete n[product.id]; return n; }); }} className="p-1 hover:bg-red-50 rounded" title="Ignorer">
+                              <X className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px]" style={{ color: "#94a3b8" }}>—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => setPreviewProduct(product)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Aperçu">
+                            <Eye className="w-4 h-4" style={{ color: "#64748b" }} />
+                          </button>
                           <button onClick={() => handleAiTitle(product)} disabled={actionLoading === `ai-${product.id}`}
-                            className="p-1.5 hover:bg-violet-50 rounded-lg" title="Améliorer le titre avec l'IA">
-                            {actionLoading === `ai-${product.id}` ? <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#8b5cf6" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#8b5cf6" }} />}
+                            className="p-1.5 hover:bg-violet-50 rounded-lg" title="Générer titre IA">
+                            {actionLoading === `ai-${product.id}` ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#8b5cf6" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#8b5cf6" }} />}
                           </button>
                           <button onClick={() => handleDuplicate(product.id)} disabled={actionLoading === `dup-${product.id}`}
-                            className="p-1.5 hover:bg-blue-50 rounded-lg" title="Dupliquer ce produit">
-                            {actionLoading === `dup-${product.id}` ? <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#3b82f6" }} /> : <Copy className="w-4 h-4" style={{ color: "#3b82f6" }} />}
+                            className="p-1.5 hover:bg-blue-50 rounded-lg" title="Dupliquer">
+                            {actionLoading === `dup-${product.id}` ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#3b82f6" }} /> : <Copy className="w-4 h-4" style={{ color: "#3b82f6" }} />}
                           </button>
-                          <button className="p-1.5 hover:bg-red-50 rounded-lg" title="Archiver"><Archive className="w-4 h-4" style={{ color: "#ef4444" }} /></button>
+                          <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver "${product.title}" ?`, action: () => handleBulkStatus("archived") })}
+                            className="p-1.5 hover:bg-red-50 rounded-lg" title="Archiver">
+                            <Archive className="w-4 h-4" style={{ color: "#ef4444" }} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -478,7 +685,7 @@ export default function ProductsPage() {
             <p className="text-sm" style={{ color: "#64748b" }}>{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredProducts.length)} sur {filteredProducts.length}</p>
             <div className="flex items-center gap-2">
               <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}
-                className="p-2 hover:bg-white rounded-lg border border-gray-200 disabled:opacity-40" title="← Page précédente">
+                className="p-2 hover:bg-white rounded-lg border border-gray-200 disabled:opacity-40">
                 <ChevronLeft className="w-4 h-4" style={{ color: "#374151" }} />
               </button>
               {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => i + 1).map((page) => (
@@ -487,7 +694,7 @@ export default function ProductsPage() {
                   style={{ color: currentPage === page ? "#fff" : "#374151" }}>{page}</button>
               ))}
               <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}
-                className="p-2 hover:bg-white rounded-lg border border-gray-200 disabled:opacity-40" title="→ Page suivante">
+                className="p-2 hover:bg-white rounded-lg border border-gray-200 disabled:opacity-40">
                 <ChevronRight className="w-4 h-4" style={{ color: "#374151" }} />
               </button>
             </div>
