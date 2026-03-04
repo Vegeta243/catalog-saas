@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Settings, User, Store, Bell, CreditCard, Key, Shield, Save,
   Globe, Moon, Sun, Palette, Upload, Eye, EyeOff, Check, Copy,
-  RefreshCw, ChevronRight, Mail, Phone, MapPin, ExternalLink,
+  RefreshCw, Mail, Phone, ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 

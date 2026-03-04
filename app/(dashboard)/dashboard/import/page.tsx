@@ -37,14 +37,14 @@ export default function ImportPage() {
     setResults(urlList.map((url) => ({ url, status: "pending" })));
     setImporting(true);
 
-    for (let i = 0; i < urlList.length; i++) {
+    await Promise.all(urlList.map(async (url, i) => {
       setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "scraping" } : r));
 
       try {
         const res = await fetch("/api/import/scrape", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: urlList[i], margin: parseFloat(margin) }),
+          body: JSON.stringify({ url, margin: parseFloat(margin) }),
         });
 
         if (!res.ok) throw new Error("Échec du scraping");
@@ -54,7 +54,7 @@ export default function ImportPage() {
       } catch {
         setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: "Impossible de charger cette URL" } : r));
       }
-    }
+    }));
     setImporting(false);
   };
 

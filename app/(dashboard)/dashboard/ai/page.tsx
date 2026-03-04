@@ -113,13 +113,13 @@ export default function AIPage() {
     setGenerating(productId);
     try {
       const toApply = fields || ["title", "description", "tags"];
-      for (const field of toApply) {
+      await Promise.all(toApply.map(async (field) => {
         const value = field === "title" ? content.title : field === "description" ? content.description : (content.keywords || content.tags);
-        if (!value) continue;
+        if (!value) return;
         const apiField = field === "description" ? "body_html" : field === "tags" ? "tags" : field;
         await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ productIds: [productId], field: apiField, value }) });
-      }
+      }));
       addToast("Contenu appliqué sur Shopify", "success");
       setGeneratedContent((prev) => { const n = { ...prev }; delete n[productId]; return n; });
     } catch { addToast("Erreur lors de l'application", "error"); }
@@ -130,18 +130,20 @@ export default function AIPage() {
     if (selected.length === 0) return;
     setMassMode(true);
     setMassProgress({ current: 0, total: selected.length });
-    for (let i = 0; i < selected.length; i++) {
-      setMassProgress({ current: i + 1, total: selected.length });
-      const product = products.find((p) => p.id === selected[i]);
-      if (!product) continue;
+    let completed = 0;
+    await Promise.all(selected.map(async (selId) => {
+      const product = products.find((p) => p.id === selId);
+      if (!product) { completed++; setMassProgress({ current: completed, total: selected.length }); return; }
       try {
         const res = await fetch("/api/ai/generate", { method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "full" }) });
-        if (!res.ok) continue;
+        if (!res.ok) { completed++; setMassProgress({ current: completed, total: selected.length }); return; }
         const data = await res.json();
         setGeneratedContent((prev) => ({ ...prev, [product.id]: data }));
       } catch { /* continue */ }
-    }
+      completed++;
+      setMassProgress({ current: completed, total: selected.length });
+    }));
     addToast(`${selected.length} produit${selected.length > 1 ? "s" : ""} analysé${selected.length > 1 ? "s" : ""} par l'IA`, "success");
     setMassMode(false);
   };
@@ -175,7 +177,7 @@ export default function AIPage() {
 
   const handlePreviewApply = async (acceptedItems: AIPreviewItem[]) => {
     setApplyingPreview(true);
-    for (const item of acceptedItems) {
+    await Promise.all(acceptedItems.map(async (item) => {
       const id = String(item.id);
       const updates: string[] = [];
       if (item.suggested.title) updates.push("title");
@@ -191,7 +193,7 @@ export default function AIPage() {
         },
       }));
       await applyGenerated(id, updates);
-    }
+    }));
     addToast(`${acceptedItems.length} produit${acceptedItems.length > 1 ? "s" : ""} optimisé${acceptedItems.length > 1 ? "s" : ""}`, "success");
     setShowPreviewModal(false);
     setApplyingPreview(false);

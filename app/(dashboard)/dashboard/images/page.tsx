@@ -2,9 +2,9 @@
 
 import { useState, useRef, useCallback } from "react";
 import {
-  ImageIcon, Upload, Wand2, Download, RotateCcw, Crop, SunMedium,
-  Contrast, Palette, Sparkles, Trash2, ZoomIn, Loader2, X,
-  CheckCircle2, FileImage, ArrowRight, Plus,
+  ImageIcon, Upload, Wand2, Download, RotateCcw, SunMedium,
+  Contrast, Palette, Sparkles, Trash2, Loader2, X,
+  CheckCircle2, ArrowRight, Plus,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 
@@ -114,10 +114,12 @@ export default function ImagesPage() {
   const handleBatchProcess = async (action: string, width = 0, height = 0) => {
     setBatchProcessing(true);
     setBatchProgress({ current: 0, total: images.length });
-    for (let i = 0; i < images.length; i++) {
-      setBatchProgress({ current: i + 1, total: images.length });
-      await processImage(images[i], action, width, height);
-    }
+    let imgDone = 0;
+    await Promise.all(images.map(async (img) => {
+      await processImage(img, action, width, height);
+      imgDone++;
+      setBatchProgress({ current: imgDone, total: images.length });
+    }));
     addToast(`${images.length} image${images.length > 1 ? "s" : ""} traitée${images.length > 1 ? "s" : ""}`, "success");
     setBatchProcessing(false);
   };

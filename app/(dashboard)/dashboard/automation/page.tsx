@@ -191,9 +191,7 @@ export default function AutomationPage() {
       addToast("Aucune règle active", "error");
       return;
     }
-    for (const rule of activeRules) {
-      await executeRule(rule);
-    }
+    await Promise.all(activeRules.map((rule) => executeRule(rule)));
     addToast(`${activeRules.length} règles exécutées`, "success");
   };
 

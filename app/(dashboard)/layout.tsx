@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useState } from 'react';
 import {
   LayoutDashboard,
@@ -19,7 +20,6 @@ import {
   Download,
   Sparkles,
   Clock,
-  CreditCard,
   Crown,
   ImageIcon,
   Coins,
@@ -92,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className={`${sidebarCollapsed ? 'w-[68px]' : 'w-[260px]'} bg-[#0f172a] flex flex-col justify-between transition-all duration-300 relative`}>
         {/* Logo — links to landing page */}
         <div>
-          <a href="/" className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors`}>
+          <Link href="/" className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors`}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                 <Zap className="w-4 h-4" style={{ color: '#ffffff' }} />
@@ -101,7 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span className="text-lg font-bold tracking-tight" style={{ color: '#ffffff' }}>EcomPilot</span>
               )}
             </div>
-          </a>
+          </Link>
 
           {/* Navigation sections */}
           <div className={`${sidebarCollapsed ? 'px-2' : 'px-3'} pt-3 space-y-4`}>
@@ -248,9 +248,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </span>
               )}
             </button>
-            <a href="/dashboard/account" className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center cursor-pointer">
+            <Link href="/dashboard/account" className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center cursor-pointer">
               <User className="w-4 h-4" style={{ color: '#ffffff' }} />
-            </a>
+            </Link>
           </div>
         </header>
 

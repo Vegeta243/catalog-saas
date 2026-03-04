@@ -135,7 +135,7 @@ export default function HelpPage() {
         setChatMessages((prev) => [...prev, {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.suggestion || "Je suis désolé, je n'ai pas pu générer de réponse. Consultez la FAQ ci-dessous ou contactez le support.",
+          content: data.title || data.description || "Je suis désolé, je n'ai pas pu générer de réponse. Consultez la FAQ ci-dessous ou contactez le support.",
           timestamp: new Date(),
         }]);
       } else {

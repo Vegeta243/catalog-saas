@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { shopifyCache, shopifyCacheKey } from '@/lib/cache';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
-import { parse } from 'url';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -44,11 +43,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ ...cached as object, cached: true });
     }
 
-    let products = [];
-    let nextPageUrl = `https://${shop_domain}/admin/api/2026-01/products.json?limit=${limit}&fields=id,title,body_html,vendor,product_type,tags,status,variants,images,created_at,updated_at`;
+    const products: Record<string, unknown>[] = [];
+    let nextPageUrl: string | null = `https://${shop_domain}/admin/api/2026-01/products.json?limit=${limit}&fields=id,title,body_html,vendor,product_type,tags,status,variants,images,created_at,updated_at`;
 
-    while (nextPageUrl) {
-      const response = await fetch(nextPageUrl, {
+    while (nextPageUrl !== null) {
+      const currentUrl: string = nextPageUrl;
+      nextPageUrl = null;
+
+      const response: Response = await fetch(currentUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -63,12 +65,18 @@ export async function GET(request: Request) {
       }
 
       const data = await response.json();
-      products = products.concat(data.products);
+      for (const p of data.products) {
+        products.push(p as Record<string, unknown>);
+      }
 
       // Check for next page in Link header
-      const linkHeader = response.headers.get('link');
-      const nextLinkMatch = linkHeader?.match(/<([^>]+)>; rel="next"/);
-      nextPageUrl = nextLinkMatch ? nextLinkMatch[1] : null;
+      const linkHeader: string | null = response.headers.get('link');
+      if (linkHeader) {
+        const nextLinkMatch = linkHeader.match(/<([^>]+)>; rel="next"/);
+        if (nextLinkMatch?.[1]) {
+          nextPageUrl = nextLinkMatch[1];
+        }
+      }
     }
 
     // Cache results for 5 minutes

@@ -8,6 +8,7 @@ import {
   AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
+import Link from "next/link";
 import { ConfirmModal } from "@/lib/confirm-modal";
 
 interface ShopifyImage { src: string }
@@ -81,6 +82,7 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [bulkDescMode, setBulkDescMode] = useState<"replace" | "append">("replace");
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; title: string; message: string; action: () => void }>({
     open: false, title: "", message: "", action: () => {}
   });
@@ -149,7 +151,7 @@ export default function ProductsPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  });
+  }, [currentPage, totalPages, filteredProducts]);
 
   /* ──────── Selection ──────── */
   const toggleSelectProduct = (id: string) => {
@@ -217,18 +219,64 @@ export default function ProductsPage() {
     finally { setActionLoading(null); }
   };
 
+  const aiBatchDescriptions = async () => {
+    if (selectedProducts.length === 0) return;
+    setAiBatchLoading(true);
+    try {
+      const prods = selectedProducts
+        .map((id) => {
+          const p = products.find((x) => x.id === id);
+          return p ? { id: p.id, title: p.title, description: p.body_html, price: p.price } : null;
+        })
+        .filter(Boolean);
+      const batches = [];
+      for (let i = 0; i < prods.length; i += 10) {
+        batches.push(prods.slice(i, i + 10));
+      }
+      const allResults: Record<string, AISuggestion> = {};
+      await Promise.all(
+        batches.map(async (batch) => {
+          const res = await fetch("/api/ai/generate-descriptions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ products: batch }),
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.descriptions) {
+            data.descriptions.forEach((d: { id: string; description: string }) => {
+              allResults[d.id] = { productId: d.id, description: d.description };
+            });
+          }
+        })
+      );
+      setAiSuggestions((prev) => ({ ...prev, ...allResults }));
+      addToast(
+        `IA: ${Object.keys(allResults).length} description${Object.keys(allResults).length > 1 ? "s" : ""} générée${Object.keys(allResults).length > 1 ? "s" : ""}`,
+        "success"
+      );
+    } catch {
+      addToast("Erreur IA — réessayez", "error");
+    }
+    setAiBatchLoading(false);
+  };
+
   const applyAllAISuggestions = async () => {
     setAiBatchLoading(true);
     const ids = Object.keys(aiSuggestions);
-    for (const id of ids) {
-      const sug = aiSuggestions[id];
-      if (!sug) continue;
-      try {
-        if (sug.title) await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "title", value: sug.title }) });
-        if (sug.description) await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "body_html", value: sug.description }) });
-        if (sug.tags) await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "tags", value: sug.tags }) });
-      } catch { /* continue */ }
-    }
+    await Promise.all(
+      ids.map(async (id) => {
+        const sug = aiSuggestions[id];
+        if (!sug) return;
+        try {
+          const calls: Promise<Response>[] = [];
+          if (sug.title) calls.push(fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "title", value: sug.title }) }));
+          if (sug.description) calls.push(fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "body_html", value: sug.description }) }));
+          if (sug.tags) calls.push(fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [id], field: "tags", value: sug.tags }) }));
+          await Promise.all(calls);
+        } catch { /* continue */ }
+      })
+    );
     addToast(`${ids.length} produit${ids.length > 1 ? "s" : ""} mis à jour avec l'IA`, "success");
     setAiSuggestions({});
     setAiBatchLoading(false);
@@ -257,15 +305,30 @@ export default function ProductsPage() {
     finally { setActionLoading(null); }
   };
 
-  const handleBulkFieldApply = async (field: string, value: string) => {
+  const handleBulkFieldApply = async (field: string, value: string, mode: "replace" | "append" = "replace") => {
     if (!value) return;
     setActionLoading(field);
     try {
-      const res = await fetch("/api/shopify/bulk-edit", {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productIds: selectedProducts, field, value }),
-      });
-      if (!res.ok) throw new Error();
+      if (mode === "append" && field === "body_html") {
+        await Promise.all(
+          selectedProducts.map(async (id) => {
+            const p = products.find((x) => x.id === id);
+            const current = p?.body_html || "";
+            const newVal = current + "\n" + value;
+            await fetch("/api/shopify/bulk-edit", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ productIds: [id], field, value: newVal }),
+            });
+          })
+        );
+      } else {
+        const res = await fetch("/api/shopify/bulk-edit", {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productIds: selectedProducts, field, value }),
+        });
+        if (!res.ok) throw new Error();
+      }
       addToast(`${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} mis à jour`, "success");
       setSelectedProducts([]); setActiveAction(null);
       setBulkTitle(""); setBulkDescription(""); setBulkTags("");
@@ -392,6 +455,13 @@ export default function ProductsPage() {
                     </div>
                   </div>
                 )}
+                {aiSuggestions[previewProduct.id].description && (
+                  <div className="mb-2">
+                    <p className="text-[11px] font-medium mb-0.5" style={{ color: "#64748b" }}>Description IA :</p>
+                    <div className="text-xs prose prose-sm max-w-none mb-1" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: aiSuggestions[previewProduct.id].description!.slice(0, 200) + "..." }} />
+                    <button onClick={() => applyAISuggestion(previewProduct.id, "body_html")} className="text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -424,9 +494,9 @@ export default function ProductsPage() {
             style={{ color: "#374151" }}>
             <Download className="w-4 h-4" style={{ color: "#374151" }} /> CSV
           </button>
-          <a href="/dashboard/import" className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium shadow-sm">
+          <Link href="/dashboard/import" className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium shadow-sm">
             <Upload className="w-4 h-4" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Importer</span>
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -487,6 +557,11 @@ export default function ProductsPage() {
                 <Sparkles className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
                 <span style={{ color: "#6d28d9" }}>IA Tags</span>
               </button>
+              <button onClick={() => aiBatchDescriptions()} disabled={aiBatchLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
+                <FileText className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                <span style={{ color: "#6d28d9" }}>IA Descriptions</span>
+              </button>
               <button onClick={() => aiBatchGenerate("full")} disabled={aiBatchLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 rounded-lg text-xs font-medium disabled:opacity-50">
                 {aiBatchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} /> : <TrendingUp className="w-3.5 h-3.5" style={{ color: "#fff" }} />}
@@ -541,33 +616,88 @@ export default function ProductsPage() {
             </div>
           )}
           {activeAction === "title" && (
-            <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-              <input type="text" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)} placeholder="Nouveau titre pour tous"
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
-              <button onClick={() => handleBulkFieldApply("title", bulkTitle)} disabled={!bulkTitle || actionLoading === "title"}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-                <span style={{ color: "#fff" }}>{actionLoading === "title" ? "..." : "Appliquer"}</span>
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-lg border border-blue-100">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>Modification manuelle</p>
+                <input type="text" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)} placeholder="Nouveau titre pour tous"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+                <button onClick={() => handleBulkFieldApply("title", bulkTitle)} disabled={!bulkTitle || actionLoading === "title"}
+                  className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                  <span style={{ color: "#fff" }}>{actionLoading === "title" ? "..." : "Appliquer"}</span>
+                </button>
+              </div>
+              <div className="border-t md:border-t-0 md:border-l border-gray-100 pt-3 md:pt-0 md:pl-4">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#8b5cf6" }}>Génération IA</p>
+                <button onClick={() => aiBatchGenerate("title")} disabled={aiBatchLoading}
+                  className="w-full px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                  {aiBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Wand2 className="w-4 h-4" style={{ color: "#fff" }} />}
+                  <span style={{ color: "#fff" }}>Générer {selectedProducts.length} titre{selectedProducts.length > 1 ? "s" : ""} IA</span>
+                </button>
+                <p className="text-[11px] mt-2" style={{ color: "#8b5cf6" }}>Les suggestions apparaîtront dans le tableau ci-dessous</p>
+              </div>
             </div>
           )}
           {activeAction === "description" && (
-            <div className="flex flex-col gap-3 p-3 bg-white rounded-lg border border-blue-100">
-              <textarea value={bulkDescription} onChange={(e) => setBulkDescription(e.target.value)} placeholder="Nouvelle description..." rows={3}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" style={{ color: "#0f172a" }} />
-              <button onClick={() => handleBulkFieldApply("body_html", bulkDescription)} disabled={!bulkDescription || !!actionLoading}
-                className="self-end px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-                <span style={{ color: "#fff" }}>{actionLoading ? "..." : "Appliquer"}</span>
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-lg border border-blue-100">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>Modification manuelle</p>
+                <textarea value={bulkDescription} onChange={(e) => setBulkDescription(e.target.value)} placeholder="Nouvelle description pour les produits sélectionnés..." rows={4}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" style={{ color: "#0f172a" }} />
+                <div className="flex items-center gap-4 mt-2">
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input type="radio" name="descMode" value="replace" checked={bulkDescMode === "replace"} onChange={() => setBulkDescMode("replace")} className="accent-blue-600" />
+                    <span style={{ color: "#374151" }}>Remplacer</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input type="radio" name="descMode" value="append" checked={bulkDescMode === "append"} onChange={() => setBulkDescMode("append")} className="accent-blue-600" />
+                    <span style={{ color: "#374151" }}>Ajouter à la suite</span>
+                  </label>
+                </div>
+                <button onClick={() => handleBulkFieldApply("body_html", bulkDescription, bulkDescMode)} disabled={!bulkDescription || !!actionLoading}
+                  className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                  <span style={{ color: "#fff" }}>{actionLoading ? "..." : "Appliquer"}</span>
+                </button>
+              </div>
+              <div className="border-t md:border-t-0 md:border-l border-gray-100 pt-3 md:pt-0 md:pl-4">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#8b5cf6" }}>Génération IA</p>
+                <button onClick={() => aiBatchDescriptions()} disabled={aiBatchLoading}
+                  className="w-full px-4 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                  {aiBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#fff" }} />}
+                  <span style={{ color: "#fff" }}>Générer {selectedProducts.length} description{selectedProducts.length > 1 ? "s" : ""} IA</span>
+                </button>
+                <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "#8b5cf6" }}>
+                  Descriptions SEO optimisées générées par IA (gpt-4o-mini). Les suggestions apparaîtront dans le tableau — vérifiez puis appliquez.
+                </p>
+                {Object.values(aiSuggestions).filter((s) => s.description).length > 0 && (
+                  <div className="mt-3 p-2 bg-violet-50 rounded-lg border border-violet-200">
+                    <p className="text-[11px] font-semibold" style={{ color: "#6d28d9" }}>
+                      {Object.values(aiSuggestions).filter((s) => s.description).length} description{Object.values(aiSuggestions).filter((s) => s.description).length > 1 ? "s" : ""} prête{Object.values(aiSuggestions).filter((s) => s.description).length > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           {activeAction === "tags" && (
-            <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
-              <input type="text" value={bulkTags} onChange={(e) => setBulkTags(e.target.value)} placeholder="tag1, tag2, tag3"
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
-              <button onClick={() => handleBulkFieldApply("tags", bulkTags)} disabled={!bulkTags || !!actionLoading}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-                <span style={{ color: "#fff" }}>{actionLoading ? "..." : "Appliquer"}</span>
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-lg border border-blue-100">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>Modification manuelle</p>
+                <input type="text" value={bulkTags} onChange={(e) => setBulkTags(e.target.value)} placeholder="tag1, tag2, tag3"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+                <button onClick={() => handleBulkFieldApply("tags", bulkTags)} disabled={!bulkTags || !!actionLoading}
+                  className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                  <span style={{ color: "#fff" }}>{actionLoading ? "..." : "Appliquer"}</span>
+                </button>
+              </div>
+              <div className="border-t md:border-t-0 md:border-l border-gray-100 pt-3 md:pt-0 md:pl-4">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#8b5cf6" }}>Génération IA</p>
+                <button onClick={() => aiBatchGenerate("tags")} disabled={aiBatchLoading}
+                  className="w-full px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
+                  {aiBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#fff" }} />}
+                  <span style={{ color: "#fff" }}>Générer {selectedProducts.length} lot{selectedProducts.length > 1 ? "s" : ""} de tags IA</span>
+                </button>
+                <p className="text-[11px] mt-2" style={{ color: "#8b5cf6" }}>10 tags SEO pertinents par produit — vérifiez puis appliquez</p>
+              </div>
             </div>
           )}
         </div>
@@ -589,9 +719,9 @@ export default function ProductsPage() {
           <Package className="w-12 h-12 mb-4" style={{ color: "#cbd5e1" }} />
           <h3 className="text-lg font-semibold mb-2" style={{ color: "#0f172a" }}>Aucun produit trouvé</h3>
           <p className="text-sm mb-4" style={{ color: "#64748b" }}>Importez vos premiers produits pour commencer</p>
-          <a href="/dashboard/import" className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium">
+          <Link href="/dashboard/import" className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium">
             <span style={{ color: "#fff" }}>Importer mes premiers produits</span>
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -638,6 +768,11 @@ export default function ProductsPage() {
                             <span className="text-[10px] px-1.5 py-0.5 bg-violet-50 rounded" style={{ color: "#8b5cf6" }}>IA: {suggestion.title.slice(0, 40)}...</span>
                           </div>
                         )}
+                        {suggestion?.description && (
+                          <div className="mt-1 flex items-center gap-1">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-violet-50 rounded" style={{ color: "#8b5cf6" }}>📝 Description IA prête</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3"><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
                       <td className="px-4 py-3">{getStatusBadge(product.status)}</td>
@@ -645,7 +780,22 @@ export default function ProductsPage() {
                       <td className="px-4 py-3">
                         {suggestion ? (
                           <div className="flex items-center gap-1">
-                            <button onClick={() => applyAISuggestion(product.id, "title")} disabled={!suggestion.title || actionLoading === `ai-apply-${product.id}`} className="p-1 hover:bg-violet-50 rounded" title="Appliquer titre IA">
+                            {suggestion.title && (
+                              <button onClick={() => applyAISuggestion(product.id, "title")} disabled={actionLoading === `ai-apply-${product.id}`} className="p-1 hover:bg-violet-50 rounded" title="Appliquer titre IA">
+                                <Type className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                              </button>
+                            )}
+                            {suggestion.description && (
+                              <button onClick={() => applyAISuggestion(product.id, "body_html")} disabled={actionLoading === `ai-apply-${product.id}`} className="p-1 hover:bg-violet-50 rounded" title="Appliquer description IA">
+                                <FileText className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                              </button>
+                            )}
+                            {suggestion.tags && (
+                              <button onClick={() => applyAISuggestion(product.id, "tags")} disabled={actionLoading === `ai-apply-${product.id}`} className="p-1 hover:bg-violet-50 rounded" title="Appliquer tags IA">
+                                <Tag className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                              </button>
+                            )}
+                            <button onClick={() => applyAISuggestion(product.id, "title")} disabled={!suggestion.title || actionLoading === `ai-apply-${product.id}`} className="p-1 hover:bg-violet-50 rounded" title="Tout appliquer">
                               <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
                             </button>
                             <button onClick={() => { setAiSuggestions((prev) => { const n = { ...prev }; delete n[product.id]; return n; }); }} className="p-1 hover:bg-red-50 rounded" title="Ignorer">
