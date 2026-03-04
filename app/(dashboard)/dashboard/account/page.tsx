@@ -271,9 +271,9 @@ export default function AccountPage() {
                 <h3 className="text-sm font-semibold mb-4" style={{ color: "#0f172a" }}>Changer de plan</h3>
                 <div className="grid grid-cols-3 gap-4">
                   {[
-                    { name: "Starter", key: "starter" as const, features: ["1 boutique", "50 tâches/mois", "Support email"] },
-                    { name: "Pro", key: "pro" as const, features: ["3 boutiques", "300 tâches/mois", "Support prioritaire", "Automatisations"] },
-                    { name: "Scale", key: "scale" as const, features: ["Boutiques illimitées", "1 000 tâches/mois", "Support dédié", "API complète"] },
+                    { name: "Starter", key: "starter" as const, features: ["1 boutique", "1 000 tâches/mois", "Support email"] },
+                    { name: "Pro", key: "pro" as const, features: ["3 boutiques", "20 000 tâches/mois", "Support prioritaire", "Automatisations"] },
+                    { name: "Scale", key: "scale" as const, features: ["Boutiques illimitées", "100 000 tâches/mois", "Support dédié", "API complète"] },
                   ].map((plan) => {
                     const isCurrent = plan.key === currentPlan;
                     return (

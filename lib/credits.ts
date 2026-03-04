@@ -2,15 +2,15 @@
 // Tâches mensuelles par plan (serveur uniquement)
 
 export const PLAN_TASKS: Record<string, number> = {
-  starter: 50,
-  pro: 300,
-  scale: 1000,
+  starter: 1000,
+  pro: 20000,
+  scale: 100000,
 };
 
 export const PLAN_PRICES: Record<string, string> = {
-  starter: "49€",
+  starter: "39€",
   pro: "89€",
-  scale: "129€",
+  scale: "179€",
 };
 
 // Coût en tâches par action (invisible pour l'utilisateur)

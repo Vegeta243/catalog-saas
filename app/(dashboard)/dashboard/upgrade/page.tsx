@@ -8,11 +8,11 @@ const PLANS = [
   {
     id: "starter",
     name: "Starter",
-    price: 49,
-    yearlyPrice: 39,
+    price: 39,
+    yearlyPrice: 29,
     color: "#2563eb",
     bg: "#eff6ff",
-    features: ["50 tâches IA / mois", "Jusqu'à 500 produits", "Import : 20/mois", "1 boutique Shopify", "Support email"],
+    features: ["1 000 tâches IA / mois", "Jusqu'à 500 produits", "Import : 20/mois", "1 boutique Shopify", "Support email"],
   },
   {
     id: "pro",
@@ -22,16 +22,16 @@ const PLANS = [
     color: "#059669",
     bg: "#ecfdf5",
     popular: true,
-    features: ["300 tâches IA / mois", "Produits illimités", "Import illimité AliExpress & CJ", "3 boutiques", "Support prioritaire 24h", "Automatisations avancées"],
+    features: ["20 000 tâches IA / mois", "Produits illimités", "Import illimité AliExpress & CJ", "3 boutiques", "Support prioritaire 24h", "Automatisations avancées"],
   },
   {
     id: "scale",
     name: "Scale",
-    price: 129,
-    yearlyPrice: 99,
+    price: 179,
+    yearlyPrice: 139,
     color: "#7c3aed",
     bg: "#faf5ff",
-    features: ["1 000 tâches IA / mois", "Boutiques illimitées", "Automatisations illimitées", "Support dédié 4h", "Accès anticipé nouveautés"],
+    features: ["100 000 tâches IA / mois", "Boutiques illimitées", "Automatisations illimitées", "Support dédié 4h", "Accès anticipé nouveautés"],
   },
 ];
 

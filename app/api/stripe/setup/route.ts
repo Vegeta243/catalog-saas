@@ -8,9 +8,9 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const PLANS = [
-  { id: "starter", name: "EcomPilot Starter", monthly: 4900, yearly: 3900 },
+  { id: "starter", name: "EcomPilot Starter", monthly: 3900, yearly: 2900 },
   { id: "pro",     name: "EcomPilot Pro",     monthly: 8900, yearly: 6900 },
-  { id: "scale",   name: "EcomPilot Scale",   monthly: 12900, yearly: 9900 },
+  { id: "scale",   name: "EcomPilot Scale",   monthly: 17900, yearly: 13900 },
 ];
 
 export async function POST(req: Request) {
