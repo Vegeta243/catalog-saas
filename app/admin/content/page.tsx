@@ -26,7 +26,7 @@ export default function AdminContentPage() {
     },
     pricing: {
       title: "Des tarifs simples et transparents",
-      subtitle: "7 jours d'essai gratuit — aucun débit avant J+7",
+      subtitle: "10 actions gratuites — aucune carte requise pour démarrer",
     },
     faq: {
       title: "Questions fréquentes",
@@ -35,7 +35,7 @@ export default function AdminContentPage() {
     cta: {
       title: "Prêt à booster votre catalogue ?",
       subtitle: "Démarrez votre optimisation Shopify dès aujourd'hui",
-      button: "Démarrer l'essai gratuit",
+      button: "Commencer gratuitement",
     },
   });
 

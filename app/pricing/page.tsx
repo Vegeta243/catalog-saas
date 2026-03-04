@@ -39,7 +39,7 @@ const PLANS = [
       "Import URL (5/jour)",
       "Support email",
     ],
-    cta: "Commencer l'essai gratuit",
+    cta: "Choisir Starter",
     popular: false,
     isFree: false,
   },
@@ -61,7 +61,7 @@ const PLANS = [
       "Historique 30 jours",
       "Support prioritaire",
     ],
-    cta: "Commencer l'essai gratuit",
+    cta: "Choisir Pro",
     popular: true,
     isFree: false,
   },
@@ -84,7 +84,7 @@ const PLANS = [
       "API access",
       "Support dédié + Slack",
     ],
-    cta: "Commencer l'essai gratuit",
+    cta: "Choisir Scale",
     popular: false,
     isFree: false,
   },
@@ -116,7 +116,7 @@ export default function PricingPage() {
           Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
         </h1>
         <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "#64748b" }}>
-          7 jours d&apos;essai gratuit. Carte requise — aucun débit avant la fin de l&apos;essai. Résiliez en 1 clic.
+          Démarrez avec 10 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
         </p>
 
         {/* Toggle */}

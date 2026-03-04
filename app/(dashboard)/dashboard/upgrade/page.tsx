@@ -172,7 +172,7 @@ export default function UpgradePage() {
         <span className="flex items-center gap-1.5"><Shield className="w-4 h-4" style={{ color: "#059669" }} /> Paiement sécurisé Stripe</span>
         <span className="flex items-center gap-1.5"><Check className="w-4 h-4" style={{ color: "#059669" }} /> Sans engagement</span>
         <span className="flex items-center gap-1.5"><Zap className="w-4 h-4" style={{ color: "#2563eb" }} /> Accès immédiat</span>
-        <span className="flex items-center gap-1.5"><Shield className="w-4 h-4" style={{ color: "#7c3aed" }} /> Essai 7 jours gratuit</span>
+        <span className="flex items-center gap-1.5"><Shield className="w-4 h-4" style={{ color: "#7c3aed" }} /> Accès immédiat</span>
       </div>
     </div>
   );

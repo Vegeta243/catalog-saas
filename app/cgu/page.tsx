@@ -74,7 +74,7 @@ export default function CGUPage() {
             <ul className="list-disc pl-6 mt-2 space-y-1">
               <li>Les abonnements payants sont facturés mensuellement ou annuellement, selon le choix de l&apos;Utilisateur.</li>
               <li>Le paiement est effectué via Stripe (carte bancaire).</li>
-              <li>Un essai gratuit de 7 jours est proposé pour les plans payants. Une carte bancaire valide est requise à l&apos;inscription. <strong>Aucun débit n&apos;est effectué pendant la période d&apos;essai.</strong> Si l&apos;Utilisateur ne résilie pas avant la fin de la période d&apos;essai, il sera automatiquement facturé au tarif du plan choisi.</li>
+              <li>Un plan gratuit avec 10 actions IA est disponible sans carte bancaire. Les plans payants donnent accès à des volumes d&apos;actions supérieurs et des fonctionnalités avancées.</li>
               <li>L&apos;Utilisateur peut annuler son abonnement à tout moment depuis le tableau de bord. L&apos;accès reste actif jusqu&apos;à la fin de la période facturée.</li>
               <li>Les tarifs peuvent être modifiés avec un préavis de 30 jours.</li>
             </ul>

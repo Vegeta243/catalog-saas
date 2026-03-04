@@ -9,13 +9,13 @@ export default function AdminSettingsPage() {
     siteName: "EcomPilot",
     siteUrl: "https://ecompilot.com",
     supportEmail: "support@ecompilot.com",
-    maxProductsFree: "50",
+    maxProductsFree: "10",
     maxProductsStarter: "500",
     maxProductsPro: "2000",
     maxProductsScale: "10000",
     maintenanceMode: false,
     registrationOpen: true,
-    trialDays: "7",
+    trialDays: "0",
     defaultModel: "gpt-4o-mini",
   });
 

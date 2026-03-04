@@ -67,7 +67,6 @@ export async function POST(req: Request) {
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/billing?checkout=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing?checkout=cancel`,
       subscription_data: {
-        trial_period_days: 7,
         metadata: { plan, billing },
       },
       allow_promotion_codes: true,
