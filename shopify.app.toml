@@ -1,0 +1,62 @@
+# shopify.app.toml — EcomPilot Shopify App Configuration
+# Used by Shopify CLI (shopify app deploy / shopify app dev)
+# Register at: https://partners.shopify.com
+
+name = "EcomPilot"
+client_id = "cd3da6aff7869afab614e42f45a0e1a7"
+
+[build]
+  automatically_update_urls_on_dev = true
+
+[access_scopes]
+  # Scopes requested during OAuth installation
+  scopes = "read_products,write_products,read_inventory,write_inventory,read_price_rules,write_price_rules,read_product_listings,read_orders,read_analytics"
+
+[auth]
+  redirect_urls = [
+    "https://app.ecompilot.fr/api/auth/shopify/callback",
+    "http://localhost:3000/api/auth/shopify/callback",
+  ]
+
+[webhooks]
+  api_version = "2024-01"
+
+  # Notified when a shop uninstalls the app
+  [[webhooks.subscriptions]]
+    topics = ["app/uninstalled"]
+    uri    = "/api/webhooks/shopify/uninstalled"
+
+  # Product changes — keep import history up to date
+  [[webhooks.subscriptions]]
+    topics = ["products/create", "products/update", "products/delete"]
+    uri    = "/api/webhooks/shopify/products"
+
+  # GDPR compliance webhooks (mandatory for App Store)
+  [[webhooks.subscriptions]]
+    topics = ["customers/data_request"]
+    uri    = "/api/webhooks/shopify/gdpr/customers-data-request"
+  [[webhooks.subscriptions]]
+    topics = ["customers/redact"]
+    uri    = "/api/webhooks/shopify/gdpr/customers-redact"
+  [[webhooks.subscriptions]]
+    topics = ["shop/redact"]
+    uri    = "/api/webhooks/shopify/gdpr/shop-redact"
+
+[app_proxy]
+  url    = "https://app.ecompilot.fr/proxy"
+  subpath = "ecompilot"
+  prefix  = "apps"
+
+[pos]
+  embedded = false
+
+[application_url]
+  # Shopify opens this URL when merchant opens your app in admin
+  url = "https://app.ecompilot.fr/shopify-embed"
+
+[embedded]
+  enabled = true
+
+[extension_directories]
+  # No extensions for now
+  directories = []

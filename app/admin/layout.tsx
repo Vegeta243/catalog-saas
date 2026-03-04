@@ -1,13 +1,15 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import {
   LayoutDashboard, Users, CreditCard, FileText, BarChart3,
   LogOut, ChevronLeft, ChevronRight, Shield, Zap, Settings, Bell, User, Search
 } from "lucide-react";
+
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
 const adminNav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -22,6 +24,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || user.email !== ADMIN_EMAIL) {
+          router.replace("/dashboard");
+          return;
+        }
+        setAuthorized(true);
+      } catch {
+        router.replace("/dashboard");
+      } finally {
+        setChecking(false);
+      }
+    })();
+  }, [router]);
 
   const handleLogout = async () => {
     try {
@@ -30,6 +52,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } catch { /* ignore */ }
     router.push("/login");
   };
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: "#1c1917" }}>
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-full border-2 border-red-500 border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="text-sm" style={{ color: "#78716c" }}>Vérification des droits...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authorized) return null;
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "#f8fafc" }}>

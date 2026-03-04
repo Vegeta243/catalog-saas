@@ -47,32 +47,33 @@ const PLANS = [
     monthlyPrice: 49, yearlyPrice: 41, popular: false,
     target: "Pour les petites boutiques qui démarrent",
     fit: "Vous avez moins de 500 produits et cherchez à gagner du temps sur les tâches répétitives.",
-    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "50 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "Essai gratuit 7 jours"],
+    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "50 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "10 actions gratuites pour démarrer"],
   },
   {
     id: "pro", name: "Pro", badge: "🥇",
     monthlyPrice: 89, yearlyPrice: 74, popular: true,
     target: "Pour les boutiques en croissance",
     fit: "Vous gérez un catalogue important et voulez automatiser votre croissance avec l'IA.",
-    features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "300 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score visibilité par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Essai gratuit 7 jours"],
+    features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "300 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score visibilité par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Démarrage immédiat • sans engagement"],
   },
   {
     id: "scale", name: "Scale", badge: "🏆",
     monthlyPrice: 129, yearlyPrice: 107, popular: false,
     target: "Pour les boutiques à grande échelle",
     fit: "Vous gérez plusieurs boutiques et avez besoin de performances maximales.",
-    features: ["Boutiques illimitées", "Tout Pro +", "1 000 tâches IA/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (4h)", "Accès anticipé nouveautés", "Essai gratuit 7 jours"],
+    features: ["Boutiques illimitées", "Tout Pro +", "1 000 tâches IA/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (4h)", "Accès anticipé nouveautés", "Accès immédiat dès le paiement"],
   },
 ];
 
 const FAQ_ITEMS = [
   { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer. Chaque modification passe par votre approbation — produit par produit ou en masse. Vous gardez le contrôle total." },
   { q: "Combien de temps faut-il pour tout mettre en place ?", a: "30 secondes pour connecter votre boutique. Vos produits se synchronisent automatiquement. En 5 minutes, vous pouvez déjà générer vos premières descriptions IA et modifier vos prix en masse." },
-  { q: "C'est quoi exactement une « tâche IA » ?", a: "Une tâche IA = une action d'intelligence artificielle (générer un titre, une description, des tags). Le nombre de tâches dépend de votre plan. Les actions manuelles (édition en masse, export, filtres) sont illimitées et gratuites." },
-  { q: "Est-ce que ça fonctionne bien pour le dropshipping ?", a: "Absolument. EcomPilot est conçu pour les dropshippers : import direct depuis AliExpress/CJ, génération IA de descriptions uniques, ajustement automatique des marges." },
-  { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic depuis votre tableau de bord. Pas d'engagement, pas de frais cachés. Si vous annulez, vous gardez accès jusqu'à la fin de votre période payée." },
-  { q: "Quelle est la différence avec les apps Shopify classiques ?", a: "Les apps Shopify font une seule chose. EcomPilot centralise tout : édition en masse, IA, images, import, automatisations, visibilité. Un seul outil au lieu de 5 apps séparées." },
-  { q: "Comment fonctionne la validation de carte à l'inscription ?", a: "Nous utilisons Stripe, le leader mondial du paiement en ligne, pour sécuriser votre carte. Votre carte est vérifiée mais aucun montant n'est débité pendant les 7 jours d'essai. Vous recevrez un email de rappel avant la fin de la période." },
+  { q: "C'est quoi exactement une action gratuite ?", a: "Chaque génération IA (titre, description, tags) ou import de produit compte pour 1 action. Vous démarrez avec 10 actions gratuites, sans carte bancaire. Une fois la limite atteinte, vous choisissez un plan adapté à vos besoins pour continuer." },
+  { q: "Est-ce que ça fonctionne bien pour le dropshipping ?", a: "Absolument. EcomPilot est conçu pour les dropshippers : import direct depuis AliExpress et CJ Dropshipping, génération IA de descriptions uniques, ajustement automatique des marges." },
+  { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic depuis votre tableau de bord. Aucun engagement, aucun frais caché. Si vous annulez, vous gardez l'accès jusqu'à la fin de votre période payée." },
+  { q: "Quelle est la différence avec les apps Shopify classiques ?", a: "Les apps Shopify font une seule chose. EcomPilot centralise tout : édition en masse, IA, images, import, automatisations, score de visibilité. Un seul outil à la place de 5 apps séparées." },
+  { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec vos 10 premières actions, sans renseigner de carte. Vous n'en avez besoin que lorsque vous choisissez un plan payant, après avoir constaté la valeur de l'outil par vous-même." },
+  { q: "Que se passe-t-il quand on atteint la limite des 10 actions ?", a: "Un message clair s'affiche pour vous proposer de passer à un plan payant. Vos données et votre boutique restent intactes. Vous choisissez votre plan et continuez là où vous vous êtes arrêté(e), immédiatement." },
 ];
 
 const TESTIMONIALS = [
@@ -120,7 +121,7 @@ export default function HomePage() {
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5"
               style={{ color: "#fff" }}
             >
-              Essai gratuit 7j →
+              Essayer gratuitement →
             </button>
           </div>
         </div>
@@ -161,7 +162,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 mt-4 mb-12">
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
-              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Carte requise — aucun débit avant J+7
+              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Sans carte bancaire • 10 actions offertes
             </p>
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
               <Check className="w-4 h-4" style={{ color: "#059669" }} /> Résiliation en 1 clic
@@ -340,7 +341,7 @@ export default function HomePage() {
               Des prix simples. Pas de surprise.
             </h2>
             <p className="text-lg mb-8" style={{ color: "#64748b" }}>
-              7 jours d&apos;essai gratuit. Carte requise à l&apos;inscription — aucun débit si vous résiliez avant la fin de l&apos;essai.
+              Commencez avec <strong>10 actions gratuites</strong> — sans carte bancaire. Passez à un plan payant quand vous êtes convaincu(e).
             </p>
             <div className="inline-flex items-center gap-3 bg-gray-100 border border-gray-200 rounded-full px-2 py-1.5">
               <button
@@ -401,7 +402,7 @@ export default function HomePage() {
                     className={`block text-center py-4 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 w-full ${plan.popular ? "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20" : "bg-gray-900 hover:bg-gray-800"}`}
                     style={{ color: "#fff" }}
                   >
-                    Commencer l&apos;essai gratuit
+                    Démarrer gratuitement
                   </button>
                 </div>
               );
@@ -494,7 +495,7 @@ export default function HomePage() {
             {[
               { stat: "3h → 5min", label: "Pour optimiser 50 fiches produit", color: "#2563eb", bg: "#eff6ff" },
               { stat: "×2.5", label: "Valeur perçue avec de vraies descriptions", color: "#059669", bg: "#f0fdf4" },
-              { stat: "0€", label: "De débit pendant les 7 jours d'essai", color: "#7c3aed", bg: "#faf5ff" },
+              { stat: "0€", label: "Requis pour démarrer — sans carte bancaire", color: "#7c3aed", bg: "#faf5ff" },
             ].map((s) => (
               <div key={s.stat} className="rounded-2xl p-6" style={{ backgroundColor: s.bg }}>
                 <p className="text-4xl font-extrabold mb-2" style={{ color: s.color }}>{s.stat}</p>
@@ -509,7 +510,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-10 py-5 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/25"
               style={{ color: "#fff" }}
             >
-              <Target className="w-5 h-5" /> Reprendre le contrôle — c&apos;est gratuit
+              <Target className="w-5 h-5" /> Reprendre le contrôle — 10 actions offertes
             </button>
             <button
               onClick={() => handleNavigate("/login")}
@@ -526,7 +527,7 @@ export default function HomePage() {
       <section className="py-24 px-6" style={{ backgroundColor: "#f8fafc" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Ce que permet EcomPilot</p>
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Ce qu'EcomPilot rend possible</p>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{ color: "#0f172a" }}>
               Des résultats concrets pour votre boutique.
             </h2>
@@ -590,7 +591,7 @@ export default function HomePage() {
             Rejoignez les marchands qui ont choisi de travailler plus intelligemment.
           </p>
           <p className="text-lg mb-10 font-medium" style={{ color: "#60a5fa" }}>
-            7 jours gratuits · Aucun débit avant J+7 · Résiliation en 1 clic
+            10 actions gratuites · Aucune carte requise · Accès immédiat
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
