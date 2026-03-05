@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { shopifyCache, shopifyCacheKey } from '@/lib/cache';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 
@@ -7,19 +7,20 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const limit = url.searchParams.get('limit') || '50';
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
-  }
-
-  const supabase = createClient(supabaseUrl, serviceKey);
-
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
+    }
+
     const { data: shop, error } = await supabase
       .from('shops')
       .select('shop_domain, access_token, user_id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1)
       .single();
 
     if (error || !shop) {

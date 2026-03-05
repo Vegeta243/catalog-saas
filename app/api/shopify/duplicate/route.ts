@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
@@ -9,14 +9,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ID produit manquant." }, { status: 400 });
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    }
 
     const { data: shop, error: shopError } = await supabase
       .from("shops")
       .select("shop_domain, access_token")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .limit(1)
       .single();
 
     if (shopError || !shop) {

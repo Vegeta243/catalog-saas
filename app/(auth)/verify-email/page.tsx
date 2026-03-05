@@ -1,15 +1,55 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Mail, Zap, CheckCircle, RefreshCw, ArrowLeft, Clock, Shield, Inbox } from "lucide-react";
+import { Mail, Zap, CheckCircle, RefreshCw, ArrowLeft, Clock, Shield, Inbox, Loader2 } from "lucide-react";
 
 export default function VerifyEmailPage() {
+  const router = useRouter();
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
+
+  // Auto-detect when user confirms email and redirect
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Check if already authenticated
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email_confirmed_at) {
+        setRedirecting(true);
+        router.replace("/dashboard");
+      }
+    };
+    checkAuth();
+
+    // Listen for auth state changes (email confirmed)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { user?: { id: string } } | null) => {
+      if (_event === "SIGNED_IN" && session?.user) {
+        setRedirecting(true);
+        router.replace("/dashboard");
+      }
+    });
+
+    // Poll every 3 seconds in case onAuthStateChange doesn't fire
+    const interval = setInterval(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email_confirmed_at) {
+        setRedirecting(true);
+        router.replace("/dashboard");
+      }
+    }, 3000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(interval);
+    };
+  }, [router]);
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +67,17 @@ export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: "#f8fafc" }}>
       <div className="w-full max-w-lg">
+        {/* Redirecting overlay */}
+        {redirecting && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90">
+            <div className="text-center">
+              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4" style={{ color: "#2563eb" }} />
+              <p className="text-lg font-bold" style={{ color: "#0f172a" }}>Email confirmé !</p>
+              <p className="text-sm mt-1" style={{ color: "#64748b" }}>Redirection vers votre espace…</p>
+            </div>
+          </div>
+        )}
+
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-2">

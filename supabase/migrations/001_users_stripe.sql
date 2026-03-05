@@ -112,16 +112,20 @@ CREATE INDEX IF NOT EXISTS shops_domain_idx ON public.shops (shop_domain);
 ALTER TABLE public.shops ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "shops_select_own" ON public.shops
-  FOR SELECT USING (
-    user_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid())
-  );
+  FOR SELECT USING (user_id = auth.uid());
 
 CREATE POLICY "shops_insert_own" ON public.shops
-  FOR INSERT WITH CHECK (true);  -- Insertion via service_role depuis webhook
+  FOR INSERT WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "shops_update_own" ON public.shops
-  FOR UPDATE USING (user_id = auth.uid());
+  FOR UPDATE USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "shops_delete_own" ON public.shops
+  FOR DELETE USING (user_id = auth.uid());
+
+CREATE POLICY "shops_service_role" ON public.shops
+  FOR ALL USING (auth.role() = 'service_role');
 
 DROP TRIGGER IF EXISTS set_shops_updated_at ON public.shops;
 CREATE TRIGGER set_shops_updated_at

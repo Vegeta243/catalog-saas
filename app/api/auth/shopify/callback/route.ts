@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -75,23 +76,49 @@ export async function GET(request: NextRequest) {
   } catch { /* non-fatal */ }
 
   // ── Save to Supabase ──
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  // Get the authenticated user so we can associate the shop with them
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  let userId: string | null = null;
+  try {
+    const response = NextResponse.next();
+    const supabaseAuth = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    userId = user?.id || null;
+  } catch { /* non-fatal — shop will be saved without user_id */ }
+
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  const upsertData: Record<string, unknown> = {
+    shop_domain: shop,
+    access_token,
+    shop_name: shopName,
+    is_active: true,
+    scopes: scope || '',
+    last_sync_at: new Date().toISOString(),
+    shopify_user_id: associated_user?.id?.toString() || null,
+    shopify_user_email: associated_user?.email || null,
+  };
+
+  // Associate shop with authenticated user
+  if (userId) {
+    upsertData.user_id = userId;
+  }
 
   const { error: upsertError } = await supabase
     .from('shops')
-    .upsert({
-      shop_domain: shop,
-      access_token,
-      shop_name: shopName,
-      is_active: true,
-      scopes: scope || '',
-      last_sync_at: new Date().toISOString(),
-      shopify_user_id: associated_user?.id?.toString() || null,
-      shopify_user_email: associated_user?.email || null,
-    }, { onConflict: 'shop_domain' });
+    .upsert(upsertData, { onConflict: 'shop_domain' });
 
   if (upsertError) {
     console.error('Supabase upsert error:', upsertError.message);
