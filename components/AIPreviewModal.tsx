@@ -10,8 +10,8 @@ export interface AIPreviewItem {
   id: number;
   productTitle: string;
   productImage?: string;
-  original: { title?: string; description?: string; tags?: string };
-  suggested: { title?: string; description?: string; tags?: string };
+  original: { title?: string; description?: string; tags?: string; meta_description?: string };
+  suggested: { title?: string; description?: string; tags?: string; meta_description?: string };
   accepted: boolean;
 }
 
@@ -62,7 +62,7 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
     setEditValue("");
   };
 
-  const revertField = (field: "title" | "description" | "tags") => {
+  const revertField = (field: "title" | "description" | "tags" | "meta_description") => {
     if (current) {
       setItems((prev) =>
         prev.map((i) =>
@@ -152,11 +152,11 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
           </div>
 
           {/* Diff sections */}
-          {(["title", "description", "tags"] as const).map((field) => {
+          {(["title", "description", "tags", "meta_description"] as const).map((field) => {
             const originalVal = current.original[field];
             const suggestedVal = current.suggested[field];
             if (!suggestedVal && !originalVal) return null;
-            const label = field === "title" ? "Titre" : field === "description" ? "Description" : "Tags";
+            const label = field === "title" ? "Titre" : field === "description" ? "Description" : field === "meta_description" ? "Meta Description" : "Tags";
             const isChanged = originalVal !== suggestedVal;
             const isEditing = editingField === field;
 
@@ -187,9 +187,8 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
                     </p>
                     <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: "#64748b" }}>
                       {field === "description"
-                        ? (originalVal || "").replace(/<[^>]*>/g, "").substring(0, 200)
+                        ? (originalVal || "").replace(/<[^>]*>/g, "")
                         : originalVal || "—"}
-                      {field === "description" && (originalVal || "").length > 200 && "..."}
                     </p>
                   </div>
 
@@ -218,9 +217,8 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
                     ) : (
                       <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: isChanged ? "#0f172a" : "#64748b" }}>
                         {field === "description"
-                          ? (suggestedVal || "").replace(/<[^>]*>/g, "").substring(0, 200)
+                          ? (suggestedVal || "").replace(/<[^>]*>/g, "")
                           : suggestedVal || "—"}
-                        {field === "description" && (suggestedVal || "").length > 200 && "..."}
                       </p>
                     )}
                   </div>

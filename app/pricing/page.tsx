@@ -116,7 +116,7 @@ export default function PricingPage() {
           Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
         </h1>
         <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "#64748b" }}>
-          Démarrez avec 10 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
+          Démarrez avec 50 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
         </p>
 
         {/* Toggle */}

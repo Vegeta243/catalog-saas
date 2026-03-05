@@ -42,7 +42,7 @@ const PLANS = [
     monthlyPrice: 39, yearlyPrice: 29, popular: false,
     target: "Pour les petites boutiques qui démarrent",
     fit: "Vous avez moins de 500 produits et cherchez à gagner du temps sur les tâches répétitives.",
-    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "1 000 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "10 actions gratuites pour démarrer"],
+    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "1 000 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "50 actions gratuites pour démarrer"],
   },
   {
     id: "pro", name: "Pro", badge: "🥇",
@@ -63,12 +63,12 @@ const PLANS = [
 const FAQ_ITEMS = [
   { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer. Chaque modification passe par votre approbation — produit par produit ou en masse. Vous gardez le contrôle total." },
   { q: "Combien de temps faut-il pour tout mettre en place ?", a: "30 secondes pour connecter votre boutique. Vos produits se synchronisent automatiquement. En 5 minutes, vous pouvez déjà générer vos premières descriptions IA et modifier vos prix en masse." },
-  { q: "C'est quoi exactement une action gratuite ?", a: "Chaque génération IA (titre, description, tags) ou import de produit compte pour 1 action. Vous démarrez avec 10 actions gratuites, sans carte bancaire. Une fois la limite atteinte, vous choisissez un plan adapté à vos besoins pour continuer." },
+  { q: "C'est quoi exactement une action gratuite ?", a: "Chaque génération IA (titre, description, tags) ou import de produit compte pour 1 action. Vous démarrez avec 50 actions gratuites, sans carte bancaire. Une fois la limite atteinte, vous choisissez un plan adapté à vos besoins pour continuer." },
   { q: "Est-ce que ça fonctionne bien pour le dropshipping ?", a: "Absolument. EcomPilot est conçu pour les dropshippers : import direct depuis AliExpress et CJ Dropshipping, génération IA de descriptions uniques, ajustement automatique des marges." },
   { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic depuis votre tableau de bord. Aucun engagement, aucun frais caché. Si vous annulez, vous gardez l'accès jusqu'à la fin de votre période payée." },
   { q: "Quelle est la différence avec les apps Shopify classiques ?", a: "Les apps Shopify font une seule chose. EcomPilot centralise tout : édition en masse, IA, images, import, automatisations, score de visibilité. Un seul outil à la place de 5 apps séparées." },
   { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec vos 10 premières actions, sans renseigner de carte. Vous n'en avez besoin que lorsque vous choisissez un plan payant, après avoir constaté la valeur de l'outil par vous-même." },
-  { q: "Que se passe-t-il quand on atteint la limite des 10 actions ?", a: "Un message clair s'affiche pour vous proposer de passer à un plan payant. Vos données et votre boutique restent intactes. Vous choisissez votre plan et continuez là où vous vous êtes arrêté(e), immédiatement." },
+  { q: "Que se passe-t-il quand on atteint la limite des 50 actions ?", a: "Un message clair s'affiche pour vous proposer de passer à un plan payant. Vos données et votre boutique restent intactes. Vous choisissez votre plan et continuez là où vous vous êtes arrêté(e), immédiatement." },
 ];
 
 const TESTIMONIALS = [
@@ -129,8 +129,8 @@ export default function HomePage() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
             <Sparkles className="w-3.5 h-3.5" /> Le copilote IA de votre catalogue Shopify
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold leading-[1.1] mb-8" style={{ color: "#0f172a" }}>
-            Arrêtez de <span style={{ color: "#dc2626" }}>galérer</span> avec<br />
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] mb-8" style={{ color: "#0f172a" }}>
+            Fini le <span style={{ color: "#dc2626" }}>chaos</span> dans<br className="hidden sm:block" />
             votre catalogue Shopify.
           </h1>
           <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-6 leading-relaxed font-medium" style={{ color: "#0f172a" }}>
@@ -157,7 +157,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 mt-4 mb-12">
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
-              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Sans carte bancaire • 10 actions offertes
+              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Sans carte bancaire • 50 actions offertes
             </p>
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
               <Check className="w-4 h-4" style={{ color: "#059669" }} /> Résiliation en 1 clic
@@ -336,7 +336,7 @@ export default function HomePage() {
               Des prix simples. Pas de surprise.
             </h2>
             <p className="text-lg mb-8" style={{ color: "#64748b" }}>
-              Commencez avec <strong>10 actions gratuites</strong> — sans carte bancaire. Passez à un plan payant quand vous êtes convaincu(e).
+              Commencez avec <strong>50 actions gratuites</strong> — sans carte bancaire. Passez à un plan payant quand vous êtes convaincu(e).
             </p>
             <div className="inline-flex items-center gap-3 bg-gray-100 border border-gray-200 rounded-full px-2 py-1.5">
               <button
@@ -513,7 +513,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-10 py-5 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/25"
               style={{ color: "#fff" }}
             >
-              <Target className="w-5 h-5" /> Reprendre le contrôle — 10 actions offertes
+              <Target className="w-5 h-5" /> Reprendre le contrôle — 50 actions offertes
             </button>
             <button
               onClick={() => handleNavigate("/login")}
@@ -594,7 +594,7 @@ export default function HomePage() {
             Rejoignez les marchands qui ont choisi de travailler plus intelligemment.
           </p>
           <p className="text-lg mb-10 font-medium" style={{ color: "#60a5fa" }}>
-            10 actions gratuites · Aucune carte requise · Accès immédiat
+            50 actions gratuites · Aucune carte requise · Accès immédiat
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button

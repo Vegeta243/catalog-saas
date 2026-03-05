@@ -74,6 +74,7 @@ export async function POST(req: Request) {
         mockResult.title = buildTitle(base);
         mockResult.description = `<ul><li><strong>Fabrication soignée</strong> — ${base} est conçu pour répondre aux exigences les plus élevées. Chaque détail est pensé pour vous offrir une expérience durable et agréable au quotidien.</li><li><strong>Design contemporain</strong> — Lignes épurées et matériaux de choix : un produit qui s'intègre naturellement dans votre environnement et séduit dès le premier regard.</li><li><strong>Expédition rapide</strong> — Commandez aujourd'hui et recevez votre colis sous 48 à 72 heures en France métropolitaine. Numéro de suivi fourni automatiquement.</li><li><strong>Retour sans souci</strong> — Vous disposez de 30 jours pour retourner votre article si vous n'êtes pas entièrement satisfait. Simple et sans condition.</li><li><strong>Équipe disponible</strong> — Notre service client est joignable du lundi au vendredi pour répondre à toutes vos questions et vous accompagner.</li></ul>`;
         mockResult.keywords = buildTags(base);
+        mockResult.meta_description = `Découvrez ${base}. Livraison rapide sous 48-72h. Retour sous 30 jours. Commandez maintenant.`.slice(0, 160);
       }
       return NextResponse.json({ success: true, demo: true, taskCost: 0, ...mockResult });
     }
@@ -110,13 +111,14 @@ Génère :
 1. Un titre accrocheur de 50 à 70 caractères exact, qui commence par le mot-clé principal
 2. Une description de vente (150-300 mots) en HTML avec puces <ul><li>, mettant en avant les bénéfices concrets pour l'acheteur
 3. 10 mots-clés que les acheteurs tapent réellement, séparés par des virgules
+4. Une meta description (max 160 caractères) accrocheuse pour Google, qui résume le produit et donne envie de cliquer
 
 Règles STRICTES pour tout le contenu :
 - N'utilise JAMAIS : "SEO", "optimisé", "optimisée", "référencement", "strategiquement", "livraison gratuite", "livraison offerte", "qualité premium", "premium", "meilleur rapport qualité-prix"
 - La description doit parler du produit, pas de la boutique
 - Ton direct, bénéfices concrets, pas de superlatifs vides
 
-Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","keywords":"..."}`;
+Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","keywords":"...","meta_description":"..."}`;
     }
 
     // Use gpt-4o-mini by default (10x cheaper than gpt-4o)

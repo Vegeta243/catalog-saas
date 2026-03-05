@@ -202,7 +202,7 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook`}
       content: (
         <div className="space-y-4">
           <p className="text-sm" style={{ color: "#64748b" }}>
-            L&apos;application Shopify est déjà configurée avec le compte <strong>elliottshilenge5@gmail.com</strong>.
+            L&apos;application Shopify est configurée via votre compte Shopify Partners.
           </p>
           <div className="grid grid-cols-1 gap-3">
             {[

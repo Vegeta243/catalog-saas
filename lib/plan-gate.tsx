@@ -40,7 +40,7 @@ export default function PlanGate({ requiredPlan, currentPlan, children, feature 
             style={{ color: "#fff" }}>
             Voir les plans <ArrowRight className="w-4 h-4" />
           </Link>
-          <p className="text-xs mt-4" style={{ color: "#94a3b8" }}>10 actions gratuites pour commencer</p>
+          <p className="text-xs mt-4" style={{ color: "#94a3b8" }}>50 actions gratuites pour commencer</p>
         </div>
       </div>
     </div>

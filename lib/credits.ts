@@ -2,6 +2,7 @@
 // Tâches mensuelles par plan (serveur uniquement)
 
 export const PLAN_TASKS: Record<string, number> = {
+  free: 50,
   starter: 1000,
   pro: 20000,
   scale: 100000,
@@ -19,6 +20,7 @@ export const ACTION_COSTS: Record<string, number> = {
   "ai.generate.description": 3,
   "ai.generate.full": 3,
   "ai.generate.tags": 1,
+  "ai.generate.meta_description": 1,
   "ai.generate.batch": 2,       // par produit dans le lot
   "import.product": 2,
   "image.optimize": 1,

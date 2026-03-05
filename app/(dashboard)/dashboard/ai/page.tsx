@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import AIPreviewModal, { type AIPreviewItem } from "@/components/AIPreviewModal";
+import QuotaGate from "@/components/QuotaGate";
+import { createClient } from "@/lib/supabase/client";
 
 interface Product {
   id: string;
@@ -24,6 +26,7 @@ interface GeneratedContent {
   description?: string;
   keywords?: string;
   tags?: string;
+  meta_description?: string;
 }
 
 function seoScore(p: Product): number {
@@ -56,6 +59,8 @@ export default function AIPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<Record<string, GeneratedContent>>({});
+  const [plan, setPlan] = useState("free");
+  const [tasksUsed, setTasksUsed] = useState(0);
   const [massMode, setMassMode] = useState(false);
   const [massProgress, setMassProgress] = useState({ current: 0, total: 0 });
   const [previewId, setPreviewId] = useState<string | null>(null);
@@ -69,6 +74,18 @@ export default function AIPage() {
       setProducts((d.products || []).map((p: Product) => ({ ...p, price: p.variants?.[0]?.price || p.price || "0" })));
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    // Fetch user plan + actions_used for QuotaGate
+    const fetchProfile = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from("users").select("plan, actions_used").eq("id", user.id).single();
+        if (data) { setPlan(data.plan || "free"); setTasksUsed(data.actions_used || 0); }
+      } catch { /* silent */ }
+    };
+    fetchProfile();
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -208,11 +225,13 @@ export default function AIPage() {
           title: product?.title,
           description: product?.body_html,
           tags: product?.tags,
+          meta_description: undefined,
         },
         suggested: {
           title: content?.title,
           description: content?.description,
           tags: content?.keywords || content?.tags,
+          meta_description: content?.meta_description,
         },
         accepted: true,
       };
@@ -229,6 +248,7 @@ export default function AIPage() {
       if (item.suggested.title) updates.push("title");
       if (item.suggested.description) updates.push("description");
       if (item.suggested.tags) updates.push("tags");
+      if (item.suggested.meta_description) updates.push("meta_description");
       // Update generatedContent with possibly edited values
       setGeneratedContent((prev) => ({
         ...prev,
@@ -236,6 +256,7 @@ export default function AIPage() {
           title: item.suggested.title,
           description: item.suggested.description,
           keywords: item.suggested.tags,
+          meta_description: item.suggested.meta_description,
         },
       }));
       await applyGenerated(id, updates);
@@ -250,6 +271,7 @@ export default function AIPage() {
   const previewContent = previewId ? generatedContent[previewId] : null;
 
   return (
+    <QuotaGate plan={plan} tasksUsed={tasksUsed}>
     <div className="max-w-6xl mx-auto">
       {/* Before/After Modal */}
       {previewProduct && (
@@ -262,17 +284,18 @@ export default function AIPage() {
               </div>
               <button onClick={() => setPreviewId(null)}><X className="w-5 h-5" style={{ color: "#94a3b8" }} /></button>
             </div>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Before */}
               <div className="p-4 bg-red-50/50 rounded-xl border border-red-100">
                 <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#dc2626" }}>Avant</p>
                 <div className="space-y-3">
                   <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre</p><p className="text-sm" style={{ color: "#0f172a" }}>{previewProduct.title}</p></div>
                   <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description</p>
-                    {previewProduct.body_html ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html.slice(0, 500) }} />
+                    {previewProduct.body_html ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} />
                       : <p className="text-sm italic" style={{ color: "#94a3b8" }}>Aucune description</p>}
                   </div>
                   <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Tags</p><p className="text-xs" style={{ color: "#374151" }}>{previewProduct.tags || "Aucun"}</p></div>
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Meta Description</p><p className="text-xs italic" style={{ color: "#94a3b8" }}>Non définie</p></div>
                   <ScoreBadge score={seoScore(previewProduct)} size="lg" />
                 </div>
               </div>
@@ -283,15 +306,23 @@ export default function AIPage() {
                   <div className="space-y-3">
                     <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre</p><p className="text-sm font-medium" style={{ color: "#0f172a" }}>{previewContent.title || previewProduct.title}</p></div>
                     <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description</p>
-                      {previewContent.description ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewContent.description.slice(0, 500) }} />
+                      {previewContent.description ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewContent.description }} />
                         : <p className="text-sm italic" style={{ color: "#94a3b8" }}>Non générée</p>}
                     </div>
                     <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Mots-clés</p><p className="text-xs" style={{ color: "#374151" }}>{previewContent.keywords || "—"}</p></div>
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Meta Description</p>
+                      {previewContent.meta_description ? (
+                        <div>
+                          <p className="text-xs" style={{ color: "#374151" }}>{previewContent.meta_description}</p>
+                          <p className="text-[10px] mt-1" style={{ color: "#94a3b8" }}>{previewContent.meta_description.length}/160 caractères</p>
+                        </div>
+                      ) : <p className="text-xs italic" style={{ color: "#94a3b8" }}>Non générée</p>}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Sparkles className="w-8 h-8 mb-2" style={{ color: "#d1d5db" }} />
-                    <p className="text-sm" style={{ color: "#64748b" }}>Générez le contenu IA d'abord</p>
+                    <p className="text-sm" style={{ color: "#64748b" }}>Générez le contenu IA d&apos;abord</p>
                   </div>
                 )}
               </div>
@@ -450,7 +481,7 @@ export default function AIPage() {
                 {isExpanded && gen && (
                   <div className="px-4 pb-4">
                     <div className="p-4 bg-violet-50/50 rounded-xl border border-violet-100">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {gen.title && (
                           <div>
                             <div className="flex items-center justify-between mb-1">
@@ -460,22 +491,32 @@ export default function AIPage() {
                             <p className="text-sm" style={{ color: "#0f172a" }}>{gen.title}</p>
                           </div>
                         )}
-                        {gen.description && (
-                          <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Description</p>
-                              <button onClick={() => applyGenerated(product.id, ["description"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
-                            </div>
-                            <div className="text-xs max-h-20 overflow-hidden" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: gen.description.slice(0, 300) }} />
-                          </div>
-                        )}
                         {(gen.keywords || gen.tags) && (
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Mots-clés</p>
+                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Mots-clés / Tags</p>
                               <button onClick={() => applyGenerated(product.id, ["tags"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
                             </div>
                             <p className="text-xs" style={{ color: "#374151" }}>{gen.keywords || gen.tags}</p>
+                          </div>
+                        )}
+                        {gen.description && (
+                          <div className="md:col-span-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Description complète</p>
+                              <button onClick={() => applyGenerated(product.id, ["description"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                            </div>
+                            <div className="text-xs leading-relaxed" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: gen.description }} />
+                          </div>
+                        )}
+                        {gen.meta_description && (
+                          <div className="md:col-span-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Meta Description</p>
+                              <button onClick={() => applyGenerated(product.id, ["meta_description"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                            </div>
+                            <p className="text-xs leading-relaxed" style={{ color: "#374151" }}>{gen.meta_description}</p>
+                            <p className="text-[10px] mt-1" style={{ color: "#94a3b8" }}>{gen.meta_description.length}/160 caractères</p>
                           </div>
                         )}
                       </div>
@@ -505,5 +546,6 @@ export default function AIPage() {
         />
       )}
     </div>
+    </QuotaGate>
   );
 }

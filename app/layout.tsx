@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className="antialiased">
+    <html lang="fr" className="overflow-x-hidden">
+      <body className="antialiased overflow-x-hidden">
         {children}
         <CookieBanner />
       </body>

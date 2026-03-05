@@ -6,7 +6,7 @@ import Link from "next/link";
 import { getTasksColor, getResetDate, PLAN_TASKS, PLAN_PRICES } from "@/lib/credits";
 
 const PLAN_META: Record<string, { name: string; icon: typeof Zap; color: string; bg: string; features: string[] }> = {
-  free:    { name: "Free",    icon: Star,   color: "#6b7280", bg: "#f9fafb",  features: ["10 actions gratuites", "1 boutique", "Export CSV basique"] },
+  free:    { name: "Free",    icon: Star,   color: "#6b7280", bg: "#f9fafb",  features: ["50 actions gratuites", "1 boutique", "Export CSV basique"] },
   starter: { name: "Starter", icon: Zap,    color: "#2563eb", bg: "#eff6ff",  features: ["1 000 actions/mois", "2 boutiques", "Modification en masse", "Support email"] },
   pro:     { name: "Pro",     icon: Crown,  color: "#8b5cf6", bg: "#faf5ff",  features: ["20 000 actions/mois", "5 boutiques", "Éditeur d'images IA", "Automatisations", "Support prioritaire"] },
   scale:   { name: "Scale",   icon: Rocket, color: "#059669", bg: "#f0fdf4",  features: ["100 000 actions/mois", "Boutiques illimitées", "Automatisations illimitées", "API access", "Support dédié + Slack"] },

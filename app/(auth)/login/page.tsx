@@ -303,7 +303,7 @@ function AuthContent() {
             <div className="p-4 rounded-xl border" style={{ borderColor: "rgba(96,165,250,0.3)", backgroundColor: "rgba(96,165,250,0.05)" }}>
               <p className="text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}>Offre de lancement</p>
               <p className="text-lg font-extrabold" style={{ color: "#fff" }}>
-                10 actions <span style={{ color: "#60a5fa" }}>offertes</span>
+                50 actions <span style={{ color: "#60a5fa" }}>offertes</span>
               </p>
               <p className="text-xs mt-1" style={{ color: "#64748b" }}>Sans carte bancaire — acces immediat au dashboard</p>
             </div>
@@ -674,7 +674,7 @@ function AuthContent() {
                 <>
                   <h1 className="text-xl font-extrabold mb-1" style={{ color: "#0f172a" }}>Creez votre compte EcomPilot</h1>
                   <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-                    10 actions offertes — sans carte bancaire — acces immediat
+                    50 actions offertes — sans carte bancaire — acces immediat
                   </p>
 
                   {signupError && (
@@ -869,7 +869,7 @@ function AuthContent() {
                   {/* Free tier badge */}
                   <div className="mt-4 flex items-center justify-center gap-2 p-3 rounded-xl" style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
                     <Shield className="w-4 h-4" style={{ color: "#059669" }} />
-                    <span className="text-xs font-semibold" style={{ color: "#166534" }}>Sans carte bancaire — 10 actions offertes pour demarrer</span>
+                    <span className="text-xs font-semibold" style={{ color: "#166534" }}>Sans carte bancaire — 50 actions offertes pour demarrer</span>
                   </div>
 
                   {/* Footer badges */}

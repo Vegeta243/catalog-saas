@@ -26,7 +26,7 @@ export default function AdminContentPage() {
     },
     pricing: {
       title: "Des tarifs simples et transparents",
-      subtitle: "10 actions gratuites — aucune carte requise pour démarrer",
+      subtitle: "50 actions gratuites — aucune carte requise pour démarrer",
     },
     faq: {
       title: "Questions fréquentes",

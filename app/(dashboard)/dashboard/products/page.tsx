@@ -10,6 +10,8 @@ import {
 import { useToast } from "@/lib/toast";
 import Link from "next/link";
 import { ConfirmModal } from "@/lib/confirm-modal";
+import QuotaGate from "@/components/QuotaGate";
+import { createClient } from "@/lib/supabase/client";
 
 interface ShopifyImage { src: string }
 interface Product {
@@ -90,6 +92,8 @@ export default function ProductsPage() {
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
   const [aiBatchLoading, setAiBatchLoading] = useState(false);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [plan, setPlan] = useState("free");
+  const [tasksUsed, setTasksUsed] = useState(0);
   const itemsPerPage = 50;
 
   /* ──────── Fetch ──────── */
@@ -116,6 +120,20 @@ export default function ProductsPage() {
   }, [addToast]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  // Fetch user plan for QuotaGate
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from("users").select("plan, actions_used").eq("id", user.id).single();
+        if (data) { setPlan(data.plan || "free"); setTasksUsed(data.actions_used || 0); }
+      } catch { /* silent */ }
+    };
+    fetchProfile();
+  }, []);
 
   /* ──────── Filter / Sort ──────── */
   const filteredProducts = useMemo(() => {
@@ -439,6 +457,7 @@ export default function ProductsPage() {
   }, [products]);
 
   return (
+    <QuotaGate plan={plan} tasksUsed={tasksUsed}>
     <div className="max-w-7xl mx-auto">
       <ConfirmModal open={confirmModal.open} title={confirmModal.title} message={confirmModal.message} variant="danger"
         onConfirm={() => { confirmModal.action(); setConfirmModal({ ...confirmModal, open: false }); }}
@@ -889,5 +908,6 @@ export default function ProductsPage() {
       )}
       <p className="text-xs mt-3 text-center" style={{ color: "#94a3b8" }}>Ctrl+A : tout sélectionner · Échap : désélectionner · ← → : naviguer</p>
     </div>
+    </QuotaGate>
   );
 }

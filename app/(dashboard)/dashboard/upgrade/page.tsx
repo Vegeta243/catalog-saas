@@ -117,7 +117,7 @@ function UpgradeContent() {
           <Zap className="w-3 h-3" /> Limite atteinte
         </div>
         <h1 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "#0f172a" }}>
-          Vous avez utilisé vos 10 actions gratuites
+          Vous avez utilisé vos 50 actions gratuites
         </h1>
         <p className="text-lg leading-relaxed" style={{ color: "#64748b" }}>
           Vous avez exploré l&apos;essentiel d&apos;EcomPilot. Choisissez un plan pour continuer à optimiser votre catalogue sans limite.
@@ -127,7 +127,7 @@ function UpgradeContent() {
       {/* Progress bar */}
       <div className="w-full max-w-sm mb-8">
         <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: "#94a3b8" }}>
-          <span>Actions utilisées</span><span className="font-bold" style={{ color: "#dc2626" }}>10 / 10</span>
+          <span>Actions utilisées</span><span className="font-bold" style={{ color: "#dc2626" }}>50 / 50</span>
         </div>
         <div className="h-2.5 rounded-full w-full" style={{ backgroundColor: "#fee2e2" }}>
           <div className="h-2.5 rounded-full w-full" style={{ backgroundColor: "#dc2626" }} />

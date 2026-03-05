@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 const STORAGE_KEY = "ecompilot_free_actions";
-const FREE_LIMIT = 10;
+const FREE_LIMIT = 50;
 
 export interface ActionLimitState {
   used: number;
