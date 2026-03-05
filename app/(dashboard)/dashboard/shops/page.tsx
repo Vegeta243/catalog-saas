@@ -93,37 +93,27 @@ export default function ShopsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setConnectError("Vous devez être connecté."); setConnectLoading(false); return; }
 
-      // Check if already added
-      const { data: existing } = await supabase
+      // Upsert: insert or reactivate if already exists
+      const { data: upserted, error } = await supabase
         .from("shops")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("shop_domain", domain)
-        .maybeSingle();
-
-      if (existing) {
-        setConnectError("Cette boutique est déjà ajoutée.");
-        setConnectLoading(false);
-        return;
-      }
-
-      const { data: inserted, error } = await supabase
-        .from("shops")
-        .insert({
-          user_id: user.id,
-          shop_domain: domain,
-          shop_name: shopSlug,
-          is_active: true,
-          scopes: "",
-          access_token: "",
-        })
+        .upsert(
+          {
+            user_id: user.id,
+            shop_domain: domain,
+            shop_name: shopSlug,
+            is_active: true,
+            scopes: "",
+            access_token: "",
+          },
+          { onConflict: "user_id,shop_domain" }
+        )
         .select()
         .single();
 
       if (error) {
         setConnectError("Erreur lors de l'ajout. Réessayez.");
       } else {
-        setConnectSuccess(`✅ Boutique "${inserted.shop_name}" ajoutée !`);
+        setConnectSuccess(`✅ Boutique "${upserted.shop_name}" ajoutée !`);
         setNewShopUrl("");
         await fetchShops();
         setTimeout(() => { setShowAddModal(false); setConnectSuccess(""); }, 1500);
