@@ -26,6 +26,7 @@ export default function ShopsPage() {
   const [newShopUrl, setNewShopUrl] = useState("");
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState("");
+  const [connectSuccess, setConnectSuccess] = useState("");
 
   useEffect(() => {
     fetchShops();
@@ -61,11 +62,14 @@ export default function ShopsPage() {
     setShowSwitcher(false);
   };
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     setConnectError("");
-    let input = newShopUrl.trim().toLowerCase();
-    if (!input) { setConnectError("Entrez votre domaine Shopify."); return; }
-    input = input.replace(/^https?:\/\//, "");
+    setConnectSuccess("");
+    const raw = newShopUrl.trim();
+    if (!raw) { setConnectError("Entrez votre domaine Shopify."); return; }
+
+    // Parse domain from any Shopify URL format
+    let input = raw.toLowerCase().replace(/^https?:\/\//, "");
     let shopSlug = "";
     const adminMatch = input.match(/admin\.shopify\.com\/store\/([a-z0-9][a-z0-9-]*)/);
     if (adminMatch) { shopSlug = adminMatch[1]; }
@@ -73,14 +77,61 @@ export default function ShopsPage() {
       const myshopifyMatch = input.match(/^([a-z0-9][a-z0-9-]*)\.myshopify\.com/);
       if (myshopifyMatch) { shopSlug = myshopifyMatch[1]; }
       else {
-        const cleanInput = input.split("/")[0].split("?")[0].replace(/\s/g, "");
-        if (/^[a-z0-9][a-z0-9-]*$/.test(cleanInput)) shopSlug = cleanInput;
+        const clean = input.split("/")[0].split("?")[0].replace(/\s/g, "");
+        if (/^[a-z0-9][a-z0-9-]*$/.test(clean)) shopSlug = clean;
       }
     }
-    if (!shopSlug) { setConnectError("Format invalide. Ex: ma-boutique ou ma-boutique.myshopify.com"); return; }
+    if (!shopSlug) {
+      setConnectError("Format invalide. Ex: ma-boutique ou ma-boutique.myshopify.com");
+      return;
+    }
+
     const domain = `${shopSlug}.myshopify.com`;
     setConnectLoading(true);
-    router.push(`/api/auth/shopify?shop=${encodeURIComponent(domain)}`);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setConnectError("Vous devez être connecté."); setConnectLoading(false); return; }
+
+      // Check if already added
+      const { data: existing } = await supabase
+        .from("shops")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("shop_domain", domain)
+        .maybeSingle();
+
+      if (existing) {
+        setConnectError("Cette boutique est déjà ajoutée.");
+        setConnectLoading(false);
+        return;
+      }
+
+      const { data: inserted, error } = await supabase
+        .from("shops")
+        .insert({
+          user_id: user.id,
+          shop_domain: domain,
+          shop_name: shopSlug,
+          is_active: true,
+          scopes: "",
+          access_token: "",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        setConnectError("Erreur lors de l'ajout. Réessayez.");
+      } else {
+        setConnectSuccess(`✅ Boutique "${inserted.shop_name}" ajoutée !`);
+        setNewShopUrl("");
+        await fetchShops();
+        setTimeout(() => { setShowAddModal(false); setConnectSuccess(""); }, 1500);
+      }
+    } catch {
+      setConnectError("Erreur réseau. Vérifiez votre connexion.");
+    }
+    setConnectLoading(false);
   };
 
   const handleDisconnect = async (shopId: string) => {
@@ -276,32 +327,51 @@ export default function ShopsPage() {
 
       {/* Add shop modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => { setShowAddModal(false); setConnectError(""); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); setNewShopUrl(""); }}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Connecter une boutique</h2>
-            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Entrez votre domaine Shopify pour démarrer la connexion.</p>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Ajouter une boutique</h2>
+            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Entrez votre domaine Shopify pour l&apos;ajouter à votre compte.</p>
+
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Domaine Shopify</label>
-                <input type="text" value={newShopUrl} onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
+                <input
+                  type="text"
+                  value={newShopUrl}
+                  onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
                   placeholder="ma-boutique ou ma-boutique.myshopify.com"
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                   style={{ color: "#0f172a" }}
-                  onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                  autoFocus />
-                <p className="mt-1 text-[11px]" style={{ color: "#94a3b8" }}>Accepte : nom de boutique, URL .myshopify.com, ou lien admin.shopify.com</p>
-                {connectError && <p className="mt-1.5 text-xs" style={{ color: "#dc2626" }}>{connectError}</p>}
+                  onKeyDown={(e) => e.key === "Enter" && !connectLoading && handleConnect()}
+                  autoFocus
+                />
+                <p className="mt-1 text-[11px]" style={{ color: "#94a3b8" }}>
+                  Accepte : ma-boutique, ma-boutique.myshopify.com, ou lien admin.shopify.com
+                </p>
               </div>
-              <div className="p-3 rounded-xl" style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
-                <p className="text-xs" style={{ color: "#1e40af" }}>Vous serez redirigé vers Shopify pour autoriser l&apos;accès. Aucun produit ne sera modifié sans votre validation.</p>
-              </div>
+
+              {connectError && (
+                <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#dc2626", backgroundColor: "#fef2f2" }}>{connectError}</p>
+              )}
+              {connectSuccess && (
+                <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#059669", backgroundColor: "#f0fdf4" }}>{connectSuccess}</p>
+              )}
+
               <div className="flex gap-3">
-                <button onClick={() => { setShowAddModal(false); setConnectError(""); }}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
-                <button onClick={handleConnect} disabled={connectLoading || !newShopUrl.trim()}
+                <button
+                  onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); setNewShopUrl(""); }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50"
+                  style={{ color: "#374151" }}>
+                  Annuler
+                </button>
+                <button
+                  onClick={handleConnect}
+                  disabled={connectLoading || !newShopUrl.trim()}
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                   style={{ backgroundColor: "#2563eb", color: "#fff" }}>
-                  {connectLoading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Connexion…</> : <>Connecter <ArrowRight className="w-4 h-4" /></>}
+                  {connectLoading
+                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Ajout…</>
+                    : <>Ajouter <ArrowRight className="w-4 h-4" /></>}
                 </button>
               </div>
             </div>
