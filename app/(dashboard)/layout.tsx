@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   PackageSearch,
@@ -70,11 +70,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [notifications] = useState(3);
 
-  // Tasks data (would come from context/API in production)
-  const plan = "pro";
-  const tasksUsed = 16;
-  const tasksTotal = PLAN_TASKS[plan] || 300;
-  const tasksRemaining = tasksTotal - tasksUsed;
+  // Real user data from Supabase
+  const [plan, setPlan] = useState("free");
+  const [tasksUsed, setTasksUsed] = useState(0);
+  const [userName, setUserName] = useState("Mon compte");
+  const [userEmail, setUserEmail] = useState("");
+
+  const tasksTotal = PLAN_TASKS[plan] || PLAN_TASKS.free || 50;
+  const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setUserEmail(user.email || "");
+        const firstName = user.user_metadata?.first_name || user.email?.split("@")[0] || "Mon compte";
+        setUserName(firstName);
+        const { data } = await supabase
+          .from("users")
+          .select("plan, actions_used")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          setPlan(data.plan || "free");
+          setTasksUsed(data.actions_used || 0);
+        }
+      } catch { /* silent — Supabase may not be configured locally */ }
+    };
+    fetchUserProfile();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -200,8 +226,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: '#f1f5f9' }}>Utilisateur</p>
-                <p className="text-xs truncate" style={{ color: '#64748b' }}>utilisateur@email.com</p>
+                <p className="text-sm font-medium truncate" style={{ color: '#f1f5f9' }}>{userName}</p>
+                <p className="text-xs truncate" style={{ color: '#64748b' }}>{userEmail || "Chargement…"}</p>
               </div>
             )}
           </div>

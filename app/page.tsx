@@ -28,6 +28,7 @@ const FEATURES = [
   { icon: PackageSearch, title: "Édition en masse ultra-rapide", desc: "Modifiez prix, titres, descriptions et tags sur des centaines de produits en quelques clics. Fini le copier-coller." },
   { icon: Import, title: "Import AliExpress & CJ en 1 clic", desc: "Importez des produits depuis n'importe quelle URL fournisseur. Marge automatique, description IA incluse." },
   { icon: Sparkles, title: "Descriptions IA percutantes", desc: "Générez des descriptions qui vendent, adaptées à votre audience. Par lot de 10, 50 ou 200 produits." },
+  { icon: TrendingUp, title: "SEO Shopify optimisé", desc: "Titres SEO, meta descriptions, tags structurés — faites remonter vos produits dans Google et la recherche interne Shopify." },
   { icon: BarChart3, title: "Score visibilité par produit", desc: "Visualisez la santé de chaque fiche produit. Identifiez en un coup d'œil ce qui manque." },
   { icon: Zap, title: "Automatisations intelligentes", desc: "Règles de prix, promotions programmées, ajustements automatiques. Votre catalogue s'optimise pendant que vous dormez." },
   { icon: ImageIcon, title: "Traitement d'images en masse", desc: "Compression, redimensionnement, watermark — en un seul clic sur toutes vos images produit." },
@@ -67,7 +68,7 @@ const FAQ_ITEMS = [
   { q: "Est-ce que ça fonctionne bien pour le dropshipping ?", a: "Absolument. EcomPilot est conçu pour les dropshippers : import direct depuis AliExpress et CJ Dropshipping, génération IA de descriptions uniques, ajustement automatique des marges." },
   { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic depuis votre tableau de bord. Aucun engagement, aucun frais caché. Si vous annulez, vous gardez l'accès jusqu'à la fin de votre période payée." },
   { q: "Quelle est la différence avec les apps Shopify classiques ?", a: "Les apps Shopify font une seule chose. EcomPilot centralise tout : édition en masse, IA, images, import, automatisations, score de visibilité. Un seul outil à la place de 5 apps séparées." },
-  { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec vos 10 premières actions, sans renseigner de carte. Vous n'en avez besoin que lorsque vous choisissez un plan payant, après avoir constaté la valeur de l'outil par vous-même." },
+  { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec vos 50 premières actions, sans renseigner de carte. Vous n'en avez besoin que lorsque vous choisissez un plan payant, après avoir constaté la valeur de l'outil par vous-même." },
   { q: "Que se passe-t-il quand on atteint la limite des 50 actions ?", a: "Un message clair s'affiche pour vous proposer de passer à un plan payant. Vos données et votre boutique restent intactes. Vous choisissez votre plan et continuez là où vous vous êtes arrêté(e), immédiatement." },
 ];
 
@@ -103,20 +104,21 @@ export default function HomePage() {
             <a href="#tarifs" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Tarifs</a>
             <a href="#faq" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>FAQ</a>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => handleNavigate("/login")}
-              className="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+              className="hidden sm:block px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
               style={{ color: "#0f172a" }}
             >
               Se connecter
             </button>
             <button
               onClick={() => handleNavigate("/login?tab=signup")}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5"
+              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs sm:text-sm font-bold transition-all shadow-md shadow-blue-500/20 hover:-translate-y-0.5 whitespace-nowrap"
               style={{ color: "#fff" }}
             >
-              Essayer gratuitement →
+              <span className="hidden sm:inline">Essayer gratuitement →</span>
+              <span className="sm:hidden">Essai gratuit</span>
             </button>
           </div>
         </div>
@@ -127,17 +129,21 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/30" />
         <div className="max-w-5xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
-            <Sparkles className="w-3.5 h-3.5" /> Le copilote IA de votre catalogue Shopify
+            <Sparkles className="w-3.5 h-3.5" /> Le copilote IA &bull; SEO &bull; Catalogue Shopify
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] mb-8" style={{ color: "#0f172a" }}>
-            Fini le <span style={{ color: "#dc2626" }}>chaos</span> dans<br className="hidden sm:block" />
-            votre catalogue Shopify.
+            Laisse l&apos;IA travailler
+            <br className="hidden sm:block" />
+            <span style={{ color: "#2563eb" }}> à ta place.</span>
           </h1>
-          <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-6 leading-relaxed font-medium" style={{ color: "#0f172a" }}>
-            EcomPilot fait en <span className="underline decoration-blue-500 decoration-2 underline-offset-4">30 secondes</span> ce qui vous prend <span className="underline decoration-red-400 decoration-2 underline-offset-4">3 heures</span>.
+          <p className="text-lg md:text-2xl max-w-3xl mx-auto mb-6 leading-relaxed font-medium" style={{ color: "#0f172a" }}>
+            Optimise ton catalogue Shopify, écrit les descriptions, gère le SEO.{" "}
+            <span className="underline decoration-blue-500 decoration-2 underline-offset-4">En 30 secondes</span>{" "}
+            au lieu de <span className="underline decoration-red-400 decoration-2 underline-offset-4">3 heures</span>.
           </p>
           <p className="text-lg max-w-2xl mx-auto mb-10 leading-relaxed" style={{ color: "#64748b" }}>
-            Descriptions IA, édition en masse, automatisations — le copilote qui transforme votre catalogue en machine à vendre.
+            SEO optimisé, descriptions percutantes en masse, automatisations intelligentes — la plateforme
+            qui transforme votre catalogue en machine à vendre.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <button

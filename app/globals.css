@@ -24,12 +24,16 @@
   color: inherit;
 }
 
-html, body {
-  overflow-x: hidden;
-  max-width: 100vw;
+html {
+  /* clip prevents horizontal scrollbar without locking child scrollable areas */
+  overflow-x: clip;
 }
 
 body {
+  /* prevent body-level horizontal scroll */
+  overflow-x: hidden;
+  max-width: 100%;
+  position: relative;
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -50,6 +54,13 @@ h1, h2, h3, h4, h5, h6, p, span, td, th, label, a, li, div, input, textarea, sel
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+}
+
+/* Horizontal scroll container (tables, sliders) */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 ::-webkit-scrollbar-track {
   background: #f1f5f9;

@@ -1,42 +1,59 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Store, Plus, ExternalLink, Trash2, RefreshCw, CheckCircle, AlertCircle, Settings, ChevronDown, ArrowRight, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Store, Plus, ExternalLink, Trash2, RefreshCw, CheckCircle, AlertCircle,
+  ChevronDown, ArrowRight, Star, PackageSearch, Loader2,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Shop {
   id: string;
-  name: string;
-  domain: string;
-  products: number;
-  status: "connected" | "disconnected" | "syncing";
-  lastSync: string;
-  plan: string;
+  shop_domain: string;
+  shop_name: string | null;
+  is_active: boolean;
+  created_at?: string;
 }
 
-const mockShops: Shop[] = [
-  { id: "1", name: "Ma Boutique Mode", domain: "ma-boutique-mode.myshopify.com", products: 342, status: "connected", lastSync: "Il y a 5 min", plan: "Pro" },
-  { id: "2", name: "Sport & Outdoor", domain: "sport-outdoor.myshopify.com", products: 128, status: "connected", lastSync: "Il y a 2h", plan: "Pro" },
-  { id: "3", name: "Déco Maison", domain: "deco-maison-fr.myshopify.com", products: 0, status: "disconnected", lastSync: "Jamais", plan: "Free" },
-];
-
-const statusConfig: Record<string, { label: string; color: string; bg: string; icon: typeof CheckCircle }> = {
-  connected: { label: "Connectée", color: "#059669", bg: "#d1fae5", icon: CheckCircle },
-  disconnected: { label: "Déconnectée", color: "#dc2626", bg: "#fef2f2", icon: AlertCircle },
-  syncing: { label: "Synchronisation…", color: "#d97706", bg: "#fffbeb", icon: RefreshCw },
-};
-
 export default function ShopsPage() {
-  const [shops] = useState<Shop[]>(mockShops);
-  const [activeShopId, setActiveShopId] = useState<string>("1");
-  const [showAddModal, setShowAddModal] = useState(false);
+  const router = useRouter();
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeShopId, setActiveShopId] = useState<string>("");
   const [showSwitcher, setShowSwitcher] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [newShopUrl, setNewShopUrl] = useState("");
-  const [newShopName, setNewShopName] = useState("");
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectError, setConnectError] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("ecompilot_active_shop");
-    if (saved) setActiveShopId(saved);
+    fetchShops();
   }, []);
+
+  const fetchShops = async () => {
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+      const { data } = await supabase
+        .from("shops")
+        .select("id, shop_domain, shop_name, is_active, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      const shopsList = data || [];
+      setShops(shopsList);
+      const saved = localStorage.getItem("ecompilot_active_shop");
+      if (saved && shopsList.find((s: Shop) => s.id === saved)) {
+        setActiveShopId(saved);
+      } else if (shopsList.length > 0) {
+        setActiveShopId(shopsList[0].id);
+        localStorage.setItem("ecompilot_active_shop", shopsList[0].id);
+      }
+    } catch { /* silent */ }
+    setLoading(false);
+  };
 
   const setActiveShop = (id: string) => {
     setActiveShopId(id);
@@ -44,210 +61,244 @@ export default function ShopsPage() {
     setShowSwitcher(false);
   };
 
+  const handleConnect = () => {
+    setConnectError("");
+    const cleaned = newShopUrl.trim().toLowerCase().replace(/https?:\/\//, "").replace(/\/$/, "");
+    if (!cleaned) { setConnectError("Entrez votre domaine Shopify."); return; }
+    const domain = cleaned.includes(".") ? cleaned : `${cleaned}.myshopify.com`;
+    if (!/^[a-z0-9][a-z0-9\-]*\.myshopify\.com$/.test(domain)) {
+      setConnectError("Format invalide. Exemple : ma-boutique.myshopify.com");
+      return;
+    }
+    setConnectLoading(true);
+    router.push(`/api/auth/shopify?shop=${encodeURIComponent(domain)}`);
+  };
+
+  const handleDisconnect = async (shopId: string) => {
+    if (!confirm("Déconnecter cette boutique ? Vos données resteront intactes.")) return;
+    try {
+      const supabase = createClient();
+      await supabase.from("shops").delete().eq("id", shopId);
+      const remaining = shops.filter((s) => s.id !== shopId);
+      setShops(remaining);
+      if (activeShopId === shopId) {
+        if (remaining.length > 0) setActiveShop(remaining[0].id);
+        else { setActiveShopId(""); localStorage.removeItem("ecompilot_active_shop"); }
+      }
+    } catch { /* silent */ }
+  };
+
   const activeShop = shops.find((s) => s.id === activeShopId) || shops[0];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2563eb" }} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Mes boutiques</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Gérez et basculez entre vos boutiques Shopify</p>
+          <p className="text-sm mt-1" style={{ color: "#64748b" }}>
+            Gérez et basculez entre vos boutiques Shopify
+          </p>
         </div>
-        <button onClick={() => setShowAddModal(true)}
+        <button
+          onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-          style={{ backgroundColor: "#2563eb", color: "#fff" }}>
+          style={{ backgroundColor: "#2563eb", color: "#fff" }}
+        >
           <Plus className="w-4 h-4" /> Ajouter une boutique
         </button>
       </div>
 
-      {/* ══════ ACTIVE SHOP SWITCHER ══════ */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Star className="w-4 h-4" style={{ color: "#2563eb" }} />
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2563eb" }}>Boutique active</span>
+      {/* Empty state */}
+      {shops.length === 0 ? (
+        <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center">
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ backgroundColor: "#eff6ff" }}>
+            <Store className="w-8 h-8" style={{ color: "#2563eb" }} />
           </div>
-          <div className="relative">
-            <button onClick={() => setShowSwitcher(!showSwitcher)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-blue-200 text-xs font-medium hover:bg-blue-50 transition-colors"
-              style={{ color: "#2563eb" }}>
-              Changer de boutique <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSwitcher ? "rotate-180" : ""}`} />
-            </button>
-            {showSwitcher && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-xl z-10 overflow-hidden">
-                <div className="p-2">
-                  {shops.filter((s) => s.status === "connected").map((shop) => (
-                    <button key={shop.id} onClick={() => setActiveShop(shop.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${shop.id === activeShopId ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"}`}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: shop.id === activeShopId ? "#dbeafe" : "#f1f5f9" }}>
-                        <Store className="w-4 h-4" style={{ color: shop.id === activeShopId ? "#2563eb" : "#64748b" }} />
+          <h2 className="text-xl font-bold mb-3" style={{ color: "#0f172a" }}>Aucune boutique connectée</h2>
+          <p className="text-base mb-6 max-w-sm mx-auto" style={{ color: "#64748b" }}>
+            Connectez votre boutique Shopify pour commencer à optimiser votre catalogue avec l&apos;IA.
+          </p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold"
+            style={{ backgroundColor: "#2563eb", color: "#fff" }}
+          >
+            <Plus className="w-4 h-4" /> Connecter ma boutique Shopify
+          </button>
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            {[
+              { icon: "⚡", title: "30 secondes", desc: "pour connecter votre boutique" },
+              { icon: "🔒", title: "Sécurisé", desc: "OAuth officiel Shopify · RGPD" },
+              { icon: "🤖", title: "IA incluse", desc: "descriptions + SEO dès la connexion" },
+            ].map((item) => (
+              <div key={item.title} className="p-4 rounded-xl" style={{ backgroundColor: "#f8fafc" }}>
+                <span className="text-2xl mb-2 block">{item.icon}</span>
+                <p className="text-sm font-bold" style={{ color: "#0f172a" }}>{item.title}</p>
+                <p className="text-xs" style={{ color: "#64748b" }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Active shop banner */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Star className="w-4 h-4" style={{ color: "#2563eb" }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#2563eb" }}>Boutique active</span>
+              </div>
+              {shops.length > 1 && (
+                <div className="relative">
+                  <button onClick={() => setShowSwitcher(!showSwitcher)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-blue-200 text-xs font-medium hover:bg-blue-50"
+                    style={{ color: "#2563eb" }}>
+                    Changer <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSwitcher ? "rotate-180" : ""}`} />
+                  </button>
+                  {showSwitcher && (
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-gray-200 shadow-xl z-10 overflow-hidden">
+                      <div className="p-2">
+                        {shops.map((s) => (
+                          <button key={s.id} onClick={() => setActiveShop(s.id)}
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${s.id === activeShopId ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"}`}>
+                            <Store className="w-4 h-4 flex-shrink-0" style={{ color: s.id === activeShopId ? "#2563eb" : "#64748b" }} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{s.shop_name || s.shop_domain}</p>
+                              <p className="text-[11px] truncate" style={{ color: "#94a3b8" }}>{s.shop_domain}</p>
+                            </div>
+                            {s.id === activeShopId && <CheckCircle className="w-4 h-4" style={{ color: "#2563eb" }} />}
+                          </button>
+                        ))}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{shop.name}</p>
-                        <p className="text-[11px] truncate" style={{ color: "#94a3b8" }}>{shop.products} produits</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-white border border-blue-200 flex items-center justify-center">
+                <Store className="w-7 h-7" style={{ color: "#2563eb" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold truncate" style={{ color: "#0f172a" }}>{activeShop?.shop_name || activeShop?.shop_domain}</h2>
+                <p className="text-sm truncate" style={{ color: "#64748b" }}>{activeShop?.shop_domain}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Shops grid */}
+          <div>
+            <h3 className="text-base font-bold mb-4" style={{ color: "#0f172a" }}>Toutes vos boutiques ({shops.length})</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {shops.map((shop) => {
+                const isActive = shop.id === activeShopId;
+                return (
+                  <div key={shop.id} className={`bg-white rounded-xl border-2 p-5 transition-all ${isActive ? "border-blue-400 ring-2 ring-blue-100 shadow-md" : "border-gray-200 hover:shadow-sm"}`}>
+                    {isActive && (
+                      <div className="mb-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: "#dbeafe", color: "#2563eb" }}>Active</span>
                       </div>
-                      {shop.id === activeShopId && (
-                        <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: "#2563eb" }} />
+                    )}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: isActive ? "#dbeafe" : "#eff6ff" }}>
+                          <Store className="w-5 h-5" style={{ color: "#2563eb" }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{shop.shop_name || shop.shop_domain}</p>
+                          <p className="text-xs truncate" style={{ color: "#94a3b8" }}>{shop.shop_domain}</p>
+                        </div>
+                      </div>
+                      <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
+                        style={{ backgroundColor: shop.is_active ? "#d1fae5" : "#fef2f2", color: shop.is_active ? "#059669" : "#dc2626" }}>
+                        {shop.is_active ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        {shop.is_active ? "OK" : "Inactive"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!isActive ? (
+                        <button onClick={() => setActiveShop(shop.id)}
+                          className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5"
+                          style={{ backgroundColor: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}>
+                          <ArrowRight className="w-3.5 h-3.5" /> Basculer
+                        </button>
+                      ) : (
+                        <div className="flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5"
+                          style={{ backgroundColor: "#f0fdf4", color: "#059669" }}>
+                          <CheckCircle className="w-3.5 h-3.5" /> Active
+                        </div>
                       )}
-                    </button>
-                  ))}
+                      <button onClick={() => router.push("/dashboard/products")}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50" title="Produits">
+                        <PackageSearch className="w-4 h-4" style={{ color: "#64748b" }} />
+                      </button>
+                      <a href={`https://${shop.shop_domain}`} target="_blank" rel="noopener noreferrer"
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+                        <ExternalLink className="w-4 h-4" style={{ color: "#64748b" }} />
+                      </a>
+                      <button onClick={() => handleDisconnect(shop.id)}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-red-50">
+                        <Trash2 className="w-4 h-4" style={{ color: "#dc2626" }} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              <button onClick={() => setShowAddModal(true)}
+                className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-5 flex flex-col items-center justify-center gap-3 min-h-[160px] hover:border-blue-300 hover:bg-blue-50/30 transition-all">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#eff6ff" }}>
+                  <Plus className="w-6 h-6" style={{ color: "#2563eb" }} />
                 </div>
-                <div className="border-t border-gray-100 p-2">
-                  <button onClick={() => { setShowSwitcher(false); setShowAddModal(true); }}
-                    className="w-full flex items-center gap-2 p-2.5 rounded-lg text-xs font-medium hover:bg-gray-50"
-                    style={{ color: "#64748b" }}>
-                    <Plus className="w-3.5 h-3.5" /> Connecter une nouvelle boutique
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-white border border-blue-200 flex items-center justify-center">
-            <Store className="w-7 h-7" style={{ color: "#2563eb" }} />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-bold" style={{ color: "#0f172a" }}>{activeShop?.name}</h2>
-            <p className="text-sm" style={{ color: "#64748b" }}>{activeShop?.domain}</p>
-          </div>
-          <div className="hidden sm:flex items-center gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{activeShop?.products}</p>
-              <p className="text-xs" style={{ color: "#94a3b8" }}>produits</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium" style={{ color: "#059669" }}>{activeShop?.lastSync}</p>
-              <p className="text-xs" style={{ color: "#94a3b8" }}>dernière sync</p>
+                <p className="text-sm font-semibold" style={{ color: "#2563eb" }}>Ajouter une boutique</p>
+              </button>
             </div>
           </div>
-        </div>
-        <p className="text-xs mt-3" style={{ color: "#64748b" }}>
-          Toutes les actions (IA, édition, import) s&apos;appliquent à cette boutique. Changez à tout moment.
-        </p>
-      </div>
+        </>
+      )}
 
-      {/* ══════ ALL SHOPS GRID ══════ */}
-      <div>
-        <h3 className="text-base font-bold mb-4" style={{ color: "#0f172a" }}>Toutes vos boutiques ({shops.length})</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {shops.map((shop) => {
-            const status = statusConfig[shop.status];
-            const StatusIcon = status.icon;
-            const isActive = shop.id === activeShopId;
-            return (
-              <div key={shop.id} className={`bg-white rounded-xl border-2 p-5 transition-all ${isActive ? "border-blue-400 ring-2 ring-blue-100 shadow-md" : "border-gray-200 hover:shadow-sm"}`}>
-                {isActive && (
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: "#dbeafe", color: "#2563eb" }}>
-                      Boutique active
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: isActive ? "#dbeafe" : "#eff6ff" }}>
-                      <Store className="w-5 h-5" style={{ color: "#2563eb" }} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>{shop.name}</p>
-                      <p className="text-xs" style={{ color: "#94a3b8" }}>{shop.domain}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-                    style={{ backgroundColor: status.bg, color: status.color }}>
-                    <StatusIcon className="w-3 h-3" />
-                    {status.label}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#f8fafc" }}>
-                    <p className="text-xs" style={{ color: "#94a3b8" }}>Produits</p>
-                    <p className="text-lg font-bold" style={{ color: "#0f172a" }}>{shop.products}</p>
-                  </div>
-                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#f8fafc" }}>
-                    <p className="text-xs" style={{ color: "#94a3b8" }}>Dernière sync</p>
-                    <p className="text-xs font-medium mt-1" style={{ color: "#374151" }}>{shop.lastSync}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {!isActive && shop.status === "connected" && (
-                    <button onClick={() => setActiveShop(shop.id)}
-                      className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                      style={{ backgroundColor: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}>
-                      <ArrowRight className="w-3.5 h-3.5" /> Basculer ici
-                    </button>
-                  )}
-                  {isActive && (
-                    <div className="flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5"
-                      style={{ backgroundColor: "#f0fdf4", color: "#059669" }}>
-                      <CheckCircle className="w-3.5 h-3.5" /> Active
-                    </div>
-                  )}
-                  <button className="flex-1 py-2 rounded-lg text-xs font-medium border border-gray-200 hover:bg-gray-50 flex items-center justify-center gap-1.5"
-                    style={{ color: "#374151" }}>
-                    <RefreshCw className="w-3.5 h-3.5" /> Sync
-                  </button>
-                  <button className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50" title="Paramètres">
-                    <Settings className="w-4 h-4" style={{ color: "#64748b" }} />
-                  </button>
-                  <a href={`https://${shop.domain}`} target="_blank" rel="noopener noreferrer"
-                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50" title="Ouvrir Shopify">
-                    <ExternalLink className="w-4 h-4" style={{ color: "#64748b" }} />
-                  </a>
-                  <button className="p-2 rounded-lg border border-gray-200 hover:bg-red-50" title="Supprimer">
-                    <Trash2 className="w-4 h-4" style={{ color: "#dc2626" }} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Add Shop Modal */}
+      {/* Add shop modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => setShowAddModal(false)}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Ajouter une boutique</h2>
-            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Connectez une nouvelle boutique Shopify à votre compte</p>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Connecter une boutique</h2>
+            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Entrez votre domaine Shopify pour démarrer la connexion.</p>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom de la boutique</label>
-                <input type="text" value={newShopName} onChange={(e) => setNewShopName(e.target.value)}
-                  placeholder="Ex: Ma Boutique Mode"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" style={{ color: "#0f172a" }} />
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>URL Shopify</label>
-                <input type="text" value={newShopUrl} onChange={(e) => setNewShopUrl(e.target.value)}
-                  placeholder="votre-boutique.myshopify.com"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" style={{ color: "#0f172a" }} />
+                <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Domaine Shopify</label>
+                <input type="text" value={newShopUrl} onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
+                  placeholder="ma-boutique.myshopify.com"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                  style={{ color: "#0f172a" }}
+                  onKeyDown={(e) => e.key === "Enter" && handleConnect()}
+                  autoFocus />
+                {connectError && <p className="mt-1.5 text-xs" style={{ color: "#dc2626" }}>{connectError}</p>}
               </div>
               <div className="p-3 rounded-xl" style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
-                <p className="text-xs" style={{ color: "#1e40af" }}>
-                  Vous serez redirigé vers Shopify pour autoriser l&apos;accès à votre boutique. Aucune modification ne sera effectuée sans votre accord.
-                </p>
+                <p className="text-xs" style={{ color: "#1e40af" }}>Vous serez redirigé vers Shopify pour autoriser l&apos;accès. Aucun produit ne sera modifié sans votre validation.</p>
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50"
-                  style={{ color: "#374151" }}>
-                  Annuler
-                </button>
-                <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
+                <button onClick={handleConnect} disabled={connectLoading || !newShopUrl.trim()}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                   style={{ backgroundColor: "#2563eb", color: "#fff" }}>
-                  Connecter la boutique
+                  {connectLoading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Connexion…</> : <>Connecter <ArrowRight className="w-4 h-4" /></>}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+      {showSwitcher && <div className="fixed inset-0 z-0" onClick={() => setShowSwitcher(false)} />}
     </div>
   );
 }
