@@ -46,17 +46,17 @@ export default function HistoryPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Historique</h1>
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Historique</h1>
         <p className="text-sm mt-1" style={{ color: "#64748b" }}>Journal de toutes les modifications de votre catalogue</p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-6">
+        <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher dans l'historique…"
+            placeholder="Rechercher…"
             className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
         </div>
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
@@ -72,7 +72,7 @@ export default function HistoryPage() {
         </select>
         <button onClick={() => setSortDesc(!sortDesc)}
           className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 hover:bg-gray-50 rounded-lg text-sm" style={{ color: "#374151" }}>
-          <ArrowUpDown className="w-4 h-4" /> {sortDesc ? "Plus récent" : "Plus ancien"}
+          <ArrowUpDown className="w-4 h-4" /> {sortDesc ? "Récent" : "Ancien"}
         </button>
       </div>
 
@@ -85,14 +85,15 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Date</th>
-                <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Action</th>
-                <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Produit</th>
-                <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Détails</th>
-                <th className="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Par</th>
+                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Date</th>
+                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Action</th>
+                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Produit</th>
+                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Détails</th>
+                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Par</th>
               </tr>
             </thead>
             <tbody>
@@ -101,31 +102,32 @@ export default function HistoryPage() {
                 const Icon = config.icon;
                 return (
                   <tr key={entry.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <span className="text-xs font-mono" style={{ color: "#64748b" }}>{entry.date}</span>
+                    <td className="px-4 md:px-5 py-3.5">
+                      <span className="text-xs font-mono whitespace-nowrap" style={{ color: "#64748b" }}>{entry.date}</span>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 md:px-5 py-3.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: config.bg }}>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                           <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
                         </div>
-                        <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{entry.action}</span>
+                        <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#0f172a" }}>{entry.action}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 md:px-5 py-3.5">
                       <span className="text-sm" style={{ color: "#374151" }}>{entry.productTitle}</span>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 md:px-5 py-3.5">
                       <span className="text-sm" style={{ color: "#64748b" }}>{entry.details}</span>
                     </td>
-                    <td className="px-5 py-3.5">
-                      <span className="text-xs px-2 py-0.5 rounded-full" style={{ color: entry.user === "système" ? "#0ea5e9" : "#64748b", backgroundColor: entry.user === "système" ? "#f0f9ff" : "#f8fafc" }}>{entry.user}</span>
+                    <td className="px-4 md:px-5 py-3.5">
+                      <span className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap" style={{ color: entry.user === "système" ? "#0ea5e9" : "#64748b", backgroundColor: entry.user === "système" ? "#f0f9ff" : "#f8fafc" }}>{entry.user}</span>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

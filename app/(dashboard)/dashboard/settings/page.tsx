@@ -82,22 +82,35 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Paramètres</h1>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Paramètres</h1>
           <p className="text-sm mt-1" style={{ color: "#64748b" }}>Gérez les préférences de votre compte et boutique</p>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors">
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors self-start sm:self-auto">
           {saving ? <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Save className="w-4 h-4" style={{ color: "#fff" }} />}
           <span style={{ color: "#fff" }}>Sauvegarder</span>
         </button>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Sidebar tabs */}
-        <div className="w-52 shrink-0">
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="w-full md:w-52 shrink-0">
+          {/* Mobile: horizontal scroll tabs */}
+          <div className="md:hidden overflow-x-auto -mx-1 px-1 pb-1">
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit min-w-full">
+              {TABS.map((tab) => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${activeTab === tab.id ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
+                  style={{ color: activeTab === tab.id ? "#2563eb" : "#374151" }}>
+                  {tab.icon}{tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Desktop: vertical sidebar */}
+          <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
             {TABS.map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id ? "bg-blue-50 border-r-2 border-blue-600" : "hover:bg-gray-50"}`}
@@ -134,7 +147,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom complet</label>
                   <div className="relative">
@@ -190,7 +203,7 @@ export default function SettingsPage() {
                 </h2>
                 <p className="text-xs mb-6" style={{ color: "#64748b" }}>Paramètres de votre boutique Shopify</p>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom de la boutique</label>
                     <input type="text" value={shopName} onChange={(e) => setShopName(e.target.value)}

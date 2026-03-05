@@ -169,9 +169,9 @@ export default function HelpPage() {
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Centre d&apos;aide</h1>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Centre d&apos;aide</h1>
           <p className="text-sm mt-1" style={{ color: "#64748b" }}>Trouvez des réponses ou discutez avec notre assistant IA</p>
         </div>
         <button onClick={() => setShowChat(!showChat)}
@@ -181,7 +181,7 @@ export default function HelpPage() {
         </button>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Main content */}
         <div className={`${showChat ? "flex-1" : "w-full"}`}>
           {/* Search */}
@@ -207,7 +207,7 @@ export default function HelpPage() {
 
           {/* Quick help cards */}
           {!search && category === "all" && (
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               {[
                 { icon: <Zap className="w-5 h-5" style={{ color: "#f59e0b" }} />, title: "Démarrage rapide", desc: "Connectez votre boutique en 2 minutes", bg: "bg-amber-50" },
                 { icon: <BookOpen className="w-5 h-5" style={{ color: "#2563eb" }} />, title: "Documentation", desc: "Guides détaillés de chaque fonctionnalité", bg: "bg-blue-50" },
@@ -289,7 +289,7 @@ export default function HelpPage() {
 
         {/* Chat panel */}
         {showChat && (
-          <div className="w-96 shrink-0">
+          <div className="w-full md:w-96 md:shrink-0">
             <div className="bg-white rounded-xl border border-gray-200 flex flex-col h-[calc(100vh-12rem)] sticky top-4">
               {/* Chat header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-100">

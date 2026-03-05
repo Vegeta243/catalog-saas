@@ -524,46 +524,48 @@ export default function ProductsPage() {
       )}
 
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Catalogue produits</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Catalogue produits</h1>
+          <p className="text-sm mt-1 flex flex-wrap items-center gap-2" style={{ color: "#64748b" }}>
             {filteredProducts.length} produit{filteredProducts.length > 1 ? "s" : ""}
             {lowStockCount > 0 && (
-              <span className="ml-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 bg-red-50 rounded-full" style={{ color: "#dc2626" }}>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 bg-red-50 rounded-full" style={{ color: "#dc2626" }}>
                 <AlertTriangle className="w-3 h-3" /> {lowStockCount} stock bas
               </span>
             )}
-            <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: avgSeo >= 70 ? "#ecfdf5" : avgSeo >= 40 ? "#fffbeb" : "#fef2f2", color: avgSeo >= 70 ? "#059669" : avgSeo >= 40 ? "#d97706" : "#dc2626" }}>
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: avgSeo >= 70 ? "#ecfdf5" : avgSeo >= 40 ? "#fffbeb" : "#fef2f2", color: avgSeo >= 70 ? "#059669" : avgSeo >= 40 ? "#d97706" : "#dc2626" }}>
               <BarChart3 className="w-3 h-3" /> SEO moyen {avgSeo}%
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-2">
           <button onClick={() => fetchProducts(true)} disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm disabled:opacity-50"
             style={{ color: "#374151" }}>
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#374151" }} /> Synchroniser
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#374151" }} /> <span className="hidden sm:inline">Synchroniser</span>
           </button>
-          <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm"
+          <button onClick={exportCSV} className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm"
             style={{ color: "#374151" }}>
             <Download className="w-4 h-4" style={{ color: "#374151" }} /> CSV
           </button>
-          <Link href="/dashboard/import" className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium shadow-sm">
+          <Link href="/dashboard/import" className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium shadow-sm">
             <Upload className="w-4 h-4" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Importer</span>
           </Link>
         </div>
       </div>
 
       {/* ── Status tabs ── */}
-      <div className="flex items-center gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
-        {[{ key: "all", label: "Tous" }, { key: "active", label: "Actifs" }, { key: "draft", label: "Brouillons" }, { key: "archived", label: "Archivés" }].map((tab) => (
-          <button key={tab.key} onClick={() => { setStatusFilter(tab.key); setCurrentPage(1); }}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${statusFilter === tab.key ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
-            style={{ color: statusFilter === tab.key ? "#0f172a" : "#64748b" }}>
-            {tab.label} <span className="ml-1 text-xs" style={{ color: "#94a3b8" }}>({statusCounts[tab.key] || 0})</span>
-          </button>
-        ))}
+      <div className="overflow-x-auto mb-4 -mx-1 px-1">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit min-w-full md:min-w-fit">
+          {[{ key: "all", label: "Tous" }, { key: "active", label: "Actifs" }, { key: "draft", label: "Brouillons" }, { key: "archived", label: "Archivés" }].map((tab) => (
+            <button key={tab.key} onClick={() => { setStatusFilter(tab.key); setCurrentPage(1); }}
+              className={`px-3 md:px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${statusFilter === tab.key ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
+              style={{ color: statusFilter === tab.key ? "#0f172a" : "#64748b" }}>
+              {tab.label} <span className="ml-1 text-xs" style={{ color: "#94a3b8" }}>({statusCounts[tab.key] || 0})</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Search + price filter ── */}
@@ -781,7 +783,7 @@ export default function ProductsPage() {
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-3 text-left w-10">

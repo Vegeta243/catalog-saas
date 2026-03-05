@@ -341,12 +341,12 @@ export default function AIPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Optimisation IA</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Analysez et optimisez le SEO de votre catalogue avec l'intelligence artificielle</p>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Optimisation IA</h1>
+          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Analysez et optimisez le SEO de votre catalogue avec l&apos;intelligence artificielle</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {Object.keys(generatedContent).length > 0 && (
             <button onClick={handleMassApply} disabled={massMode}
               className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-sm font-medium">
@@ -365,7 +365,7 @@ export default function AIPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Score moyen", value: `${stats.avg}%`, icon: BarChart3, color: "#2563eb", bg: "#eff6ff" },
           { label: "SEO Faible", value: stats.low.toString(), icon: AlertTriangle, color: "#dc2626", bg: "#fef2f2" },
@@ -387,8 +387,8 @@ export default function AIPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-[160px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
           <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20" style={{ color: "#0f172a" }} />
