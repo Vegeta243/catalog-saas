@@ -32,6 +32,7 @@
     "eslint": "^9.39.3",
     "eslint-config-next": "16.1.6",
     "postgres": "^3.4.8",
+    "supabase": "^2.76.17",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   },
