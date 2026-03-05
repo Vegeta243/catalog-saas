@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "shopify:deploy": "shopify app deploy",
+    "shopify:deploy:no-release": "shopify app deploy --no-release",
+    "shopify:setup": "node scripts/shopify-deploy.mjs",
+    "shopify:dev": "shopify app dev"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
