@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Upload, Link2, FileSpreadsheet, CheckCircle2, XCircle, RefreshCw, Package, ArrowRight, X, ImageOff } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Upload, Link2, FileSpreadsheet, CheckCircle2, XCircle, RefreshCw, Package, ArrowRight, X, ImageOff, AlertTriangle } from "lucide-react";
 import { useToast } from "@/lib/toast";
+import { createClient } from "@/lib/supabase/client";
 
 interface ImportPreview {
   title: string;
@@ -31,6 +32,27 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [hasShop, setHasShop] = useState<boolean | null>(null);
+
+  // Check if user has a connected shop
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setHasShop(false); return; }
+        const { data } = await supabase
+          .from("shops")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .limit(1);
+        setHasShop(!!(data && data.length > 0));
+      } catch {
+        setHasShop(false);
+      }
+    })();
+  }, []);
 
   const handleScrape = async () => {
     const urlList = urls.split("\n").map((u) => u.trim()).filter(Boolean).slice(0, 20);
@@ -86,18 +108,27 @@ export default function ImportPage() {
       if (!res.ok) throw new Error("Erreur d'import");
       const data = await res.json();
 
-      setResults((prev) => prev.map((r) => {
-        if (r.status === "importing") {
-          const match = data.results?.find((dr: { title: string; success: boolean }) => dr.title === r.preview?.title);
-          return { ...r, status: match?.success ? "done" : "error", error: match?.error };
-        }
-        return r;
-      }));
+      if (data.error) {
+        // API returned a specific error (e.g. no shop connected)
+        setResults((prev) => prev.map((r) =>
+          r.status === "importing" ? { ...r, status: "error", error: data.error } : r
+        ));
+        addToast(data.error, "error");
+      } else {
+        setResults((prev) => prev.map((r) => {
+          if (r.status === "importing") {
+            const match = data.results?.find((dr: { title: string; success: boolean }) => dr.title === r.preview?.title);
+            return { ...r, status: match?.success ? "done" : "error", error: match?.error };
+          }
+          return r;
+        }));
 
-      addToast(`${data.summary?.succeeded || 0} produit${(data.summary?.succeeded || 0) > 1 ? "s" : ""} importé${(data.summary?.succeeded || 0) > 1 ? "s" : ""}`, "success");
-    } catch {
-      setResults((prev) => prev.map((r) => r.status === "importing" ? { ...r, status: "error", error: "Erreur réseau" } : r));
-      addToast("Erreur lors de l'import", "error");
+        addToast(`${data.summary?.succeeded || 0} produit${(data.summary?.succeeded || 0) > 1 ? "s" : ""} importé${(data.summary?.succeeded || 0) > 1 ? "s" : ""}`, "success");
+      }
+    } catch (err) {
+      const errorMsg = hasShop === false ? "Boutique non connectée — connectez votre boutique dans Mes boutiques" : "Erreur réseau — vérifiez votre connexion";
+      setResults((prev) => prev.map((r) => r.status === "importing" ? { ...r, status: "error", error: errorMsg } : r));
+      addToast(errorMsg, "error");
     }
 
     setImporting(false);
@@ -142,6 +173,19 @@ export default function ImportPage() {
       </div>
 
       {/* Tabs */}
+      {hasShop === false && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-200 mb-4" style={{ backgroundColor: "#fffbeb" }}>
+          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#d97706" }} />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "#92400e" }}>Aucune boutique connectée</p>
+            <p className="text-xs mt-0.5" style={{ color: "#a16207" }}>
+              Vous pouvez analyser les URLs, mais l&apos;import vers Shopify nécessite une boutique connectée.{" "}
+              <a href="/dashboard/shops" className="underline font-medium">Connecter une boutique →</a>
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
         <button onClick={() => setActiveTab("url")} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium ${activeTab === "url" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`} style={{ color: activeTab === "url" ? "#0f172a" : "#64748b" }}>
           <Link2 className="w-4 h-4" /> Depuis une URL

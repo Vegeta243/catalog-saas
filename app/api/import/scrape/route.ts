@@ -100,8 +100,41 @@ export async function POST(req: Request) {
     }
 
     // --- General scraping ---
-    const preview = await scrapePage(url, multiplier);
-    return NextResponse.json({ success: true, preview });
+    try {
+      const preview = await scrapePage(url, multiplier);
+      // If scraping got no useful title, return a demo with note
+      if (!preview.title || preview.title === "Produit importé") {
+        return NextResponse.json({
+          success: true,
+          demo: true,
+          preview: {
+            ...preview,
+            title: preview.title || "Produit importé",
+            note: "Le titre n'a pas pu être extrait automatiquement — modifiez-le avant l'import",
+          },
+        });
+      }
+      return NextResponse.json({ success: true, preview });
+    } catch (scrapeError) {
+      // If AliExpress, return demo
+      if (isAliexpressUrl(url)) {
+        const demo = CJ_DEMO_PRODUCTS[Math.floor(Math.random() * CJ_DEMO_PRODUCTS.length)];
+        return NextResponse.json({
+          success: true,
+          demo: true,
+          preview: {
+            title: demo.title,
+            description: demo.description,
+            imageUrl: demo.imageUrl,
+            supplierPrice: demo.supplierPrice,
+            sellingPrice: (demo.supplierPrice * multiplier).toFixed(2),
+            margin: multiplier,
+            note: "Données de démonstration — AliExpress bloque le scraping direct",
+          },
+        });
+      }
+      throw scrapeError;
+    }
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }

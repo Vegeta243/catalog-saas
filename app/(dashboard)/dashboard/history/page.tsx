@@ -85,15 +85,14 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Date</th>
-                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Action</th>
-                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Produit</th>
-                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Détails</th>
-                <th className="text-left px-4 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Par</th>
+                <th className="text-left px-3 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Date</th>
+                <th className="text-left px-3 md:px-5 py-3 text-xs font-medium uppercase tracking-wider" style={{ color: "#64748b" }}>Action</th>
+                <th className="text-left px-3 md:px-5 py-3 text-xs font-medium uppercase tracking-wider hidden sm:table-cell" style={{ color: "#64748b" }}>Produit</th>
+                <th className="text-left px-3 md:px-5 py-3 text-xs font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: "#64748b" }}>Détails</th>
+                <th className="text-left px-3 md:px-5 py-3 text-xs font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: "#64748b" }}>Par</th>
               </tr>
             </thead>
             <tbody>
@@ -102,24 +101,27 @@ export default function HistoryPage() {
                 const Icon = config.icon;
                 return (
                   <tr key={entry.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 md:px-5 py-3.5">
+                    <td className="px-3 md:px-5 py-3.5">
                       <span className="text-xs font-mono whitespace-nowrap" style={{ color: "#64748b" }}>{entry.date}</span>
                     </td>
-                    <td className="px-4 md:px-5 py-3.5">
+                    <td className="px-3 md:px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                           <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
                         </div>
-                        <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#0f172a" }}>{entry.action}</span>
+                        <div>
+                          <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{entry.action}</span>
+                          <p className="text-xs sm:hidden truncate max-w-[120px]" style={{ color: "#94a3b8" }}>{entry.productTitle}</p>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-4 md:px-5 py-3.5">
+                    <td className="px-3 md:px-5 py-3.5 hidden sm:table-cell">
                       <span className="text-sm" style={{ color: "#374151" }}>{entry.productTitle}</span>
                     </td>
-                    <td className="px-4 md:px-5 py-3.5">
+                    <td className="px-3 md:px-5 py-3.5 hidden md:table-cell">
                       <span className="text-sm" style={{ color: "#64748b" }}>{entry.details}</span>
                     </td>
-                    <td className="px-4 md:px-5 py-3.5">
+                    <td className="px-3 md:px-5 py-3.5 hidden md:table-cell">
                       <span className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap" style={{ color: entry.user === "système" ? "#0ea5e9" : "#64748b", backgroundColor: entry.user === "système" ? "#f0f9ff" : "#f8fafc" }}>{entry.user}</span>
                     </td>
                   </tr>
@@ -127,7 +129,6 @@ export default function HistoryPage() {
               })}
             </tbody>
           </table>
-          </div>
         </div>
       )}
 

@@ -96,8 +96,17 @@ export default function ImagesPage() {
       if (height) formData.append("height", height.toString());
 
       const res = await fetch("/api/images/process", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Erreur serveur");
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Erreur serveur (${res.status})`);
+      }
+      
       const data = await res.json();
+
+      if (!data.image) {
+        throw new Error("Aucune image retournée par le serveur");
+      }
 
       setImages((prev) => prev.map((img) =>
         img.id === imageFile.id
@@ -106,21 +115,33 @@ export default function ImagesPage() {
       ));
       addToast(`Image traitée — ${data.compression}% de compression`, "success");
     } catch (err) {
-      addToast("Erreur de traitement — réessayez", "error");
+      const errorMsg = err instanceof Error ? err.message : "Erreur de traitement";
+      addToast(`Échec : ${errorMsg}`, "error");
+      console.error("Image processing error:", err);
     }
     setProcessing(false);
   };
 
   const handleBatchProcess = async (action: string, width = 0, height = 0) => {
+    if (images.length === 0) {
+      addToast("Aucune image à traiter — ajoutez des images d'abord", "error");
+      return;
+    }
     setBatchProcessing(true);
     setBatchProgress({ current: 0, total: images.length });
     let imgDone = 0;
-    await Promise.all(images.map(async (img) => {
-      await processImage(img, action, width, height);
+    let errors = 0;
+    for (const img of images) {
+      try {
+        await processImage(img, action, width, height);
+      } catch {
+        errors++;
+      }
       imgDone++;
       setBatchProgress({ current: imgDone, total: images.length });
-    }));
-    addToast(`${images.length} image${images.length > 1 ? "s" : ""} traitée${images.length > 1 ? "s" : ""}`, "success");
+    }
+    const successCount = imgDone - errors;
+    addToast(`${successCount} image${successCount > 1 ? "s" : ""} traitée${successCount > 1 ? "s" : ""}${errors > 0 ? `, ${errors} erreur${errors > 1 ? "s" : ""}` : ""}`, errors > 0 ? "error" : "success");
     setBatchProcessing(false);
   };
 
@@ -166,15 +187,15 @@ export default function ImagesPage() {
         onChange={(e) => e.target.files && handleFiles(e.target.files)} />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Éditeur d&apos;images</h1>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Éditeur d&apos;images</h1>
           <p className="text-sm mt-1" style={{ color: "#64748b" }}>
-            Retouchez, redimensionnez et optimisez vos images en masse
+            Importez, retouchez et exportez vos images
             {images.length > 0 && <span className="ml-1 font-medium">· {images.length} image{images.length > 1 ? "s" : ""}</span>}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {images.length > 0 && (
             <>
               <button onClick={() => handleBatchProcess("adjust")} disabled={batchProcessing}
@@ -296,17 +317,20 @@ export default function ImagesPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Actions IA */}
+          {/* Step 1: Actions */}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4" style={{ color: "#2563eb" }} />
-              <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Traitement serveur</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-bold" style={{ color: "#fff" }}>1</span>
+              </div>
+              <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Traitement</h3>
             </div>
+            <p className="text-[11px] mb-3" style={{ color: "#94a3b8" }}>Sélectionnez une image puis cliquez sur une action</p>
             <div className="space-y-2">
               {[
-                { id: "enhance", label: "Améliorer la qualité", icon: Sparkles, desc: "Netteté et couleurs améliorées" },
-                { id: "adjust", label: "Appliquer ajustements", icon: SunMedium, desc: "Luminosité, contraste, saturation" },
-                { id: "grayscale", label: "Noir et blanc", icon: Palette, desc: "Conversion N&B serveur" },
+                { id: "enhance", label: "Améliorer la qualité", icon: Sparkles, desc: "Netteté + couleurs optimisées" },
+                { id: "adjust", label: "Appliquer ajustements", icon: SunMedium, desc: "Applique luminosité, contraste, saturation ci-dessous" },
+                { id: "grayscale", label: "Noir et blanc", icon: Palette, desc: "Convertir en niveaux de gris" },
               ].map((action) => (
                 <button key={action.id} onClick={() => selectedImage && processImage(selectedImage, action.id)}
                   disabled={!selectedImage || processing}
@@ -323,59 +347,86 @@ export default function ImagesPage() {
             </div>
           </div>
 
-          {/* Adjustments */}
+          {/* Step 2: Adjustments */}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold mb-4" style={{ color: "#0f172a" }}>Ajustements</h3>
-            <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-bold" style={{ color: "#fff" }}>2</span>
+              </div>
+              <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Ajustements</h3>
+            </div>
+            <div className="space-y-3">
               {[
                 { label: "Luminosité", icon: SunMedium, value: brightness, set: setBrightness, min: 50, max: 150 },
                 { label: "Contraste", icon: Contrast, value: contrast, set: setContrast, min: 50, max: 150 },
                 { label: "Saturation", icon: Palette, value: saturation, set: setSaturation, min: 0, max: 200 },
               ].map((adj) => (
                 <div key={adj.label}>
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-medium flex items-center gap-1.5" style={{ color: "#64748b" }}>
                       <adj.icon className="w-3.5 h-3.5" /> {adj.label}
                     </label>
-                    <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{adj.value}%</span>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => adj.set(Math.max(adj.min, adj.value - 10))} className="w-6 h-6 rounded border border-gray-200 flex items-center justify-center text-xs hover:bg-gray-100" style={{ color: "#64748b" }}>−</button>
+                      <span className="text-xs font-mono w-10 text-center" style={{ color: "#94a3b8" }}>{adj.value}%</span>
+                      <button onClick={() => adj.set(Math.min(adj.max, adj.value + 10))} className="w-6 h-6 rounded border border-gray-200 flex items-center justify-center text-xs hover:bg-gray-100" style={{ color: "#64748b" }}>+</button>
+                    </div>
                   </div>
                   <input type="range" min={adj.min} max={adj.max} value={adj.value}
                     onChange={(e) => adj.set(Number(e.target.value))}
                     className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600" />
                 </div>
               ))}
+              <button onClick={handleReset} className="w-full py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 mt-1" style={{ color: "#64748b" }}>
+                <RotateCcw className="w-3 h-3 inline mr-1" /> Réinitialiser les valeurs
+              </button>
             </div>
           </div>
 
-          {/* Output settings */}
+          {/* Step 3: Output format & Resize */}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Format de sortie</h3>
-            <div className="flex gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-bold" style={{ color: "#fff" }}>3</span>
+              </div>
+              <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Export</h3>
+            </div>
+
+            {/* Format */}
+            <p className="text-xs font-medium mb-2" style={{ color: "#64748b" }}>Format de sortie</p>
+            <div className="flex gap-2 mb-4">
               {["webp", "png", "jpeg"].map((fmt) => (
                 <button key={fmt} onClick={() => setOutputFormat(fmt)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${outputFormat === fmt ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border text-center ${outputFormat === fmt ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
                   style={{ color: outputFormat === fmt ? "#2563eb" : "#64748b" }}>{fmt.toUpperCase()}</button>
               ))}
             </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
+
+            {/* Quality */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium" style={{ color: "#64748b" }}>Qualité</label>
-                <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{quality}%</span>
+                <div className="flex items-center gap-1">
+                  {[60, 80, 100].map((q) => (
+                    <button key={q} onClick={() => setQuality(q)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-medium ${quality === q ? "bg-blue-100" : "hover:bg-gray-100"}`}
+                      style={{ color: quality === q ? "#2563eb" : "#94a3b8" }}>{q}%</button>
+                  ))}
+                </div>
               </div>
               <input type="range" min="10" max="100" value={quality} onChange={(e) => setQuality(Number(e.target.value))}
                 className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600" />
             </div>
-          </div>
 
-          {/* Preset sizes */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Redimensionner</h3>
+            {/* Resize presets */}
+            <p className="text-xs font-medium mb-2" style={{ color: "#64748b" }}>Redimensionner</p>          {/* Preset sizes */}
+          
             <div className="grid grid-cols-2 gap-2">
               {presetSizes.map((preset) => (
                 <button key={preset.label}
                   onClick={() => selectedImage && processImage(selectedImage, "resize", preset.width, preset.height)}
                   disabled={!selectedImage || processing}
-                  className="p-2.5 rounded-lg border border-gray-200 hover:border-blue-300 transition-all text-left disabled:opacity-50">
+                  className="p-2.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left disabled:opacity-50">
                   <p className="text-xs font-medium" style={{ color: "#0f172a" }}>{preset.label}</p>
                   <p className="text-[10px]" style={{ color: "#94a3b8" }}>{preset.width}×{preset.height}</p>
                 </button>

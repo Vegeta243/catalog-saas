@@ -783,23 +783,23 @@ export default function ProductsPage() {
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px]">
+            <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left w-10">
+                  <th className="px-3 md:px-4 py-3 text-left w-10">
                     <button onClick={selectAll} title="Tout sélectionner (Ctrl+A)">
                       {selectedProducts.length === filteredProducts.length && filteredProducts.length > 0
                         ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} />
                         : <Square className="w-4 h-4" style={{ color: "#94a3b8" }} />}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Image</th>
-                  <th className="px-4 py-3 text-left"><button onClick={() => handleSort("title")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Titre <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
-                  <th className="px-4 py-3 text-left"><button onClick={() => handleSort("price")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Prix <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
-                  <th className="px-4 py-3 text-left"><button onClick={() => handleSort("status")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Statut <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
-                  <th className="px-4 py-3 text-left"><button onClick={() => handleSort("seo")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>SEO <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>IA</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Actions</th>
+                  <th className="px-3 md:px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider hidden sm:table-cell" style={{ color: "#64748b" }}>Image</th>
+                  <th className="px-3 md:px-4 py-3 text-left"><button onClick={() => handleSort("title")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Titre <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
+                  <th className="px-3 md:px-4 py-3 text-left"><button onClick={() => handleSort("price")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Prix <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
+                  <th className="px-3 md:px-4 py-3 text-left hidden sm:table-cell"><button onClick={() => handleSort("status")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Statut <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
+                  <th className="px-3 md:px-4 py-3 text-left hidden md:table-cell"><button onClick={() => handleSort("seo")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>SEO <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
+                  <th className="px-3 md:px-4 py-3 text-left hidden lg:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>IA</th>
+                  <th className="px-3 md:px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -811,13 +811,13 @@ export default function ProductsPage() {
                   const suggestion = aiSuggestions[product.id];
                   return (
                     <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}>
-                      <td className="px-4 py-3"><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 md:px-4 py-3"><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
+                      <td className="px-3 md:px-4 py-3 hidden sm:table-cell">
                         {imageUrl ? <img src={imageUrl} alt={product.title} className="w-11 h-11 rounded-lg object-cover border border-gray-100" />
                           : <div className="w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
                       </td>
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{product.title}</p>
+                      <td className="px-3 md:px-4 py-3">
+                        <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none" style={{ color: "#0f172a" }}>{product.title}</p>
                         {product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
                         {hasLowStock && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 bg-red-50 rounded mt-1" style={{ color: "#dc2626" }}><AlertTriangle className="w-2.5 h-2.5" /> Stock bas</span>}
                         {suggestion?.title && (
@@ -831,10 +831,10 @@ export default function ProductsPage() {
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3"><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
-                      <td className="px-4 py-3">{getStatusBadge(product.status)}</td>
-                      <td className="px-4 py-3"><ScoreBadge score={score} /></td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 md:px-4 py-3"><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
+                      <td className="px-3 md:px-4 py-3 hidden sm:table-cell">{getStatusBadge(product.status)}</td>
+                      <td className="px-3 md:px-4 py-3 hidden md:table-cell"><ScoreBadge score={score} /></td>
+                      <td className="px-3 md:px-4 py-3 hidden lg:table-cell">
                         {suggestion ? (
                           <div className="flex items-center gap-1">
                             {suggestion.title && (
@@ -863,7 +863,7 @@ export default function ProductsPage() {
                           <span className="text-[10px]" style={{ color: "#94a3b8" }}>—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 md:px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => setPreviewProduct(product)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Aperçu">
                             <Eye className="w-4 h-4" style={{ color: "#64748b" }} />

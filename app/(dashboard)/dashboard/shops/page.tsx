@@ -63,13 +63,40 @@ export default function ShopsPage() {
 
   const handleConnect = () => {
     setConnectError("");
-    const cleaned = newShopUrl.trim().toLowerCase().replace(/https?:\/\//, "").replace(/\/$/, "");
-    if (!cleaned) { setConnectError("Entrez votre domaine Shopify."); return; }
-    const domain = cleaned.includes(".") ? cleaned : `${cleaned}.myshopify.com`;
-    if (!/^[a-z0-9][a-z0-9\-]*\.myshopify\.com$/.test(domain)) {
-      setConnectError("Format invalide. Exemple : ma-boutique.myshopify.com");
+    let input = newShopUrl.trim().toLowerCase();
+    if (!input) { setConnectError("Entrez votre domaine Shopify."); return; }
+
+    // Strip protocol
+    input = input.replace(/^https?:\/\//, "");
+
+    let shopSlug = "";
+
+    // admin.shopify.com/store/SLUG/...
+    const adminMatch = input.match(/admin\.shopify\.com\/store\/([a-z0-9][a-z0-9-]*)/);
+    if (adminMatch) {
+      shopSlug = adminMatch[1];
+    }
+    // SLUG.myshopify.com/...
+    else {
+      const myshopifyMatch = input.match(/^([a-z0-9][a-z0-9-]*)\.myshopify\.com/);
+      if (myshopifyMatch) {
+        shopSlug = myshopifyMatch[1];
+      }
+      // Just a slug (no dots, no slashes)
+      else {
+        const cleanInput = input.split("/")[0].split("?")[0].replace(/\s/g, "");
+        if (/^[a-z0-9][a-z0-9-]*$/.test(cleanInput)) {
+          shopSlug = cleanInput;
+        }
+      }
+    }
+
+    if (!shopSlug) {
+      setConnectError("Format invalide. Entrez le nom de votre boutique (ex: ma-boutique), son URL .myshopify.com, ou un lien admin Shopify.");
       return;
     }
+
+    const domain = `${shopSlug}.myshopify.com`;
     setConnectLoading(true);
     router.push(`/api/auth/shopify?shop=${encodeURIComponent(domain)}`);
   };
@@ -275,11 +302,12 @@ export default function ShopsPage() {
               <div>
                 <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Domaine Shopify</label>
                 <input type="text" value={newShopUrl} onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
-                  placeholder="ma-boutique.myshopify.com"
+                  placeholder="ma-boutique ou ma-boutique.myshopify.com"
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                   style={{ color: "#0f172a" }}
                   onKeyDown={(e) => e.key === "Enter" && handleConnect()}
                   autoFocus />
+                <p className="mt-1 text-[11px]" style={{ color: "#94a3b8" }}>Accepte : nom de boutique, URL .myshopify.com, ou lien admin.shopify.com</p>
                 {connectError && <p className="mt-1.5 text-xs" style={{ color: "#dc2626" }}>{connectError}</p>}
               </div>
               <div className="p-3 rounded-xl" style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
