@@ -30,18 +30,8 @@ extension_directories = []
     topics = ["products/create", "products/update", "products/delete"]
     uri    = "/api/webhooks/shopify/products"
 
-  # GDPR (obligatoire pour l'App Store)
-  [[webhooks.subscriptions]]
-    topics = ["customers/data_request"]
-    uri    = "/api/webhooks/shopify/gdpr/customers-data-request"
-
-  [[webhooks.subscriptions]]
-    topics = ["customers/redact"]
-    uri    = "/api/webhooks/shopify/gdpr/customers-redact"
-
-  [[webhooks.subscriptions]]
-    topics = ["shop/redact"]
-    uri    = "/api/webhooks/shopify/gdpr/shop-redact"
+  # Note: GDPR/Privacy webhooks (customers_data_request, customers_redact, shop_redact)
+  # are configured separately in Partners Dashboard > App setup > Privacy webhooks
 
 [app_proxy]
   url     = "https://www.ecompilotelite.com/api/proxy"
