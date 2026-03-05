@@ -1,23 +1,30 @@
 #!/usr/bin/env node
 /**
- * Configuration automatique Supabase OAuth
- * 
- * USAGE:
- *   node scripts/setup-oauth.mjs sbp_VOTRE_TOKEN_MANAGEMENT
- * 
- * Obtenir le token: https://supabase.com/dashboard/account/tokens
- * → "Generate new token" → copier le token
+ * Configuration automatique Supabase OAuth (Google + Apple)
+ *
+ * USAGE - Google seulement:
+ *   node scripts/setup-oauth.mjs SBP_TOKEN GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
+ *
+ * USAGE - Apple seulement:
+ *   node scripts/setup-oauth.mjs SBP_TOKEN "" "" APPLE_SERVICE_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY_FILE.p8
+ *
+ * USAGE - Google + Apple:
+ *   node scripts/setup-oauth.mjs SBP_TOKEN GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET APPLE_SERVICE_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY_FILE.p8
+ *
+ * Obtenir SBP_TOKEN: https://supabase.com/dashboard/account/tokens
  */
 
-const PROJECT_REF = "mhroujagzclmdlfpiqju";
-const SITE_URL    = "https://www.ecompilotelite.com";
+import { createSign } from "crypto";
+import { readFileSync, existsSync } from "fs";
+
+const PROJECT_REF      = "mhroujagzclmdlfpiqju";
+const SITE_URL         = "https://www.ecompilotelite.com";
 const SUPABASE_CALLBACK = `https://${PROJECT_REF}.supabase.co/auth/v1/callback`;
 
 const token = process.argv[2];
 if (!token) {
   console.error("\n❌ Token manquant!\n");
-  console.error("Usage: node scripts/setup-oauth.mjs sbp_VOTRE_TOKEN\n");
-  console.error("Obtenir un token: https://supabase.com/dashboard/account/tokens");
+  console.error("Usage: node scripts/setup-oauth.mjs sbp_TOKEN [GOOGLE_ID GOOGLE_SECRET] [APPLE_SERVICE_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_KEY.p8]\n");
   process.exit(1);
 }
 
@@ -40,13 +47,50 @@ async function req(method, path, body) {
   return res.json();
 }
 
+/**
+ * Génère le client_secret JWT Apple (ES256, valide 180 jours)
+ * Conforme: https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret
+ */
+function generateAppleClientSecret({ serviceId, teamId, keyId, privateKeyPath }) {
+  let privateKey;
+  if (existsSync(privateKeyPath)) {
+    privateKey = readFileSync(privateKeyPath, "utf8");
+  } else {
+    // Accepte aussi le contenu brut de la clé en lieu et place du chemin
+    privateKey = privateKeyPath;
+  }
+
+  const b64url = (buf) =>
+    Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+  const header  = b64url(JSON.stringify({ alg: "ES256", kid: keyId }));
+  const now     = Math.floor(Date.now() / 1000);
+  const payload = b64url(JSON.stringify({
+    iss: teamId,
+    iat: now,
+    exp: now + 15552000, // 180 jours (maximum Apple)
+    aud: "https://appleid.apple.com",
+    sub: serviceId,
+  }));
+
+  const signingInput = `${header}.${payload}`;
+  const sign = createSign("SHA256");
+  sign.update(signingInput);
+
+  // dsaEncoding: "ieee-p1363" = format r||s (64 bytes P-256) = format JWT
+  const sigBuf = sign.sign({ key: privateKey, dsaEncoding: "ieee-p1363" });
+  const signature = b64url(sigBuf);
+
+  return `${signingInput}.${signature}`;
+}
+
 async function main() {
   console.log("\n╔══════════════════════════════════════════════════╗");
   console.log("║   EcomPilot Elite - Configuration OAuth          ║");
   console.log("╚══════════════════════════════════════════════════╝\n");
 
-  // ── Étape 1: Mise à jour Site URL + Redirects ─────────────
-  console.log("▶ [1/3] Configuration Site URL et redirects...");
+  // ── Étape 1: Site URL + Redirects ─────────────────────────
+  console.log("▶ [1/4] Configuration Site URL et redirects...");
   try {
     await req("PATCH", "/config/auth", {
       site_url: SITE_URL,
@@ -56,15 +100,14 @@ async function main() {
       refresh_token_rotation_enabled: true,
     });
     console.log(`  ✅ Site URL: ${SITE_URL}`);
-    console.log(`  ✅ Callback autorisé: ${SITE_URL}/auth/callback`);
-    console.log(`  ✅ Callback local: http://localhost:3000/auth/callback`);
+    console.log(`  ✅ Callbacks: prod + localhost`);
   } catch (e) {
     console.error(`  ❌ Erreur: ${e.message}`);
     process.exit(1);
   }
 
-  // ── Étape 2: Vérification config actuelle ─────────────────
-  console.log("\n▶ [2/3] Lecture configuration actuelle...");
+  // ── Étape 2: Lecture config actuelle ──────────────────────
+  console.log("\n▶ [2/4] Lecture configuration actuelle...");
   let config;
   try {
     config = await req("GET", "/config/auth");
@@ -75,48 +118,80 @@ async function main() {
     console.error(`  ❌ Lecture config: ${e.message}`);
   }
 
-  // ── Étape 3: Instructions Google OAuth ────────────────────
-  console.log("\n▶ [3/3] Google OAuth...");
-  if (!config?.external_google_enabled) {
-    console.log("\n  🔑 Pour activer Google OAuth, tu as besoin de:");
-    console.log("     → Client ID + Client Secret Google\n");
-    console.log("  Étapes (2 minutes):");
-    console.log("  1. Va sur https://console.cloud.google.com");
-    console.log("  2. APIs & Services > Identifiants > Créer des identifiants");
-    console.log("  3. Type: 'ID client OAuth 2.0' + Application Web");
-    console.log("  4. Ajouter dans 'URI de redirection autorisés':");
-    console.log(`     ${SUPABASE_CALLBACK}`);
-    console.log("  5. Copier Client ID + Client Secret");
-    console.log("  6. Relancer:");
-    console.log("     node scripts/setup-oauth.mjs sbp_TOKEN GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET\n");
-  } else {
-    console.log("  ✅ Google OAuth déjà activé!");
-  }
-
-  // Si credentials Google passés en arguments
+  // ── Étape 3: Google OAuth ─────────────────────────────────
   const googleClientId = process.argv[3];
   const googleSecret   = process.argv[4];
+  console.log("\n▶ [3/4] Google OAuth...");
   if (googleClientId && googleSecret) {
-    console.log("\n▶ Activation Google OAuth avec les credentials fournis...");
     try {
       await req("PATCH", "/config/auth", {
         external_google_enabled: true,
         external_google_client_id: googleClientId,
         external_google_secret: googleSecret,
       });
-      console.log("  ✅ Google OAuth activé avec succès!\n");
+      console.log("  ✅ Google OAuth activé avec succès!");
     } catch (e) {
       console.error(`  ❌ Erreur Google: ${e.message}`);
     }
+  } else if (config?.external_google_enabled) {
+    console.log("  ✅ Google déjà activé (inchangé)");
+  } else {
+    console.log("  ⏭  Aucun credential Google fourni — ignoré");
   }
+
+  // ── Étape 4: Apple Sign In ────────────────────────────────
+  const appleServiceId = process.argv[5];
+  const appleTeamId    = process.argv[6];
+  const appleKeyId     = process.argv[7];
+  const appleKeyFile   = process.argv[8];
+  console.log("\n▶ [4/4] Apple Sign In...");
+  if (appleServiceId && appleTeamId && appleKeyId && appleKeyFile) {
+    try {
+      console.log("  🔑 Génération du client_secret JWT Apple (ES256)...");
+      const clientSecret = generateAppleClientSecret({
+        serviceId:      appleServiceId,
+        teamId:         appleTeamId,
+        keyId:          appleKeyId,
+        privateKeyPath: appleKeyFile,
+      });
+      console.log("  ✅ JWT généré (valide 180 jours)");
+
+      await req("PATCH", "/config/auth", {
+        external_apple_enabled:   true,
+        external_apple_client_id: appleServiceId,
+        external_apple_secret:    clientSecret,
+      });
+      console.log("  ✅ Apple Sign In activé avec succès!");
+    } catch (e) {
+      console.error(`  ❌ Erreur Apple: ${e.message}`);
+    }
+  } else if (config?.external_apple_enabled) {
+    console.log("  ✅ Apple déjà activé (inchangé)");
+  } else {
+    console.log("  ⏭  Aucun credential Apple fourni — ignoré");
+    console.log("\n  Pour activer Apple Sign In:");
+    console.log("  1. https://developer.apple.com → Certificates, IDs & Profiles");
+    console.log("  2. Identifiers → App ID → activer 'Sign In with Apple'");
+    console.log("  3. Identifiers → '+' → Services ID → activer 'Sign In with Apple'");
+    console.log(`     Callback à renseigner: ${SUPABASE_CALLBACK}`);
+    console.log("  4. Keys → '+' → activer 'Sign In with Apple' → télécharger .p8");
+    console.log("  5. Relancer:");
+    console.log("     node scripts/setup-oauth.mjs sbp_TOKEN \"\" \"\" APPLE_SERVICE_ID TEAM_ID KEY_ID chemin/vers/AuthKey_XXXX.p8");
+  }
+
+  // ── Résumé final ──────────────────────────────────────────
+  let finalConfig;
+  try { finalConfig = await req("GET", "/config/auth"); } catch {}
 
   console.log("\n╔══════════════════════════════════════════════════╗");
   console.log("║   Configuration terminée!                        ║");
   console.log("╚══════════════════════════════════════════════════╝");
-  console.log("\n📋 Récapitulatif:");
-  console.log(`   Site URL:   ${SITE_URL}`);
-  console.log(`   Callback:   ${SITE_URL}/auth/callback`);
-  console.log(`   Supabase callback (pour Google): ${SUPABASE_CALLBACK}\n`);
+  console.log("\n📋 Récapitulatif Supabase:");
+  console.log(`   Site URL:    ${finalConfig?.site_url ?? SITE_URL}`);
+  console.log(`   Google:      ${finalConfig?.external_google_enabled ? "✅ activé" : "❌ inactif"}`);
+  console.log(`   Apple:       ${finalConfig?.external_apple_enabled  ? "✅ activé" : "❌ inactif"}`);
+  console.log(`   Callback:    ${SITE_URL}/auth/callback`);
+  console.log(`   Supabase CB: ${SUPABASE_CALLBACK}\n`);
 }
 
 main().catch(console.error);
