@@ -83,7 +83,6 @@ export async function POST(request: NextRequest) {
     // Save to Supabase
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    // Upsert: update if already exists, insert if not
     const { data, error } = await supabaseAdmin
       .from('shops')
       .upsert(
@@ -93,9 +92,10 @@ export async function POST(request: NextRequest) {
           shop_name: shopName,
           access_token: accessToken,
           is_active: true,
-          scope: 'manual_token',
+          scopes: 'manual_token',
+          last_sync_at: new Date().toISOString(),
         },
-        { onConflict: 'user_id,shop_domain' }
+        { onConflict: 'shop_domain' }
       )
       .select()
       .single();
