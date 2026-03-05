@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Store, Plus, ExternalLink, Trash2, RefreshCw, CheckCircle, AlertCircle,
-  ChevronDown, ArrowRight, Star, PackageSearch, Loader2, Key, Eye, EyeOff,
+  ChevronDown, ArrowRight, Star, PackageSearch, Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -24,12 +24,8 @@ export default function ShopsPage() {
   const [showSwitcher, setShowSwitcher] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newShopUrl, setNewShopUrl] = useState("");
-  const [connectMethod, setConnectMethod] = useState<"token" | "oauth">("token");
-  const [apiToken, setApiToken] = useState("");
-  const [showToken, setShowToken] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState("");
-  const [connectSuccess, setConnectSuccess] = useState("");
 
   useEffect(() => {
     fetchShops();
@@ -63,34 +59,6 @@ export default function ShopsPage() {
     setActiveShopId(id);
     localStorage.setItem("ecompilot_active_shop", id);
     setShowSwitcher(false);
-  };
-
-  const handleConnectToken = async () => {
-    setConnectError("");
-    setConnectSuccess("");
-    if (!newShopUrl.trim()) { setConnectError("Entrez votre domaine Shopify."); return; }
-    if (!apiToken.trim()) { setConnectError("Entrez votre token API Shopify."); return; }
-    setConnectLoading(true);
-    try {
-      const res = await fetch("/api/auth/shopify/save-token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shopInput: newShopUrl.trim(), accessToken: apiToken.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setConnectError(data.error || "Erreur lors de la connexion.");
-      } else {
-        setConnectSuccess(`✅ Boutique "${data.shop?.shop_name || data.shop?.shop_domain}" connectée avec succès !`);
-        setNewShopUrl("");
-        setApiToken("");
-        await fetchShops();
-        setTimeout(() => { setShowAddModal(false); setConnectSuccess(""); }, 2000);
-      }
-    } catch {
-      setConnectError("Erreur réseau. Vérifiez votre connexion.");
-    }
-    setConnectLoading(false);
   };
 
   const handleConnect = () => {
@@ -308,111 +276,35 @@ export default function ShopsPage() {
 
       {/* Add shop modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => { setShowAddModal(false); setConnectError(""); }}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Connecter une boutique</h2>
-            <p className="text-sm mb-4" style={{ color: "#64748b" }}>Choisissez la méthode de connexion.</p>
-
-            {/* Method tabs */}
-            <div className="flex gap-2 mb-5 p-1 rounded-xl" style={{ backgroundColor: "#f1f5f9" }}>
-              <button
-                onClick={() => { setConnectMethod("token"); setConnectError(""); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${connectMethod === "token" ? "bg-white shadow-sm" : "hover:bg-white/60"}`}
-                style={{ color: connectMethod === "token" ? "#2563eb" : "#64748b" }}>
-                <Key className="w-4 h-4" /> Token API
-                <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "#dbeafe", color: "#1d4ed8" }}>Recommandé</span>
-              </button>
-              <button
-                onClick={() => { setConnectMethod("oauth"); setConnectError(""); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-all ${connectMethod === "oauth" ? "bg-white shadow-sm" : "hover:bg-white/60"}`}
-                style={{ color: connectMethod === "oauth" ? "#2563eb" : "#64748b" }}>
-                <Store className="w-4 h-4" /> OAuth
-              </button>
+            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Entrez votre domaine Shopify pour démarrer la connexion.</p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Domaine Shopify</label>
+                <input type="text" value={newShopUrl} onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
+                  placeholder="ma-boutique ou ma-boutique.myshopify.com"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                  style={{ color: "#0f172a" }}
+                  onKeyDown={(e) => e.key === "Enter" && handleConnect()}
+                  autoFocus />
+                <p className="mt-1 text-[11px]" style={{ color: "#94a3b8" }}>Accepte : nom de boutique, URL .myshopify.com, ou lien admin.shopify.com</p>
+                {connectError && <p className="mt-1.5 text-xs" style={{ color: "#dc2626" }}>{connectError}</p>}
+              </div>
+              <div className="p-3 rounded-xl" style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                <p className="text-xs" style={{ color: "#1e40af" }}>Vous serez redirigé vers Shopify pour autoriser l&apos;accès. Aucun produit ne sera modifié sans votre validation.</p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => { setShowAddModal(false); setConnectError(""); }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
+                <button onClick={handleConnect} disabled={connectLoading || !newShopUrl.trim()}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{ backgroundColor: "#2563eb", color: "#fff" }}>
+                  {connectLoading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Connexion…</> : <>Connecter <ArrowRight className="w-4 h-4" /></>}
+                </button>
+              </div>
             </div>
-
-            {connectMethod === "token" ? (
-              <div className="space-y-4">
-                {/* Instructions */}
-                <div className="p-3 rounded-xl text-xs space-y-1" style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a" }}>
-                  <p className="font-bold" style={{ color: "#92400e" }}>📋 Comment obtenir votre token :</p>
-                  <p style={{ color: "#78350f" }}>1. Shopify Admin → <strong>Apps</strong> → <strong>Develop apps</strong></p>
-                  <p style={{ color: "#78350f" }}>2. Créez une app → <strong>Configuration API Admin</strong></p>
-                  <p style={{ color: "#78350f" }}>3. Activez les permissions produits → <strong>Installer l&apos;app</strong></p>
-                  <p style={{ color: "#78350f" }}>4. Copiez le <strong>token d&apos;accès Admin API</strong></p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Domaine Shopify</label>
-                  <input type="text" value={newShopUrl} onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
-                    placeholder="ma-boutique ou ma-boutique.myshopify.com"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                    style={{ color: "#0f172a" }}
-                    autoFocus />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Token d&apos;accès Admin API</label>
-                  <div className="relative">
-                    <input
-                      type={showToken ? "text" : "password"}
-                      value={apiToken}
-                      onChange={(e) => { setApiToken(e.target.value); setConnectError(""); }}
-                      placeholder="shpat_xxxxxxxxxxxxxxxxxxxx"
-                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                      style={{ color: "#0f172a" }}
-                      onKeyDown={(e) => e.key === "Enter" && handleConnectToken()}
-                    />
-                    <button type="button" onClick={() => setShowToken(!showToken)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5" style={{ color: "#94a3b8" }}>
-                      {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {connectError && <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#dc2626", backgroundColor: "#fef2f2" }}>{connectError}</p>}
-                {connectSuccess && <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#059669", backgroundColor: "#f0fdf4" }}>{connectSuccess}</p>}
-
-                <div className="flex gap-3">
-                  <button onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); }}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
-                  <button onClick={handleConnectToken} disabled={connectLoading || !newShopUrl.trim() || !apiToken.trim()}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-                    style={{ backgroundColor: "#2563eb", color: "#fff" }}>
-                    {connectLoading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Connexion…</> : <><Key className="w-4 h-4" /> Connecter</>}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-3 rounded-xl text-xs" style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca" }}>
-                  <p className="font-bold mb-1" style={{ color: "#991b1b" }}>⚠️ Nécessite une configuration Shopify Partners</p>
-                  <p style={{ color: "#7f1d1d" }}>Le flux OAuth requiert une app enregistrée sur partners.shopify.com avec les variables d&apos;environnement configurées. Utilisez &quot;Token API&quot; si vous n&apos;avez pas accès à Shopify Partners.</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Domaine Shopify</label>
-                  <input type="text" value={newShopUrl} onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
-                    placeholder="ma-boutique ou ma-boutique.myshopify.com"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                    style={{ color: "#0f172a" }}
-                    onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                    autoFocus />
-                  <p className="mt-1 text-[11px]" style={{ color: "#94a3b8" }}>Accepte : nom de boutique, URL .myshopify.com, ou lien admin.shopify.com</p>
-                  {connectError && <p className="mt-1.5 text-xs" style={{ color: "#dc2626" }}>{connectError}</p>}
-                </div>
-                <div className="p-3 rounded-xl" style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
-                  <p className="text-xs" style={{ color: "#1e40af" }}>Vous serez redirigé vers Shopify pour autoriser l&apos;accès.</p>
-                </div>
-                <div className="flex gap-3">
-                  <button onClick={() => { setShowAddModal(false); setConnectError(""); }}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
-                  <button onClick={handleConnect} disabled={connectLoading || !newShopUrl.trim()}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-                    style={{ backgroundColor: "#2563eb", color: "#fff" }}>
-                    {connectLoading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Connexion…</> : <>Connecter <ArrowRight className="w-4 h-4" /></>}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
