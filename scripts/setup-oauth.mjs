@@ -50,10 +50,7 @@ async function main() {
   try {
     await req("PATCH", "/config/auth", {
       site_url: SITE_URL,
-      uri_allow_list: [
-        `${SITE_URL}/auth/callback`,
-        "http://localhost:3000/auth/callback",
-      ],
+      uri_allow_list: `${SITE_URL}/auth/callback,http://localhost:3000/auth/callback`,
       mailer_autoconfirm: false,
       external_email_enabled: true,
       refresh_token_rotation_enabled: true,
