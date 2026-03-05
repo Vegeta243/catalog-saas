@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Zap, PackageSearch, Sparkles, Bot, BarChart3, Image as ImageIcon,
   FileDown, Bell, Clock, ArrowRight, Check, Shield, Import,
-  ChevronDown, Star, TrendingUp, Rocket, Heart, Target, Users,
+  ChevronDown, TrendingUp, Rocket, Heart, Target, Users,
   Crown, ChevronRight, Play, Lock,
 } from "lucide-react";
 
@@ -72,9 +72,9 @@ const FAQ_ITEMS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Sophie M.", role: "Boutique mode — exemple illustratif", quote: "Optimiser des centaines de fiches produit en quelques heures, pas en plusieurs semaines : voilà ce qu'EcomPilot permet.", stars: 5 },
-  { name: "Marc L.", role: "Dropshipping multi-boutiques — exemple illustratif", quote: "L'import fournisseur couplé à la génération IA de descriptions uniques change complètement la gestion d'un catalogue.", stars: 5 },
-  { name: "Camille D.", role: "Artisanat — exemple illustratif", quote: "Le score visibilité par produit permet d'identifier exactement ce qui manque pour améliorer sa présence en ligne.", stars: 5 },
+  { name: "Sophie M.", role: "Boutique mode", context: "Scénario illustratif", quote: "Optimiser des centaines de fiches produit en quelques heures, pas en plusieurs semaines : voilà ce qu’EcomPilot rend possible." },
+  { name: "Marc L.", role: "Dropshipping multi-boutiques", context: "Scénario illustratif", quote: "L’import fournisseur couplé à la génération IA de descriptions uniques change complètement la gestion d’un catalogue." },
+  { name: "Camille D.", role: "Artisanat", context: "Scénario illustratif", quote: "Le score visibilité par produit permet d’identifier exactement ce qui manque pour améliorer sa présence en ligne." },
 ];
 
 export default function HomePage() {
@@ -87,7 +87,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* ══════ HEADER ══════ */}
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -176,18 +176,18 @@ export default function HomePage() {
                 <div className="w-3 h-3 rounded-full bg-green-400" />
                 <span className="ml-4 text-xs" style={{ color: "#94a3b8" }}>app.ecompilot.fr/dashboard</span>
               </div>
-              <div className="p-8 grid grid-cols-3 gap-4">
-                <div className="bg-blue-50 rounded-xl p-6 text-left">
+              <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-blue-50 rounded-xl p-4 sm:p-6 text-left">
                   <p className="text-sm font-medium" style={{ color: "#2563eb" }}>Produits gérés</p>
                   <p className="text-3xl font-bold mt-1" style={{ color: "#0f172a" }}>1 247</p>
                   <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>+12% ce mois</p>
                 </div>
-                <div className="bg-emerald-50 rounded-xl p-6 text-left">
+                <div className="bg-emerald-50 rounded-xl p-4 sm:p-6 text-left">
                   <p className="text-sm font-medium" style={{ color: "#059669" }}>Temps économisé</p>
                   <p className="text-3xl font-bold mt-1" style={{ color: "#0f172a" }}>48h</p>
                   <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>ce mois</p>
                 </div>
-                <div className="bg-purple-50 rounded-xl p-6 text-left">
+                <div className="bg-purple-50 rounded-xl p-4 sm:p-6 text-left">
                   <p className="text-sm font-medium" style={{ color: "#7c3aed" }}>IA générées</p>
                   <p className="text-3xl font-bold mt-1" style={{ color: "#0f172a" }}>382</p>
                   <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>descriptions</p>
@@ -393,7 +393,15 @@ export default function HomePage() {
                     <p className="text-xs leading-relaxed" style={{ color: "#166534" }}>{plan.fit}</p>
                   </div>
                   <button
-                    onClick={() => handleNavigate("/login?tab=signup")}
+                    onClick={() => {
+                      const pId = plan.id;
+                      const billing = billingPeriod;
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('ecompilot_pending_plan', pId);
+                        localStorage.setItem('ecompilot_pending_billing', billing);
+                      }
+                      handleNavigate(`/login?tab=signup&plan=${pId}&billing=${billing}`);
+                    }}
                     className={`block text-center py-4 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 w-full ${plan.popular ? "bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20" : "bg-gray-900 hover:bg-gray-800"}`}
                     style={{ color: "#fff" }}
                   >
@@ -522,18 +530,18 @@ export default function HomePage() {
       <section className="py-24 px-6" style={{ backgroundColor: "#f8fafc" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Ce qu'EcomPilot rend possible</p>
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Ce qu’EcomPilot rend possible</p>
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{ color: "#0f172a" }}>
               Des résultats concrets pour votre boutique.
             </h2>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Scénarios illustratifs basés sur l&apos;usage typique de l&apos;outil. Les résultats réels varient selon votre catalogue et votre utilisation.</p>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>Scénarios illustratifs basés sur l&apos;usage typique de l&apos;outil. Ces exemples ne constituent pas des témoignages réels. Les résultats varient selon votre catalogue et votre utilisation.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {TESTIMONIALS.map((t) => (
               <div key={t.name} className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-all">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(t.stars)].map((_, i) => <Star key={i} className="w-5 h-5 fill-yellow-400" style={{ color: "#facc15" }} />)}
-                </div>
+                <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
+                  {t.context}
+                </span>
                 <p className="text-base leading-relaxed mb-6 italic" style={{ color: "#374151" }}>&ldquo;{t.quote}&rdquo;</p>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#0f172a" }}>{t.name}</p>

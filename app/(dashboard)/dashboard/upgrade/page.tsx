@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { ArrowRight, Check, Crown, Lock, Zap, Shield, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 
 const PLANS = [
   {
@@ -36,26 +37,60 @@ const PLANS = [
 ];
 
 export default function UpgradePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <UpgradeContent />
+    </Suspense>
+  );
+}
+
+function UpgradeContent() {
+  const searchParams = useSearchParams();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   useEffect(() => {
+    // Read billing period from URL param
+    const billingParam = searchParams.get("billing");
+    if (billingParam === "yearly") setBilling("yearly");
+
     const fetchUser = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       setUserEmail(user?.email ?? null);
     };
     fetchUser();
-  }, []);
+  }, [searchParams]);
 
-  const handleChoosePlan = async (planId: string) => {
+  // Auto-trigger Stripe checkout when coming from plan selection on homepage
+  useEffect(() => {
+    const autocheckout = searchParams.get("autocheckout");
+    const billingParam = searchParams.get("billing") as "monthly" | "yearly" | null;
+    if (autocheckout && !autoTriggered && userEmail !== undefined) {
+      setAutoTriggered(true);
+      if (billingParam === "yearly") setBilling("yearly");
+      // Small delay to allow the UI to render first
+      setTimeout(() => {
+        handleChoosePlan(autocheckout, billingParam || "monthly");
+      }, 500);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, userEmail, autoTriggered]);
+
+  const handleChoosePlan = async (planId: string, billingOverride?: string) => {
     setLoadingPlan(planId);
+    const activeBilling = billingOverride || billing;
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId, billing, email: userEmail }),
+        body: JSON.stringify({ plan: planId, billing: activeBilling, email: userEmail }),
       });
       const data = await res.json();
       if (data.url) {

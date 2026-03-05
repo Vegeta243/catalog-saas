@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { getTasksColor, getResetDate, PLAN_TASKS } from "@/lib/credits";
+import { createClient } from "@/lib/supabase/client";
 
 interface Product {
   id: number;
@@ -41,12 +42,13 @@ export default function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("");
+  const [userFirstName, setUserFirstName] = useState("");
 
-  // Tasks
-  const plan: string = "pro";
-  const tasksUsed = 16;
-  const tasksTotal = PLAN_TASKS[plan] || 300;
-  const tasksRemaining = tasksTotal - tasksUsed;
+  // Tasks — fetched from Supabase
+  const [plan, setPlan] = useState<string>("free");
+  const [tasksUsed, setTasksUsed] = useState<number>(0);
+  const tasksTotal = PLAN_TASKS[plan] || 10;
+  const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
   const resetDate = getResetDate();
 
   // Onboarding
@@ -69,13 +71,8 @@ export default function DashboardPage() {
   const [workflowLoading, setWorkflowLoading] = useState(false);
   const [aiResults, setAiResults] = useState<Record<number, { title?: string; description?: string }>>({});
 
-  // Activity
-  const [recentActivity] = useState([
-    { date: "2026-03-04", action: "3 produits optimisés par IA", products: 3, result: "Score +12 pts" },
-    { date: "2026-03-04", action: "Prix mis à jour en masse", products: 15, result: "Appliqué" },
-    { date: "2026-03-03", action: "Import AliExpress", products: 1, result: "Ajouté au catalogue" },
-    { date: "2026-03-02", action: "Descriptions IA générées", products: 8, result: "Score +18 pts" },
-  ]);
+  // No fake activity — only real events would be stored in DB
+  const recentActivity: { date: string; action: string; products: number; result: string }[] = [];
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -94,6 +91,37 @@ export default function DashboardPage() {
     else if (hour < 18) setGreeting("Bon après-midi");
     else setGreeting("Bonsoir");
     fetchProducts();
+
+    // Fetch real user plan + actions_used from Supabase
+    const fetchUserProfile = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        // Set first name from auth metadata
+        const firstName = user.user_metadata?.first_name || user.email?.split("@")[0] || "";
+        setUserFirstName(firstName);
+        // Fetch plan + actions_used from users table
+        const { data } = await supabase
+          .from("users")
+          .select("plan, actions_used")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          setPlan(data.plan || "free");
+          setTasksUsed(data.actions_used || 0);
+        }
+        // Also check for pending checkout plan in localStorage
+        const pendingPlan = localStorage.getItem("ecompilot_pending_plan");
+        const pendingBilling = localStorage.getItem("ecompilot_pending_billing");
+        if (pendingPlan) {
+          localStorage.removeItem("ecompilot_pending_plan");
+          localStorage.removeItem("ecompilot_pending_billing");
+          window.location.href = `/dashboard/upgrade?autocheckout=${pendingPlan}&billing=${pendingBilling || "monthly"}`;
+        }
+      } catch { /* silent */ }
+    };
+    fetchUserProfile();
   }, [fetchProducts]);
 
   // Sync onboarding steps with real app state
@@ -261,7 +289,7 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>{greeting}, Utilisateur 👋</h1>
+        <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>{greeting}{userFirstName ? `, ${userFirstName}` : ""} 👋</h1>
         <p className="mt-1 text-sm" style={{ color: "#64748b" }}>Voici un aperçu de votre activité sur EcomPilot</p>
       </div>
 
