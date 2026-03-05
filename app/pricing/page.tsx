@@ -13,8 +13,7 @@ const PLANS = [
     yearlyPrice: 0,
     description: "Pour tester EcomPilot",
     features: [
-      "Jusqu'à 50 produits",
-      "50 tâches IA/mois",
+      "50 actions gratuites",
       "1 boutique connectée",
       "Export CSV basique",
       "Support communautaire",
@@ -31,13 +30,14 @@ const PLANS = [
     yearlyPrice: 29,
     description: "Pour les petites boutiques qui démarrent",
     features: [
+      "1 boutique Shopify",
       "Jusqu'à 500 produits",
       "1 000 tâches IA/mois",
-      "2 boutiques connectées",
-      "Modification en masse",
+      "Édition en masse complète",
+      "Import produits : 20/mois",
       "Export CSV complet",
-      "Import URL (5/jour)",
-      "Support email",
+      "Alertes stock bas",
+      "Support email (48h)",
     ],
     cta: "Choisir Starter",
     popular: false,
@@ -51,15 +51,16 @@ const PLANS = [
     yearlyPrice: 69,
     description: "Pour les boutiques en croissance",
     features: [
-      "Jusqu'à 2 000 produits",
-      "20 000 tâches IA/mois",
-      "5 boutiques connectées",
+      "Jusqu'à 3 boutiques",
+      "Produits illimités",
       "Tout Starter +",
-      "IA : titres, descriptions, tags",
-      "Éditeur d'images IA",
-      "Automatisations (5 règles)",
-      "Historique 30 jours",
-      "Support prioritaire",
+      "20 000 tâches IA/mois",
+      "Import illimité AliExpress & CJ",
+      "Automatisations avancées",
+      "Traitement images en masse",
+      "Score visibilité par produit",
+      "Alertes personnalisées",
+      "Support prioritaire (24h)",
     ],
     cta: "Choisir Pro",
     popular: true,
@@ -73,16 +74,13 @@ const PLANS = [
     yearlyPrice: 139,
     description: "Pour les boutiques à grande échelle",
     features: [
-      "Produits illimités",
-      "100 000 tâches IA/mois",
-      "20 boutiques connectées",
+      "Boutiques illimitées",
       "Tout Pro +",
-      "IA en masse illimitée",
-      "Modèle GPT-4o (avancé)",
+      "100 000 tâches IA/mois",
       "Automatisations illimitées",
-      "Historique illimité",
-      "API access",
-      "Support dédié + Slack",
+      "Performance gros catalogues",
+      "Support dédié (4h)",
+      "Accès anticipé nouveautés",
     ],
     cta: "Choisir Scale",
     popular: false,
@@ -103,7 +101,7 @@ export default function PricingPage() {
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-medium hover:underline" style={{ color: "#374151" }}>Connexion</Link>
-            <Link href="/signup" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>
+            <Link href="/login?tab=signup" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>
               S&apos;inscrire
             </Link>
           </div>
@@ -116,7 +114,7 @@ export default function PricingPage() {
           Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
         </h1>
         <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "#64748b" }}>
-          Démarrez avec 50 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
+          50 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
         </p>
 
         {/* Toggle */}
@@ -181,7 +179,7 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <Link href={plan.isFree ? "/signup" : `/signup?plan=${plan.id}&billing=${yearly ? "yearly" : "monthly"}`}
+              <Link href={plan.isFree ? "/login?tab=signup" : `/login?tab=signup&plan=${plan.id}&billing=${yearly ? "yearly" : "monthly"}`}
                 className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.popular ? "bg-blue-600 hover:bg-blue-700" : plan.isFree ? "bg-gray-100 hover:bg-gray-200" : "bg-gray-900 hover:bg-gray-800"}`}
                 style={{ color: plan.isFree ? "#374151" : "#fff" }}>
                 {plan.cta}

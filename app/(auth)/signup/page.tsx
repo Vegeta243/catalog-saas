@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 
 const PLAN_LABELS: Record<string, { name: string; monthly: number }> = {
-  starter: { name: "Starter", monthly: 49 },
+  starter: { name: "Starter", monthly: 39 },
   pro: { name: "Pro", monthly: 89 },
-  scale: { name: "Scale", monthly: 129 },
+  scale: { name: "Scale", monthly: 179 },
 };
 
 export default function SignupPage() {
@@ -127,8 +127,8 @@ function SignupContent() {
           ) : (
             <div className="p-4 rounded-xl border" style={{ borderColor: "rgba(96,165,250,0.3)", backgroundColor: "rgba(96,165,250,0.05)" }}>
               <p className="text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}>Plan</p>
-              <p className="text-lg font-extrabold" style={{ color: "#fff" }}>Gratuit <span style={{ color: "#60a5fa" }}>? 10 t�ches</span></p>
-              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Aucune carte requise pour d�marrer</p>
+              <p className="text-lg font-extrabold" style={{ color: "#fff" }}>Gratuit <span style={{ color: "#60a5fa" }}>&bull; 50 actions</span></p>
+              <p className="text-xs mt-1" style={{ color: "#64748b" }}>Aucune carte requise pour démarrer</p>
             </div>
           )}
         </div>
