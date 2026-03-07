@@ -404,7 +404,7 @@ export default function SettingsPage() {
                 </h2>
                 <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez votre abonnement et votre facturation</p>
 
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white mb-6">
+                <div className="bg-blue-700 rounded-xl p-6 text-white mb-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium opacity-80">Votre plan</p>
@@ -551,18 +551,8 @@ export default function SettingsPage() {
                 <ToggleSwitch on={devMode} onToggle={() => handleDevChange(!devMode)} label="Mode développeur (logs console)" />
               </div>
 
-              <div className="bg-white rounded-xl border border-red-200 p-6">
-                <h2 className="text-base font-semibold mb-2" style={{ color: "#ef4444" }}>Zone de danger</h2>
-                <p className="text-xs mb-4" style={{ color: "#64748b" }}>Actions irréversibles sur votre compte</p>
-                <div className="flex gap-3">
-                  <button className="px-4 py-2 border border-red-300 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-                    style={{ color: "#ef4444" }}>
-                    Réinitialiser les données
-                  </button>
-                  <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors">
-                    <span style={{ color: "#fff" }}>Supprimer le compte</span>
-                  </button>
-                </div>
+              <div className="pt-2">
+                <a href="/dashboard/account" className="text-xs underline underline-offset-2" style={{ color: "#94a3b8" }}>Supprimer mon compte</a>
               </div>
             </div>
           )}

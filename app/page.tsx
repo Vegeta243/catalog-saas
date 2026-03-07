@@ -93,7 +93,7 @@ export default function HomePage() {
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
               <Zap className="w-4 h-4" style={{ color: "#fff" }} />
             </div>
             <span className="text-xl font-bold" style={{ color: "#0f172a" }}>Ecom<span style={{ color: "#2563eb" }}>Pilot</span></span>
@@ -125,8 +125,7 @@ export default function HomePage() {
       </header>
 
       {/* ══════ HERO ══════ */}
-      <section className="pt-32 pb-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/30" />
+      <section className="pt-32 pb-20 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
             <Sparkles className="w-3.5 h-3.5" /> Le copilote IA &bull; SEO &bull; Catalogue Shopify
@@ -161,7 +160,7 @@ export default function HomePage() {
               <Lock className="w-4 h-4" /> J&apos;ai déjà un compte
             </button>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-4 mb-12">
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-4 mb-8">
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
               <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Sans carte bancaire • 50 actions offertes
             </p>
@@ -173,7 +172,22 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Dashboard mockup */}
+          {/* Stats clés — résultats concrets */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-12">
+            <div className="rounded-2xl p-5 border border-blue-100 dark:border-blue-900/40" style={{ backgroundColor: "#eff6ff" }}>
+              <p className="text-3xl font-extrabold" style={{ color: "#2563eb" }}>5 min</p>
+              <p className="text-sm font-medium mt-1" style={{ color: "#374151" }}>au lieu de 3h pour optimiser 50 fiches</p>
+            </div>
+            <div className="rounded-2xl p-5 border border-emerald-100 dark:border-emerald-900/40" style={{ backgroundColor: "#f0fdf4" }}>
+              <p className="text-3xl font-extrabold" style={{ color: "#059669" }}>×2.5</p>
+              <p className="text-sm font-medium mt-1" style={{ color: "#374151" }}>valeur perçue avec de vraies descriptions</p>
+            </div>
+            <div className="rounded-2xl p-5 border border-purple-100 dark:border-purple-900/40" style={{ backgroundColor: "#faf5ff" }}>
+              <p className="text-3xl font-extrabold" style={{ color: "#7c3aed" }}>0€</p>
+              <p className="text-sm font-medium mt-1" style={{ color: "#374151" }}>requis pour démarrer — sans carte bancaire</p>
+            </div>
+          </div>
+
           <div className="relative">
             <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-gray-300/30 overflow-hidden">
               <div className="bg-gray-50 px-4 py-3 flex items-center gap-2 border-b border-gray-200">
@@ -279,7 +293,7 @@ export default function HomePage() {
             {STEPS.map((s) => {
               const Icon = s.icon;
               return (
-                <div key={s.step} className="relative bg-gradient-to-b from-blue-50/80 to-white border border-blue-100 rounded-2xl p-8 text-center hover:shadow-lg transition-all">
+                <div key={s.step} className="relative bg-blue-50/60 border border-blue-100 rounded-2xl p-8 text-center hover:shadow-lg transition-all">
                   <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold" style={{ color: "#fff" }}>
                     {s.step}
                   </div>
@@ -369,7 +383,7 @@ export default function HomePage() {
                 <div key={plan.id} className={`relative bg-white rounded-2xl border-2 p-8 flex flex-col transition-all hover:shadow-xl ${plan.popular ? "border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02]" : "border-gray-200 hover:-translate-y-1"}`}>
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-blue-600 rounded-full text-xs font-bold tracking-wide flex items-center gap-1" style={{ color: "#fff" }}>
-                      <Crown className="w-3 h-3" /> LE PLUS POPULAIRE
+                      <Crown className="w-3 h-3" /> RECOMMANDÉ
                     </div>
                   )}
                   <div className="mb-6">
@@ -500,19 +514,6 @@ export default function HomePage() {
             <span className="font-bold" style={{ color: "#dc2626" }}>Chaque heure passée à copier-coller des descriptions</span>, c&apos;est une heure de moins pour trouver de nouveaux fournisseurs, lancer une campagne, ou tout simplement profiter de votre vie.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {[
-              { stat: "3h → 5min", label: "Pour optimiser 50 fiches produit", color: "#2563eb", bg: "#eff6ff" },
-              { stat: "×2.5", label: "Valeur perçue avec de vraies descriptions", color: "#059669", bg: "#f0fdf4" },
-              { stat: "0€", label: "Requis pour démarrer — sans carte bancaire", color: "#7c3aed", bg: "#faf5ff" },
-            ].map((s) => (
-              <div key={s.stat} className="rounded-2xl p-6" style={{ backgroundColor: s.bg }}>
-                <p className="text-4xl font-extrabold mb-2" style={{ color: s.color }}>{s.stat}</p>
-                <p className="text-sm font-medium" style={{ color: "#374151" }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={() => handleNavigate("/login?tab=signup")}
@@ -590,7 +591,6 @@ export default function HomePage() {
 
       {/* ══════ CTA FINAL ══════ */}
       <section className="py-24 px-6 relative overflow-hidden" style={{ backgroundColor: "#0f172a" }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-indigo-900/20" />
         <div className="max-w-3xl mx-auto text-center relative">
           <Rocket className="w-12 h-12 mx-auto mb-8" style={{ color: "#60a5fa" }} />
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight" style={{ color: "#fff" }}>
@@ -626,7 +626,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5" style={{ color: "#fff" }} />
               </div>
               <span className="text-lg font-bold" style={{ color: "#0f172a" }}>Ecom<span style={{ color: "#2563eb" }}>Pilot</span></span>

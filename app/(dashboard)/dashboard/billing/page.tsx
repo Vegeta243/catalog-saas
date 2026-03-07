@@ -279,13 +279,13 @@ function BillingContent() {
       )}
 
       {/* Cancel */}
-      <div className="bg-white rounded-xl border border-red-100 p-6">
-        <h3 className="text-base font-semibold mb-2" style={{ color: "#0f172a" }}>Zone de danger</h3>
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-base font-semibold mb-2" style={{ color: "#0f172a" }}>Annuler l&apos;abonnement</h3>
         <p className="text-sm mb-4" style={{ color: "#64748b" }}>
-          L&apos;annulation prendra effet à la fin de votre période de facturation actuelle.
+          L&apos;annulation prendra effet à la fin de votre période de facturation actuelle. Vous conservez l&apos;accès jusqu&apos;à la fin de la période payée.
         </p>
         <button onClick={handleCancel} disabled={cancelling}
-          className="px-4 py-2 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium disabled:opacity-50" style={{ color: "#ef4444" }}>
+          className="px-4 py-2 border border-gray-300 hover:bg-gray-50 rounded-lg text-sm font-medium disabled:opacity-50" style={{ color: "#475569" }}>
           {cancelling ? "Annulation en cours…" : "Annuler l'abonnement"}
         </button>
       </div>

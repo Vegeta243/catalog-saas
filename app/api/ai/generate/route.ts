@@ -2,17 +2,41 @@ import { NextResponse } from "next/server";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { aiCache, aiCacheKey } from "@/lib/cache";
 import { getCreditCost } from "@/lib/credits";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
-    const { product, mode, userId, language = "fr" } = await req.json();
+    const { product, mode, language = "fr" } = await req.json();
 
     if (!product) {
       return NextResponse.json({ error: "Produit manquant." }, { status: 400 });
     }
 
+    // Authenticate user from session cookie
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    }
+
+    // Check task quota
+    const actionKey = `ai.generate.${mode || "full"}`;
+    const taskCost = getCreditCost(actionKey);
+    const { data: userData } = await supabase
+      .from("users")
+      .select("actions_used, actions_limit")
+      .eq("id", user.id)
+      .single();
+    if (userData && userData.actions_used + taskCost > userData.actions_limit) {
+      return NextResponse.json({
+        error: "limit_exceeded",
+        message: "Vous avez atteint votre limite de tâches. Passez à un plan supérieur pour continuer.",
+        remaining: Math.max(0, userData.actions_limit - userData.actions_used),
+      }, { status: 429 });
+    }
+
     // Rate limiting
-    const rateLimitKey = userId || "anonymous";
+    const rateLimitKey = user.id;
     const rateResult = checkRateLimit(rateLimitKey, "ai.generate");
     if (!rateResult.allowed) {
       return NextResponse.json(
@@ -76,12 +100,12 @@ export async function POST(req: Request) {
         mockResult.keywords = buildTags(base);
         mockResult.meta_description = `Découvrez ${base}. Livraison rapide sous 48-72h. Retour sous 30 jours. Commandez maintenant.`.slice(0, 160);
       }
-      return NextResponse.json({ success: true, demo: true, taskCost: 0, ...mockResult });
+      // Consume tasks even in demo mode
+      if (taskCost > 0) {
+        await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: taskCost });
+      }
+      return NextResponse.json({ success: true, demo: true, taskCost, ...mockResult });
     }
-
-    // Task cost
-    const actionKey = `ai.generate.${mode || "description"}`;
-    const taskCost = getCreditCost(actionKey);
 
     let prompt = "";
 
@@ -162,9 +186,15 @@ Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","key
     // Cache the result
     aiCache.set(cacheKey, result);
 
+    // Consume tasks after successful generation
+    if (taskCost > 0) {
+      await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: taskCost });
+    }
+
     return NextResponse.json({
       success: true,
       taskCost,
+      remaining: userData ? Math.max(0, userData.actions_limit - userData.actions_used - taskCost) : undefined,
       ...result,
       ...getRateLimitHeaders(rateResult),
     });
