@@ -128,7 +128,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] overflow-x-hidden">
+    <div className="flex min-h-screen bg-[#e8f0f8] dark:bg-[#060d1c] overflow-x-hidden">
       {/* Mobile backdrop overlay */}
       {mobileMenuOpen && (
         <div
@@ -306,9 +306,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden dark:bg-gray-950">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden dark:bg-[#060d1c]">
         {/* Top bar */}
-        <header className="h-16 bg-white dark:bg-gray-900 dark:border-gray-700 border-b border-gray-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+        <header className="h-16 bg-white dark:bg-[#0b1827] dark:border-[#18304a] border-b border-gray-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
           {/* Hamburger button — mobile only */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors mr-2 flex-shrink-0"
@@ -343,7 +343,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               </button>
               {showNotifPanel && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50">
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-[#0d1a2e] rounded-xl border border-gray-200 dark:border-[#18304a] shadow-lg z-50">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                     <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>Notifications</span>
                     <button onClick={() => setShowNotifPanel(false)} className="text-xs hover:underline" style={{ color: '#64748b' }}>Fermer</button>
@@ -363,10 +363,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-3 md:p-6 overflow-x-hidden dark:bg-gray-950">{children}</main>
+        <main className="flex-1 p-3 md:p-6 overflow-x-hidden dark:bg-[#060d1c]">{children}</main>
 
         {/* Footer */}
-        <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-3 flex items-center justify-between">
+        <footer className="border-t border-gray-200 dark:border-[#18304a] bg-white dark:bg-[#0b1827] px-6 py-3 flex items-center justify-between">
           <p className="text-xs" style={{ color: '#94a3b8' }}>© 2026 EcomPilot. Tous droits réservés.</p>
           <p className="text-xs" style={{ color: '#94a3b8' }}>v6.0.0</p>
         </footer>
