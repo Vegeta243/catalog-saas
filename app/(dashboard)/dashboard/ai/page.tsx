@@ -10,6 +10,7 @@ import { useToast } from "@/lib/toast";
 import AIPreviewModal, { type AIPreviewItem } from "@/components/AIPreviewModal";
 import QuotaGate from "@/components/QuotaGate";
 import { createClient } from "@/lib/supabase/client";
+import { PLAN_TASKS } from "@/lib/credits";
 
 interface Product {
   id: string;
@@ -372,6 +373,24 @@ export default function AIPage() {
           )}
         </div>
       </div>
+
+      {/* Upsell notice when below 80% tasks remaining */}
+      {(() => {
+        const total = PLAN_TASKS[plan] || 50;
+        const remaining = Math.max(0, total - tasksUsed);
+        if (remaining >= total * 0.8) return null;
+        return (
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-amber-200 mb-4" style={{ backgroundColor: "#fffbeb" }}>
+            <Zap className="w-4 h-4 flex-shrink-0" style={{ color: "#d97706" }} />
+            <p className="text-sm flex-1" style={{ color: "#92400e" }}>
+              <strong>{remaining}</strong> action{remaining !== 1 ? "s" : ""} restante{remaining !== 1 ? "s" : ""} sur {total} ce mois.{" "}
+              {(plan === "free" || plan === "starter") && (
+                <a href="/dashboard/billing" className="underline font-medium">Passez au plan Pro pour 20 000 actions →</a>
+              )}
+            </p>
+          </div>
+        );
+      })()}
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

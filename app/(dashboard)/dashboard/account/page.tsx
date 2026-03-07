@@ -86,6 +86,7 @@ export default function AccountPage() {
   const [deleteStep, setDeleteStep] = useState(0);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [dangerZoneExpanded, setDangerZoneExpanded] = useState(false);
 
   // ─── Fetch user data from Supabase ───
   const fetchData = useCallback(async () => {
@@ -163,7 +164,7 @@ export default function AccountPage() {
     setPasswordLoading(true);
     try {
       await updateUserPassword(newPassword);
-      addToast("Mot de passe mis à jour", "success");
+      addToast("✅ Mot de passe mis à jour avec succès", "success");
       setNewPassword(""); setConfirmPassword("");
     } catch { addToast("Erreur lors du changement", "error"); }
     setPasswordLoading(false);
@@ -171,7 +172,7 @@ export default function AccountPage() {
 
   // ─── Delete account ───
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE") return;
+    if (deleteConfirmText !== "SUPPRIMER") return;
     setDeleteLoading(true);
     try {
       const supabase = createClient();
@@ -531,10 +532,19 @@ export default function AccountPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-red-200 p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-4 h-4" style={{ color: "#ef4444" }} />
-                  <h2 className="text-base font-semibold" style={{ color: "#ef4444" }}>Zone de danger</h2>
-                </div>
+                <button
+                  onClick={() => setDangerZoneExpanded(!dangerZoneExpanded)}
+                  className="flex items-center justify-between w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" style={{ color: "#ef4444" }} />
+                    <h2 className="text-base font-semibold" style={{ color: "#ef4444" }}>Zone de danger</h2>
+                  </div>
+                  <span className="text-xs" style={{ color: "#94a3b8" }}>{dangerZoneExpanded ? "▲ Réduire" : "▼ Développer"}</span>
+                </button>
+
+                {dangerZoneExpanded && (
+                <div className="mt-4">
                 <p className="text-xs mb-4" style={{ color: "#64748b" }}>La suppression du compte est irréversible. Toutes vos données seront effacées.</p>
 
                 {deleteStep === 0 && (
@@ -601,24 +611,26 @@ export default function AccountPage() {
                   <div className="space-y-3">
                     <p className="text-sm font-medium" style={{ color: "#dc2626" }}>⚠️ Dernière étape — cette action est irréversible.</p>
                     <label className="text-xs block" style={{ color: "#64748b" }}>
-                      Tapez <strong style={{ color: "#dc2626" }}>DELETE</strong> pour confirmer la suppression :
+                      Tapez <strong style={{ color: "#dc2626" }}>SUPPRIMER</strong> pour confirmer la suppression :
                     </label>
                     <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder="DELETE" className="w-full px-3 py-2.5 border border-red-300 rounded-lg text-sm font-mono"
+                      placeholder="SUPPRIMER" className="w-full px-3 py-2.5 border border-red-300 rounded-lg text-sm font-mono"
                       style={{ color: "#0f172a" }} />
                     <div className="flex gap-2">
-                      <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); }}
+                      <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); setDangerZoneExpanded(false); }}
                         className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
                         style={{ color: "#374151" }}>
                         Annuler
                       </button>
-                      <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== "DELETE" || deleteLoading}
+                      <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== "SUPPRIMER" || deleteLoading}
                         className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 rounded-lg text-sm font-medium flex items-center gap-1.5">
                         {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} />}
                         <span style={{ color: "#fff" }}>Confirmer la suppression</span>
                       </button>
                     </div>
                   </div>
+                )}
+                </div>
                 )}
               </div>
             </div>

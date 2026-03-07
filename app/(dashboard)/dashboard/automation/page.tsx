@@ -5,6 +5,7 @@ import {
   Zap, Play, Plus, Trash2, ToggleLeft, ToggleRight, Clock, RefreshCw,
   AlertTriangle, TrendingUp, TrendingDown, Tag, Archive, Bell, ChevronDown,
   ChevronUp, History, CheckCircle2, XCircle, Filter, BarChart3, Settings2,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 
@@ -524,6 +525,38 @@ export default function AutomationPage() {
           ))}
         </div>
       )}
+
+      {/* Pro-locked features upsell */}
+      <div className="mt-6 bg-white rounded-xl border border-indigo-200 p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="w-4 h-4" style={{ color: "#6366f1" }} />
+          <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Fonctionnalités avancées</h3>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#6366f1", color: "#fff" }}>PRO</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { label: "Génération SEO automatique (IA)", desc: "Optimise automatiquement titres et descriptions", icon: Sparkles },
+            { label: "Règles planifiées avancées", desc: "Exécution horaire, quotidienne ou hebdomadaire", icon: Clock },
+            { label: "Webhooks & intégrations", desc: "Connectez Zapier, Make.com et vos outils", icon: Bell },
+          ].map((feat) => (
+            <div key={feat.label} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: "#f5f3ff" }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#ede9fe" }}>
+                <feat.icon className="w-4 h-4" style={{ color: "#6366f1" }} />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="text-xs font-semibold" style={{ color: "#0f172a" }}>{feat.label}</p>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#6366f1", color: "#fff" }}>PRO</span>
+                </div>
+                <p className="text-[11px]" style={{ color: "#64748b" }}>{feat.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <a href="/dashboard/billing" className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold" style={{ color: "#6366f1" }}>
+          Débloquer ces fonctionnalités →
+        </a>
+      </div>
     </div>
   );
 }

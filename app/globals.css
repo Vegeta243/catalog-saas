@@ -53,6 +53,46 @@ h1, h2, h3, h4, h5, h6, p, span, td, th, label, a, li, div, input, textarea, sel
   color: #0f172a;
 }
 
+/* ── Dark mode global overrides ──────────────────────── */
+/* Text: override forced dark text in dark mode */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+.dark p, .dark span, .dark td, .dark th, .dark label,
+.dark li {
+  color: var(--foreground);
+}
+/* Cards and surfaces: white → dark slate */
+.dark .bg-white {
+  background-color: #1e293b !important;
+}
+.dark .bg-gray-50 {
+  background-color: #1e293b !important;
+}
+.dark .bg-gray-100 {
+  background-color: #334155 !important;
+}
+/* Borders */
+.dark .border-gray-200 {
+  border-color: #334155 !important;
+}
+.dark .border-gray-100 {
+  border-color: #1e293b !important;
+}
+/* Inputs in dark mode */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.dark textarea,
+.dark select {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+/* Scrollbars in dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
 /* Exceptions for explicitly white text */
 .text-white, .text-white * {
   color: #ffffff !important;

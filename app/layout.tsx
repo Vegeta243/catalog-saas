@@ -71,6 +71,8 @@ export default function RootLayout({
     <html lang="fr">
       <head>
         <link rel="icon" href="/favicon.ico" />
+        {/* Dark mode init — must run before paint to prevent FOUC */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('app-theme');if(t==='dark'||(t==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})()` }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

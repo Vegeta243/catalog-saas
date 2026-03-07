@@ -11,6 +11,7 @@ import { useToast } from "@/lib/toast";
 import Link from "next/link";
 import { ConfirmModal } from "@/lib/confirm-modal";
 import QuotaGate from "@/components/QuotaGate";
+import AIPreviewModal, { type AIPreviewItem } from "@/components/AIPreviewModal";
 import { createClient } from "@/lib/supabase/client";
 
 interface ShopifyImage { src: string }
@@ -102,6 +103,8 @@ export default function ProductsPage() {
   const [plan, setPlan] = useState("free");
   const [tasksUsed, setTasksUsed] = useState(0);
   const [compactMode, setCompactMode] = useState(false);
+  const [showAIPreviewModal, setShowAIPreviewModal] = useState(false);
+  const [aiPreviewItems, setAiPreviewItems] = useState<AIPreviewItem[]>([]);
   const itemsPerPage = compactMode ? 50 : 25;
 
   /* ──────── Fetch ──────── */
@@ -229,6 +232,26 @@ export default function ProductsPage() {
     });
     await Promise.all(batch);
     setAiSuggestions((prev) => ({ ...prev, ...results }));
+    // Build AIPreviewModal items for human-in-the-loop review
+    const previewItems: AIPreviewItem[] = Object.entries(results).map(([id, sug]) => {
+      const p = products.find((x) => x.id === id);
+      return {
+        id: Number(id) || 0,
+        productTitle: p?.title || id,
+        productImage: p?.images?.[0]?.src,
+        original: { title: p?.title, description: p?.body_html, tags: p?.tags },
+        suggested: {
+          title: (sug as AISuggestion).title,
+          description: (sug as AISuggestion).description,
+          tags: (sug as AISuggestion).tags,
+        },
+        accepted: true,
+      };
+    });
+    if (previewItems.length > 0) {
+      setAiPreviewItems(previewItems);
+      setShowAIPreviewModal(true);
+    }
     const anyDemo = Object.values(results).some((r: unknown) => (r as Record<string, unknown>).demo === true);
     addToast(
       anyDemo
@@ -237,6 +260,26 @@ export default function ProductsPage() {
       "success"
     );
     setAiBatchLoading(false);
+  };
+
+  const handleAIPreviewApply = (acceptedItems: AIPreviewItem[]) => {
+    const updated: Record<string, AISuggestion> = { ...aiSuggestions };
+    acceptedItems.forEach((item) => {
+      const id = String(item.id);
+      updated[id] = {
+        productId: id,
+        title: item.suggested.title || aiSuggestions[id]?.title,
+        description: item.suggested.description || aiSuggestions[id]?.description,
+        tags: item.suggested.tags || aiSuggestions[id]?.tags,
+      };
+    });
+    setAiSuggestions(updated);
+    setShowAIPreviewModal(false);
+    const n = acceptedItems.length;
+    addToast(`${n} suggestion${n > 1 ? "s" : ""} IA prête${n > 1 ? "s" : ""} — appliquez depuis le tableau`, "success");
+    const ids = acceptedItems.map((i) => String(i.id));
+    setRecentlyUpdated(ids);
+    setTimeout(() => setRecentlyUpdated([]), 2000);
   };
 
   const applyAISuggestion = async (productId: string, field: string) => {
@@ -479,6 +522,14 @@ export default function ProductsPage() {
   return (
     <QuotaGate plan={plan} tasksUsed={tasksUsed}>
     <div className="max-w-7xl mx-auto">
+      {showAIPreviewModal && (
+        <AIPreviewModal
+          items={aiPreviewItems}
+          onApply={handleAIPreviewApply}
+          onClose={() => setShowAIPreviewModal(false)}
+          loading={aiBatchLoading}
+        />
+      )}
       <ConfirmModal open={confirmModal.open} title={confirmModal.title} message={confirmModal.message} variant="danger"
         onConfirm={() => { confirmModal.action(); setConfirmModal({ ...confirmModal, open: false }); }}
         onCancel={() => setConfirmModal({ ...confirmModal, open: false })} />

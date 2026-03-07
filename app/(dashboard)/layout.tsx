@@ -343,7 +343,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               </button>
               {showNotifPanel && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-lg z-50">
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg z-50">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                     <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>Notifications</span>
                     <button onClick={() => setShowNotifPanel(false)} className="text-xs hover:underline" style={{ color: '#64748b' }}>Fermer</button>
