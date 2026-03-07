@@ -237,7 +237,9 @@ input:focus, select:focus, textarea:focus {
 .dark [style*="color: rgb(55, 65, 81)"] { color: #b0c8de !important; }
 /* Muted / already gray — keep readable */
 .dark [style*="color: #64748b"]      { color: #5e7d97 !important; }
-.dark [style*="color: #94a3b8"]      { color: #40607a !important; }
+.dark [style*="color: #94a3b8"]      { color: var(--text-muted) !important; }
+/* gray-600 (#4b5563) on dark surfaces — needs boosting */
+.dark [style*="color: #4b5563"]      { color: #94a3b8 !important; }
 
 /* ── Inputs / selects / textareas ── */
 .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),

@@ -370,10 +370,40 @@ export default function ProductsPage() {
         } catch { /* continue */ }
       })
     );
+    // Mise à jour locale immédiate pour recalculer les scores SEO sans refetch
+    setProducts((prev) => prev.map((p) => {
+      const sug = aiSuggestions[p.id];
+      if (!sug) return p;
+      return {
+        ...p,
+        ...(sug.title ? { title: sug.title } : {}),
+        ...(sug.description ? { body_html: sug.description } : {}),
+        ...(sug.tags ? { tags: sug.tags } : {}),
+      };
+    }));
+    // Écriture historique (fire-and-forget)
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await Promise.all(ids.map((id) => {
+          const sug = aiSuggestions[id];
+          const prod = products.find((p) => p.id === id);
+          if (!sug) return Promise.resolve();
+          return supabase.from("action_history").insert({
+            user_id: user.id,
+            action_type: "ai",
+            description: `Optimisation IA — ${sug.title || prod?.title || id}`,
+            products_count: 1,
+            credits_used: 1,
+            details: { product_title: sug.title || prod?.title || id, fields: ["title", "description", "tags"].filter((f) => f === "title" ? !!sug.title : f === "description" ? !!sug.description : !!sug.tags) },
+          });
+        }));
+      }
+    } catch { /* ignore history errors */ }
     addToast(`${ids.length} produit${ids.length > 1 ? "s" : ""} mis à jour avec l'IA`, "success");
     setAiSuggestions({});
     setAiBatchLoading(false);
-    fetchProducts(true);
   };
 
   /* ──────── Bulk actions ──────── */

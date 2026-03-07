@@ -44,16 +44,30 @@ export default function HistoryPage() {
           .order("created_at", { ascending: false })
           .limit(200);
         if (data && data.length > 0) {
+          const mapType = (t: string): HistoryEntry["type"] => {
+            if (t === "ai") return "ai";
+            if (t === "bulk_edit" || t === "edit") return "edit";
+            if (t === "price") return "price";
+            if (t === "import") return "import";
+            if (t === "delete") return "delete";
+            if (t === "duplicate") return "duplicate";
+            if (t === "automation") return "automation";
+            return "edit";
+          };
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setEntries((data as any[]).map((row) => ({
-            id: String(row.id),
-            date: row.created_at ? String(row.created_at).replace("T", " ").slice(0, 16) : "",
-            action: row.action || "",
-            type: (row.type as HistoryEntry["type"]) || "edit",
-            productTitle: row.product_title || "",
-            details: row.details || "",
-            user: row.user_label || "vous",
-          })));
+          setEntries((data as any[]).map((row) => {
+            const det = row.details as Record<string, unknown> | null;
+            const fieldsArr = Array.isArray(det?.fields) ? (det!.fields as string[]).join(", ") : "";
+            return {
+              id: String(row.id),
+              date: row.created_at ? String(row.created_at).replace("T", " ").slice(0, 16) : "",
+              action: row.description || row.action_type || "",
+              type: mapType(row.action_type || ""),
+              productTitle: (det?.product_title as string) || "",
+              details: fieldsArr ? `Champs: ${fieldsArr}` : (det?.note as string) || "",
+              user: "vous",
+            };
+          }));
         }
       } catch {
         // table may not exist yet

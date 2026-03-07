@@ -169,6 +169,21 @@ export default function AIPage() {
         };
       }));
       addToast("⚡ Appliqué ! Score SEO mis à jour.", "success");
+      // Écriture historique (fire-and-forget)
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          void supabase.from("action_history").insert({
+            user_id: user.id,
+            action_type: "ai",
+            description: `Optimisation IA — ${data.title || product.title}`,
+            products_count: 1,
+            credits_used: 1,
+            details: { product_title: data.title || product.title, fields: ["title", "description", "tags"] },
+          });
+        }
+      } catch { /* ignore history errors */ }
     } catch { addToast("Erreur lors de l'application IA directe", "error"); }
     setGenerating(null);
   };
@@ -197,6 +212,22 @@ export default function AIPage() {
         };
       }));
       addToast("✅ Appliqué ! Score SEO mis à jour.", "success");
+      // Écriture historique (fire-and-forget)
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const prod = products.find((p) => p.id === productId);
+          void supabase.from("action_history").insert({
+            user_id: user.id,
+            action_type: "ai",
+            description: `Optimisation IA — ${content.title || prod?.title || productId}`,
+            products_count: 1,
+            credits_used: 1,
+            details: { product_title: content.title || prod?.title || productId, fields: toApply },
+          });
+        }
+      } catch { /* ignore history errors */ }
       setGeneratedContent((prev) => { const n = { ...prev }; delete n[productId]; return n; });
     } catch { addToast("Erreur lors de l'application", "error"); }
     setGenerating(null);

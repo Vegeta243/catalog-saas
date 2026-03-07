@@ -16,14 +16,30 @@ function getCookieConsent(): CookieConsent | null {
   if (typeof window === "undefined") return null;
   try {
     const stored = localStorage.getItem(COOKIE_KEY);
-    return stored ? JSON.parse(stored) : null;
+    if (stored) return JSON.parse(stored);
+    // Fallback: read from HTTP cookie
+    const match = document.cookie.match(/ecompilot_consent=([^;]+)/);
+    if (match) {
+      const parsed = JSON.parse(decodeURIComponent(match[1]));
+      return { essential: true, analytics: !!parsed.a, marketing: !!parsed.m };
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
 function saveCookieConsent(consent: CookieConsent) {
+  // Persist in localStorage for easy JS access
   localStorage.setItem(COOKIE_KEY, JSON.stringify(consent));
+  // Write HTTP cookie so server-side middleware can read it (1 year)
+  const encoded = encodeURIComponent(JSON.stringify({ e: consent.essential, a: consent.analytics, m: consent.marketing }));
+  document.cookie = `ecompilot_consent=${encoded}; path=/; max-age=31536000; SameSite=Lax`;
+  // Dispatch event so any analytics integration can react immediately
+  window.dispatchEvent(new CustomEvent("ecompilot-consent", { detail: consent }));
+  // Expose flags on window for any inline scripts
+  (window as unknown as Record<string, unknown>).__ecompilot_analytics = consent.analytics;
+  (window as unknown as Record<string, unknown>).__ecompilot_marketing = consent.marketing;
 }
 
 export default function CookieBanner() {
@@ -42,6 +58,9 @@ export default function CookieBanner() {
       const timer = setTimeout(() => setVisible(true), 1000);
       return () => clearTimeout(timer);
     }
+    // Apply saved consent flags so analytics respects previous choices
+    (window as unknown as Record<string, unknown>).__ecompilot_analytics = existing.analytics;
+    (window as unknown as Record<string, unknown>).__ecompilot_marketing = existing.marketing;
   }, []);
 
   const handleAcceptAll = () => {

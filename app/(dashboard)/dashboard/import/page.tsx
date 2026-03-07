@@ -214,11 +214,11 @@ export default function ImportPage() {
         </div>
       )}
 
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-        <button onClick={() => setActiveTab("url")} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium ${activeTab === "url" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`} style={{ color: activeTab === "url" ? "#0f172a" : "#64748b" }}>
+      <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-slate-800 rounded-lg p-1 w-fit">
+        <button onClick={() => setActiveTab("url")} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "url" ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white" : "hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300"}`}>
           <Link2 className="w-4 h-4" /> Depuis une URL
         </button>
-        <button onClick={() => setActiveTab("csv")} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium ${activeTab === "csv" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`} style={{ color: activeTab === "csv" ? "#0f172a" : "#64748b" }}>
+        <button onClick={() => setActiveTab("csv")} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "csv" ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white" : "hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300"}`}>
           <FileSpreadsheet className="w-4 h-4" /> Import CSV
         </button>
       </div>
