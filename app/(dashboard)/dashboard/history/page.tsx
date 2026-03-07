@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { History, Search, ArrowUpDown, Clock, Edit3, DollarSign, Tag, Trash2, Copy, Sparkles } from "lucide-react";
+import { History, Search, ArrowUpDown, Clock, Edit3, DollarSign, Tag, Trash2, Copy, Sparkles, LayoutList, LayoutGrid } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 interface HistoryEntry {
@@ -30,6 +30,10 @@ export default function HistoryPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sortDesc, setSortDesc] = useState(true);
+  const [compactView, setCompactView] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("history_compact") === "true";
+    return false;
+  });
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -106,6 +110,15 @@ export default function HistoryPage() {
           className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-200 hover:bg-gray-50 rounded-lg text-sm" style={{ color: "#374151" }}>
           <ArrowUpDown className="w-4 h-4" /> {sortDesc ? "Récent" : "Ancien"}
         </button>
+        <button
+          onClick={() => { const v = !compactView; setCompactView(v); if (typeof window !== "undefined") localStorage.setItem("history_compact", String(v)); }}
+          className={`flex items-center gap-1.5 px-3 py-2.5 border rounded-lg text-sm transition-colors ${compactView ? "bg-blue-50 border-blue-300" : "border-gray-200 hover:bg-gray-50"}`}
+          style={{ color: compactView ? "#2563eb" : "#374151" }}
+          title={compactView ? "Vue normale" : "Vue compacte"}
+        >
+          {compactView ? <LayoutGrid className="w-4 h-4" /> : <LayoutList className="w-4 h-4" />}
+          <span className="hidden sm:inline">{compactView ? "Normal" : "Compact"}</span>
+        </button>
       </div>
 
       {/* Timeline / Table */}
@@ -140,13 +153,13 @@ export default function HistoryPage() {
                 const Icon = config.icon;
                 return (
                   <tr key={entry.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-2 md:px-5 py-3 align-top">
+                    <td className={`px-2 md:px-5 ${compactView ? "py-1.5" : "py-3"} align-top`}>
                       <span className="hidden sm:inline text-xs font-mono whitespace-nowrap" style={{ color: "#64748b" }}>{entry.date}</span>
                       <span className="sm:hidden text-[10px] font-mono whitespace-nowrap" style={{ color: "#64748b" }}>{entry.date.slice(5, 16)}</span>
                     </td>
-                    <td className="px-2 md:px-5 py-3 align-top">
+                    <td className={`px-2 md:px-5 ${compactView ? "py-1.5" : "py-3"} align-top`}>
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
+                        <div className={`${compactView ? "w-5 h-5" : "w-7 h-7"} rounded-lg flex items-center justify-center flex-shrink-0`} style={{ backgroundColor: config.bg }}>
                           <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
                         </div>
                         <div>
@@ -155,13 +168,13 @@ export default function HistoryPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 md:px-5 py-3 hidden sm:table-cell align-top">
+                    <td className={`px-2 md:px-5 ${compactView ? "py-1.5" : "py-3"} hidden sm:table-cell align-top`}>
                       <span className="text-sm" style={{ color: "#374151" }}>{entry.productTitle}</span>
                     </td>
-                    <td className="px-2 md:px-5 py-3 hidden md:table-cell align-top">
+                    <td className={`px-2 md:px-5 ${compactView ? "py-1.5" : "py-3"} hidden md:table-cell align-top`}>
                       <span className="text-sm" style={{ color: "#64748b" }}>{entry.details}</span>
                     </td>
-                    <td className="px-2 md:px-5 py-3 hidden md:table-cell align-top">
+                    <td className={`px-2 md:px-5 ${compactView ? "py-1.5" : "py-3"} hidden md:table-cell align-top`}>
                       <span className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap" style={{ color: entry.user === "système" ? "#0ea5e9" : "#64748b", backgroundColor: entry.user === "système" ? "#f0f9ff" : "#f8fafc" }}>{entry.user}</span>
                     </td>
                   </tr>
