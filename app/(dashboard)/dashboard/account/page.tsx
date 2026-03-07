@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   User, CreditCard, Store, Bell, Shield, Save, Check,
   Mail, Phone, Globe, Eye, EyeOff,
-  RefreshCw, Lock, Key, Trash2, Crown, Zap,
+  RefreshCw, Lock, Key, Crown, Zap,
   ExternalLink, Calendar, AlertTriangle, Loader2, ChevronDown,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
@@ -631,7 +631,7 @@ export default function AccountPage() {
                           />
                         </div>
                         <p className="text-xs p-2 bg-amber-50 rounded border border-amber-200" style={{ color: "#92400e" }}>
-                          ⏳ Votre compte sera définitivement supprimé. Cette action est irréversible.
+                          ⏳ Cette action est irréversible. Votre compte sera supprimé sans possibilité de récupération.
                         </p>
                         <div className="flex gap-2">
                           <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); setDeletePassword(""); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "#374151" }}>Annuler</button>

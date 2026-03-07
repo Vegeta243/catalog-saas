@@ -5,7 +5,8 @@ import {
   Sparkles, RefreshCw, CheckCircle2, Wand2, Tag, FileText, ArrowRight,
   Search, X, BarChart3, TrendingUp, Eye, ChevronDown, ChevronUp, Loader2,
   AlertTriangle, Zap, Target, Award,
-} from "lucide-react";import { useToast } from "@/lib/toast";
+} from "lucide-react";
+import { useToast } from "@/lib/toast";
 import AIPreviewModal, { type AIPreviewItem } from "@/components/AIPreviewModal";
 import QuotaGate from "@/components/QuotaGate";
 import { createClient } from "@/lib/supabase/client";

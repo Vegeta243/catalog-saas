@@ -149,12 +149,13 @@ export default function SettingsPage() {
       document.documentElement.classList.toggle("dark", isDark);
     };
     applyTheme(theme);
-    if (theme === "auto") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = (e: MediaQueryListEvent) => { if (theme === "auto") document.documentElement.classList.toggle("dark", e.matches); };
-      mq.addEventListener("change", handler);
-      return () => mq.removeEventListener("change", handler);
-    }
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => {
+      const current = (localStorage.getItem("theme") as "light" | "dark" | "auto") || "auto";
+      if (current === "auto") document.documentElement.classList.toggle("dark", e.matches);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
   const handleSave = async () => {
