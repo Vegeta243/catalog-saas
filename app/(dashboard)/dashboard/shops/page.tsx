@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Store, Plus, ExternalLink, Trash2, RefreshCw, CheckCircle, AlertCircle,
   ChevronDown, ArrowRight, Star, PackageSearch, Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/lib/toast";
 
 interface Shop {
   id: string;
@@ -18,7 +19,17 @@ interface Shop {
 }
 
 export default function ShopsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin" style={{ color: "#2563eb" }} /></div>}>
+      <ShopsContent />
+    </Suspense>
+  );
+}
+
+function ShopsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { addToast } = useToast();
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeShopId, setActiveShopId] = useState<string>("");
@@ -32,6 +43,19 @@ export default function ShopsPage() {
   useEffect(() => {
     fetchShops();
   }, []);
+
+  useEffect(() => {
+    const connected = searchParams.get("connected");
+    const error = searchParams.get("error");
+    if (connected === "1") {
+      addToast("✅ Boutique Shopify connectée avec succès ! Vos produits sont maintenant accessibles.", "success");
+      // Clean URL
+      router.replace("/dashboard/shops");
+    } else if (error === "save_failed") {
+      addToast("Erreur lors de la sauvegarde du token. Réessayez.", "error");
+      router.replace("/dashboard/shops");
+    }
+  }, [searchParams, addToast, router]);
 
   const fetchShops = async () => {
     setLoading(true);

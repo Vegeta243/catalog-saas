@@ -7,6 +7,7 @@ import {
   User, RefreshCw, ExternalLink, ThumbsUp, ThumbsDown, X,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
+import { createClient } from "@/lib/supabase/client";
 
 interface FAQItem {
   id: string;
@@ -65,6 +66,17 @@ const FAQ_DATA: FAQItem[] = [
   },
 ];
 
+// Renders **bold** and *italic* markdown in FAQ answers safely
+function renderMarkdown(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 const CATEGORIES = [
   { id: "all", label: "Tout", icon: <BookOpen className="w-3.5 h-3.5" /> },
   { id: "general", label: "Général", icon: <HelpCircle className="w-3.5 h-3.5" /> },
@@ -93,9 +105,51 @@ export default function HelpPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Contact form state
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSending, setContactSending] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState(false);
+  const [contactError, setContactError] = useState("");
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
+
+  const handleSendContact = async () => {
+    if (!contactSubject.trim() || !contactMessage.trim()) {
+      setContactError("Veuillez remplir le sujet et le message.");
+      return;
+    }
+    setContactSending(true);
+    setContactError("");
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: user?.user_metadata?.first_name || user?.email?.split("@")[0] || "Utilisateur",
+          email: user?.email || "noreply@ecompilotelite.com",
+          subject: contactSubject.trim(),
+          message: contactMessage.trim(),
+        }),
+      });
+      if (res.ok) {
+        setContactSuccess(true);
+        setContactSubject("");
+        setContactMessage("");
+      } else {
+        const d = await res.json();
+        setContactError(d.error || "Erreur lors de l'envoi.");
+      }
+    } catch {
+      setContactError("Erreur réseau. Réessayez.");
+    }
+    setContactSending(false);
+  };
 
   const filteredFAQ = FAQ_DATA.filter((item) => {
     const matchesCategory = category === "all" || item.category === category;
@@ -249,7 +303,7 @@ export default function HelpPage() {
                   {expandedFAQ === item.id && (
                     <div className="px-4 pb-4 pt-0">
                       <div className="pl-9">
-                        <p className="text-sm leading-relaxed" style={{ color: "#4b5563" }}>{item.answer}</p>
+                        <p className="text-sm leading-relaxed" style={{ color: "#4b5563" }}>{renderMarkdown(item.answer)}</p>
                         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
                           <span className="text-xs" style={{ color: "#94a3b8" }}>Cette réponse vous a aidé ?</span>
                           <button onClick={() => addToast("Merci pour votre retour !", "success")}
@@ -271,19 +325,50 @@ export default function HelpPage() {
 
           {/* Contact section */}
           <div className="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold" style={{ color: "#fff" }}>Besoin d&apos;aide supplémentaire ?</p>
-                <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
-                  Notre équipe support répond sous 24h en semaine
-                </p>
+            {!showContactForm ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "#fff" }}>Besoin d&apos;aide supplémentaire ?</p>
+                  <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
+                    Notre équipe support répond sous 24h en semaine
+                  </p>
+                </div>
+                <button onClick={() => setShowContactForm(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                  style={{ color: "#fff" }}>
+                  <ExternalLink className="w-4 h-4" /> Contacter le support
+                </button>
               </div>
-              <a href="mailto:support@ecompilot.com"
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
-                style={{ color: "#fff" }}>
-                <ExternalLink className="w-4 h-4" /> Contacter le support
-              </a>
-            </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm font-semibold" style={{ color: "#fff" }}>Envoyer un message</p>
+                  <button onClick={() => { setShowContactForm(false); setContactSuccess(false); setContactError(""); }}
+                    className="text-white/70 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                {contactSuccess ? (
+                  <div className="flex items-center gap-3 bg-white/20 rounded-lg p-4">
+                    <ThumbsUp className="w-5 h-5 text-white" />
+                    <p className="text-sm text-white">Message envoyé ! Nous vous répondrons sous 24h.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {contactError && <p className="text-xs text-red-200">{contactError}</p>}
+                    <input value={contactSubject} onChange={(e) => setContactSubject(e.target.value)}
+                      placeholder="Sujet" className="w-full px-3 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 text-sm border border-white/20 focus:outline-none focus:border-white/50" />
+                    <textarea value={contactMessage} onChange={(e) => setContactMessage(e.target.value)}
+                      placeholder="Votre message..." rows={3}
+                      className="w-full px-3 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 text-sm border border-white/20 focus:outline-none focus:border-white/50 resize-none" />
+                    <button onClick={handleSendContact} disabled={contactSending}
+                      className="w-full py-2 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                      {contactSending ? <><RefreshCw className="w-4 h-4 animate-spin" /> Envoi...</> : "Envoyer"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

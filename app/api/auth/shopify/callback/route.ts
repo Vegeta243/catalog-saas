@@ -81,26 +81,33 @@ export async function GET(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+  // ── Get authenticated user from session cookies ──
   let userId: string | null = null;
   try {
-    const response = NextResponse.next();
+    const tempResponse = NextResponse.next();
     const supabaseAuth = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
+            tempResponse.cookies.set(name, value, options);
           });
         },
       },
     });
     const { data: { user } } = await supabaseAuth.auth.getUser();
     userId = user?.id || null;
-  } catch { /* non-fatal — shop will be saved without user_id */ }
+  } catch { /* non-fatal */ }
+
+  if (!userId) {
+    // Cannot associate shop without a user — redirect to login
+    return NextResponse.redirect(`${siteUrl}/login?error=auth&reason=shopify_oauth`);
+  }
 
   const supabase = createClient(supabaseUrl, serviceKey);
 
   const upsertData: Record<string, unknown> = {
+    user_id: userId,
     shop_domain: shop,
     access_token,
     shop_name: shopName,
@@ -111,24 +118,20 @@ export async function GET(request: NextRequest) {
     shopify_user_email: associated_user?.email || null,
   };
 
-  // Associate shop with authenticated user
-  if (userId) {
-    upsertData.user_id = userId;
-  }
-
   const { error: upsertError } = await supabase
     .from('shops')
-    .upsert(upsertData, { onConflict: 'shop_domain' });
+    .upsert(upsertData, { onConflict: 'user_id,shop_domain' });
 
   if (upsertError) {
     console.error('Supabase upsert error:', upsertError.message);
-    // Non-fatal — redirect anyway
+    // Redirect with error so user sees feedback
+    return NextResponse.redirect(`${siteUrl}/dashboard/shops?error=save_failed`);
   }
 
   // ── Clear OAuth cookies ──
   const redirectUrl = host
     ? `${siteUrl}/shopify-embed?shop=${shop}&host=${host}`
-    : `${siteUrl}/dashboard`;
+    : `${siteUrl}/dashboard/shops?connected=1`;
 
   const response = NextResponse.redirect(redirectUrl);
   response.cookies.delete('shopify_oauth_nonce');

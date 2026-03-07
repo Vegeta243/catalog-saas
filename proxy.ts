@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
   const isProtected = pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
   if (isProtected && !user) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
+    loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
   }
 

@@ -186,19 +186,24 @@ export default function DashboardPage() {
     setWorkflowLoading(true);
     const selected = products.filter((p) => selectedProducts.includes(p.id));
     try {
-      const results = await Promise.all(
-        selected.map((p) =>
-          fetch("/api/ai/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ product: p, mode: "full" }),
-          }).then((r) => r.json())
-        )
-      );
+      // Process in batches of 3 to avoid rate limiting and excessive costs
+      const BATCH_SIZE = 3;
       const map: Record<number, { title?: string; description?: string }> = {};
-      selected.forEach((p, i) => {
-        map[p.id] = { title: results[i]?.title, description: results[i]?.description };
-      });
+      for (let i = 0; i < selected.length; i += BATCH_SIZE) {
+        const batch = selected.slice(i, i + BATCH_SIZE);
+        const results = await Promise.all(
+          batch.map((p) =>
+            fetch("/api/ai/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ product: p, mode: "full" }),
+            }).then((r) => r.json())
+          )
+        );
+        batch.forEach((p, j) => {
+          map[p.id] = { title: results[j]?.title, description: results[j]?.description };
+        });
+      }
       setAiResults(map);
       setWorkflowStep(3);
     } catch {

@@ -31,14 +31,18 @@ interface GeneratedContent {
 
 function seoScore(p: Product): number {
   let s = 0;
+  // Title: 30 pts max — 50-70 chars ideal
   if (p.title.length >= 50 && p.title.length <= 70) s += 30;
   else if (p.title.length >= 30) s += 15;
-  if (p.body_html && p.body_html.length > 300) s += 30;
-  else if (p.body_html && p.body_html.length > 100) s += 15;
-  if (p.tags && p.tags.split(",").length >= 5) s += 20;
-  else if (p.tags) s += 10;
+  // Description: 40 pts max — 100+ words ideal
+  const wordCount = (p.body_html || "").replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
+  if (wordCount >= 100) s += 40;
+  else if (wordCount >= 30) s += 20;
+  // Tags: 20 pts max — 5+ tags ideal
+  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 20;
+  else if (p.tags && p.tags.trim().length > 0) s += 10;
+  // Images: 10 pts
   if (p.images && p.images.length > 0) s += 10;
-  if (parseFloat(p.price) > 0) s += 10;
   return s;
 }
 
@@ -194,19 +198,24 @@ export default function AIPage() {
     setMassMode(true);
     setMassProgress({ current: 0, total: selected.length });
     let completed = 0;
-    await Promise.all(selected.map(async (selId) => {
-      const product = products.find((p) => p.id === selId);
-      if (!product) { completed++; setMassProgress({ current: completed, total: selected.length }); return; }
-      try {
-        const res = await fetch("/api/ai/generate", { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "full" }) });
-        if (!res.ok) { completed++; setMassProgress({ current: completed, total: selected.length }); return; }
-        const data = await res.json();
-        setGeneratedContent((prev) => ({ ...prev, [product.id]: data }));
-      } catch { /* continue */ }
-      completed++;
-      setMassProgress({ current: completed, total: selected.length });
-    }));
+    // Process in batches of 3 to avoid rate limiting and reduce costs
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < selected.length; i += BATCH_SIZE) {
+      const batchIds = selected.slice(i, i + BATCH_SIZE);
+      await Promise.all(batchIds.map(async (selId) => {
+        const product = products.find((p) => p.id === selId);
+        if (!product) { completed++; setMassProgress({ current: completed, total: selected.length }); return; }
+        try {
+          const res = await fetch("/api/ai/generate", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ product: { title: product.title, description: product.body_html }, mode: "full" }) });
+          if (!res.ok) { completed++; setMassProgress({ current: completed, total: selected.length }); return; }
+          const data = await res.json();
+          setGeneratedContent((prev) => ({ ...prev, [product.id]: data }));
+        } catch { /* continue */ }
+        completed++;
+        setMassProgress({ current: completed, total: selected.length });
+      }));
+    }
     addToast(`${selected.length} produit${selected.length > 1 ? "s" : ""} analysé${selected.length > 1 ? "s" : ""} par l'IA`, "success");
     setMassMode(false);
   };

@@ -67,6 +67,7 @@ function AuthContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "signup" ? "signup" : "login";
   const errorParam = searchParams.get("error");
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
 
   const [view, setView] = useState<AuthView>(initialTab);
 
@@ -128,7 +129,7 @@ function AuthContent() {
         setLoginLoading(false);
       } else {
         lockout.recordSuccess(loginEmail);
-        router.push("/dashboard");
+        router.push(redirectTo);
       }
     } catch {
       setLoginError("Une erreur est survenue. Reessayez.");
