@@ -99,6 +99,24 @@ export async function GET(request: NextRequest) {
     userId = user?.id || null;
   } catch { /* non-fatal */ }
 
+  // Fallback 1: uid stored in cookie during OAuth initiation
+  if (!userId) {
+    userId = request.cookies.get('shopify_oauth_uid')?.value || null;
+  }
+
+  // Fallback 2: look up user_id from existing shop record in DB
+  if (!userId) {
+    try {
+      const supabaseService = createClient(supabaseUrl, serviceKey);
+      const { data: existingShop } = await supabaseService
+        .from('shops')
+        .select('user_id')
+        .eq('shop_domain', shop)
+        .maybeSingle();
+      userId = existingShop?.user_id || null;
+    } catch { /* non-fatal */ }
+  }
+
   if (!userId) {
     // Cannot associate shop without a user — redirect to login
     return NextResponse.redirect(`${siteUrl}/login?error=auth&reason=shopify_oauth`);
@@ -128,13 +146,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/dashboard/shops?error=save_failed`);
   }
 
-  // ── Clear OAuth cookies ──
-  const redirectUrl = host
-    ? `${siteUrl}/shopify-embed?shop=${shop}&host=${host}`
-    : `${siteUrl}/dashboard/shops?connected=1`;
+  // ── Determine redirect destination ──
+  // If OAuth was initiated from the EcomPilot dashboard, always go back there.
+  // Only use shopify-embed for requests coming from within Shopify admin.
+  const source = request.cookies.get('shopify_oauth_source')?.value;
+  const redirectUrl = (source === 'dashboard' || !host)
+    ? `${siteUrl}/dashboard/shops?connected=1`
+    : `${siteUrl}/shopify-embed?shop=${shop}&host=${host}`;
 
   const response = NextResponse.redirect(redirectUrl);
   response.cookies.delete('shopify_oauth_nonce');
   response.cookies.delete('shopify_oauth_shop');
+  response.cookies.delete('shopify_oauth_source');
+  response.cookies.delete('shopify_oauth_uid');
   return response;
 }

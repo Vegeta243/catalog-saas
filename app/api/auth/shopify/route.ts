@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import crypto from 'crypto';
+import { createServerClient } from '@supabase/ssr';
 
 // Scopes required by EcomPilot
 const SCOPES = [
@@ -21,7 +23,7 @@ function sanitizeShopDomain(shop: string): string {
   return cleaned;
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawShop = searchParams.get('shop');
 
@@ -66,6 +68,39 @@ export async function GET(request: Request) {
     maxAge: 900,
     path: '/',
   });
+
+  // Mark as dashboard-initiated so callback redirects back to dashboard
+  response.cookies.set('shopify_oauth_source', 'dashboard', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 900,
+    path: '/',
+  });
+
+  // Store current user ID as backup (in case session cookie isn't readable in callback)
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll(); },
+          setAll() {},
+        },
+      },
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      response.cookies.set('shopify_oauth_uid', user.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 900,
+        path: '/',
+      });
+    }
+  } catch { /* non-fatal */ }
 
   return response;
 }
