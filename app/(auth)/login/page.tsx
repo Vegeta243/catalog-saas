@@ -289,7 +289,7 @@ function AuthContent() {
           <div className="grid grid-cols-3 gap-4">
             {[
               { val: "2 min", label: "Configuration" },
-              { val: "10", label: "Actions gratuites" },
+              { val: "50", label: "Actions gratuites" },
               { val: "0 €", label: "Pour demarrer" },
             ].map((s) => (
               <div key={s.label} className="text-center p-3 rounded-xl" style={{ backgroundColor: "rgba(96,165,250,0.08)" }}>

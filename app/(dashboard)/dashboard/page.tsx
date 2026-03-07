@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("");
   const [userFirstName, setUserFirstName] = useState("");
+  const [shopCount, setShopCount] = useState(0);
 
   // Tasks — fetched from Supabase
   const [plan, setPlan] = useState<string>("free");
@@ -112,6 +113,13 @@ export default function DashboardPage() {
           setPlan(data.plan || "free");
           setTasksUsed(data.actions_used || 0);
         }
+        // Check if user has any connected shops
+        const { data: shopsData } = await supabase
+          .from("shops")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("is_active", true);
+        setShopCount(shopsData?.length || 0);
         // Also check for pending checkout plan in localStorage
         const pendingPlan = localStorage.getItem("ecompilot_pending_plan");
         const pendingBilling = localStorage.getItem("ecompilot_pending_billing");
@@ -129,7 +137,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (loading) return;
     const optimized = products.filter((p) => seoScore(p) >= 50).length;
-    const shopifyConnected = products.length > 0;
+    const shopifyConnected = shopCount > 0;
     const workflowDone = typeof window !== "undefined" && localStorage.getItem("ecompilot_workflow_done") === "1";
     const enoughOptimized = optimized >= 5;
     setOnboardingSteps([
@@ -139,7 +147,7 @@ export default function DashboardPage() {
       { id: 4, label: "Optimiser 5 produits avec l'IA", done: enoughOptimized, href: "/dashboard/ai" },
       { id: 5, label: "Activer votre abonnement", done: plan !== "free", href: "/dashboard/credits" },
     ]);
-  }, [loading, products, plan]);
+  }, [loading, products, plan, shopCount]);
 
   // Health Score calculations
   const avgScore = products.length > 0

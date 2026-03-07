@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Données d&apos;identification</strong> : prénom, nom, adresse email</li>
               <li><strong>Données de connexion</strong> : adresse IP, type de navigateur, date et heure de connexion</li>
               <li><strong>Données d&apos;utilisation</strong> : actions effectuées sur la plateforme, tâches utilisées, fonctionnalités utilisées</li>
-              <li><strong>Données de paiement</strong> : traitées directement par Stripe et PayPal (nous ne stockons pas les numéros de carte)</li>
+              <li><strong>Données de paiement</strong> : traitées directement par Stripe (nous ne stockons pas les numéros de carte)</li>
               <li><strong>Données e-commerce</strong> : catalogues produits, boutiques connectées, URLs de boutiques</li>
             </ul>
           </section>
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Droit à la limitation</strong> : limiter le traitement de vos données</li>
             </ul>
             <p className="mt-2">
-              Pour exercer ces droits, contactez-nous à : <a href="mailto:privacy@ecompilot.com" className="underline" style={{ color: "#2563eb" }}>privacy@ecompilot.com</a>.
+              Pour exercer ces droits, contactez-nous à : <a href="mailto:support@ecompilot.fr" className="underline" style={{ color: "#2563eb" }}>support@ecompilot.fr</a>.
               Nous répondrons dans un délai de 30 jours.
             </p>
           </section>
@@ -129,7 +129,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>10. Contact et réclamation</h2>
             <p>
-              Pour toute question : <a href="mailto:privacy@ecompilot.com" className="underline" style={{ color: "#2563eb" }}>privacy@ecompilot.com</a>.
+              Pour toute question : <a href="mailto:support@ecompilot.fr" className="underline" style={{ color: "#2563eb" }}>support@ecompilot.fr</a>.
               Vous pouvez également introduire une réclamation auprès de la CNIL (Commission Nationale de l&apos;Informatique
               et des Libertés) : <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#2563eb" }}>www.cnil.fr</a>.
             </p>

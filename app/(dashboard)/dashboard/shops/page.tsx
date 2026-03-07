@@ -13,6 +13,7 @@ interface Shop {
   shop_domain: string;
   shop_name: string | null;
   is_active: boolean;
+  access_token?: string | null;
   created_at?: string;
 }
 
@@ -40,7 +41,7 @@ export default function ShopsPage() {
       if (!user) { setLoading(false); return; }
       const { data } = await supabase
         .from("shops")
-        .select("id, shop_domain, shop_name, is_active, created_at")
+        .select("id, shop_domain, shop_name, is_active, access_token, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       const shopsList = data || [];
@@ -251,11 +252,24 @@ export default function ShopsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {shops.map((shop) => {
                 const isActive = shop.id === activeShopId;
+                const hasToken = !!shop.access_token;
                 return (
                   <div key={shop.id} className={`bg-white rounded-xl border-2 p-5 transition-all ${isActive ? "border-blue-400 ring-2 ring-blue-100 shadow-md" : "border-gray-200 hover:shadow-sm"}`}>
                     {isActive && (
                       <div className="mb-3">
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: "#dbeafe", color: "#2563eb" }}>Active</span>
+                      </div>
+                    )}
+                    {/* Token warning */}
+                    {!hasToken && (
+                      <div className="mb-3 flex items-center justify-between p-2.5 rounded-lg" style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a" }}>
+                        <span className="text-xs font-medium" style={{ color: "#92400e" }}>⚠️ Connexion incomplète — produits non accessibles</span>
+                        <a
+                          href={`/api/auth/shopify?shop=${shop.shop_domain}`}
+                          className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: "#f59e0b", color: "#fff" }}
+                        >
+                          Connecter
+                        </a>
                       </div>
                     )}
                     <div className="flex items-start justify-between mb-4">

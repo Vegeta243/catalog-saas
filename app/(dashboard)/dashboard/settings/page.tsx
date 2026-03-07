@@ -41,7 +41,7 @@ export default function SettingsPage() {
         setEmail(user.email || "");
         const { data } = await supabase
           .from("users")
-          .select("first_name, last_name, phone, timezone")
+          .select("first_name, last_name, phone, timezone, plan, actions_used, actions_limit")
           .eq("id", user.id)
           .single();
         const firstName = data?.first_name || user.user_metadata?.first_name || "";
@@ -52,18 +52,44 @@ export default function SettingsPage() {
         if (data?.timezone) setTimezone(data.timezone);
         const i = [firstName[0], lastName[0]].filter(Boolean).join("").toUpperCase() || name[0]?.toUpperCase() || "?";
         setInitials(i);
+        if (data) {
+          setPlanName(data.plan || "free");
+          setPlanTasksUsed(data.actions_used || 0);
+          setPlanTasksLimit(data.actions_limit || 50);
+        }
+        // Fetch active shop
+        const { data: shopData } = await supabase
+          .from("shops")
+          .select("shop_domain, shop_name, access_token")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .limit(1)
+          .maybeSingle();
+        if (shopData) {
+          setShopName(shopData.shop_name || shopData.shop_domain || "");
+          setShopUrl(shopData.shop_domain || "");
+          setShopToken(shopData.access_token || "");
+          setShopHasToken(!!shopData.access_token);
+        }
       } catch { /* silent */ }
     };
     loadUser();
   }, []);
 
-  // Shop
-  const [shopName, setShopName] = useState("Ma Boutique Shopify");
-  const [shopUrl, setShopUrl] = useState("ma-boutique.myshopify.com");
+  // Shop (real data from Supabase)
+  const [shopName, setShopName] = useState("");
+  const [shopUrl, setShopUrl] = useState("");
+  const [shopToken, setShopToken] = useState("");
+  const [shopHasToken, setShopHasToken] = useState(false);
   const [currency, setCurrency] = useState("EUR");
   const [language, setLanguage] = useState("fr");
   const [autoSync, setAutoSync] = useState(true);
   const [syncInterval, setSyncInterval] = useState("30");
+
+  // Plan (real data from Supabase)
+  const [planName, setPlanName] = useState("free");
+  const [planTasksUsed, setPlanTasksUsed] = useState(0);
+  const [planTasksLimit, setPlanTasksLimit] = useState(50);
 
   // Notifications
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -75,9 +101,6 @@ export default function SettingsPage() {
 
   // API
   const [showShopifyKey, setShowShopifyKey] = useState(false);
-  const [showOpenAIKey, setShowOpenAIKey] = useState(false);
-  const shopifyKey = "shpat_xxxxxxxxxxxx";
-  const openaiKey = "sk-xxxxxxxxxxxxxxxx";
 
   // Advanced
   const [theme, setTheme] = useState<"light" | "dark" | "auto">("light");
@@ -328,43 +351,27 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium opacity-80">Votre plan</p>
-                      <p className="text-2xl font-bold mt-1">Pro</p>
-                      <p className="text-sm mt-2 opacity-80">29€ / mois</p>
+                      <p className="text-2xl font-bold mt-1">{planName.charAt(0).toUpperCase() + planName.slice(1)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm opacity-80">Tâches restantes</p>
-                      <p className="text-3xl font-bold mt-1">847</p>
-                      <p className="text-xs mt-1 opacity-60">sur 1 000 / mois</p>
+                      <p className="text-3xl font-bold mt-1">{Math.max(0, planTasksLimit - planTasksUsed)}</p>
+                      <p className="text-xs mt-1 opacity-60">sur {planTasksLimit} / mois</p>
                     </div>
                   </div>
                   <div className="mt-4 bg-white/20 rounded-full h-2">
-                    <div className="bg-white rounded-full h-2" style={{ width: "84.7%" }} />
+                    <div className="bg-white rounded-full h-2" style={{ width: `${Math.min(100, (Math.max(0, planTasksLimit - planTasksUsed) / Math.max(1, planTasksLimit)) * 100)}%` }} />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { name: "Starter", price: "49€", features: ["1 boutique", "50 tâches/mois", "Support email"] },
-                    { name: "Pro", price: "89€", features: ["3 boutiques", "300 tâches/mois", "Support prioritaire", "Automatisations"], current: true },
-                    { name: "Scale", price: "129€", features: ["Boutiques illimitées", "1 000 tâches/mois", "Support dédié", "API complète"] },
-                  ].map((plan) => (
-                    <div key={plan.name}
-                      className={`rounded-xl border p-4 ${plan.current ? "border-blue-400 bg-blue-50/50" : "border-gray-200"}`}>
-                      <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>{plan.name}</p>
-                      <p className="text-xl font-bold mt-1" style={{ color: "#0f172a" }}>{plan.price}<span className="text-xs font-normal" style={{ color: "#64748b" }}>/mois</span></p>
-                      <ul className="mt-3 space-y-1.5">
-                        {plan.features.map((f) => (
-                          <li key={f} className="flex items-center gap-1.5 text-xs" style={{ color: "#64748b" }}>
-                            <Check className="w-3 h-3" style={{ color: "#059669" }} /> {f}
-                          </li>
-                        ))}
-                      </ul>
-                      <button className={`w-full mt-4 py-2 rounded-lg text-xs font-medium ${plan.current ? "bg-blue-600" : "bg-gray-100 hover:bg-gray-200"}`}
-                        style={{ color: plan.current ? "#fff" : "#374151" }}>
-                        {plan.current ? "Plan actuel" : "Changer"}
-                      </button>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Gérer mon abonnement</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Changez de plan, consultez vos factures et gérez votre abonnement</p>
+                  </div>
+                  <a href="/dashboard/billing" className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors" style={{ color: "#fff" }}>
+                    Gérer <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </div>
               </div>
             </div>
@@ -380,7 +387,7 @@ export default function SettingsPage() {
               <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez vos intégrations API tierces</p>
 
               <div className="space-y-4">
-                {/* Shopify */}
+                {/* Shopify Token */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -388,47 +395,52 @@ export default function SettingsPage() {
                         <Store className="w-4 h-4" style={{ color: "#16a34a" }} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Shopify API</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>Token d&apos;accès privé</p>
+                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Shopify</p>
+                        <p className="text-xs" style={{ color: "#64748b" }}>{shopUrl || "Aucune boutique connectée"}</p>
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Connecté</span>
+                    {shopHasToken
+                      ? <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Token actif</span>
+                      : <span className="text-xs px-2 py-0.5 bg-amber-100 rounded" style={{ color: "#d97706" }}>Sans token</span>
+                    }
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input type={showShopifyKey ? "text" : "password"} value={shopifyKey} readOnly
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white font-mono" style={{ color: "#0f172a" }} />
-                    <button onClick={() => setShowShopifyKey(!showShopifyKey)} className="p-2 hover:bg-gray-200 rounded-lg">
-                      {showShopifyKey ? <EyeOff className="w-4 h-4" style={{ color: "#64748b" }} /> : <Eye className="w-4 h-4" style={{ color: "#64748b" }} />}
-                    </button>
-                    <button onClick={() => copyToClipboard(shopifyKey)} className="p-2 hover:bg-gray-200 rounded-lg">
-                      <Copy className="w-4 h-4" style={{ color: "#64748b" }} />
-                    </button>
-                  </div>
+                  {shopHasToken && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type={showShopifyKey ? "text" : "password"}
+                        value={shopToken}
+                        readOnly
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white font-mono"
+                        style={{ color: "#0f172a" }}
+                      />
+                      <button onClick={() => setShowShopifyKey(!showShopifyKey)} className="p-2 hover:bg-gray-200 rounded-lg">
+                        {showShopifyKey ? <EyeOff className="w-4 h-4" style={{ color: "#64748b" }} /> : <Eye className="w-4 h-4" style={{ color: "#64748b" }} />}
+                      </button>
+                      <button onClick={() => copyToClipboard(shopToken)} className="p-2 hover:bg-gray-200 rounded-lg">
+                        <Copy className="w-4 h-4" style={{ color: "#64748b" }} />
+                      </button>
+                    </div>
+                  )}
+                  {!shopUrl && (
+                    <a href="/dashboard/shops" className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "#2563eb" }}>
+                      Connecter une boutique <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
                 </div>
 
-                {/* OpenAI */}
+                {/* OpenAI — géré côté serveur */}
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
                         <Key className="w-4 h-4" style={{ color: "#7c3aed" }} />
                       </div>
                       <div>
                         <p className="text-sm font-medium" style={{ color: "#0f172a" }}>OpenAI API</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>Clé secrète GPT-4o-mini</p>
+                        <p className="text-xs" style={{ color: "#64748b" }}>Géré côté serveur — GPT-4o-mini</p>
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Connecté</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input type={showOpenAIKey ? "text" : "password"} value={openaiKey} readOnly
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white font-mono" style={{ color: "#0f172a" }} />
-                    <button onClick={() => setShowOpenAIKey(!showOpenAIKey)} className="p-2 hover:bg-gray-200 rounded-lg">
-                      {showOpenAIKey ? <EyeOff className="w-4 h-4" style={{ color: "#64748b" }} /> : <Eye className="w-4 h-4" style={{ color: "#64748b" }} />}
-                    </button>
-                    <button onClick={() => copyToClipboard(openaiKey)} className="p-2 hover:bg-gray-200 rounded-lg">
-                      <Copy className="w-4 h-4" style={{ color: "#64748b" }} />
-                    </button>
+                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Actif</span>
                   </div>
                 </div>
 
@@ -441,10 +453,10 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Stripe</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>Paiements et abonnements</p>
+                        <p className="text-xs" style={{ color: "#64748b" }}>Paiements et abonnements — géré côté serveur</p>
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Connecté</span>
+                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Actif</span>
                   </div>
                 </div>
               </div>

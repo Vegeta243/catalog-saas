@@ -26,7 +26,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     id: "1", category: "general",
     question: "Comment connecter ma boutique Shopify ?",
-    answer: "Allez dans **Mes boutiques** dans le menu de gauche, puis cliquez sur **Ajouter une boutique**. Entrez simplement votre domaine Shopify (ex : ma-boutique ou ma-boutique.myshopify.com) et cliquez Ajouter. La boutique est enregistrée instantanément — aucun token ou OAuth requis.",
+    answer: "Allez dans **Mes boutiques** dans le menu de gauche, puis cliquez sur **Ajouter une boutique**. Entrez votre domaine Shopify (ex : ma-boutique ou ma-boutique.myshopify.com) et cliquez Ajouter. Pour que vos produits soient accessibles, cliquez ensuite sur **Connecter** (bouton orange) sur la carte de votre boutique afin de finaliser la connexion via l'accès OAuth Shopify.",
   },
   {
     id: "2", category: "ai",
@@ -36,7 +36,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     id: "3", category: "ai",
     question: "Que signifie le score SEO ?",
-    answer: "Le score SEO (0-100) évalue la qualité de votre fiche produit selon 5 critères : longueur du titre (20 pts), présence de description (25 pts), nombre de tags (20 pts), images (20 pts) et prix configuré (15 pts). Un score > 70 est considéré comme bon.",
+    answer: "Le score SEO (0-100) évalue la qualité de votre fiche produit selon 4 critères : longueur du titre (30 pts max — idéalement 50 à 70 caractères), richesse de la description (40 pts max — idéalement 100+ mots), nombre de tags (20 pts max — 5+ tags recommandés), et présence d'images (10 pts). Un score > 70 est considéré comme bon.",
   },
   {
     id: "4", category: "images",
