@@ -55,7 +55,7 @@
 
   --text-primary: #e4effe;
   --text-secondary: #8aaec8;
-  --text-muted: #46647e;
+  --text-muted: #7aa0bc;
 
   --shadow-xs:  0 1px 2px rgba(0,0,0,0.4);
   --shadow-sm:  0 1px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
@@ -237,7 +237,8 @@ input:focus, select:focus, textarea:focus {
 .dark [style*="color: rgb(55, 65, 81)"] { color: #b0c8de !important; }
 /* Muted / already gray — keep readable */
 .dark [style*="color: #64748b"]      { color: #7fa8c4 !important; }
-.dark [style*="color: #94a3b8"]      { color: var(--text-muted) !important; }
+/* #94a3b8 is already light enough — keep close to original */
+.dark [style*="color: #94a3b8"]      { color: #8cb8d0 !important; }
 /* gray-600 (#4b5563) on dark surfaces — needs boosting */
 .dark [style*="color: #4b5563"]      { color: #94a3b8 !important; }
 /* slate-600 nav links */

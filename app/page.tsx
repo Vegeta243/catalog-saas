@@ -127,7 +127,7 @@ export default function HomePage() {
       {/* ══════ HERO ══════ */}
       <section className="pt-32 pb-20 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8 bg-blue-50" style={{ color: "#2563eb" }}>
             <Sparkles className="w-3.5 h-3.5" /> Le copilote IA &bull; SEO &bull; Catalogue Shopify
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] mb-8" style={{ color: "#0f172a" }}>
@@ -174,15 +174,15 @@ export default function HomePage() {
 
           {/* Stats clés — résultats concrets */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-12">
-            <div className="rounded-2xl p-5 border border-blue-100 dark:border-blue-900/40" style={{ backgroundColor: "#eff6ff" }}>
+            <div className="rounded-2xl p-5 border border-blue-100 dark:border-blue-900/40 bg-blue-50">
               <p className="text-3xl font-extrabold" style={{ color: "#2563eb" }}>5 min</p>
               <p className="text-sm font-medium mt-1" style={{ color: "#374151" }}>au lieu de 3h pour optimiser 50 fiches</p>
             </div>
-            <div className="rounded-2xl p-5 border border-emerald-100 dark:border-emerald-900/40" style={{ backgroundColor: "#f0fdf4" }}>
+            <div className="rounded-2xl p-5 border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50">
               <p className="text-3xl font-extrabold" style={{ color: "#059669" }}>×2.5</p>
               <p className="text-sm font-medium mt-1" style={{ color: "#374151" }}>valeur perçue avec de vraies descriptions</p>
             </div>
-            <div className="rounded-2xl p-5 border border-purple-100 dark:border-purple-900/40" style={{ backgroundColor: "#faf5ff" }}>
+            <div className="rounded-2xl p-5 border border-purple-100 dark:border-purple-900/40 bg-violet-50">
               <p className="text-3xl font-extrabold" style={{ color: "#7c3aed" }}>0€</p>
               <p className="text-sm font-medium mt-1" style={{ color: "#374151" }}>requis pour démarrer — sans carte bancaire</p>
             </div>
@@ -219,7 +219,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════ SOCIAL PROOF BAR ══════ */}
-      <section className="py-6 border-y border-gray-100" style={{ backgroundColor: "#f8fafc" }}>
+      <section className="py-6 border-y border-gray-100 bg-gray-50">
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-8 px-6">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5" style={{ color: "#2563eb" }} />
@@ -245,7 +245,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════ PAIN POINTS ══════ */}
-      <section id="problemes" className="py-24 px-6" style={{ backgroundColor: "#fafafa" }}>
+      <section id="problemes" className="py-24 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#dc2626" }}>Le problème</p>
@@ -297,7 +297,7 @@ export default function HomePage() {
                   <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold" style={{ color: "#fff" }}>
                     {s.step}
                   </div>
-                  <div className="w-16 h-16 rounded-2xl mx-auto mb-6 mt-4 flex items-center justify-center" style={{ backgroundColor: "#eff6ff" }}>
+                  <div className="w-16 h-16 rounded-2xl mx-auto mb-6 mt-4 flex items-center justify-center bg-blue-50">
                     <Icon className="w-8 h-8" style={{ color: "#2563eb" }} />
                   </div>
                   <h3 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>{s.title}</h3>
@@ -310,7 +310,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════ FEATURES ══════ */}
-      <section id="fonctionnalites" className="py-24 px-6" style={{ backgroundColor: "#f8fafc" }}>
+      <section id="fonctionnalites" className="py-24 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#2563eb" }}>Fonctionnalités</p>
@@ -326,7 +326,7 @@ export default function HomePage() {
               const Icon = f.icon;
               return (
                 <div key={f.title} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all group">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform" style={{ backgroundColor: "#eff6ff" }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform bg-blue-50">
                     <Icon className="w-6 h-6" style={{ color: "#2563eb" }} />
                   </div>
                   <h4 className="text-base font-bold mb-2" style={{ color: "#0f172a" }}>{f.title}</h4>
@@ -409,7 +409,7 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <div className="p-3 rounded-xl mb-6" style={{ backgroundColor: "#f0fdf4" }}>
+                  <div className="p-3 rounded-xl mb-6 bg-emerald-50">
                     <p className="text-xs leading-relaxed" style={{ color: "#166534" }}>{plan.fit}</p>
                   </div>
                   <button
@@ -501,7 +501,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════ EMOTIONAL SECTION ══════ */}
-      <section className="py-24 px-6" style={{ backgroundColor: "#fff" }}>
+      <section className="py-24 px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center">
           <Heart className="w-12 h-12 mx-auto mb-8" style={{ color: "#f43f5e" }} />
           <h2 className="text-3xl md:text-5xl font-extrabold mb-8 leading-tight" style={{ color: "#0f172a" }}>
