@@ -154,15 +154,18 @@ export default function AccountPage() {
   // ─── Change password ───
   const handleChangePassword = async () => {
     if (!newPassword || newPassword !== confirmPassword) return;
-    if (newPassword.length < 6) { addToast("6 caractères minimum", "error"); return; }
+    if (newPassword.length < 6) { addToast("Le mot de passe doit comporter au moins 6 caractères", "error"); return; }
     setPasswordLoading(true);
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      addToast("Mot de passe mis à jour", "success");
+      addToast("✅ Mot de passe modifié avec succès", "success");
       setNewPassword(""); setConfirmPassword("");
-    } catch { addToast("Erreur lors du changement", "error"); }
+    } catch (err) {
+      const msg = (err as Error).message || "Erreur lors du changement de mot de passe";
+      addToast(`❌ ${msg}`, "error");
+    }
     setPasswordLoading(false);
   };
 
@@ -479,7 +482,7 @@ export default function AccountPage() {
                   )}
                   <button onClick={handleChangePassword} disabled={!newPassword || newPassword !== confirmPassword || passwordLoading}
                     className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center gap-2" style={{ color: "#fff" }}>
-                    {passwordLoading && <Loader2 className="w-4 h-4 animate-spin" />} Mettre à jour
+                    {passwordLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Mise à jour en cours...</> : "Mettre à jour le mot de passe"}
                   </button>
                 </div>
               </div>
