@@ -237,6 +237,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Tasks counter + plan */}
         {!sidebarCollapsed && (
+          <>
           <div className="mx-3 mb-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(96,165,250,0.1)' }}>
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
@@ -255,6 +256,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <p className="text-[10px] mt-1.5" style={{ color: '#64748b' }}>{tasksUsed} / {tasksTotal} tâches utilisées</p>
           </div>
+
+          {(plan === 'free' || plan === 'starter') && (
+            <div className="mx-3 mb-3 p-3 rounded-lg border" style={{ backgroundColor: 'rgba(99,102,241,0.1)', borderColor: 'rgba(99,102,241,0.3)' }}>
+              <p className="text-xs font-semibold mb-1" style={{ color: '#a5b4fc' }}>🚀 Passez au plan Pro</p>
+              <p className="text-[10px] leading-relaxed mb-2" style={{ color: '#94a3b8' }}>
+                Débloquez 20 000 actions IA, 3 boutiques et le support prioritaire.
+              </p>
+              <a href="/dashboard/billing"
+                className="block w-full text-center py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90"
+                style={{ backgroundColor: '#6366f1', color: '#fff' }}>
+                Voir les offres →
+              </a>
+            </div>
+          )}
+          </>
         )}
 
         {/* Bottom user area */}
@@ -290,9 +306,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden dark:bg-gray-950">
         {/* Top bar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+        <header className="h-16 bg-white dark:bg-gray-900 dark:border-gray-700 border-b border-gray-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
           {/* Hamburger button — mobile only */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors mr-2 flex-shrink-0"
@@ -347,10 +363,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-3 md:p-6 overflow-x-hidden">{children}</main>
+        <main className="flex-1 p-3 md:p-6 overflow-x-hidden dark:bg-gray-950">{children}</main>
 
         {/* Footer */}
-        <footer className="border-t border-gray-200 bg-white px-6 py-3 flex items-center justify-between">
+        <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-3 flex items-center justify-between">
           <p className="text-xs" style={{ color: '#94a3b8' }}>© 2026 EcomPilot. Tous droits réservés.</p>
           <p className="text-xs" style={{ color: '#94a3b8' }}>v6.0.0</p>
         </footer>

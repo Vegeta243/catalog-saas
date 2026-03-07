@@ -5,7 +5,7 @@ import {
   Search, RefreshCw, Download, Upload, ChevronLeft, ChevronRight, Package,
   CheckSquare, Square, ImageOff, ArrowUpDown, DollarSign,
   X, Copy, Archive, CheckCircle2, Tag, Type, FileText, Sparkles,
-  AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3,
+  AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3, LayoutList,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import Link from "next/link";
@@ -101,7 +101,8 @@ export default function ProductsPage() {
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [plan, setPlan] = useState("free");
   const [tasksUsed, setTasksUsed] = useState(0);
-  const itemsPerPage = 50;
+  const [compactMode, setCompactMode] = useState(false);
+  const itemsPerPage = compactMode ? 50 : 25;
 
   /* ──────── Fetch ──────── */
   const fetchProducts = useCallback(async (showRefresh = false) => {
@@ -127,6 +128,12 @@ export default function ProductsPage() {
   }, [addToast]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  // Load compact mode preference
+  useEffect(() => {
+    const saved = localStorage.getItem("catalog-compact") === "true";
+    setCompactMode(saved);
+  }, []);
 
   // Fetch user plan for QuotaGate
   useEffect(() => {
@@ -575,6 +582,14 @@ export default function ProductsPage() {
             style={{ color: "#374151" }}>
             <Download className="w-4 h-4" style={{ color: "#374151" }} /> CSV
           </button>
+          <button
+            onClick={() => { const next = !compactMode; setCompactMode(next); localStorage.setItem("catalog-compact", String(next)); }}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border shadow-sm transition-colors ${compactMode ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:bg-gray-50"}`}
+            title="Mode compact"
+            style={{ color: compactMode ? "#2563eb" : "#374151" }}>
+            <LayoutList className="w-4 h-4" />
+            <span className="hidden sm:inline">{compactMode ? "Compact ✓" : "Compact"}</span>
+          </button>
           <Link href="/dashboard/import" className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium shadow-sm">
             <Upload className="w-4 h-4" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Importer</span>
           </Link>
@@ -864,7 +879,7 @@ export default function ProductsPage() {
                         : <Square className="w-4 h-4" style={{ color: "#94a3b8" }} />}
                     </button>
                   </th>
-                  <th className="px-3 md:px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider hidden sm:table-cell" style={{ color: "#64748b" }}>Image</th>
+                  <th className={`px-3 md:px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider ${compactMode ? "hidden" : "hidden sm:table-cell"}`} style={{ color: "#64748b" }}>Image</th>
                   <th className="px-3 md:px-4 py-3 text-left"><button onClick={() => handleSort("title")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Titre <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-3 md:px-4 py-3 text-left"><button onClick={() => handleSort("price")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Prix <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-3 md:px-4 py-3 text-left hidden sm:table-cell"><button onClick={() => handleSort("status")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Statut <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
@@ -883,12 +898,12 @@ export default function ProductsPage() {
                   const justUpdated = recentlyUpdated.includes(product.id);
                   return (
                     <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""} ${justUpdated ? "bg-emerald-50/60" : ""}`}>
-                      <td className="px-3 md:px-4 py-3"><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
-                      <td className="px-3 md:px-4 py-3 hidden sm:table-cell">
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"}`}><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} ${compactMode ? "hidden" : "hidden sm:table-cell"}`}>
                         {imageUrl ? <img src={imageUrl} alt={product.title} className="w-11 h-11 rounded-lg object-cover border border-gray-100" />
                           : <div className="w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
                       </td>
-                      <td className="px-3 md:px-4 py-3 cursor-pointer" onClick={() => setPreviewProduct(product)}>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} cursor-pointer`} onClick={() => setPreviewProduct(product)}>
                         <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none hover:text-blue-600 transition-colors" style={{ color: "#0f172a" }}>{product.title}</p>
                         {product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
                         {hasLowStock && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 bg-red-50 rounded mt-1" style={{ color: "#dc2626" }}><AlertTriangle className="w-2.5 h-2.5" /> Stock bas</span>}
@@ -903,10 +918,10 @@ export default function ProductsPage() {
                           </div>
                         )}
                       </td>
-                      <td className="px-3 md:px-4 py-3"><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
-                      <td className="px-3 md:px-4 py-3 hidden sm:table-cell">{getStatusBadge(product.status)}</td>
-                      <td className="px-3 md:px-4 py-3 hidden md:table-cell"><ScoreBadge score={score} /></td>
-                      <td className="px-3 md:px-4 py-3 hidden lg:table-cell">
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"}`}><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} hidden sm:table-cell`}>{getStatusBadge(product.status)}</td>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} hidden md:table-cell`}><ScoreBadge score={score} /></td>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} hidden lg:table-cell`}>
                         {suggestion ? (
                           <div className="flex items-center gap-1">
                             {suggestion.title && (
@@ -935,7 +950,7 @@ export default function ProductsPage() {
                           <span className="text-[10px]" style={{ color: "#94a3b8" }}>—</span>
                         )}
                       </td>
-                      <td className="px-3 md:px-4 py-3">
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"}`}>
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => setPreviewProduct(product)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Aperçu">
                             <Eye className="w-4 h-4" style={{ color: "#64748b" }} />

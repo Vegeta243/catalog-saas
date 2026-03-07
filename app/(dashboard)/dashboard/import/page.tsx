@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Upload, Link2, FileSpreadsheet, CheckCircle2, XCircle, RefreshCw, Package, ArrowRight, X, ImageOff, AlertTriangle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Upload, Link2, FileSpreadsheet, CheckCircle2, XCircle, RefreshCw, Package, ArrowRight, X, ImageOff, AlertTriangle, Settings } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 interface ImportPreview {
   title: string;
@@ -25,6 +27,7 @@ interface ImportResult {
 
 export default function ImportPage() {
   const { addToast } = useToast();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"url" | "csv">("url");
   const [urls, setUrls] = useState("");
   const [margin, setMargin] = useState("2.5");
@@ -33,6 +36,7 @@ export default function ImportPage() {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [hasShop, setHasShop] = useState<boolean | null>(null);
+  const [cjError, setCjError] = useState(false);
 
   // Check if user has a connected shop
   useEffect(() => {
@@ -59,6 +63,7 @@ export default function ImportPage() {
     if (urlList.length === 0) return;
 
     setResults(urlList.map((url) => ({ url, status: "pending" })));
+    setCjError(false);
     setImporting(true);
 
     await Promise.all(urlList.map(async (url, i) => {
@@ -73,6 +78,12 @@ export default function ImportPage() {
 
         if (!res.ok) throw new Error("Échec du scraping");
         const data = await res.json();
+
+        if (data.error === "CJ_API_REQUIRED") {
+          setCjError(true);
+          setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: "Clé API CJ Dropshipping requise" } : r));
+          return;
+        }
 
         setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "preview", preview: data.preview, isDemo: data.demo === true } : r));
       } catch {
@@ -123,7 +134,9 @@ export default function ImportPage() {
           return r;
         }));
 
-        addToast(`${data.summary?.succeeded || 0} produit${(data.summary?.succeeded || 0) > 1 ? "s" : ""} importé${(data.summary?.succeeded || 0) > 1 ? "s" : ""}`, "success");
+        const successCount = data.summary?.succeeded || 0;
+        addToast(`${successCount} produit${successCount > 1 ? "s" : ""} importé${successCount > 1 ? "s" : ""} — voir le catalogue`, "success");
+        if (successCount > 0) router.refresh();
       }
     } catch (err) {
       const errorMsg = hasShop === false ? "Boutique non connectée — connectez votre boutique dans Mes boutiques" : "Erreur réseau — vérifiez votre connexion";
@@ -183,6 +196,21 @@ export default function ImportPage() {
               <a href="/dashboard/shops" className="underline font-medium">Connecter une boutique →</a>
             </p>
           </div>
+        </div>
+      )}
+
+      {cjError && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-orange-300 mb-4" style={{ backgroundColor: "#fff7ed" }}>
+          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#ea580c" }} />
+          <div className="flex-1">
+            <p className="text-sm font-semibold" style={{ color: "#9a3412" }}>Clé API CJ Dropshipping manquante</p>
+            <p className="text-xs mt-0.5" style={{ color: "#c2410c" }}>
+              Pour importer depuis CJ Dropshipping, configurez votre clé API dans les paramètres.
+            </p>
+          </div>
+          <Link href="/dashboard/settings?tab=api" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#ea580c", color: "#fff" }}>
+            Configurer clé CJ →
+          </Link>
         </div>
       )}
 

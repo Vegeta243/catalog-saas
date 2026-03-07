@@ -548,7 +548,6 @@ export default function SettingsPage() {
                   <Shield className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Options avancées
                 </h2>
-                <ToggleSwitch on={compactMode} onToggle={() => handleCompactChange(!compactMode)} label="Mode compact (tableaux denses)" />
                 <ToggleSwitch on={devMode} onToggle={() => handleDevChange(!devMode)} label="Mode développeur (logs console)" />
               </div>
 

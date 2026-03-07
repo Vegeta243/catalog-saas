@@ -10,6 +10,7 @@ import {
 import { useToast } from "@/lib/toast";
 import { PLAN_TASKS, PLAN_PRICES, getTasksColor, getResetDate } from "@/lib/credits";
 import { createClient } from "@/lib/supabase/client";
+import { updateUserPassword } from "@/lib/auth";
 import Link from "next/link";
 
 type Tab = "profile" | "subscription" | "shops" | "notifications" | "security";
@@ -83,7 +84,7 @@ export default function AccountPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [deleteStep, setDeleteStep] = useState(0);
-  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // ─── Fetch user data from Supabase ───
@@ -161,9 +162,7 @@ export default function AccountPage() {
     if (newPassword.length < 6) { addToast("6 caractères minimum", "error"); return; }
     setPasswordLoading(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
+      await updateUserPassword(newPassword);
       addToast("Mot de passe mis à jour", "success");
       setNewPassword(""); setConfirmPassword("");
     } catch { addToast("Erreur lors du changement", "error"); }
@@ -172,7 +171,7 @@ export default function AccountPage() {
 
   // ─── Delete account ───
   const handleDeleteAccount = async () => {
-    if (deleteConfirmEmail !== email) { addToast("L'email ne correspond pas", "error"); return; }
+    if (deleteConfirmText !== "DELETE") return;
     setDeleteLoading(true);
     try {
       const supabase = createClient();
@@ -537,21 +536,84 @@ export default function AccountPage() {
                   <h2 className="text-base font-semibold" style={{ color: "#ef4444" }}>Zone de danger</h2>
                 </div>
                 <p className="text-xs mb-4" style={{ color: "#64748b" }}>La suppression du compte est irréversible. Toutes vos données seront effacées.</p>
+
                 {deleteStep === 0 && (
-                  <button onClick={() => setDeleteStep(1)} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium flex items-center gap-1.5">
-                    <Trash2 className="w-3.5 h-3.5" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Supprimer le compte</span>
+                  <button onClick={() => setDeleteStep(1)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium border border-red-300 hover:bg-red-50 flex items-center gap-1.5"
+                    style={{ color: "#dc2626" }}>
+                    <Trash2 className="w-3.5 h-3.5" /> Supprimer le compte
                   </button>
                 )}
+
                 {deleteStep === 1 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium" style={{ color: "#dc2626" }}>⚠️ Cette action supprimera définitivement votre compte, toutes vos boutiques connectées et vos données.</p>
-                    <p className="text-xs" style={{ color: "#64748b" }}>Saisissez votre email <strong>{email}</strong> pour confirmer :</p>
-                    <input type="email" value={deleteConfirmEmail} onChange={(e) => setDeleteConfirmEmail(e.target.value)}
-                      placeholder={email} className="w-full px-3 py-2.5 border border-red-300 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+                  <div className="space-y-4">
+                    <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>Êtes-vous sûr de vouloir partir ?</p>
+                    <ul className="space-y-1.5 text-sm" style={{ color: "#374151" }}>
+                      {["Tous vos produits synchronisés", "Votre historique d'actions IA", "Vos boutiques connectées", "Vos paramètres et préférences"].map((item) => (
+                        <li key={item} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                          {item} seront <strong>définitivement supprimés</strong>
+                        </li>
+                      ))}
+                    </ul>
                     <div className="flex gap-2">
-                      <button onClick={() => { setDeleteStep(0); setDeleteConfirmEmail(""); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "#374151" }}>Annuler</button>
-                      <button onClick={handleDeleteAccount} disabled={deleteConfirmEmail !== email || deleteLoading}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center gap-1.5">
+                      <button onClick={() => setDeleteStep(0)}
+                        className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700"
+                        style={{ color: "#fff" }}>
+                        Conserver mon compte
+                      </button>
+                      <button onClick={() => setDeleteStep(2)}
+                        className="px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100"
+                        style={{ color: "#64748b" }}>
+                        Continuer quand même →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {deleteStep === 2 && (
+                  <div className="space-y-4">
+                    <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>Vous n&apos;avez pas encore exploité :</p>
+                    <ul className="space-y-1.5 text-sm" style={{ color: "#374151" }}>
+                      {["Optimisation SEO IA en masse", "Import automatique AliExpress / CJ", "Édition d'images avec Sharp", "Rapports hebdomadaires et alertes stock"].map((item) => (
+                        <li key={item} className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex gap-2">
+                      <button onClick={() => setDeleteStep(0)}
+                        className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700"
+                        style={{ color: "#fff" }}>
+                        Rester sur EcomPilot
+                      </button>
+                      <button onClick={() => setDeleteStep(3)}
+                        className="px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100"
+                        style={{ color: "#64748b" }}>
+                        Supprimer quand même
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {deleteStep === 3 && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium" style={{ color: "#dc2626" }}>⚠️ Dernière étape — cette action est irréversible.</p>
+                    <label className="text-xs block" style={{ color: "#64748b" }}>
+                      Tapez <strong style={{ color: "#dc2626" }}>DELETE</strong> pour confirmer la suppression :
+                    </label>
+                    <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="DELETE" className="w-full px-3 py-2.5 border border-red-300 rounded-lg text-sm font-mono"
+                      style={{ color: "#0f172a" }} />
+                    <div className="flex gap-2">
+                      <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); }}
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
+                        style={{ color: "#374151" }}>
+                        Annuler
+                      </button>
+                      <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== "DELETE" || deleteLoading}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 rounded-lg text-sm font-medium flex items-center gap-1.5">
                         {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} />}
                         <span style={{ color: "#fff" }}>Confirmer la suppression</span>
                       </button>
