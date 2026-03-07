@@ -470,7 +470,7 @@ export default function ProductsPage() {
           body: JSON.stringify({ productIds: [editProduct.id], field: f.field, value: f.value }),
         })
       ));
-      setModifiedProducts((prev) => new Set(prev).add(editProduct.id));
+      setModifiedProducts((prev) => new Set([...prev, editProduct.id]));
       addToast(`✅ Produit "${editTitle.slice(0, 40)}" mis à jour`, "success");
       setEditProduct(null);
       fetchProducts(true);

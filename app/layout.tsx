@@ -80,7 +80,12 @@ export default function RootLayout({
                   if (t === 'dark') document.documentElement.classList.add('dark');
                   else if (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
                   if (localStorage.getItem('ecompilot-compact') === 'true') {
-                    document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('compact'); });
+                    function applyCompact() { document.body.classList.add('compact'); }
+                    if (document.readyState === 'loading') {
+                      document.addEventListener('DOMContentLoaded', applyCompact);
+                    } else {
+                      applyCompact();
+                    }
                   }
                 } catch(e) {}
               })();

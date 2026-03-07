@@ -109,7 +109,11 @@ export default function SettingsPage() {
 
   // Load advanced preferences from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("ecompilot-theme") as "light" | "dark" | "auto" | null;
+    const rawTheme = localStorage.getItem("ecompilot-theme");
+    const validThemes = ["light", "dark", "auto"] as const;
+    const savedTheme = validThemes.includes(rawTheme as (typeof validThemes)[number])
+      ? (rawTheme as "light" | "dark" | "auto")
+      : null;
     const savedCompact = localStorage.getItem("ecompilot-compact") === "true";
     const savedDev = localStorage.getItem("ecompilot-devmode") === "true";
     if (savedTheme) setTheme(savedTheme);

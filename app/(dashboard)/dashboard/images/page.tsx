@@ -76,7 +76,8 @@ function processImageWithCanvas(
         const canvas = document.createElement("canvas");
         canvas.width = outWidth;
         canvas.height = outHeight;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Impossible d'initialiser le contexte Canvas 2D");
 
         // Build CSS filter string
         const filters: string[] = [];
@@ -240,9 +241,7 @@ export default function ImagesPage() {
   };
 
   const downloadAll = async () => {
-    for (const img of images) {
-      await downloadImage(img);
-    }
+    await Promise.all(images.map((img) => downloadImage(img)));
     addToast(`${images.length} image${images.length > 1 ? "s" : ""} téléchargée${images.length > 1 ? "s" : ""}`, "success");
   };
 
