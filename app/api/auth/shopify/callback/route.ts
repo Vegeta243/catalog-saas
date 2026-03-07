@@ -14,53 +14,101 @@ export async function GET(request: NextRequest) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-  if (!code || !shop || !hmac) {
-    return NextResponse.redirect(`${siteUrl}/shopify-embed?error=missing_params`);
+  // ── Helper: redirect to the right error destination based on origin ──
+  const source = request.cookies.get('shopify_oauth_source')?.value;
+  const isDashboard = source === 'dashboard' || !host;
+
+  function errorRedirect(errCode: string): NextResponse {
+    const dest = isDashboard
+      ? `${siteUrl}/dashboard/shops?error=${errCode}`
+      : `${siteUrl}/shopify-embed?error=${errCode}`;
+    const res = NextResponse.redirect(dest);
+    res.cookies.delete('shopify_oauth_nonce');
+    res.cookies.delete('shopify_oauth_shop');
+    res.cookies.delete('shopify_oauth_source');
+    res.cookies.delete('shopify_oauth_uid');
+    return res;
+  }
+
+  if (!code || !shop) {
+    console.error('[Shopify OAuth callback] Missing code or shop params');
+    return errorRedirect('missing_params');
   }
 
   // ── CSRF / nonce check ──
   const storedNonce = request.cookies.get('shopify_oauth_nonce')?.value;
   const storedShop  = request.cookies.get('shopify_oauth_shop')?.value;
   if (state && storedNonce && state !== storedNonce) {
-    return NextResponse.redirect(`${siteUrl}/shopify-embed?error=csrf`);
+    console.error('[Shopify OAuth callback] CSRF nonce mismatch');
+    return errorRedirect('csrf');
   }
   if (storedShop && storedShop !== shop) {
-    return NextResponse.redirect(`${siteUrl}/shopify-embed?error=shop_mismatch`);
+    console.error('[Shopify OAuth callback] Shop mismatch:', storedShop, '!=', shop);
+    return errorRedirect('shop_mismatch');
   }
 
   // ── HMAC verification ──
-  const params = Object.fromEntries(searchParams);
-  delete params.hmac;
-  const message = Object.keys(params)
-    .sort()
-    .map((k) => `${k}=${params[k]}`)
-    .join('&');
-  const generated = crypto
-    .createHmac('sha256', process.env.SHOPIFY_API_SECRET!)
-    .update(message)
-    .digest('hex');
-  if (generated !== hmac) {
-    return NextResponse.redirect(`${siteUrl}/shopify-embed?error=invalid_hmac`);
+  // Wrapped in try-catch to prevent a crash when SHOPIFY_API_SECRET is not set
+  const apiSecret = process.env.SHOPIFY_API_SECRET;
+  if (hmac && apiSecret) {
+    try {
+      const params = Object.fromEntries(searchParams);
+      delete params.hmac;
+      const message = Object.keys(params)
+        .sort()
+        .map((k) => `${k}=${params[k]}`)
+        .join('&');
+      const generated = crypto
+        .createHmac('sha256', apiSecret)
+        .update(message)
+        .digest('hex');
+      if (generated !== hmac) {
+        console.error('[Shopify OAuth callback] HMAC mismatch — possible forgery');
+        return errorRedirect('invalid_hmac');
+      }
+    } catch (e) {
+      console.error('[Shopify OAuth callback] HMAC verification threw:', e);
+      return errorRedirect('hmac_error');
+    }
+  } else if (!apiSecret) {
+    console.warn('[Shopify OAuth callback] SHOPIFY_API_SECRET not configured — skipping HMAC check');
   }
 
   // ── Exchange code for access token ──
-  const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: process.env.SHOPIFY_API_KEY,
-      client_secret: process.env.SHOPIFY_API_SECRET,
-      code,
-    }),
-  });
-  if (!tokenRes.ok) {
-    return NextResponse.redirect(`${siteUrl}/shopify-embed?error=token_exchange`);
+  const apiKey = process.env.SHOPIFY_API_KEY;
+  if (!apiKey || !apiSecret) {
+    console.error('[Shopify OAuth callback] Missing SHOPIFY_API_KEY or SHOPIFY_API_SECRET');
+    return errorRedirect('config_missing');
   }
-  const tokenData = await tokenRes.json();
-  const { access_token, associated_user, scope } = tokenData;
+
+  let access_token: string | null = null;
+  let scope = '';
+  try {
+    const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: apiKey,
+        client_secret: apiSecret,
+        code,
+      }),
+    });
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.error('[Shopify OAuth callback] Token exchange failed:', tokenRes.status, errText);
+      return errorRedirect('token_exchange');
+    }
+    const tokenData = await tokenRes.json();
+    access_token = tokenData.access_token || null;
+    scope = tokenData.scope || '';
+  } catch (e) {
+    console.error('[Shopify OAuth callback] Token exchange network error:', e);
+    return errorRedirect('token_exchange');
+  }
 
   if (!access_token) {
-    return NextResponse.redirect(`${siteUrl}/shopify-embed?error=no_token`);
+    console.error('[Shopify OAuth callback] No access_token in Shopify response');
+    return errorRedirect('no_token');
   }
 
   // ── Fetch shop info from Shopify ──
@@ -75,40 +123,35 @@ export async function GET(request: NextRequest) {
     }
   } catch { /* non-fatal */ }
 
-  // ── Save to Supabase ──
-  // Get the authenticated user so we can associate the shop with them
+  // ── Resolve authenticated user ──
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-  // ── Get authenticated user from session cookies ──
   let userId: string | null = null;
+
+  // Attempt 1: read from Supabase session cookie
   try {
-    const tempResponse = NextResponse.next();
     const supabaseAuth = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() { return request.cookies.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            tempResponse.cookies.set(name, value, options);
-          });
-        },
+        setAll() {},
       },
     });
     const { data: { user } } = await supabaseAuth.auth.getUser();
     userId = user?.id || null;
   } catch { /* non-fatal */ }
 
-  // Fallback 1: uid stored in cookie during OAuth initiation
+  // Attempt 2: uid cookie stored during OAuth initiation
   if (!userId) {
     userId = request.cookies.get('shopify_oauth_uid')?.value || null;
   }
 
-  // Fallback 2: look up user_id from existing shop record in DB
+  // Attempt 3: look up existing shop row in DB
   if (!userId) {
     try {
-      const supabaseService = createClient(supabaseUrl, serviceKey);
-      const { data: existingShop } = await supabaseService
+      const svc = createClient(supabaseUrl, serviceKey);
+      const { data: existingShop } = await svc
         .from('shops')
         .select('user_id')
         .eq('shop_domain', shop)
@@ -118,43 +161,48 @@ export async function GET(request: NextRequest) {
   }
 
   if (!userId) {
-    // Cannot associate shop without a user — redirect to login
+    console.error('[Shopify OAuth callback] Could not resolve userId — redirecting to login');
     return NextResponse.redirect(`${siteUrl}/login?error=auth&reason=shopify_oauth`);
   }
 
+  // ── Save to Supabase ──
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  const upsertData: Record<string, unknown> = {
+  // Core fields guaranteed to exist in the shops table
+  const coreData: Record<string, unknown> = {
     user_id: userId,
     shop_domain: shop,
     access_token,
     shop_name: shopName,
     is_active: true,
-    scopes: scope || '',
-    last_sync_at: new Date().toISOString(),
-    shopify_user_id: associated_user?.id?.toString() || null,
-    shopify_user_email: associated_user?.email || null,
+    scopes: scope,
   };
 
   const { error: upsertError } = await supabase
     .from('shops')
-    .upsert(upsertData, { onConflict: 'user_id,shop_domain' });
+    .upsert(coreData, { onConflict: 'user_id,shop_domain' });
 
   if (upsertError) {
-    console.error('Supabase upsert error:', upsertError.message);
-    // Redirect with error so user sees feedback
-    return NextResponse.redirect(`${siteUrl}/dashboard/shops?error=save_failed`);
+    console.error('[Shopify OAuth callback] Supabase upsert error:', upsertError.message);
+    // Retry with absolute minimum fields
+    const { error: retryError } = await supabase
+      .from('shops')
+      .upsert(
+        { user_id: userId, shop_domain: shop, access_token, shop_name: shopName, is_active: true },
+        { onConflict: 'user_id,shop_domain' },
+      );
+    if (retryError) {
+      console.error('[Shopify OAuth callback] Retry upsert also failed:', retryError.message);
+      return errorRedirect('save_failed');
+    }
   }
 
-  // ── Determine redirect destination ──
-  // If OAuth was initiated from the EcomPilot dashboard, always go back there.
-  // Only use shopify-embed for requests coming from within Shopify admin.
-  const source = request.cookies.get('shopify_oauth_source')?.value;
-  const redirectUrl = (source === 'dashboard' || !host)
+  // ── Success ──
+  const successUrl = isDashboard
     ? `${siteUrl}/dashboard/shops?connected=1`
     : `${siteUrl}/shopify-embed?shop=${shop}&host=${host}`;
 
-  const response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(successUrl);
   response.cookies.delete('shopify_oauth_nonce');
   response.cookies.delete('shopify_oauth_shop');
   response.cookies.delete('shopify_oauth_source');

@@ -51,8 +51,19 @@ function ShopsContent() {
       addToast("✅ Boutique Shopify connectée avec succès ! Vos produits sont maintenant accessibles.", "success");
       // Clean URL
       router.replace("/dashboard/shops");
-    } else if (error === "save_failed") {
-      addToast("Erreur lors de la sauvegarde du token. Réessayez.", "error");
+    } else if (error) {
+      const errorMessages: Record<string, string> = {
+        save_failed: "Erreur lors de la sauvegarde. Réessayez.",
+        missing_params: "Paramètres OAuth manquants. Réessayez.",
+        csrf: "Erreur de sécurité (CSRF). Réessayez.",
+        shop_mismatch: "La boutique ne correspond pas. Réessayez.",
+        invalid_hmac: "Signature invalide. Vérifiez la configuration Shopify.",
+        hmac_error: "Erreur de vérification HMAC. Contactez le support.",
+        token_exchange: "Échange de token Shopify échoué. Réessayez.",
+        no_token: "Aucun token reçu de Shopify. Réessayez.",
+        config_missing: "Configuration serveur incomplète (clés Shopify). Contactez le support.",
+      };
+      addToast(errorMessages[error] ?? `Erreur OAuth : ${error}`, "error");
       router.replace("/dashboard/shops");
     }
   }, [searchParams, addToast, router]);

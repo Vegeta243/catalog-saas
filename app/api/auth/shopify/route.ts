@@ -44,13 +44,18 @@ export async function GET(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const redirectUri = `${siteUrl}/api/auth/shopify/callback`;
 
+  const apiKey = process.env.SHOPIFY_API_KEY;
+  if (!apiKey) {
+    console.error('[Shopify OAuth] SHOPIFY_API_KEY is not configured!');
+    return NextResponse.json({ error: 'Configuration serveur manquante (SHOPIFY_API_KEY). Contactez le support.' }, { status: 500 });
+  }
+
   const authUrl = new URL(`https://${shop}/admin/oauth/authorize`);
-  authUrl.searchParams.set('client_id', process.env.SHOPIFY_API_KEY!);
+  authUrl.searchParams.set('client_id', apiKey);
   authUrl.searchParams.set('scope', SCOPES);
   authUrl.searchParams.set('redirect_uri', redirectUri);
   authUrl.searchParams.set('state', nonce);
-  // Request online access token (per-user) for embedded apps
-  authUrl.searchParams.set('grant_options[]', 'per-user');
+  // NOTE: Do NOT use per-user (online) tokens — they expire. Use offline persistent tokens.
 
   const response = NextResponse.redirect(authUrl.toString());
   // Store nonce in cookie for callback CSRF check (15 min expiry)
