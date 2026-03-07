@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { shopifyCache } from "@/lib/cache";
 
 export async function PUT(req: Request) {
   try {
@@ -59,6 +60,9 @@ export async function PUT(req: Request) {
         return response.json();
       })
     );
+
+    // Invalidate cache so next fetch returns fresh data
+    shopifyCache.invalidatePattern(shop_domain);
 
     return NextResponse.json({ success: true, updated: results.length });
   } catch (error) {

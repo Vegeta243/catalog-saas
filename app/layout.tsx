@@ -72,6 +72,22 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
         <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var t = localStorage.getItem('ecompilot-theme');
+                  if (t === 'dark') document.documentElement.classList.add('dark');
+                  else if (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+                  if (localStorage.getItem('ecompilot-compact') === 'true') {
+                    document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('compact'); });
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({

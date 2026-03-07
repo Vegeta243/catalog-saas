@@ -107,6 +107,54 @@ export default function SettingsPage() {
   const [compactMode, setCompactMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
 
+  // Load advanced preferences from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("ecompilot-theme") as "light" | "dark" | "auto" | null;
+    const savedCompact = localStorage.getItem("ecompilot-compact") === "true";
+    const savedDev = localStorage.getItem("ecompilot-devmode") === "true";
+    if (savedTheme) setTheme(savedTheme);
+    setCompactMode(savedCompact);
+    setDevMode(savedDev);
+  }, []);
+
+  // Apply dark mode whenever theme changes
+  const applyTheme = (t: "light" | "dark" | "auto") => {
+    const html = document.documentElement;
+    if (t === "dark") {
+      html.classList.add("dark");
+    } else if (t === "light") {
+      html.classList.remove("dark");
+    } else {
+      // Auto: follow system preference
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) html.classList.add("dark");
+      else html.classList.remove("dark");
+    }
+  };
+
+  const handleThemeChange = (t: "light" | "dark" | "auto") => {
+    setTheme(t);
+    localStorage.setItem("ecompilot-theme", t);
+    applyTheme(t);
+    addToast(t === "dark" ? "Mode sombre activé" : t === "light" ? "Mode clair activé" : "Mode automatique activé", "success");
+  };
+
+  const handleCompactToggle = () => {
+    const next = !compactMode;
+    setCompactMode(next);
+    localStorage.setItem("ecompilot-compact", String(next));
+    if (next) document.body.classList.add("compact");
+    else document.body.classList.remove("compact");
+    addToast(next ? "Mode compact activé" : "Mode compact désactivé", "success");
+  };
+
+  const handleDevModeToggle = () => {
+    const next = !devMode;
+    setDevMode(next);
+    localStorage.setItem("ecompilot-devmode", String(next));
+    addToast(next ? "Mode développeur activé — IDs et logs visibles" : "Mode développeur désactivé", "success");
+  };
+
   const handleSave = async () => {
     setSaving(true);
     await new Promise((r) => setTimeout(r, 800));
@@ -119,10 +167,13 @@ export default function SettingsPage() {
     addToast("Copié dans le presse-papier", "success");
   };
 
-  const ToggleSwitch = ({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) => (
+  const ToggleSwitch = ({ on, onToggle, label, desc }: { on: boolean; onToggle: () => void; label: string; desc?: string }) => (
     <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <span className="text-sm" style={{ color: "#374151" }}>{label}</span>
-      <button onClick={onToggle} className="relative w-10 h-6 rounded-full transition-colors"
+      <div>
+        <span className="text-sm" style={{ color: "#374151" }}>{label}</span>
+        {desc && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{desc}</p>}
+      </div>
+      <button onClick={onToggle} className="relative w-10 h-6 rounded-full transition-colors flex-shrink-0"
         style={{ backgroundColor: on ? "#2563eb" : "#d1d5db" }}>
         <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
           style={{ transform: on ? "translateX(16px)" : "translateX(0)" }} />
@@ -471,19 +522,25 @@ export default function SettingsPage() {
                   <Palette className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Apparence
                 </h2>
+                <p className="text-xs mb-3" style={{ color: "#64748b" }}>Choisissez le thème d&apos;affichage du dashboard. La préférence est sauvegardée dans votre navigateur.</p>
                 <div className="flex items-center gap-3">
                   {[
                     { value: "light" as const, label: "Clair", icon: <Sun className="w-4 h-4" /> },
                     { value: "dark" as const, label: "Sombre", icon: <Moon className="w-4 h-4" /> },
                     { value: "auto" as const, label: "Auto", icon: <Settings className="w-4 h-4" /> },
                   ].map((t) => (
-                    <button key={t.value} onClick={() => setTheme(t.value)}
+                    <button key={t.value} onClick={() => handleThemeChange(t.value)}
                       className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${theme === t.value ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
                       style={{ color: theme === t.value ? "#2563eb" : "#374151" }}>
                       {t.icon} {t.label}
                     </button>
                   ))}
                 </div>
+                {theme === "dark" && (
+                  <p className="text-xs mt-2 flex items-center gap-1" style={{ color: "#059669" }}>
+                    <Moon className="w-3 h-3" /> Mode sombre actif — la classe &quot;dark&quot; est appliquée sur l&apos;élément HTML.
+                  </p>
+                )}
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -491,8 +548,28 @@ export default function SettingsPage() {
                   <Shield className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Options avancées
                 </h2>
-                <ToggleSwitch on={compactMode} onToggle={() => setCompactMode(!compactMode)} label="Mode compact (tableaux denses)" />
-                <ToggleSwitch on={devMode} onToggle={() => setDevMode(!devMode)} label="Mode développeur (logs console)" />
+                <ToggleSwitch
+                  on={compactMode}
+                  onToggle={handleCompactToggle}
+                  label="Mode compact"
+                  desc="Réduit les espacements dans les tableaux et listes du dashboard pour afficher plus de données à l'écran."
+                />
+                <ToggleSwitch
+                  on={devMode}
+                  onToggle={handleDevModeToggle}
+                  label="Mode développeur"
+                  desc="Affiche les informations techniques : IDs Shopify des produits, logs API et temps de réponse."
+                />
+                {devMode && (
+                  <div className="mt-3 p-3 bg-slate-900 rounded-lg">
+                    <p className="text-[11px] font-mono" style={{ color: "#22d3ee" }}>
+                      [DEV] Mode développeur actif · Dashboard EcomPilot · {new Date().toISOString()}
+                    </p>
+                    <p className="text-[11px] font-mono mt-1" style={{ color: "#94a3b8" }}>
+                      Les IDs Shopify des produits sont maintenant visibles dans le catalogue.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white rounded-xl border border-red-200 p-6">
