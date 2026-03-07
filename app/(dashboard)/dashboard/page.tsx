@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import {
   Package, TrendingUp, Clock, CheckCircle2, Circle,
   Sparkles, DollarSign, Download, X, ChevronRight,
@@ -54,11 +55,11 @@ export default function DashboardPage() {
   // Onboarding
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [onboardingSteps, setOnboardingSteps] = useState([
-    { id: 1, label: "Créer votre compte", done: true },
-    { id: 2, label: "Connecter votre boutique Shopify", done: false },
-    { id: 3, label: "Lancer votre premier workflow", done: false },
-    { id: 4, label: "Optimiser 5 produits avec l'IA", done: false },
-    { id: 5, label: "Activer votre abonnement", done: false },
+    { id: 1, label: "Créer votre compte", done: true, href: "" },
+    { id: 2, label: "Connecter votre boutique Shopify", done: false, href: "/dashboard/shops" },
+    { id: 3, label: "Lancer votre premier workflow", done: false, href: "/dashboard/automation" },
+    { id: 4, label: "Optimiser 5 produits avec l'IA", done: false, href: "/dashboard/ai" },
+    { id: 5, label: "Activer votre abonnement", done: false, href: "/dashboard/credits" },
   ]);
 
   // Workflow modals
@@ -132,11 +133,11 @@ export default function DashboardPage() {
     const workflowDone = typeof window !== "undefined" && localStorage.getItem("ecompilot_workflow_done") === "1";
     const enoughOptimized = optimized >= 5;
     setOnboardingSteps([
-      { id: 1, label: "Créer votre compte", done: true },
-      { id: 2, label: "Connecter votre boutique Shopify", done: shopifyConnected },
-      { id: 3, label: "Lancer votre premier workflow", done: workflowDone },
-      { id: 4, label: "Optimiser 5 produits avec l'IA", done: enoughOptimized },
-      { id: 5, label: "Activer votre abonnement", done: plan !== "free" },
+      { id: 1, label: "Créer votre compte", done: true, href: "" },
+      { id: 2, label: "Connecter votre boutique Shopify", done: shopifyConnected, href: "/dashboard/shops" },
+      { id: 3, label: "Lancer votre premier workflow", done: workflowDone, href: "/dashboard/automation" },
+      { id: 4, label: "Optimiser 5 produits avec l'IA", done: enoughOptimized, href: "/dashboard/ai" },
+      { id: 5, label: "Activer votre abonnement", done: plan !== "free", href: "/dashboard/credits" },
     ]);
   }, [loading, products, plan]);
 
@@ -333,15 +334,24 @@ export default function DashboardPage() {
               <div className="h-2 bg-blue-600 rounded-full transition-all" style={{ width: `${(onboardingDone / onboardingTotal) * 100}%` }} />
             </div>
             <div className="space-y-2">
-              {onboardingSteps.map((step) => (
-                <div key={step.id} className="flex items-center gap-3 py-1">
-                  {step.done
-                    ? <CheckCircle2 className="w-4 h-4" style={{ color: "#059669" }} />
-                    : <Circle className="w-4 h-4" style={{ color: "#d1d5db" }} />}
-                  <span className={`text-sm ${step.done ? "line-through" : ""}`}
-                    style={{ color: step.done ? "#94a3b8" : "#374151" }}>{step.label}</span>
-                </div>
-              ))}
+              {onboardingSteps.map((step) =>
+                !step.done && step.href ? (
+                  <Link key={step.id} href={step.href}
+                    className="flex items-center gap-3 py-1.5 px-2 -mx-2 hover:bg-blue-50 rounded-lg transition-colors group">
+                    <Circle className="w-4 h-4 flex-shrink-0" style={{ color: "#d1d5db" }} />
+                    <span className="text-sm flex-1" style={{ color: "#374151" }}>{step.label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#2563eb" }} />
+                  </Link>
+                ) : (
+                  <div key={step.id} className="flex items-center gap-3 py-1">
+                    {step.done
+                      ? <CheckCircle2 className="w-4 h-4" style={{ color: "#059669" }} />
+                      : <Circle className="w-4 h-4" style={{ color: "#d1d5db" }} />}
+                    <span className={`text-sm ${step.done ? "line-through" : ""}`}
+                      style={{ color: step.done ? "#94a3b8" : "#374151" }}>{step.label}</span>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>

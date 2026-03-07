@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Settings, User, Store, Bell, CreditCard, Key, Shield, Save,
   Globe, Moon, Sun, Palette, Upload, Eye, EyeOff, Check, Copy,
   RefreshCw, Mail, Phone, ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
+import { createClient } from "@/lib/supabase/client";
 
 type Tab = "profile" | "shop" | "notifications" | "billing" | "api" | "advanced";
 
@@ -25,10 +26,36 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   // Profile
-  const [fullName, setFullName] = useState("Jean Dupont");
-  const [email, setEmail] = useState("jean@ecompilot.com");
-  const [phone, setPhone] = useState("+33 6 12 34 56 78");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [timezone, setTimezone] = useState("Europe/Paris");
+  const [initials, setInitials] = useState("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setEmail(user.email || "");
+        const { data } = await supabase
+          .from("users")
+          .select("first_name, last_name, phone, timezone")
+          .eq("id", user.id)
+          .single();
+        const firstName = data?.first_name || user.user_metadata?.first_name || "";
+        const lastName = data?.last_name || "";
+        const name = [firstName, lastName].filter(Boolean).join(" ") || user.email?.split("@")[0] || "";
+        setFullName(name);
+        setPhone(data?.phone || "");
+        if (data?.timezone) setTimezone(data.timezone);
+        const i = [firstName[0], lastName[0]].filter(Boolean).join("").toUpperCase() || name[0]?.toUpperCase() || "?";
+        setInitials(i);
+      } catch { /* silent */ }
+    };
+    loadUser();
+  }, []);
 
   // Shop
   const [shopName, setShopName] = useState("Ma Boutique Shopify");
@@ -136,7 +163,7 @@ export default function SettingsPage() {
               {/* Avatar */}
               <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
                 <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-xl font-bold" style={{ color: "#2563eb" }}>JD</span>
+                  <span className="text-xl font-bold" style={{ color: "#2563eb" }}>{initials || "?"}</span>
                 </div>
                 <div>
                   <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{fullName}</p>

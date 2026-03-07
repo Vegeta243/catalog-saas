@@ -30,6 +30,10 @@ export async function GET(request: Request) {
 
     const { shop_domain, access_token, user_id } = shop;
 
+    if (!access_token) {
+      return NextResponse.json({ products: [], message: 'Boutique connectée sans token — les produits ne peuvent pas être importés pour l\'instant.' });
+    }
+
     const rateResult = checkRateLimit(user_id || 'anonymous', 'shopify.products');
     if (!rateResult.allowed) {
       return NextResponse.json(

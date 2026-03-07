@@ -26,7 +26,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     id: "1", category: "general",
     question: "Comment connecter ma boutique Shopify ?",
-    answer: "Allez dans Paramètres > Clés API, puis entrez votre token d'accès Shopify Admin API. Vous pouvez le créer depuis votre admin Shopify dans Apps > Développer des apps. Assurez-vous d'activer les permissions read_products et write_products.",
+    answer: "Allez dans **Mes boutiques** dans le menu de gauche, puis cliquez sur **Ajouter une boutique**. Entrez simplement votre domaine Shopify (ex : ma-boutique ou ma-boutique.myshopify.com) et cliquez Ajouter. La boutique est enregistrée instantanément — aucun token ou OAuth requis.",
   },
   {
     id: "2", category: "ai",
@@ -51,7 +51,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     id: "6", category: "billing",
     question: "Comment changer de plan ?",
-    answer: "Rendez-vous dans Paramètres > Facturation pour voir les plans disponibles. Le changement de plan est immédiat et la différence est calculée au prorata. Vous pouvez upgrader ou downgrader à tout moment.",
+    answer: "Allez dans **Mon forfait** dans le menu de gauche pour voir vos tâches restantes et les plans disponibles. Vous pouvez upgrader à tout moment pour obtenir plus de tâches mensuelles.",
   },
   {
     id: "7", category: "general",

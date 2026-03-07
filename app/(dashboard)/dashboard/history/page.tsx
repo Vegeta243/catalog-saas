@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { History, Search, Filter, ArrowUpDown, Clock, Edit3, DollarSign, Tag, Trash2, Copy, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { History, Search, ArrowUpDown, Clock, Edit3, DollarSign, Tag, Trash2, Copy, Sparkles } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface HistoryEntry {
   id: string;
@@ -12,17 +13,6 @@ interface HistoryEntry {
   details: string;
   user: string;
 }
-
-const MOCK_HISTORY: HistoryEntry[] = [
-  { id: "1", date: "2026-03-03 14:30", action: "Modification prix", type: "price", productTitle: "T-Shirt Premium", details: "29.99€ → 34.49€ (+15%)", user: "admin" },
-  { id: "2", date: "2026-03-03 14:25", action: "Titre IA généré", type: "ai", productTitle: "Sneakers Urban", details: "Nouveau titre généré par IA", user: "admin" },
-  { id: "3", date: "2026-03-03 13:10", action: "Produit dupliqué", type: "duplicate", productTitle: "Hoodie Classic", details: "Copie créée: Hoodie Classic (copie)", user: "admin" },
-  { id: "4", date: "2026-03-03 12:45", action: "Tags modifiés", type: "edit", productTitle: "Casquette Sport", details: "Ajout tags: sport, cap, outdoor", user: "admin" },
-  { id: "5", date: "2026-03-02 18:00", action: "Import URL", type: "import", productTitle: "Montre Digital", details: "Importé depuis amazon.fr", user: "admin" },
-  { id: "6", date: "2026-03-02 16:30", action: "Automatisation exécutée", type: "automation", productTitle: "Pack Premium", details: "Règle: Stock bas → Prix +15%", user: "système" },
-  { id: "7", date: "2026-03-02 15:00", action: "Produit archivé", type: "delete", productTitle: "Ancien Modèle", details: "Statut → draft", user: "admin" },
-  { id: "8", date: "2026-03-01 10:20", action: "Modification en masse", type: "price", productTitle: "12 produits", details: "Prix -10% (promo lancement)", user: "admin" },
-];
 
 const TYPE_CONFIG = {
   price: { icon: DollarSign, color: "#2563eb", bg: "#eff6ff" },
@@ -35,14 +25,56 @@ const TYPE_CONFIG = {
 };
 
 export default function HistoryPage() {
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sortDesc, setSortDesc] = useState(true);
 
-  const filtered = MOCK_HISTORY
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setHistoryLoading(false); return; }
+        const { data } = await supabase
+          .from("action_history")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (data && data.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setEntries((data as any[]).map((row) => ({
+            id: String(row.id),
+            date: row.created_at ? String(row.created_at).replace("T", " ").slice(0, 16) : "",
+            action: row.action || "",
+            type: (row.type as HistoryEntry["type"]) || "edit",
+            productTitle: row.product_title || "",
+            details: row.details || "",
+            user: row.user_label || "vous",
+          })));
+        }
+      } catch {
+        // table may not exist yet
+      }
+      setHistoryLoading(false);
+    };
+    fetchHistory();
+  }, []);
+
+  const filtered = entries
     .filter((e) => typeFilter === "all" || e.type === typeFilter)
     .filter((e) => !search || e.productTitle.toLowerCase().includes(search.toLowerCase()) || e.action.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+
+  if (historyLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -80,8 +112,14 @@ export default function HistoryPage() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <History className="w-12 h-12 mx-auto mb-4" style={{ color: "#cbd5e1" }} />
-          <h3 className="text-lg font-semibold mb-2" style={{ color: "#0f172a" }}>Aucun résultat</h3>
-          <p className="text-sm" style={{ color: "#64748b" }}>Modifiez vos filtres pour voir l&apos;historique</p>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: "#0f172a" }}>
+            {entries.length === 0 ? "Aucun historique" : "Aucun résultat"}
+          </h3>
+          <p className="text-sm" style={{ color: "#64748b" }}>
+            {entries.length === 0
+              ? "Vos actions apparaîtront ici au fur et à mesure de votre utilisation."
+              : "Modifiez vos filtres pour voir l&apos;historique"}
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

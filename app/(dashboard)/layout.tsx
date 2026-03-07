@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard,
   PackageSearch,
@@ -71,7 +71,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notifications] = useState(3);
+  const [notifications, setNotifications] = useState(0);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   // Real user data from Supabase
   const [plan, setPlan] = useState("free");
@@ -81,6 +83,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const tasksTotal = PLAN_TASKS[plan] || PLAN_TASKS.free || 50;
   const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifPanel(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -301,14 +313,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-all">
-              <Bell className="w-5 h-5" style={{ color: '#64748b' }} />
-              {notifications > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
-                  {notifications}
-                </span>
+            <div className="relative" ref={notifRef}>
+              <button
+                className="relative p-2 hover:bg-gray-100 rounded-lg transition-all"
+                onClick={() => { setShowNotifPanel((v) => !v); setNotifications(0); }}
+                aria-label="Notifications"
+              >
+                <Bell className="w-5 h-5" style={{ color: '#64748b' }} />
+                {notifications > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ color: '#ffffff' }}>
+                    {notifications}
+                  </span>
+                )}
+              </button>
+              {showNotifPanel && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-lg z-50">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <span className="text-sm font-semibold" style={{ color: '#0f172a' }}>Notifications</span>
+                    <button onClick={() => setShowNotifPanel(false)} className="text-xs hover:underline" style={{ color: '#64748b' }}>Fermer</button>
+                  </div>
+                  <div className="py-8 text-center">
+                    <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: '#cbd5e1' }} />
+                    <p className="text-sm font-medium" style={{ color: '#0f172a' }}>Aucune notification</p>
+                    <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>Vous êtes à jour !</p>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
             <Link href="/dashboard/account" className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center cursor-pointer">
               <User className="w-4 h-4" style={{ color: '#ffffff' }} />
             </Link>
