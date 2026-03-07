@@ -317,6 +317,57 @@ export default function AccountPage() {
                   </div>
                 </div>
               </div>
+              {/* Suppression de compte — accès discret */}
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                {deleteStep === 0 ? (
+                  <button onClick={() => setDeleteStep(1)} className="text-xs flex items-center gap-1.5 opacity-40 hover:opacity-80 transition-opacity" style={{ color: "#94a3b8" }}>
+                    <Trash2 className="w-3 h-3" /> Supprimer mon compte
+                  </button>
+                ) : (
+                  <div className="p-4 rounded-lg border border-red-100" style={{ backgroundColor: "rgba(254,242,242,0.4)" }}>
+                    <p className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color: "#dc2626" }}>
+                      <AlertTriangle className="w-3.5 h-3.5" /> Suppression définitive — action irréversible
+                    </p>
+                    {deleteStep === 1 && (
+                      <div className="space-y-3">
+                        <p className="text-sm" style={{ color: "#374151" }}>Cette action effacera définitivement votre compte, boutiques et toutes vos données.</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setDeleteStep(0)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold" style={{ color: "#fff" }}>Conserver mon compte</button>
+                          <button onClick={() => setDeleteStep(2)} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-xs" style={{ color: "#64748b" }}>Continuer &rarr;</button>
+                        </div>
+                      </div>
+                    )}
+                    {deleteStep === 2 && (
+                      <div className="space-y-3">
+                        <p className="text-sm" style={{ color: "#374151" }}>Dernière chance avant suppression définitive.</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => setDeleteStep(0)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold" style={{ color: "#fff" }}>Annuler</button>
+                          <button onClick={() => setDeleteStep(3)} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-xs" style={{ color: "#64748b" }}>Supprimer quand même</button>
+                        </div>
+                      </div>
+                    )}
+                    {deleteStep === 3 && (
+                      <div className="space-y-3">
+                        <label className="text-xs block" style={{ color: "#64748b" }}>
+                          Tapez <strong style={{ color: "#dc2626" }}>SUPPRIMER</strong> pour confirmer :
+                        </label>
+                        <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)}
+                          placeholder="SUPPRIMER" className="w-full max-w-xs px-3 py-2 border border-red-300 rounded-lg text-sm font-mono"
+                          style={{ color: "#0f172a" }} />
+                        <div className="flex gap-2">
+                          <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); }}
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium" style={{ color: "#374151" }}>Annuler</button>
+                          <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== "SUPPRIMER" || deleteLoading}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 rounded-lg text-xs font-medium flex items-center gap-1.5">
+                            {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} />}
+                            <span style={{ color: "#fff" }}>Confirmer la suppression</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -531,108 +582,6 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-red-200 p-6">
-                <button
-                  onClick={() => setDangerZoneExpanded(!dangerZoneExpanded)}
-                  className="flex items-center justify-between w-full"
-                >
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" style={{ color: "#ef4444" }} />
-                    <h2 className="text-base font-semibold" style={{ color: "#ef4444" }}>Zone de danger</h2>
-                  </div>
-                  <span className="text-xs" style={{ color: "#94a3b8" }}>{dangerZoneExpanded ? "▲ Réduire" : "▼ Développer"}</span>
-                </button>
-
-                {dangerZoneExpanded && (
-                <div className="mt-4">
-                <p className="text-xs mb-4" style={{ color: "#64748b" }}>La suppression du compte est irréversible. Toutes vos données seront effacées.</p>
-
-                {deleteStep === 0 && (
-                  <button onClick={() => setDeleteStep(1)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium border border-red-300 hover:bg-red-50 flex items-center gap-1.5"
-                    style={{ color: "#dc2626" }}>
-                    <Trash2 className="w-3.5 h-3.5" /> Supprimer le compte
-                  </button>
-                )}
-
-                {deleteStep === 1 && (
-                  <div className="space-y-4">
-                    <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>Êtes-vous sûr de vouloir partir ?</p>
-                    <ul className="space-y-1.5 text-sm" style={{ color: "#374151" }}>
-                      {["Tous vos produits synchronisés", "Votre historique d'actions IA", "Vos boutiques connectées", "Vos paramètres et préférences"].map((item) => (
-                        <li key={item} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-                          {item} seront <strong>définitivement supprimés</strong>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex gap-2">
-                      <button onClick={() => setDeleteStep(0)}
-                        className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700"
-                        style={{ color: "#fff" }}>
-                        Conserver mon compte
-                      </button>
-                      <button onClick={() => setDeleteStep(2)}
-                        className="px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100"
-                        style={{ color: "#64748b" }}>
-                        Continuer quand même →
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {deleteStep === 2 && (
-                  <div className="space-y-4">
-                    <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>Vous n&apos;avez pas encore exploité :</p>
-                    <ul className="space-y-1.5 text-sm" style={{ color: "#374151" }}>
-                      {["Optimisation SEO IA en masse", "Import automatique AliExpress / CJ", "Édition d'images avec Sharp", "Rapports hebdomadaires et alertes stock"].map((item) => (
-                        <li key={item} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex gap-2">
-                      <button onClick={() => setDeleteStep(0)}
-                        className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700"
-                        style={{ color: "#fff" }}>
-                        Rester sur EcomPilot
-                      </button>
-                      <button onClick={() => setDeleteStep(3)}
-                        className="px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-100"
-                        style={{ color: "#64748b" }}>
-                        Supprimer quand même
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {deleteStep === 3 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium" style={{ color: "#dc2626" }}>⚠️ Dernière étape — cette action est irréversible.</p>
-                    <label className="text-xs block" style={{ color: "#64748b" }}>
-                      Tapez <strong style={{ color: "#dc2626" }}>SUPPRIMER</strong> pour confirmer la suppression :
-                    </label>
-                    <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder="SUPPRIMER" className="w-full px-3 py-2.5 border border-red-300 rounded-lg text-sm font-mono"
-                      style={{ color: "#0f172a" }} />
-                    <div className="flex gap-2">
-                      <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); setDangerZoneExpanded(false); }}
-                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
-                        style={{ color: "#374151" }}>
-                        Annuler
-                      </button>
-                      <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== "SUPPRIMER" || deleteLoading}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 rounded-lg text-sm font-medium flex items-center gap-1.5">
-                        {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} />}
-                        <span style={{ color: "#fff" }}>Confirmer la suppression</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                </div>
-                )}
-              </div>
             </div>
           )}
         </div>

@@ -39,21 +39,29 @@ interface AISuggestion {
 type SortKey = "title" | "price" | "status" | "seo";
 type SortDir = "asc" | "desc";
 
-/* ── SEO Scoring ─────────────────────────────── */
+/* ── SEO Scoring — score sur 100 ─────────────── */
 function seoScore(p: Product): number {
   let s = 0;
-  // Title: 25 pts max — 50-70 chars ideal
+  // Titre : 25 pts — 50-70 chars = optimal SEO
   if (p.title.length >= 50 && p.title.length <= 70) s += 25;
-  else if (p.title.length >= 30) s += 12;
-  // Description: 30 pts max — 200+ words ideal
+  else if (p.title.length >= 30 && p.title.length < 80) s += 15;
+  else if (p.title.length >= 10) s += 5;
+  // Description : 40 pts — richesse = 1er critère SEO
   const wordCount = (p.body_html || "").replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
-  if (wordCount >= 200) s += 30;
-  else if (wordCount >= 50) s += 15;
-  // Tags: 10 pts max — 5+ tags ideal
-  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 10;
-  else if (p.tags && p.tags.trim().length > 0) s += 5;
-  // Images: 10 pts
-  if (p.images && p.images.length > 0) s += 10;
+  if (wordCount >= 200) s += 40;
+  else if (wordCount >= 100) s += 25;
+  else if (wordCount >= 30) s += 12;
+  else if (wordCount >= 5) s += 4;
+  // Tags : 20 pts — 8+ = excellent pour le SEO
+  const tagCount = (p.tags || "").split(",").filter(Boolean).length;
+  if (tagCount >= 8) s += 20;
+  else if (tagCount >= 5) s += 14;
+  else if (tagCount >= 3) s += 8;
+  else if (tagCount >= 1) s += 3;
+  // Images : 15 pts
+  const imgCount = p.images?.length || 0;
+  if (imgCount >= 3) s += 15;
+  else if (imgCount >= 1) s += 10;
   return s;
 }
 
@@ -105,6 +113,10 @@ export default function ProductsPage() {
   const [compactMode, setCompactMode] = useState(false);
   const [showAIPreviewModal, setShowAIPreviewModal] = useState(false);
   const [aiPreviewItems, setAiPreviewItems] = useState<AIPreviewItem[]>([]);
+  const [titlePrefix, setTitlePrefix] = useState("");
+  const [titleSuffix, setTitleSuffix] = useState("");
+  const [descCommonText, setDescCommonText] = useState("");
+  const [descCommonMode, setDescCommonMode] = useState<"prepend" | "append" | "remove">("append");
   const itemsPerPage = compactMode ? 50 : 25;
 
   /* ──────── Fetch ──────── */
@@ -452,6 +464,59 @@ export default function ProductsPage() {
     finally { setActionLoading(null); }
   };
 
+  const handleBulkTitlePrefixSuffix = async () => {
+    if (!titlePrefix && !titleSuffix) return;
+    setActionLoading("title");
+    try {
+      await Promise.all(
+        selectedProducts.map(async (id) => {
+          const p = products.find((x) => x.id === id);
+          if (!p) return;
+          const newTitle = `${titlePrefix}${p.title}${titleSuffix}`.trim();
+          await fetch("/api/shopify/bulk-edit", {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [id], field: "title", value: newTitle }),
+          });
+        })
+      );
+      setProducts((prev) => prev.map((p) =>
+        selectedProducts.includes(p.id) ? { ...p, title: `${titlePrefix}${p.title}${titleSuffix}`.trim() } : p
+      ));
+      addToast(`✅ ${selectedProducts.length} titre${selectedProducts.length > 1 ? "s" : ""} mis à jour`, "success");
+      setRecentlyUpdated([...selectedProducts]);
+      setTimeout(() => setRecentlyUpdated([]), 2000);
+      setTitlePrefix(""); setTitleSuffix(""); setActiveAction(null); setSelectedProducts([]);
+    } catch { addToast("Erreur — réessayez", "error"); }
+    finally { setActionLoading(null); }
+  };
+
+  const handleBulkDescCommonText = async () => {
+    if (!descCommonText) return;
+    setActionLoading("description");
+    try {
+      await Promise.all(
+        selectedProducts.map(async (id) => {
+          const p = products.find((x) => x.id === id);
+          if (!p) return;
+          let newDesc = p.body_html || "";
+          if (descCommonMode === "prepend") newDesc = `<p>${descCommonText}</p>\n${newDesc}`;
+          else if (descCommonMode === "append") newDesc = `${newDesc}\n<p>${descCommonText}</p>`;
+          else if (descCommonMode === "remove") newDesc = newDesc.split(descCommonText).join("");
+          await fetch("/api/shopify/bulk-edit", {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [id], field: "body_html", value: newDesc }),
+          });
+        })
+      );
+      addToast(`✅ ${selectedProducts.length} description${selectedProducts.length > 1 ? "s" : ""} mise${selectedProducts.length > 1 ? "s" : ""} à jour`, "success");
+      setRecentlyUpdated([...selectedProducts]);
+      setTimeout(() => setRecentlyUpdated([]), 2000);
+      setDescCommonText(""); setActiveAction(null); setSelectedProducts([]);
+      fetchProducts(true);
+    } catch { addToast("Erreur — réessayez", "error"); }
+    finally { setActionLoading(null); }
+  };
+
   const handleBulkStatus = async (status: string) => {
     setActionLoading(status);
     try {
@@ -578,6 +643,20 @@ export default function ProductsPage() {
                       <p className="text-xs" style={{ color: "#374151" }}>{aiSuggestions[previewProduct.id].tags}</p>
                       <button onClick={() => { applyAISuggestion(previewProduct.id, "tags"); setPreviewProduct(null); }} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
                     </div>}
+                    {/* Score SEO projeté après IA */}
+                    {(() => {
+                      const sug = aiSuggestions[previewProduct.id];
+                      const projected = { ...previewProduct, title: sug.title || previewProduct.title, body_html: sug.description || previewProduct.body_html, tags: sug.tags || previewProduct.tags };
+                      const before = seoScore(previewProduct);
+                      const after = seoScore(projected);
+                      const delta = after - before;
+                      return (
+                        <div className="flex items-center justify-between pt-1 mt-1 border-t border-emerald-100">
+                          <ScoreBadge score={after} />
+                          {delta > 0 && <span className="text-xs font-bold px-2 py-0.5 bg-emerald-100 rounded-full" style={{ color: "#059669" }}>+{delta} pts ↑</span>}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -782,60 +861,75 @@ export default function ProductsPage() {
           {activeAction === "title" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-lg border border-blue-100">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>Modification manuelle</p>
-                <input type="text" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)} placeholder="Nouveau titre pour tous"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
-                <button onClick={() => handleBulkFieldApply("title", bulkTitle)} disabled={!bulkTitle || actionLoading === "title"}
-                  className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-                  <span style={{ color: "#fff" }}>{actionLoading === "title" ? "..." : "Appliquer"}</span>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "#64748b" }}>Préfixe / Suffixe commun</p>
+                <p className="text-[11px] mb-3" style={{ color: "#94a3b8" }}>Chaque produit garde son titre unique — ajoutez seulement un élément commun avant ou après</p>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs block mb-1" style={{ color: "#374151" }}>Préfixe (avant le titre)</label>
+                    <input type="text" value={titlePrefix} onChange={(e) => setTitlePrefix(e.target.value)} placeholder='Ex: 🌟 — '
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+                  </div>
+                  <div>
+                    <label className="text-xs block mb-1" style={{ color: "#374151" }}>Suffixe (après le titre)</label>
+                    <input type="text" value={titleSuffix} onChange={(e) => setTitleSuffix(e.target.value)} placeholder='Ex:  | Livraison offerte'
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+                  </div>
+                  {(titlePrefix || titleSuffix) && (
+                    <p className="text-[11px] bg-blue-50 p-2 rounded-lg" style={{ color: "#2563eb" }}>
+                      Aperçu : <em>{titlePrefix}Titre du produit{titleSuffix}</em>
+                    </p>
+                  )}
+                </div>
+                <button onClick={handleBulkTitlePrefixSuffix} disabled={(!titlePrefix && !titleSuffix) || actionLoading === "title"}
+                  className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                  <span style={{ color: "#fff" }}>{actionLoading === "title" ? "..." : `Appliquer aux ${selectedProducts.length} titre${selectedProducts.length > 1 ? "s" : ""}`}</span>
                 </button>
               </div>
               <div className="border-t md:border-t-0 md:border-l border-gray-100 pt-3 md:pt-0 md:pl-4">
                 <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#8b5cf6" }}>Génération IA</p>
+                <p className="text-[11px] mb-3" style={{ color: "#94a3b8" }}>Titre SEO unique pour chaque produit, généré par IA — aperçu avant application</p>
                 <button onClick={() => aiBatchGenerate("title")} disabled={aiBatchLoading}
                   className="w-full px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
                   {aiBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Wand2 className="w-4 h-4" style={{ color: "#fff" }} />}
                   <span style={{ color: "#fff" }}>Générer {selectedProducts.length} titre{selectedProducts.length > 1 ? "s" : ""} IA</span>
                 </button>
-                <p className="text-[11px] mt-2" style={{ color: "#8b5cf6" }}>Les suggestions apparaîtront dans le tableau ci-dessous</p>
+                <p className="text-[11px] mt-2" style={{ color: "#8b5cf6" }}>Score SEO visiblement amélioré — titres 50-70 caractères optimisés</p>
               </div>
             </div>
           )}
           {activeAction === "description" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-lg border border-blue-100">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>Modification manuelle</p>
-                <textarea value={bulkDescription} onChange={(e) => setBulkDescription(e.target.value)} placeholder="Nouvelle description pour les produits sélectionnés..." rows={4}
+                <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: "#64748b" }}>Texte commun à ajouter / retirer</p>
+                <p className="text-[11px] mb-3" style={{ color: "#94a3b8" }}>Chaque produit garde sa description unique — ajoutez ou retirez seulement un fragment commun</p>
+                <textarea value={descCommonText} onChange={(e) => setDescCommonText(e.target.value)}
+                  placeholder="Ex: Livraison gratuite en 48h. Satisfait ou remboursé 30 jours." rows={3}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" style={{ color: "#0f172a" }} />
-                <div className="flex items-center gap-4 mt-2">
-                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                    <input type="radio" name="descMode" value="replace" checked={bulkDescMode === "replace"} onChange={() => setBulkDescMode("replace")} className="accent-blue-600" />
-                    <span style={{ color: "#374151" }}>Remplacer</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                    <input type="radio" name="descMode" value="append" checked={bulkDescMode === "append"} onChange={() => setBulkDescMode("append")} className="accent-blue-600" />
-                    <span style={{ color: "#374151" }}>Ajouter à la suite</span>
-                  </label>
+                <div className="flex items-center gap-3 mt-2">
+                  {([{ val: "append", label: "Ajouter après" }, { val: "prepend", label: "Ajouter avant" }, { val: "remove", label: "Retirer" }] as const).map((opt) => (
+                    <label key={opt.val} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <input type="radio" name="descCommonMode" value={opt.val} checked={descCommonMode === opt.val} onChange={() => setDescCommonMode(opt.val)} className="accent-blue-600" />
+                      <span style={{ color: "#374151" }}>{opt.label}</span>
+                    </label>
+                  ))}
                 </div>
-                <button onClick={() => handleBulkFieldApply("body_html", bulkDescription, bulkDescMode)} disabled={!bulkDescription || !!actionLoading}
+                <button onClick={handleBulkDescCommonText} disabled={!descCommonText || !!actionLoading}
                   className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-                  <span style={{ color: "#fff" }}>{actionLoading ? "..." : "Appliquer"}</span>
+                  <span style={{ color: "#fff" }}>{actionLoading === "description" ? "..." : "Appliquer"}</span>
                 </button>
               </div>
               <div className="border-t md:border-t-0 md:border-l border-gray-100 pt-3 md:pt-0 md:pl-4">
                 <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#8b5cf6" }}>Génération IA</p>
+                <p className="text-[11px] mb-3" style={{ color: "#94a3b8" }}>Description SEO unique (200+ mots) pour chaque produit — score SEO fortement amélioré</p>
                 <button onClick={() => aiBatchDescriptions()} disabled={aiBatchLoading}
                   className="w-full px-4 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
                   {aiBatchLoading ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <Sparkles className="w-4 h-4" style={{ color: "#fff" }} />}
                   <span style={{ color: "#fff" }}>Générer {selectedProducts.length} description{selectedProducts.length > 1 ? "s" : ""} IA</span>
                 </button>
-                <p className="text-[11px] mt-2 leading-relaxed" style={{ color: "#8b5cf6" }}>
-                  Descriptions SEO optimisées générées par IA (gpt-4o-mini). Les suggestions apparaîtront dans le tableau — vérifiez puis appliquez.
-                </p>
                 {Object.values(aiSuggestions).filter((s) => s.description).length > 0 && (
                   <div className="mt-3 p-2 bg-violet-50 rounded-lg border border-violet-200">
                     <p className="text-[11px] font-semibold" style={{ color: "#6d28d9" }}>
-                      {Object.values(aiSuggestions).filter((s) => s.description).length} description{Object.values(aiSuggestions).filter((s) => s.description).length > 1 ? "s" : ""} prête{Object.values(aiSuggestions).filter((s) => s.description).length > 1 ? "s" : ""}
+                      ✅ {Object.values(aiSuggestions).filter((s) => s.description).length} description{Object.values(aiSuggestions).filter((s) => s.description).length > 1 ? "s" : ""} prête{Object.values(aiSuggestions).filter((s) => s.description).length > 1 ? "s" : ""} — vérifiez dans le tableau
                     </p>
                   </div>
                 )}

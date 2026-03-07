@@ -32,18 +32,26 @@ interface GeneratedContent {
 
 function seoScore(p: Product): number {
   let s = 0;
-  // Title: 25 pts max — 50-70 chars ideal
+  // Titre : 25 pts — 50-70 chars = optimal SEO
   if (p.title.length >= 50 && p.title.length <= 70) s += 25;
-  else if (p.title.length >= 30) s += 12;
-  // Description: 30 pts max — 200+ words ideal
+  else if (p.title.length >= 30 && p.title.length < 80) s += 15;
+  else if (p.title.length >= 10) s += 5;
+  // Description : 40 pts — richesse = 1er critère SEO
   const wordCount = (p.body_html || "").replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
-  if (wordCount >= 200) s += 30;
-  else if (wordCount >= 50) s += 15;
-  // Tags: 10 pts max — 5+ tags ideal
-  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 10;
-  else if (p.tags && p.tags.trim().length > 0) s += 5;
-  // Images: 10 pts
-  if (p.images && p.images.length > 0) s += 10;
+  if (wordCount >= 200) s += 40;
+  else if (wordCount >= 100) s += 25;
+  else if (wordCount >= 30) s += 12;
+  else if (wordCount >= 5) s += 4;
+  // Tags : 20 pts — 8+ = excellent pour le SEO
+  const tagCount = (p.tags || "").split(",").filter(Boolean).length;
+  if (tagCount >= 8) s += 20;
+  else if (tagCount >= 5) s += 14;
+  else if (tagCount >= 3) s += 8;
+  else if (tagCount >= 1) s += 3;
+  // Images : 15 pts
+  const imgCount = p.images?.length || 0;
+  if (imgCount >= 3) s += 15;
+  else if (imgCount >= 1) s += 10;
   return s;
 }
 
