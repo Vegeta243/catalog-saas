@@ -41,16 +41,16 @@ type SortDir = "asc" | "desc";
 /* ── SEO Scoring ─────────────────────────────── */
 function seoScore(p: Product): number {
   let s = 0;
-  // Title: 30 pts max — 50-70 chars ideal
-  if (p.title.length >= 50 && p.title.length <= 70) s += 30;
-  else if (p.title.length >= 30) s += 15;
-  // Description: 40 pts max — 100+ words ideal
+  // Title: 25 pts max — 50-70 chars ideal
+  if (p.title.length >= 50 && p.title.length <= 70) s += 25;
+  else if (p.title.length >= 30) s += 12;
+  // Description: 30 pts max — 200+ words ideal
   const wordCount = (p.body_html || "").replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
-  if (wordCount >= 100) s += 40;
-  else if (wordCount >= 30) s += 20;
-  // Tags: 20 pts max — 5+ tags ideal
-  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 20;
-  else if (p.tags && p.tags.trim().length > 0) s += 10;
+  if (wordCount >= 200) s += 30;
+  else if (wordCount >= 50) s += 15;
+  // Tags: 10 pts max — 5+ tags ideal
+  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 10;
+  else if (p.tags && p.tags.trim().length > 0) s += 5;
   // Images: 10 pts
   if (p.images && p.images.length > 0) s += 10;
   return s;
@@ -83,6 +83,9 @@ export default function ProductsPage() {
   const [bulkTitle, setBulkTitle] = useState("");
   const [bulkDescription, setBulkDescription] = useState("");
   const [bulkTags, setBulkTags] = useState("");
+  const [bulkMetaTitle, setBulkMetaTitle] = useState("");
+  const [bulkMetaDescription, setBulkMetaDescription] = useState("");
+  const [recentlyUpdated, setRecentlyUpdated] = useState<string[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>("title");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -388,8 +391,12 @@ export default function ProductsPage() {
         if (!res.ok) throw new Error();
       }
       addToast(`${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} mis à jour`, "success");
+      const updatedIds = [...selectedProducts];
       setSelectedProducts([]); setActiveAction(null);
       setBulkTitle(""); setBulkDescription(""); setBulkTags("");
+      setBulkMetaTitle(""); setBulkMetaDescription("");
+      setRecentlyUpdated(updatedIds);
+      setTimeout(() => setRecentlyUpdated([]), 2000);
       fetchProducts(true);
     } catch { addToast("Erreur lors de la mise à jour — réessayez", "error"); }
     finally { setActionLoading(null); }
@@ -403,7 +410,9 @@ export default function ProductsPage() {
         body: JSON.stringify({ productIds: selectedProducts, field: "status", value: status }),
       });
       if (!res.ok) throw new Error();
-      addToast(`${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} ${status === "archived" ? "archivé" : "activé"}${selectedProducts.length > 1 ? "s" : ""}`, "success");
+      addToast(`${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} ${status === "archived" ? "archivé" : status === "draft" ? "mis en brouillon" : "activé"}${selectedProducts.length > 1 ? "s" : ""}`, "success");
+      // Optimistic local update so counters refresh immediately
+      setProducts((prev) => prev.map((p) => selectedProducts.includes(p.id) ? { ...p, status } : p));
       setSelectedProducts([]); setActiveAction(null);
       fetchProducts(true);
     } catch { addToast("Erreur — réessayez", "error"); }
@@ -470,56 +479,69 @@ export default function ProductsPage() {
       {/* ── Preview Modal ── */}
       {previewProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setPreviewProduct(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 p-6 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>Aperçu produit</h3>
+              <div>
+                <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>Aperçu produit</h3>
+                {aiSuggestions[previewProduct.id] && <p className="text-xs mt-0.5" style={{ color: "#8b5cf6" }}>Suggestions IA disponibles — comparaison Avant / Après</p>}
+              </div>
               <button onClick={() => setPreviewProduct(null)}><X className="w-5 h-5" style={{ color: "#94a3b8" }} /></button>
             </div>
-            {previewProduct.images?.[0]?.src && <img src={previewProduct.images[0].src} alt="" className="w-full h-48 object-cover rounded-xl mb-4" />}
-            <p className="font-semibold text-base mb-1" style={{ color: "#0f172a" }}>{previewProduct.title}</p>
-            <p className="text-sm font-bold mb-2" style={{ color: "#059669" }}>{parseFloat(previewProduct.price).toFixed(2)} €</p>
-            <div className="flex items-center gap-2 mb-3">
-              {getStatusBadge(previewProduct.status)}
-              <ScoreBadge score={seoScore(previewProduct)} />
-            </div>
-            {previewProduct.tags && (
-              <div className="flex flex-wrap gap-1 mb-3">
-                {previewProduct.tags.split(",").map((t, i) => (
-                  <span key={i} className="text-[11px] px-2 py-0.5 bg-blue-50 rounded-full" style={{ color: "#2563eb" }}>{t.trim()}</span>
-                ))}
+            {aiSuggestions[previewProduct.id] ? (
+              /* Before/After columns when AI suggestion exists */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-red-50/50 rounded-xl border border-red-100">
+                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#dc2626" }}>Avant</p>
+                  <div className="space-y-3">
+                    {previewProduct.images?.[0]?.src && <img src={previewProduct.images[0].src} alt="" className="w-full h-32 object-cover rounded-lg" />}
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre</p><p className="text-sm" style={{ color: "#0f172a" }}>{previewProduct.title}</p></div>
+                    {previewProduct.body_html && <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description</p>
+                      <div className="text-xs prose prose-sm max-w-none max-h-24 overflow-hidden" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} /></div>}
+                    {previewProduct.tags && <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Tags</p><p className="text-xs" style={{ color: "#374151" }}>{previewProduct.tags}</p></div>}
+                    <ScoreBadge score={seoScore(previewProduct)} />
+                  </div>
+                </div>
+                <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#059669" }}>Après (IA)</p>
+                  <div className="space-y-3">
+                    {previewProduct.images?.[0]?.src && <img src={previewProduct.images[0].src} alt="" className="w-full h-32 object-cover rounded-lg" />}
+                    {aiSuggestions[previewProduct.id].title && <div>
+                      <p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre suggéré</p>
+                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{aiSuggestions[previewProduct.id].title}</p>
+                      <button onClick={() => { applyAISuggestion(previewProduct.id, "title"); setPreviewProduct(null); }} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                    </div>}
+                    {aiSuggestions[previewProduct.id].description && <div>
+                      <p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description IA</p>
+                      <div className="text-xs prose prose-sm max-w-none max-h-24 overflow-hidden" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: aiSuggestions[previewProduct.id].description!.slice(0, 300) }} />
+                      <button onClick={() => { applyAISuggestion(previewProduct.id, "body_html"); setPreviewProduct(null); }} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                    </div>}
+                    {aiSuggestions[previewProduct.id].tags && <div>
+                      <p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Tags suggérés</p>
+                      <p className="text-xs" style={{ color: "#374151" }}>{aiSuggestions[previewProduct.id].tags}</p>
+                      <button onClick={() => { applyAISuggestion(previewProduct.id, "tags"); setPreviewProduct(null); }} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                    </div>}
+                  </div>
+                </div>
               </div>
-            )}
-            {previewProduct.body_html && (
-              <div className="text-sm prose prose-sm max-w-none mt-2" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} />
-            )}
-            {/* AI suggestion for this product */}
-            {aiSuggestions[previewProduct.id] && (
-              <div className="mt-4 p-4 bg-violet-50 rounded-xl border border-violet-200">
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#8b5cf6" }}>Suggestions IA</p>
-                {aiSuggestions[previewProduct.id].title && (
-                  <div className="mb-2">
-                    <p className="text-[11px] font-medium mb-0.5" style={{ color: "#64748b" }}>Titre suggéré :</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium flex-1" style={{ color: "#0f172a" }}>{aiSuggestions[previewProduct.id].title}</p>
-                      <button onClick={() => applyAISuggestion(previewProduct.id, "title")} className="text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
-                    </div>
+            ) : (
+              /* Simple product info when no AI suggestion */
+              <div>
+                {previewProduct.images?.[0]?.src && <img src={previewProduct.images[0].src} alt="" className="w-full h-48 object-cover rounded-xl mb-4" />}
+                <p className="font-semibold text-base mb-1" style={{ color: "#0f172a" }}>{previewProduct.title}</p>
+                <p className="text-sm font-bold mb-2" style={{ color: "#059669" }}>{parseFloat(previewProduct.price).toFixed(2)} €</p>
+                <div className="flex items-center gap-2 mb-3">
+                  {getStatusBadge(previewProduct.status)}
+                  <ScoreBadge score={seoScore(previewProduct)} />
+                </div>
+                {previewProduct.tags && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {previewProduct.tags.split(",").map((t, i) => (
+                      <span key={i} className="text-[11px] px-2 py-0.5 bg-blue-50 rounded-full" style={{ color: "#2563eb" }}>{t.trim()}</span>
+                    ))}
                   </div>
                 )}
-                {aiSuggestions[previewProduct.id].tags && (
-                  <div className="mb-2">
-                    <p className="text-[11px] font-medium mb-0.5" style={{ color: "#64748b" }}>Tags suggérés :</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs flex-1" style={{ color: "#374151" }}>{aiSuggestions[previewProduct.id].tags}</p>
-                      <button onClick={() => applyAISuggestion(previewProduct.id, "tags")} className="text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
-                    </div>
-                  </div>
-                )}
-                {aiSuggestions[previewProduct.id].description && (
-                  <div className="mb-2">
-                    <p className="text-[11px] font-medium mb-0.5" style={{ color: "#64748b" }}>Description IA :</p>
-                    <div className="text-xs prose prose-sm max-w-none mb-1" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: aiSuggestions[previewProduct.id].description!.slice(0, 200) + "..." }} />
-                    <button onClick={() => applyAISuggestion(previewProduct.id, "body_html")} className="text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
-                  </div>
+                {previewProduct.body_html && (
+                  <div className="text-sm prose prose-sm max-w-none mt-2" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} />
                 )}
               </div>
             )}
@@ -629,13 +651,28 @@ export default function ProductsPage() {
                 <span style={{ color: "#fff" }}>IA Complète</span>
               </button>
               <div className="w-px h-6 bg-blue-200 mx-1" />
+              {[{ key: "meta_title", icon: FileText, label: "Meta Titre" }, { key: "meta_description", icon: FileText, label: "Meta Desc" }].map((a) => (
+                <button key={a.key} onClick={() => setActiveAction(activeAction === a.key ? null : a.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeAction === a.key ? "bg-blue-600" : "bg-white border border-blue-200 hover:bg-blue-100"}`}>
+                  <a.icon className="w-3.5 h-3.5" style={{ color: activeAction === a.key ? "#fff" : "#3b82f6" }} />
+                  <span style={{ color: activeAction === a.key ? "#fff" : "#1e40af" }}>{a.label}</span>
+                </button>
+              ))}
+              <div className="w-px h-6 bg-blue-200 mx-1" />
               <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver ${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} ?`, action: () => handleBulkStatus("archived") })}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100">
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100"
+                title="Archive les produits (retirés de la vitrine)">
                 <Archive className="w-3.5 h-3.5" style={{ color: "#d97706" }} /><span style={{ color: "#92400e" }}>Archiver</span>
               </button>
+              <button onClick={() => setConfirmModal({ open: true, title: "Brouillon", message: `Passer ${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} en brouillon ?`, action: () => handleBulkStatus("draft") })}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100"
+                title="Met les produits en brouillon (non publiés)">
+                <FileText className="w-3.5 h-3.5" style={{ color: "#6366f1" }} /><span style={{ color: "#3730a3" }}>Brouillon</span>
+              </button>
               <button onClick={() => handleBulkStatus("active")}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100">
-                <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#059669" }} /><span style={{ color: "#065f46" }}>Activer</span>
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100"
+                title="Publie à nouveau les produits archivés ou en brouillon">
+                <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#059669" }} /><span style={{ color: "#065f46" }}>Restaurer Actif</span>
               </button>
               <button onClick={() => { setSelectedProducts([]); setActiveAction(null); }}
                 className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
@@ -761,6 +798,36 @@ export default function ProductsPage() {
               </div>
             </div>
           )}
+          {activeAction === "meta_title" && (
+            <div className="p-4 bg-white rounded-lg border border-blue-100">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>Meta Titre (55-60 caractères idéal)</p>
+              <input type="text" value={bulkMetaTitle} onChange={(e) => setBulkMetaTitle(e.target.value)}
+                placeholder="Meta titre pour les moteurs de recherche..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[11px]" style={{ color: bulkMetaTitle.length > 60 ? "#dc2626" : "#94a3b8" }}>{bulkMetaTitle.length}/60 caractères</p>
+              </div>
+              <button onClick={() => handleBulkFieldApply("metafields_global_title_tag", bulkMetaTitle)} disabled={!bulkMetaTitle || !!actionLoading}
+                className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                <span style={{ color: "#fff" }}>{actionLoading ? "..." : "Appliquer"}</span>
+              </button>
+            </div>
+          )}
+          {activeAction === "meta_description" && (
+            <div className="p-4 bg-white rounded-lg border border-blue-100">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#64748b" }}>Meta Description (150-160 caractères idéal)</p>
+              <textarea value={bulkMetaDescription} onChange={(e) => setBulkMetaDescription(e.target.value)}
+                placeholder="Meta description pour les moteurs de recherche..." rows={3}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" style={{ color: "#0f172a" }} />
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[11px]" style={{ color: bulkMetaDescription.length > 160 ? "#dc2626" : "#94a3b8" }}>{bulkMetaDescription.length}/160 caractères</p>
+              </div>
+              <button onClick={() => handleBulkFieldApply("metafields_global_description_tag", bulkMetaDescription)} disabled={!bulkMetaDescription || !!actionLoading}
+                className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                <span style={{ color: "#fff" }}>{actionLoading ? "..." : "Appliquer"}</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -813,15 +880,16 @@ export default function ProductsPage() {
                   const score = seoScore(product);
                   const hasLowStock = product.variants?.some((v) => (v.inventory_quantity ?? 999) < 5);
                   const suggestion = aiSuggestions[product.id];
+                  const justUpdated = recentlyUpdated.includes(product.id);
                   return (
-                    <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}>
+                    <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""} ${justUpdated ? "bg-emerald-50/60" : ""}`}>
                       <td className="px-3 md:px-4 py-3"><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
                       <td className="px-3 md:px-4 py-3 hidden sm:table-cell">
                         {imageUrl ? <img src={imageUrl} alt={product.title} className="w-11 h-11 rounded-lg object-cover border border-gray-100" />
                           : <div className="w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
                       </td>
-                      <td className="px-3 md:px-4 py-3">
-                        <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none" style={{ color: "#0f172a" }}>{product.title}</p>
+                      <td className="px-3 md:px-4 py-3 cursor-pointer" onClick={() => setPreviewProduct(product)}>
+                        <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none hover:text-blue-600 transition-colors" style={{ color: "#0f172a" }}>{product.title}</p>
                         {product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
                         {hasLowStock && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 bg-red-50 rounded mt-1" style={{ color: "#dc2626" }}><AlertTriangle className="w-2.5 h-2.5" /> Stock bas</span>}
                         {suggestion?.title && (

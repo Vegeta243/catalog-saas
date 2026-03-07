@@ -31,16 +31,16 @@ interface GeneratedContent {
 
 function seoScore(p: Product): number {
   let s = 0;
-  // Title: 30 pts max — 50-70 chars ideal
-  if (p.title.length >= 50 && p.title.length <= 70) s += 30;
-  else if (p.title.length >= 30) s += 15;
-  // Description: 40 pts max — 100+ words ideal
+  // Title: 25 pts max — 50-70 chars ideal
+  if (p.title.length >= 50 && p.title.length <= 70) s += 25;
+  else if (p.title.length >= 30) s += 12;
+  // Description: 30 pts max — 200+ words ideal
   const wordCount = (p.body_html || "").replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
-  if (wordCount >= 100) s += 40;
-  else if (wordCount >= 30) s += 20;
-  // Tags: 20 pts max — 5+ tags ideal
-  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 20;
-  else if (p.tags && p.tags.trim().length > 0) s += 10;
+  if (wordCount >= 200) s += 30;
+  else if (wordCount >= 50) s += 15;
+  // Tags: 10 pts max — 5+ tags ideal
+  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 10;
+  else if (p.tags && p.tags.trim().length > 0) s += 5;
   // Images: 10 pts
   if (p.images && p.images.length > 0) s += 10;
   return s;

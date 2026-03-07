@@ -107,11 +107,68 @@ export default function SettingsPage() {
   const [compactMode, setCompactMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
 
+  // Load persisted appearance preferences
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("app-theme") as "light" | "dark" | "auto" | null;
+    const savedCompact = localStorage.getItem("app-compact") === "true";
+    const savedDev = localStorage.getItem("app-dev") === "true";
+    if (savedTheme) setTheme(savedTheme);
+    setCompactMode(savedCompact);
+    setDevMode(savedDev);
+  }, []);
+
+  // Apply theme to <html> element
+  useEffect(() => {
+    const html = document.documentElement;
+    if (theme === "dark") {
+      html.classList.add("dark");
+    } else if (theme === "light") {
+      html.classList.remove("dark");
+    } else {
+      // Auto: use system preference
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) html.classList.add("dark");
+      else html.classList.remove("dark");
+    }
+    localStorage.setItem("app-theme", theme);
+  }, [theme]);
+
+  const handleThemeChange = (t: "light" | "dark" | "auto") => {
+    setTheme(t);
+  };
+
+  const handleCompactChange = (val: boolean) => {
+    setCompactMode(val);
+    localStorage.setItem("app-compact", String(val));
+  };
+
+  const handleDevChange = (val: boolean) => {
+    setDevMode(val);
+    localStorage.setItem("app-dev", String(val));
+    if (val) console.log("[DevMode] Mode développeur activé — logs console activés");
+  };
+
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non authentifié");
+      const nameParts = fullName.trim().split(" ");
+      await supabase.from("users").update({
+        first_name: nameParts[0] || "",
+        last_name: nameParts.slice(1).join(" ") || null,
+        phone: phone || null,
+        timezone,
+        notif_email: emailNotifs,
+        notif_stock_alert: stockAlerts,
+        notif_price_alert: priceAlerts,
+        notif_weekly_report: weeklyReport,
+      }).eq("id", user.id);
+      addToast("Paramètres sauvegardés", "success");
+    } catch {
+      addToast("Erreur lors de la sauvegarde", "error");
+    }
     setSaving(false);
-    addToast("Paramètres sauvegardés", "success");
   };
 
   const copyToClipboard = (text: string) => {
@@ -477,7 +534,7 @@ export default function SettingsPage() {
                     { value: "dark" as const, label: "Sombre", icon: <Moon className="w-4 h-4" /> },
                     { value: "auto" as const, label: "Auto", icon: <Settings className="w-4 h-4" /> },
                   ].map((t) => (
-                    <button key={t.value} onClick={() => setTheme(t.value)}
+                    <button key={t.value} onClick={() => handleThemeChange(t.value)}
                       className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${theme === t.value ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
                       style={{ color: theme === t.value ? "#2563eb" : "#374151" }}>
                       {t.icon} {t.label}
@@ -491,8 +548,8 @@ export default function SettingsPage() {
                   <Shield className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Options avancées
                 </h2>
-                <ToggleSwitch on={compactMode} onToggle={() => setCompactMode(!compactMode)} label="Mode compact (tableaux denses)" />
-                <ToggleSwitch on={devMode} onToggle={() => setDevMode(!devMode)} label="Mode développeur (logs console)" />
+                <ToggleSwitch on={compactMode} onToggle={() => handleCompactChange(!compactMode)} label="Mode compact (tableaux denses)" />
+                <ToggleSwitch on={devMode} onToggle={() => handleDevChange(!devMode)} label="Mode développeur (logs console)" />
               </div>
 
               <div className="bg-white rounded-xl border border-red-200 p-6">

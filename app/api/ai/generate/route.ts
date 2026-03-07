@@ -108,15 +108,16 @@ Titre : "${product.title}"
 Description actuelle : "${product.description || "Aucune"}"
 
 Génère :
-1. Un titre accrocheur de 50 à 70 caractères exact, qui commence par le mot-clé principal
-2. Une description de vente (150-300 mots) en HTML avec puces <ul><li>, mettant en avant les bénéfices concrets pour l'acheteur
+1. Un titre accrocheur de 55 à 60 caractères exact, qui commence par le mot-clé principal
+2. Une description de vente d'au moins 220 mots en HTML avec puces <ul><li>, mettant en avant les bénéfices concrets pour l'acheteur
 3. 10 mots-clés que les acheteurs tapent réellement, séparés par des virgules
-4. Une meta description (max 160 caractères) accrocheuse pour Google, qui résume le produit et donne envie de cliquer
+4. Une meta description de 150 à 160 caractères accrocheuse pour Google, qui résume le produit et donne envie de cliquer
 
 Règles STRICTES pour tout le contenu :
 - N'utilise JAMAIS : "SEO", "optimisé", "optimisée", "référencement", "strategiquement", "livraison gratuite", "livraison offerte", "qualité premium", "premium", "meilleur rapport qualité-prix"
 - La description doit parler du produit, pas de la boutique
 - Ton direct, bénéfices concrets, pas de superlatifs vides
+- La meta description doit faire EXACTEMENT entre 150 et 160 caractères
 
 Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","keywords":"...","meta_description":"..."}`;
     }
@@ -132,7 +133,7 @@ Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","key
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 800, // Optimized from 1000 to reduce costs
+        max_tokens: 1200, // Increased for 220+ word descriptions
       }),
     });
 

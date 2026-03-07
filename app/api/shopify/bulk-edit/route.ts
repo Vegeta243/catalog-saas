@@ -38,6 +38,8 @@ export async function PUT(req: Request) {
         else if (field === "body_html") body.body_html = value;
         else if (field === "tags") body.tags = value;
         else if (field === "status") body.status = value;
+        else if (field === "metafields_global_title_tag") body.metafields_global_title_tag = value;
+        else if (field === "metafields_global_description_tag") body.metafields_global_description_tag = value;
 
         const response = await fetch(
           `https://${shop_domain}/admin/api/2026-01/products/${id}.json`,

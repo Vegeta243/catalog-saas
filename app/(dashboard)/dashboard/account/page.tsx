@@ -73,14 +73,18 @@ export default function AccountPage() {
 
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifStock, setNotifStock] = useState(true);
-  const [notifPrice, setNotifPrice] = useState(false);
+  const [notifSyncErrors, setNotifSyncErrors] = useState(false);
   const [notifWeekly, setNotifWeekly] = useState(true);
   const [notifSecurity, setNotifSecurity] = useState(true);
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [deleteStep, setDeleteStep] = useState(0);
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // ─── Fetch user data from Supabase ───
   const fetchData = useCallback(async () => {
@@ -104,7 +108,7 @@ export default function AccountPage() {
         setTimezone(u.timezone || "Europe/Paris");
         setNotifEmail(u.notif_email ?? true);
         setNotifStock(u.notif_stock_alert ?? true);
-        setNotifPrice(u.notif_price_alert ?? false);
+        setNotifSyncErrors(u.notif_price_alert ?? false);
         setNotifWeekly(u.notif_weekly_report ?? true);
         setNotifSecurity(u.notif_security ?? true);
       }
@@ -138,7 +142,7 @@ export default function AccountPage() {
           timezone,
           notif_email: notifEmail,
           notif_stock_alert: notifStock,
-          notif_price_alert: notifPrice,
+          notif_price_alert: notifSyncErrors,
           notif_weekly_report: notifWeekly,
           notif_security: notifSecurity,
         })
@@ -164,6 +168,19 @@ export default function AccountPage() {
       setNewPassword(""); setConfirmPassword("");
     } catch { addToast("Erreur lors du changement", "error"); }
     setPasswordLoading(false);
+  };
+
+  // ─── Delete account ───
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmEmail !== email) { addToast("L'email ne correspond pas", "error"); return; }
+    setDeleteLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ data: { delete_requested: true } });
+      if (error) throw error;
+      await supabase.auth.signOut();
+      window.location.href = "/?deleted=1";
+    } catch { addToast("Erreur lors de la suppression — contactez le support", "error"); setDeleteLoading(false); setDeleteStep(0); }
   };
 
   const initials = fullName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
@@ -442,7 +459,7 @@ export default function AccountPage() {
               <p className="text-xs mb-5" style={{ color: "#64748b" }}>Choisissez les notifications à recevoir</p>
               <ToggleSwitch on={notifEmail} onToggle={() => setNotifEmail(!notifEmail)} label="Notifications par email" desc="Résumé des actions sur votre compte" />
               <ToggleSwitch on={notifStock} onToggle={() => setNotifStock(!notifStock)} label="Alertes stock bas" desc="Quand un produit est presque en rupture" />
-              <ToggleSwitch on={notifPrice} onToggle={() => setNotifPrice(!notifPrice)} label="Alertes de prix" desc="Quand un concurrent change ses prix" />
+              <ToggleSwitch on={notifSyncErrors} onToggle={() => setNotifSyncErrors(!notifSyncErrors)} label="Erreurs de synchronisation" desc="Quand la sync Shopify échoue" />
               <ToggleSwitch on={notifWeekly} onToggle={() => setNotifWeekly(!notifWeekly)} label="Rapport hebdomadaire" desc="Résumé chaque lundi" />
               <ToggleSwitch on={notifSecurity} onToggle={() => setNotifSecurity(!notifSecurity)} label="Alertes de sécurité" desc="Connexions suspectes" />
               <p className="text-xs mt-4" style={{ color: "#94a3b8" }}>Cliquez sur &quot;Sauvegarder&quot; pour enregistrer vos préférences</p>
@@ -452,6 +469,30 @@ export default function AccountPage() {
           {/* ─── Sécurité ─── */}
           {activeTab === "security" && (
             <div className="space-y-6">
+              {/* Session info */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                  <Shield className="w-4 h-4" style={{ color: "#2563eb" }} /> Session actuelle
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Navigateur actuel</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Session authentifiée via Supabase</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-emerald-100 rounded-full font-medium" style={{ color: "#059669" }}>Active</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Dernière connexion</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                        {profile?.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { dateStyle: "medium" }) : "—"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
                   <Lock className="w-4 h-4" style={{ color: "#2563eb" }} /> Changer le mot de passe
@@ -471,8 +512,14 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Confirmer</label>
-                    <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                      <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full pl-9 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
+                      <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <Eye className="w-4 h-4" style={{ color: "#94a3b8" }} />}
+                      </button>
+                    </div>
                   </div>
                   {newPassword && confirmPassword && newPassword !== confirmPassword && (
                     <p className="text-xs" style={{ color: "#dc2626" }}>Les mots de passe ne correspondent pas</p>
@@ -489,10 +536,28 @@ export default function AccountPage() {
                   <AlertTriangle className="w-4 h-4" style={{ color: "#ef4444" }} />
                   <h2 className="text-base font-semibold" style={{ color: "#ef4444" }}>Zone de danger</h2>
                 </div>
-                <p className="text-xs mb-4" style={{ color: "#64748b" }}>Action irréversible</p>
-                <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium flex items-center gap-1.5">
-                  <Trash2 className="w-3.5 h-3.5" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Supprimer le compte</span>
-                </button>
+                <p className="text-xs mb-4" style={{ color: "#64748b" }}>La suppression du compte est irréversible. Toutes vos données seront effacées.</p>
+                {deleteStep === 0 && (
+                  <button onClick={() => setDeleteStep(1)} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium flex items-center gap-1.5">
+                    <Trash2 className="w-3.5 h-3.5" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Supprimer le compte</span>
+                  </button>
+                )}
+                {deleteStep === 1 && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium" style={{ color: "#dc2626" }}>⚠️ Cette action supprimera définitivement votre compte, toutes vos boutiques connectées et vos données.</p>
+                    <p className="text-xs" style={{ color: "#64748b" }}>Saisissez votre email <strong>{email}</strong> pour confirmer :</p>
+                    <input type="email" value={deleteConfirmEmail} onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+                      placeholder={email} className="w-full px-3 py-2.5 border border-red-300 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+                    <div className="flex gap-2">
+                      <button onClick={() => { setDeleteStep(0); setDeleteConfirmEmail(""); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "#374151" }}>Annuler</button>
+                      <button onClick={handleDeleteAccount} disabled={deleteConfirmEmail !== email || deleteLoading}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center gap-1.5">
+                        {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} />}
+                        <span style={{ color: "#fff" }}>Confirmer la suppression</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
