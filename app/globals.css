@@ -362,3 +362,101 @@ input:focus, select:focus, textarea:focus {
   50%       { opacity: 0.4; }
 }
 .animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════════════════
+   LANDING PAGE — Dark mode overrides
+   ═══════════════════════════════════════════════════════════ */
+
+/* Fixed header with opacity modifier (bg-white/95, bg-white/90, etc.) */
+.dark header.fixed,
+.dark header[style*="position: fixed"] {
+  background-color: rgba(6, 13, 28, 0.97) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+/* Section inline background-color overrides */
+.dark [style*="background-color: #f8fafc"] { background-color: var(--surface-alt) !important; }
+.dark [style*="background-color: rgb(248, 250, 252)"] { background-color: var(--surface-alt) !important; }
+.dark [style*="background-color: #fafafa"] { background-color: var(--surface-alt) !important; }
+.dark [style*="background-color: #f1f5f9"] { background-color: var(--surface-alt) !important; }
+.dark [style*="background-color: rgb(241, 245, 249)"] { background-color: var(--surface-alt) !important; }
+.dark [style*="background-color: #fff;"],
+.dark [style*="background-color: #fff\""] { background-color: var(--surface-card) !important; }
+.dark [style*="background-color: #ffffff"] { background-color: var(--surface-card) !important; }
+.dark [style*="background-color: rgb(255, 255, 255)"] { background-color: var(--surface-card) !important; }
+
+/* Tinted accent inline backgrounds */
+.dark [style*="background-color: #eff6ff"] { background-color: rgba(59,130,246,0.13) !important; }
+.dark [style*="background-color: rgb(239, 246, 255)"] { background-color: rgba(59,130,246,0.13) !important; }
+.dark [style*="background-color: #f0fdf4"] { background-color: rgba(16,185,129,0.1) !important; }
+.dark [style*="background-color: rgb(240, 253, 244)"] { background-color: rgba(16,185,129,0.1) !important; }
+.dark [style*="background-color: #faf5ff"] { background-color: rgba(139,92,246,0.1) !important; }
+.dark [style*="background-color: #dcfce7"] { background-color: rgba(16,185,129,0.18) !important; }
+.dark [style*="background-color: #fafafa"] { background-color: var(--surface-alt) !important; }
+
+/* Inline color overrides — extended palette */
+.dark [style*="color: #475569"] { color: #7a9ab8 !important; }
+.dark [style*="color: rgb(71, 85, 105)"] { color: #7a9ab8 !important; }
+.dark [style*="color: #374151"] { color: #8aaec8 !important; }
+.dark [style*="color: rgb(55, 65, 81)"] { color: #8aaec8 !important; }
+.dark [style*="color: #166534"] { color: #4ade80 !important; }
+.dark [style*="color: rgb(22, 101, 52)"] { color: #4ade80 !important; }
+
+/* Gradient card overrides -- prevent light gradient in dark mode */
+.dark [class*="from-blue-50"] {
+  --tw-gradient-from: rgba(13, 26, 46, 1) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.dark [class*="to-white"] {
+  --tw-gradient-to: rgba(10, 18, 32, 1) !important;
+}
+
+/* Hero hero gradient overlay — very subtle in dark mode */
+.dark section > .absolute.inset-0[class*="gradient"] { opacity: 0.06 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   IMAGE EDITOR — Readability improvements in both modes
+   ═══════════════════════════════════════════════════════════ */
+
+/* Preview canvas background */
+.dark [style*="background-color: #f1f5f9"] {
+  background-color: #080f1c !important;
+}
+
+/* Toolbar bg */
+.dark [style*="background-color: #fafafa"] {
+  background-color: #0b1424 !important;
+}
+
+/* Range inputs — more visible track in dark mode */
+.dark input[type="range"] {
+  background-color: transparent !important;
+  border: none !important;
+  accent-color: #3b82f6;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL TEXT CONTRAST — both modes
+   ═══════════════════════════════════════════════════════════ */
+
+/* Make sure small/muted text is still readable */
+.text-xs, .text-\[11px\], .text-\[10px\] { line-height: 1.55; }
+
+/* Better button focus visible */
+button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Improve link readability */
+a:not([class]) {
+  color: var(--accent);
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s;
+}
+a:not([class]):hover { text-decoration-color: currentColor; }
+
+/* Table th text — ensure readable */
+.dark th { color: var(--text-secondary) !important; font-weight: 600; }

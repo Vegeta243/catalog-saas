@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // sharp is a native Node.js addon — must not be bundled by webpack
+  serverExternalPackages: ["sharp"],
+
   async headers() {
     return [
       // ── Shopify embed routes: allow framing from Shopify admin ──

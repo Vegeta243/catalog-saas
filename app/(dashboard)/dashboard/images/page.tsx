@@ -285,7 +285,7 @@ export default function ImagesPage() {
             ) : (
               <div className="relative">
                 {/* Toolbar */}
-                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100" style={{ backgroundColor: "#fafafa" }}>
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 bg-gray-50 dark:bg-[#0b1424] dark:border-[#18304a]">
                   <div className="flex items-center gap-2">
                     <button onClick={handleReset} className="p-1.5 rounded hover:bg-gray-200" title="Réinitialiser">
                       <RotateCcw className="w-4 h-4" style={{ color: "#64748b" }} />
@@ -307,7 +307,7 @@ export default function ImagesPage() {
                 </div>
 
                 {/* Preview */}
-                <div className="flex items-center justify-center p-8 min-h-[400px]" style={{ backgroundColor: "#f1f5f9" }}>
+                <div className="flex items-center justify-center p-8 min-h-[400px] bg-[#f1f5f9] dark:bg-[#060c19] relative">
                   <div className="relative rounded-lg overflow-hidden shadow-lg max-w-full max-h-[400px]" style={adjustmentStyle}>
                     <img
                                   key={selectedImage.processedUrl ? `processed-${selectedIdx}` : `original-${selectedIdx}`} src={selectedImage.processedUrl || selectedImage.originalUrl} alt={selectedImage.name}

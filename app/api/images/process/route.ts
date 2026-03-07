@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 
 export async function POST(req: Request) {
   try {
@@ -19,13 +20,6 @@ export async function POST(req: Request) {
 
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: "Fichier trop volumineux (max 10 MB)" }, { status: 400 });
-    }
-
-    let sharp;
-    try {
-      sharp = (await import("sharp")).default;
-    } catch {
-      return NextResponse.json({ error: "Module de traitement d'images non disponible sur ce serveur" }, { status: 500 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
