@@ -41,18 +41,24 @@ type SortDir = "asc" | "desc";
 /* ── SEO Scoring ─────────────────────────────── */
 function seoScore(p: Product): number {
   let s = 0;
-  // Title: 30 pts max — 50-70 chars ideal
-  if (p.title.length >= 50 && p.title.length <= 70) s += 30;
-  else if (p.title.length >= 30) s += 15;
-  // Description: 40 pts max — 100+ words ideal
+  // Titre : max 25 pts
+  const titleLen = p.title.length;
+  if (titleLen >= 50 && titleLen <= 70) s += 25;
+  else if (titleLen >= 30) s += 12;
+  // Description : max 30 pts
   const wordCount = (p.body_html || "").replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
-  if (wordCount >= 100) s += 40;
-  else if (wordCount >= 30) s += 20;
-  // Tags: 20 pts max — 5+ tags ideal
-  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 20;
-  else if (p.tags && p.tags.trim().length > 0) s += 10;
-  // Images: 10 pts
-  if (p.images && p.images.length > 0) s += 10;
+  if (wordCount >= 100) s += 30;
+  else if (wordCount >= 30) s += 15;
+  else if (wordCount >= 10) s += 8;
+  // Tags : max 25 pts
+  const tagCount = p.tags ? p.tags.split(",").filter(Boolean).length : 0;
+  if (tagCount >= 5) s += 25;
+  else if (tagCount >= 2) s += 12;
+  else if (tagCount >= 1) s += 5;
+  // Images : max 15 pts
+  if (p.images && p.images.length > 0) s += 15;
+  // Prix renseigné : max 5 pts
+  if (parseFloat(p.price) > 0) s += 5;
   return s;
 }
 
@@ -98,6 +104,10 @@ export default function ProductsPage() {
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [plan, setPlan] = useState("free");
   const [tasksUsed, setTasksUsed] = useState(0);
+  const [compactView, setCompactView] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("products_compact") === "true";
+    return false;
+  });
   const itemsPerPage = 50;
 
   /* ──────── Fetch ──────── */
@@ -530,8 +540,14 @@ export default function ProductsPage() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Catalogue produits</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Package className="w-4 h-4" style={{ color: "#2563eb" }} />
+            </div>
+            <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Modifier en masse</h1>
+          </div>
           <p className="text-sm mt-1 flex flex-wrap items-center gap-2" style={{ color: "#64748b" }}>
+            Modifiez titres, descriptions, tags et métadonnées de vos produits en masse.{" "}
             {filteredProducts.length} produit{filteredProducts.length > 1 ? "s" : ""}
             {lowStockCount > 0 && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 bg-red-50 rounded-full" style={{ color: "#dc2626" }}>
@@ -544,6 +560,15 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center flex-wrap gap-2">
+          <button
+            onClick={() => { const v = !compactView; setCompactView(v); if (typeof window !== "undefined") localStorage.setItem("products_compact", String(v)); }}
+            className={`flex items-center gap-1.5 px-3 py-2 border rounded-lg text-xs font-medium transition-colors ${compactView ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:bg-gray-50"}`}
+            style={{ color: compactView ? "#2563eb" : "#374151" }}
+            title={compactView ? "Vue normale" : "Vue compacte"}
+          >
+            {compactView ? <TrendingUp className="w-3.5 h-3.5" /> : <BarChart3 className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{compactView ? "Normal" : "Compact"}</span>
+          </button>
           <button onClick={() => fetchProducts(true)} disabled={refreshing}
             className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm disabled:opacity-50"
             style={{ color: "#374151" }}>
@@ -815,30 +840,30 @@ export default function ProductsPage() {
                   const suggestion = aiSuggestions[product.id];
                   return (
                     <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}>
-                      <td className="px-3 md:px-4 py-3"><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
-                      <td className="px-3 md:px-4 py-3 hidden sm:table-cell">
-                        {imageUrl ? <img src={imageUrl} alt={product.title} className="w-11 h-11 rounded-lg object-cover border border-gray-100" />
-                          : <div className="w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"}`}><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"} hidden sm:table-cell`}>
+                        {imageUrl ? <img src={imageUrl} alt={product.title} className={`${compactView ? "w-8 h-8" : "w-11 h-11"} rounded-lg object-cover border border-gray-100`} />
+                          : <div className={`${compactView ? "w-8 h-8" : "w-11 h-11"} rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200`}><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
                       </td>
-                      <td className="px-3 md:px-4 py-3">
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"}`}>
                         <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none" style={{ color: "#0f172a" }}>{product.title}</p>
-                        {product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
+                        {!compactView && product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
                         {hasLowStock && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 bg-red-50 rounded mt-1" style={{ color: "#dc2626" }}><AlertTriangle className="w-2.5 h-2.5" /> Stock bas</span>}
-                        {suggestion?.title && (
+                        {!compactView && suggestion?.title && (
                           <div className="mt-1 flex items-center gap-1">
                             <span className="text-[10px] px-1.5 py-0.5 bg-violet-50 rounded" style={{ color: "#8b5cf6" }}>IA: {suggestion.title.slice(0, 40)}...</span>
                           </div>
                         )}
-                        {suggestion?.description && (
+                        {!compactView && suggestion?.description && (
                           <div className="mt-1 flex items-center gap-1">
                             <span className="text-[10px] px-1.5 py-0.5 bg-violet-50 rounded" style={{ color: "#8b5cf6" }}>📝 Description IA prête</span>
                           </div>
                         )}
                       </td>
-                      <td className="px-3 md:px-4 py-3"><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
-                      <td className="px-3 md:px-4 py-3 hidden sm:table-cell">{getStatusBadge(product.status)}</td>
-                      <td className="px-3 md:px-4 py-3 hidden md:table-cell"><ScoreBadge score={score} /></td>
-                      <td className="px-3 md:px-4 py-3 hidden lg:table-cell">
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"}`}><p className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</p></td>
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"} hidden sm:table-cell`}>{getStatusBadge(product.status)}</td>
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"} hidden md:table-cell`}><ScoreBadge score={score} /></td>
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"} hidden lg:table-cell`}>
                         {suggestion ? (
                           <div className="flex items-center gap-1">
                             {suggestion.title && (
@@ -867,7 +892,7 @@ export default function ProductsPage() {
                           <span className="text-[10px]" style={{ color: "#94a3b8" }}>—</span>
                         )}
                       </td>
-                      <td className="px-3 md:px-4 py-3">
+                      <td className={`px-3 md:px-4 ${compactView ? "py-1.5" : "py-3"}`}>
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => setPreviewProduct(product)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Aperçu">
                             <Eye className="w-4 h-4" style={{ color: "#64748b" }} />

@@ -18,13 +18,14 @@ import {
   Zap,
   User,
   Download,
-  Sparkles,
   Clock,
   Crown,
   ImageIcon,
   Coins,
   Menu,
   X,
+  TrendingUp,
+  ArrowUpRight,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 
@@ -32,38 +33,38 @@ const NAV_SECTIONS = [
   {
     label: "PRINCIPAL",
     items: [
-      { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-      { href: '/dashboard/shops', label: 'Mes boutiques', icon: Store },
-      { href: '/dashboard/credits', label: 'Mon forfait', icon: Coins },
-      { href: '/dashboard/history', label: 'Historique', icon: Clock },
+      { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, desc: 'Vue d\'ensemble de votre activité' },
+      { href: '/dashboard/shops', label: 'Mes boutiques', icon: Store, desc: 'Gérez vos boutiques Shopify' },
+      { href: '/dashboard/credits', label: 'Mon forfait', icon: Coins, desc: 'Crédits et abonnement' },
+      { href: '/dashboard/history', label: 'Historique', icon: Clock, desc: 'Journal de toutes les actions' },
     ],
   },
   {
     label: "OPTIMISATION",
     items: [
-      { href: '/dashboard/products', label: 'Modifier en masse', icon: PackageSearch },
-      { href: '/dashboard/ai', label: 'Optimisation IA', icon: Sparkles },
-      { href: '/dashboard/images', label: 'Éditeur d\'images', icon: ImageIcon },
+      { href: '/dashboard/products', label: 'Modifier en masse', icon: PackageSearch, desc: 'Titres, prix, tags en quelques clics' },
+      { href: '/dashboard/ai', label: 'Audit SEO', icon: TrendingUp, desc: 'Score & analyse SEO de votre catalogue' },
+      { href: '/dashboard/images', label: 'Éditeur d\'images', icon: ImageIcon, desc: 'Optimisez vos visuels produits' },
     ],
   },
   {
     label: "AUTOMATISATION",
     items: [
-      { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
+      { href: '/dashboard/automation', label: 'Automatisations', icon: Zap, desc: 'Règles et actions planifiées' },
     ],
   },
   {
     label: "IMPORT",
     items: [
-      { href: '/dashboard/import', label: 'Import produits', icon: Download },
+      { href: '/dashboard/import', label: 'Import produits', icon: Download, desc: 'Importez depuis CSV ou autre source' },
     ],
   },
 ];
 
 const BOTTOM_ITEMS = [
-  { href: '/dashboard/account', label: 'Mon compte', icon: User },
-  { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
-  { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle },
+  { href: '/dashboard/account', label: 'Mon compte', icon: User, desc: 'Profil et sécurité' },
+  { href: '/dashboard/settings', label: 'Paramètres', icon: Settings, desc: 'Boutique et préférences' },
+  { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle, desc: 'Guides et support' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -195,7 +196,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       >
                         <Icon className="w-[17px] h-[17px] flex-shrink-0" style={{ color: active ? '#60a5fa' : '#94a3b8' }} />
                         {!sidebarCollapsed && (
-                          <span style={{ color: active ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
+                          <div className="flex-1 min-w-0">
+                            <span style={{ color: active ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
+                            {'desc' in item && item.desc && !active && (
+                              <p className="text-[10px] leading-tight mt-0.5 truncate" style={{ color: '#475569' }}>{item.desc}</p>
+                            )}
+                          </div>
                         )}
                       </a>
                     );
@@ -228,7 +234,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   title={sidebarCollapsed ? item.label : undefined}
                 >
                   <Icon className="w-[17px] h-[17px] flex-shrink-0" style={{ color: isActive ? '#60a5fa' : '#94a3b8' }} />
-                  {!sidebarCollapsed && <span style={{ color: isActive ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>}
+                  {!sidebarCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <span style={{ color: isActive ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
+                      {'desc' in item && item.desc && !isActive && (
+                        <p className="text-[10px] leading-tight mt-0.5 truncate" style={{ color: '#475569' }}>{item.desc}</p>
+                      )}
+                    </div>
+                  )}
                 </a>
               );
             })}
@@ -254,6 +267,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               }} />
             </div>
             <p className="text-[10px] mt-1.5" style={{ color: '#64748b' }}>{tasksUsed} / {tasksTotal} tâches utilisées</p>
+            {(plan === 'free' || tasksRemaining < 20) && (
+              <a href="/dashboard/billing" className="flex items-center justify-center gap-1.5 mt-2.5 w-full py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90"
+                style={{ backgroundColor: tasksRemaining < 5 ? '#dc2626' : '#2563eb', color: '#fff' }}>
+                <ArrowUpRight className="w-3 h-3" />
+                {plan === 'free' ? 'Passer au plan Starter' : 'Augmenter mes crédits'}
+              </a>
+            )}
           </div>
         )}
 
@@ -345,6 +365,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           </div>
         </header>
+
+        {/* Upgrade banner for free plan users */}
+        {plan === 'free' && (
+          <div className="mx-3 md:mx-6 mt-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-between gap-3">
+            <p className="text-xs font-medium" style={{ color: '#fff' }}>🚀 Passez au plan Starter pour débloquer l&apos;IA illimitée — À partir de 39€/mois</p>
+            <a href="/dashboard/billing" className="flex-shrink-0 px-3 py-1.5 bg-white rounded-lg text-xs font-semibold hover:bg-blue-50 transition-colors" style={{ color: '#2563eb' }}>
+              Upgrader
+            </a>
+          </div>
+        )}
 
         {/* Page content */}
         <main className="flex-1 p-3 md:p-6 overflow-x-hidden">{children}</main>

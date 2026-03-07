@@ -27,22 +27,29 @@ interface GeneratedContent {
   keywords?: string;
   tags?: string;
   meta_description?: string;
+  meta_title?: string;
 }
 
 function seoScore(p: Product): number {
   let s = 0;
-  // Title: 30 pts max — 50-70 chars ideal
-  if (p.title.length >= 50 && p.title.length <= 70) s += 30;
-  else if (p.title.length >= 30) s += 15;
-  // Description: 40 pts max — 100+ words ideal
+  // Titre : max 25 pts
+  const titleLen = p.title.length;
+  if (titleLen >= 50 && titleLen <= 70) s += 25;
+  else if (titleLen >= 30) s += 12;
+  // Description : max 30 pts
   const wordCount = (p.body_html || "").replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
-  if (wordCount >= 100) s += 40;
-  else if (wordCount >= 30) s += 20;
-  // Tags: 20 pts max — 5+ tags ideal
-  if (p.tags && p.tags.split(",").filter(Boolean).length >= 5) s += 20;
-  else if (p.tags && p.tags.trim().length > 0) s += 10;
-  // Images: 10 pts
-  if (p.images && p.images.length > 0) s += 10;
+  if (wordCount >= 100) s += 30;
+  else if (wordCount >= 30) s += 15;
+  else if (wordCount >= 10) s += 8;
+  // Tags : max 25 pts
+  const tagCount = p.tags ? p.tags.split(",").filter(Boolean).length : 0;
+  if (tagCount >= 5) s += 25;
+  else if (tagCount >= 2) s += 12;
+  else if (tagCount >= 1) s += 5;
+  // Images : max 15 pts
+  if (p.images && p.images.length > 0) s += 15;
+  // Prix renseigné : max 5 pts
+  if (parseFloat(p.price) > 0) s += 5;
   return s;
 }
 
@@ -235,12 +242,14 @@ export default function AIPage() {
           description: product?.body_html,
           tags: product?.tags,
           meta_description: undefined,
+          meta_title: undefined,
         },
         suggested: {
           title: content?.title,
           description: content?.description,
           tags: content?.keywords || content?.tags,
           meta_description: content?.meta_description,
+          meta_title: content?.meta_title,
         },
         accepted: true,
       };
@@ -350,10 +359,15 @@ export default function AIPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Optimisation IA</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Analysez et optimisez le SEO de votre catalogue avec l&apos;intelligence artificielle</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4" style={{ color: "#059669" }} />
+            </div>
+            <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Audit SEO</h1>
+          </div>
+          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Analysez et améliorez le score SEO de vos produits. Obtenez des recommandations personnalisées.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {Object.keys(generatedContent).length > 0 && (

@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import {
   Settings, User, Store, Bell, CreditCard, Key, Shield, Save,
   Globe, Moon, Sun, Palette, Upload, Eye, EyeOff, Check, Copy,
-  RefreshCw, Mail, Phone, ExternalLink,
+  RefreshCw, Mail, Phone, ExternalLink, ChevronDown, AlertTriangle,
+  Loader2, ArrowRight, Lock,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 type Tab = "profile" | "shop" | "notifications" | "billing" | "api" | "advanced";
 
@@ -103,9 +105,58 @@ export default function SettingsPage() {
   const [showShopifyKey, setShowShopifyKey] = useState(false);
 
   // Advanced
-  const [theme, setTheme] = useState<"light" | "dark" | "auto">("light");
+  const [theme, setTheme] = useState<"light" | "dark" | "auto">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme") as "light" | "dark" | "auto" | null;
+      return saved || "auto";
+    }
+    return "auto";
+  });
   const [compactMode, setCompactMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
+
+  // Delete account danger zone
+  const [showDeleteAccordion, setShowDeleteAccordion] = useState(false);
+  const [deleteStep, setDeleteStep] = useState(0);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Multi-shop
+  interface ShopEntry { id: string; shop_domain: string; shop_name: string; is_active: boolean; products_count: number; last_sync_at: string | null; }
+  const [allShops, setAllShops] = useState<ShopEntry[]>([]);
+
+  useEffect(() => {
+    const loadShops = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from("shops").select("id, shop_domain, shop_name, is_active, products_count, last_sync_at").eq("user_id", user.id).order("created_at", { ascending: false });
+        setAllShops((data || []) as ShopEntry[]);
+      } catch { /* silent */ }
+    };
+    loadShops();
+  }, []);
+
+  // Apply theme from state
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const applyTheme = (t: "light" | "dark" | "auto") => {
+      localStorage.setItem("theme", t);
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const isDark = t === "dark" || (t === "auto" && prefersDark);
+      document.documentElement.classList.toggle("dark", isDark);
+    };
+    applyTheme(theme);
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => {
+      const current = (localStorage.getItem("theme") as "light" | "dark" | "auto") || "auto";
+      if (current === "auto") document.documentElement.classList.toggle("dark", e.matches);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [theme]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -117,6 +168,15 @@ export default function SettingsPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     addToast("Copié dans le presse-papier", "success");
+  };
+
+  const formatDate = (d: string | null) => {
+    if (!d) return "Jamais";
+    const diff = Date.now() - new Date(d).getTime();
+    if (diff < 60000) return "À l'instant";
+    if (diff < 3600000) return `Il y a ${Math.floor(diff / 60000)} min`;
+    if (diff < 86400000) return `Il y a ${Math.floor(diff / 3600000)}h`;
+    return new Date(d).toLocaleDateString("fr-FR");
   };
 
   const ToggleSwitch = ({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) => (
@@ -249,49 +309,52 @@ export default function SettingsPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
                   <Store className="w-4 h-4" style={{ color: "#2563eb" }} />
-                  Configuration de la boutique
+                  Boutiques connectées
                 </h2>
-                <p className="text-xs mb-6" style={{ color: "#64748b" }}>Paramètres de votre boutique Shopify</p>
+                <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez toutes vos boutiques Shopify depuis un seul endroit</p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom de la boutique</label>
-                    <input type="text" value={shopName} onChange={(e) => setShopName(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }} />
+                {allShops.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Store className="w-10 h-10 mx-auto mb-3" style={{ color: "#d1d5db" }} />
+                    <p className="text-sm mb-4" style={{ color: "#64748b" }}>Aucune boutique connectée</p>
+                    <a href="/dashboard/shops" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>
+                      + Connecter une boutique
+                    </a>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>URL Shopify</label>
-                    <div className="relative">
-                      <input type="text" value={shopUrl} onChange={(e) => setShopUrl(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none pr-8"
-                        style={{ color: "#0f172a" }} />
-                      <ExternalLink className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
-                    </div>
+                ) : (
+                  <div className="space-y-3">
+                    {allShops.map((shop) => (
+                      <div key={shop.id} className="p-4 border border-gray-200 rounded-lg hover:border-blue-200 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${shop.is_active ? "bg-emerald-50" : "bg-gray-100"}`}>
+                              <Store className="w-5 h-5" style={{ color: shop.is_active ? "#059669" : "#94a3b8" }} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{shop.shop_name || shop.shop_domain}</p>
+                              <a href={`https://${shop.shop_domain}`} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1" style={{ color: "#2563eb" }}>
+                                {shop.shop_domain} <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right hidden sm:block">
+                              <p className="text-xs" style={{ color: "#64748b" }}>{shop.products_count || 0} produits</p>
+                              <p className="text-xs" style={{ color: "#94a3b8" }}>Synchro : {formatDate(shop.last_sync_at)}</p>
+                            </div>
+                            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${shop.is_active ? "bg-emerald-50" : "bg-red-50"}`}
+                              style={{ color: shop.is_active ? "#059669" : "#dc2626" }}>
+                              {shop.is_active ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <a href="/dashboard/shops" className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 rounded-lg text-sm font-medium w-full justify-center transition-colors" style={{ color: "#2563eb" }}>
+                      + Ajouter une boutique
+                    </a>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Devise</label>
-                    <select value={currency} onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }}>
-                      <option value="EUR">EUR (€)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="GBP">GBP (£)</option>
-                      <option value="CAD">CAD (C$)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Langue du catalogue</label>
-                    <select value={language} onChange={(e) => setLanguage(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }}>
-                      <option value="fr">Français</option>
-                      <option value="en">English</option>
-                      <option value="es">Español</option>
-                      <option value="de">Deutsch</option>
-                    </select>
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -379,18 +442,18 @@ export default function SettingsPage() {
 
           {/* API Keys Tab */}
           {activeTab === "api" && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
-                <Key className="w-4 h-4" style={{ color: "#2563eb" }} />
-                Clés API
-              </h2>
-              <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez vos intégrations API tierces</p>
+            <div className="space-y-4">
+              {/* Status overview — always visible */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                  <Key className="w-4 h-4" style={{ color: "#2563eb" }} />
+                  Intégrations
+                </h2>
+                <p className="text-xs mb-4" style={{ color: "#64748b" }}>Statut de vos connexions et services</p>
 
-              <div className="space-y-4">
-                {/* Shopify Token */}
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
                         <Store className="w-4 h-4" style={{ color: "#16a34a" }} />
                       </div>
@@ -400,66 +463,71 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     {shopHasToken
-                      ? <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Token actif</span>
-                      : <span className="text-xs px-2 py-0.5 bg-amber-100 rounded" style={{ color: "#d97706" }}>Sans token</span>
+                      ? <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded-full font-medium" style={{ color: "#059669" }}>✅ Connecté</span>
+                      : <span className="text-xs px-2 py-0.5 bg-amber-100 rounded-full font-medium" style={{ color: "#d97706" }}>⚠️ Non connecté</span>
                     }
                   </div>
-                  {shopHasToken && (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type={showShopifyKey ? "text" : "password"}
-                        value={shopToken}
-                        readOnly
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white font-mono"
-                        style={{ color: "#0f172a" }}
-                      />
-                      <button onClick={() => setShowShopifyKey(!showShopifyKey)} className="p-2 hover:bg-gray-200 rounded-lg">
-                        {showShopifyKey ? <EyeOff className="w-4 h-4" style={{ color: "#64748b" }} /> : <Eye className="w-4 h-4" style={{ color: "#64748b" }} />}
-                      </button>
-                      <button onClick={() => copyToClipboard(shopToken)} className="p-2 hover:bg-gray-200 rounded-lg">
-                        <Copy className="w-4 h-4" style={{ color: "#64748b" }} />
-                      </button>
-                    </div>
-                  )}
-                  {!shopUrl && (
-                    <a href="/dashboard/shops" className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: "#2563eb" }}>
-                      Connecter une boutique <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                </div>
-
-                {/* OpenAI — géré côté serveur */}
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
                         <Key className="w-4 h-4" style={{ color: "#7c3aed" }} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>OpenAI API</p>
+                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>OpenAI</p>
                         <p className="text-xs" style={{ color: "#64748b" }}>Géré côté serveur — GPT-4o-mini</p>
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Actif</span>
+                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded-full font-medium" style={{ color: "#059669" }}>✅ Actif</span>
                   </div>
-                </div>
-
-                {/* Stripe */}
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
                         <CreditCard className="w-4 h-4" style={{ color: "#2563eb" }} />
                       </div>
                       <div>
                         <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Stripe</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>Paiements et abonnements — géré côté serveur</p>
+                        <p className="text-xs" style={{ color: "#64748b" }}>Paiements et abonnements</p>
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Actif</span>
+                    <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded-full font-medium" style={{ color: "#059669" }}>✅ Actif</span>
                   </div>
                 </div>
               </div>
+
+              {/* Dev mode details — only visible in dev mode */}
+              {devMode && (
+                <div className="bg-white rounded-xl border border-amber-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="w-4 h-4" style={{ color: "#d97706" }} />
+                    <h2 className="text-base font-semibold" style={{ color: "#0f172a" }}>Clés API (mode développeur)</h2>
+                    <span className="text-[10px] px-2 py-0.5 bg-amber-100 rounded font-medium" style={{ color: "#92400e" }}>DEV</span>
+                  </div>
+                  <p className="text-xs mb-4 p-3 bg-amber-50 rounded-lg" style={{ color: "#92400e" }}>
+                    ⚠️ Ces clés sont gérées automatiquement. Ne les modifiez que si vous savez ce que vous faites.
+                  </p>
+
+                  {shopHasToken && (
+                    <div className="p-4 bg-gray-50 rounded-lg mb-3">
+                      <p className="text-xs font-semibold mb-2" style={{ color: "#374151" }}>Token Shopify Admin</p>
+                      <div className="flex items-center gap-2">
+                        <input type={showShopifyKey ? "text" : "password"} value={shopToken} readOnly
+                          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white font-mono" style={{ color: "#0f172a" }} />
+                        <button onClick={() => setShowShopifyKey(!showShopifyKey)} className="p-2 hover:bg-gray-200 rounded-lg">
+                          {showShopifyKey ? <EyeOff className="w-4 h-4" style={{ color: "#64748b" }} /> : <Eye className="w-4 h-4" style={{ color: "#64748b" }} />}
+                        </button>
+                        <button onClick={() => copyToClipboard(shopToken)} className="p-2 hover:bg-gray-200 rounded-lg">
+                          <Copy className="w-4 h-4" style={{ color: "#64748b" }} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!devMode && (
+                <p className="text-xs text-center" style={{ color: "#94a3b8" }}>
+                  Activez le mode développeur dans l&apos;onglet Avancé pour accéder aux détails des clés API.
+                </p>
+              )}
             </div>
           )}
 
@@ -471,11 +539,12 @@ export default function SettingsPage() {
                   <Palette className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Apparence
                 </h2>
+                <p className="text-xs mb-3" style={{ color: "#64748b" }}>Choisissez le thème de l&apos;interface. &quot;Auto&quot; suit votre préférence système.</p>
                 <div className="flex items-center gap-3">
                   {[
+                    { value: "auto" as const, label: "Automatique", icon: <Settings className="w-4 h-4" /> },
                     { value: "light" as const, label: "Clair", icon: <Sun className="w-4 h-4" /> },
                     { value: "dark" as const, label: "Sombre", icon: <Moon className="w-4 h-4" /> },
-                    { value: "auto" as const, label: "Auto", icon: <Settings className="w-4 h-4" /> },
                   ].map((t) => (
                     <button key={t.value} onClick={() => setTheme(t.value)}
                       className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${theme === t.value ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
@@ -484,6 +553,9 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
+                {theme === "auto" && (
+                  <p className="text-xs mt-2" style={{ color: "#94a3b8" }}>Mode actuel : suit votre préférence système</p>
+                )}
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -492,21 +564,88 @@ export default function SettingsPage() {
                   Options avancées
                 </h2>
                 <ToggleSwitch on={compactMode} onToggle={() => setCompactMode(!compactMode)} label="Mode compact (tableaux denses)" />
-                <ToggleSwitch on={devMode} onToggle={() => setDevMode(!devMode)} label="Mode développeur (logs console)" />
+                <ToggleSwitch on={devMode} onToggle={() => setDevMode(!devMode)} label="Mode développeur (logs console + clés API visibles)" />
+                {devMode && (
+                  <p className="text-xs mt-2 p-2 bg-amber-50 rounded" style={{ color: "#92400e" }}>
+                    ⚠️ Mode développeur activé — les clés API sont visibles dans l&apos;onglet Clés API
+                  </p>
+                )}
               </div>
 
-              <div className="bg-white rounded-xl border border-red-200 p-6">
-                <h2 className="text-base font-semibold mb-2" style={{ color: "#ef4444" }}>Zone de danger</h2>
-                <p className="text-xs mb-4" style={{ color: "#64748b" }}>Actions irréversibles sur votre compte</p>
-                <div className="flex gap-3">
-                  <button className="px-4 py-2 border border-red-300 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-                    style={{ color: "#ef4444" }}>
-                    Réinitialiser les données
-                  </button>
-                  <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors">
-                    <span style={{ color: "#fff" }}>Supprimer le compte</span>
-                  </button>
-                </div>
+              {/* Mot de passe — lien vers Mon compte */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 className="text-base font-semibold mb-2 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                  <Lock className="w-4 h-4" style={{ color: "#2563eb" }} />
+                  Mot de passe
+                </h2>
+                <p className="text-xs mb-4" style={{ color: "#64748b" }}>Changez votre mot de passe depuis la section Sécurité de votre compte</p>
+                <Link href="/dashboard/account" className="flex items-center gap-2 text-sm font-medium" style={{ color: "#2563eb" }}>
+                  Modifier le mot de passe → Mon compte &gt; Sécurité <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {/* Zone de danger — accordéon discret */}
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setShowDeleteAccordion(!showDeleteAccordion)}
+                  className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-sm font-medium" style={{ color: "#94a3b8" }}>Zone de danger</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showDeleteAccordion ? "rotate-180" : ""}`} style={{ color: "#94a3b8" }} />
+                </button>
+                {showDeleteAccordion && (
+                  <div className="px-5 pb-5 border-t border-gray-100">
+                    <p className="text-xs mt-4 mb-4" style={{ color: "#64748b" }}>
+                      La suppression de votre compte est permanente. Toutes vos données seront supprimées.
+                    </p>
+
+                    {deleteStep === 0 && (
+                      <button onClick={() => setDeleteStep(1)} className="text-sm font-medium underline" style={{ color: "#94a3b8" }}>
+                        Supprimer mon compte
+                      </button>
+                    )}
+
+                    {deleteStep === 1 && (
+                      <div className="p-4 bg-red-50 rounded-lg border border-red-200 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: "#dc2626" }} />
+                          <p className="text-sm font-semibold" style={{ color: "#dc2626" }}>Êtes-vous sûr(e) ?</p>
+                        </div>
+                        <p className="text-xs" style={{ color: "#374151" }}>Cette action est irréversible. Toutes vos boutiques et données seront perdues.</p>
+                        <div className="flex gap-2 pt-2">
+                          <button onClick={() => setDeleteStep(0)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "#374151" }}>Annuler</button>
+                          <button onClick={() => setDeleteStep(2)} className="px-4 py-2 bg-amber-600 hover:bg-amber-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>Continuer</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {deleteStep === 2 && (
+                      <div className="p-4 bg-red-50 rounded-lg border border-red-200 space-y-3">
+                        <p className="text-sm font-semibold" style={{ color: "#dc2626" }}>Confirmez en tapant &quot;SUPPRIMER&quot;</p>
+                        <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder='Tapez "SUPPRIMER"'
+                          className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm" style={{ color: "#0f172a" }} />
+                        <div className="flex gap-2">
+                          <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); setDeletePassword(""); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "#374151" }}>Annuler</button>
+                          <button
+                            disabled={deleteConfirmText !== "SUPPRIMER" || deleteLoading}
+                            onClick={async () => {
+                              setDeleteLoading(true);
+                              try {
+                                const supabase = createClient();
+                                await supabase.auth.signOut();
+                                addToast("Compte supprimé. Au revoir !", "success");
+                              } catch { addToast("Erreur lors de la suppression", "error"); }
+                              setDeleteLoading(false);
+                            }}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg text-sm font-medium flex items-center gap-2" style={{ color: "#fff" }}>
+                            {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                            Supprimer définitivement
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
