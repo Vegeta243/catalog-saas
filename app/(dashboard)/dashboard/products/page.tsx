@@ -301,13 +301,41 @@ export default function ProductsPage() {
     if (!value) return;
     setActionLoading(`ai-apply-${productId}`);
     try {
-      const res = await fetch("/api/shopify/bulk-edit", {
+      await fetch("/api/shopify/bulk-edit", {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: [productId], field, value }),
       });
-      if (!res.ok) throw new Error();
+      // Update local state immediately — no refetch needed
+      setProducts((prev) => prev.map((p) => p.id === productId ? {
+        ...p,
+        ...(field === "title" ? { title: value } : {}),
+        ...(field === "body_html" ? { body_html: value } : {}),
+        ...(field === "tags" ? { tags: value } : {}),
+      } : p));
       addToast("Suggestion IA appliquée", "success");
-      fetchProducts(true);
+    } catch { addToast("Erreur — réessayez", "error"); }
+    finally { setActionLoading(null); }
+  };
+
+  const applyAllForProduct = async (productId: string) => {
+    const sug = aiSuggestions[productId];
+    if (!sug) return;
+    setActionLoading(`ai-apply-all-${productId}`);
+    try {
+      const calls: Promise<Response>[] = [];
+      if (sug.title) calls.push(fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [productId], field: "title", value: sug.title }) }));
+      if (sug.description) calls.push(fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [productId], field: "body_html", value: sug.description }) }));
+      if (sug.tags) calls.push(fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productIds: [productId], field: "tags", value: sug.tags }) }));
+      await Promise.all(calls);
+      setProducts((prev) => prev.map((p) => p.id === productId ? {
+        ...p,
+        ...(sug.title ? { title: sug.title } : {}),
+        ...(sug.description ? { body_html: sug.description } : {}),
+        ...(sug.tags ? { tags: sug.tags } : {}),
+      } : p));
+      setAiSuggestions((prev) => { const next = { ...prev }; delete next[productId]; return next; });
+      addToast("Toutes les suggestions IA appliquées ✓", "success");
+      setPreviewProduct(null);
     } catch { addToast("Erreur — réessayez", "error"); }
     finally { setActionLoading(null); }
   };
@@ -661,17 +689,17 @@ export default function ProductsPage() {
                     {aiSuggestions[previewProduct.id].title && <div>
                       <p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre suggéré</p>
                       <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{aiSuggestions[previewProduct.id].title}</p>
-                      <button onClick={() => { applyAISuggestion(previewProduct.id, "title"); setPreviewProduct(null); }} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                      <button onClick={() => applyAISuggestion(previewProduct.id, "title")} disabled={!!actionLoading} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
                     </div>}
                     {aiSuggestions[previewProduct.id].description && <div>
                       <p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description IA</p>
-                      <div className="text-xs prose prose-sm max-w-none max-h-24 overflow-hidden" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: aiSuggestions[previewProduct.id].description!.slice(0, 300) }} />
-                      <button onClick={() => { applyAISuggestion(previewProduct.id, "body_html"); setPreviewProduct(null); }} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                      <div className="text-xs prose prose-sm max-w-none max-h-40 overflow-y-auto border border-emerald-100 rounded-lg p-2 bg-white" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: aiSuggestions[previewProduct.id].description! }} />
+                      <button onClick={() => applyAISuggestion(previewProduct.id, "body_html")} disabled={!!actionLoading} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
                     </div>}
                     {aiSuggestions[previewProduct.id].tags && <div>
                       <p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Tags suggérés</p>
                       <p className="text-xs" style={{ color: "#374151" }}>{aiSuggestions[previewProduct.id].tags}</p>
-                      <button onClick={() => { applyAISuggestion(previewProduct.id, "tags"); setPreviewProduct(null); }} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
+                      <button onClick={() => applyAISuggestion(previewProduct.id, "tags")} disabled={!!actionLoading} className="mt-1 text-[11px] px-2 py-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg font-medium" style={{ color: "#fff" }}>Appliquer</button>
                     </div>}
                     {/* Score SEO projeté après IA */}
                     {(() => {
@@ -687,6 +715,16 @@ export default function ProductsPage() {
                         </div>
                       );
                     })()}
+                    {/* Tout appliquer — bouton principal */}
+                    <div className="pt-3 border-t border-emerald-200 mt-2">
+                      <button
+                        onClick={() => applyAllForProduct(previewProduct.id)}
+                        disabled={!!actionLoading}
+                        className="w-full py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                        {actionLoading === `ai-apply-all-${previewProduct.id}` ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <CheckCircle2 className="w-4 h-4" style={{ color: "#fff" }} />}
+                        <span style={{ color: "#fff" }}>Tout appliquer (titre + description + tags)</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

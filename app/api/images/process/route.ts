@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
+import { createClient } from "@/lib/supabase/server";
+
+const ALLOWED_IMAGE_HOSTS = ["cdn.shopify.com", "shopify.com"];
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    const imageUrlParam = formData.get("imageUrl") as string | null;
     const action = formData.get("action") as string;
     const width = parseInt(formData.get("width") as string) || 0;
     const height = parseInt(formData.get("height") as string) || 0;
@@ -14,15 +18,45 @@ export async function POST(req: Request) {
     const contrast = parseFloat(formData.get("contrast") as string) || 1;
     const saturation = parseFloat(formData.get("saturation") as string) || 1;
 
-    if (!file) {
+    // Auth + quota check
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("actions_used, actions_limit")
+        .eq("id", user.id)
+        .single();
+      if (userData && userData.actions_used >= userData.actions_limit) {
+        return NextResponse.json(
+          { error: "limit_exceeded", message: "Limite de tâches atteinte — passez à un plan supérieur" },
+          { status: 429 }
+        );
+      }
+    }
+
+    // Build buffer from either a remote URL or an uploaded file
+    let buffer: Buffer;
+    if (imageUrlParam) {
+      // SSRF protection: only allow trusted image hosts
+      let urlObj: URL;
+      try { urlObj = new URL(imageUrlParam); } catch {
+        return NextResponse.json({ error: "URL invalide" }, { status: 400 });
+      }
+      if (!ALLOWED_IMAGE_HOSTS.some((h) => urlObj.hostname === h || urlObj.hostname.endsWith("." + h))) {
+        return NextResponse.json({ error: "Hôte non autorisé" }, { status: 400 });
+      }
+      const imgRes = await fetch(imageUrlParam);
+      if (!imgRes.ok) throw new Error("Impossible de télécharger l'image distante");
+      buffer = Buffer.from(await imgRes.arrayBuffer());
+    } else if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        return NextResponse.json({ error: "Fichier trop volumineux (max 10 MB)" }, { status: 400 });
+      }
+      buffer = Buffer.from(await file.arrayBuffer());
+    } else {
       return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 });
     }
-
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "Fichier trop volumineux (max 10 MB)" }, { status: 400 });
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
     let pipeline = sharp(buffer);
 
     // Get original metadata
@@ -74,6 +108,11 @@ export async function POST(req: Request) {
     }
 
     const base64 = outputBuffer.toString("base64");
+
+    // Consume 1 task for authenticated users
+    if (user) {
+      await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: 1 });
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   ImageIcon, Upload, Wand2, Download, RotateCcw, SunMedium,
   Contrast, Palette, Sparkles, Trash2, Loader2, X,
-  CheckCircle2, ArrowRight, Plus,
+  CheckCircle2, ArrowRight, Plus, Package,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 
@@ -48,13 +48,63 @@ export default function ImagesPage() {
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
   const [processing, setProcessing] = useState(false);
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [outputFormat, setOutputFormat] = useState("webp");
   const [quality, setQuality] = useState(80);
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  // Shopify product images
+  const [imageSource, setImageSource] = useState<"upload" | "shopify">("upload");
+  const [shopifyImages, setShopifyImages] = useState<{ id: string; title: string; src: string }[]>([]);
+  const [loadingShopify, setLoadingShopify] = useState(false);
+  const [shopifyLoaded, setShopifyLoaded] = useState(false);
 
   const selectedImage = selectedIdx !== null ? images[selectedIdx] : null;
+
+  const loadShopifyImages = useCallback(async () => {
+    if (loadingShopify || shopifyLoaded) return;
+    setLoadingShopify(true);
+    try {
+      const res = await fetch("/api/shopify/products");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const imgs: { id: string; title: string; src: string }[] = [];
+      (data.products || []).forEach((p: { id: string; title: string; images?: { src: string }[] }) => {
+        if (p.images?.length) imgs.push({ id: p.id, title: p.title, src: p.images[0].src });
+      });
+      setShopifyImages(imgs);
+      setShopifyLoaded(true);
+      if (imgs.length === 0) addToast("Aucune image produit trouvée — connectez votre boutique Shopify", "error");
+    } catch {
+      addToast("Impossible de charger les images Shopify — boutique non connectée", "error");
+      setShopifyLoaded(true);
+    }
+    setLoadingShopify(false);
+  }, [loadingShopify, shopifyLoaded, addToast]);
+
+  useEffect(() => {
+    if (imageSource === "shopify") loadShopifyImages();
+  }, [imageSource, loadShopifyImages]);
+
+  const addShopifyImage = (img: { id: string; title: string; src: string }) => {
+    const existing = images.find((i) => i.originalUrl === img.src);
+    if (existing) {
+      setSelectedIdx(images.indexOf(existing));
+      addToast(`"${img.title}" déjà dans l'editeur`, "success");
+      return;
+    }
+    const newImg: ImageFile = {
+      id: `shopify-${img.id}-${Date.now()}`,
+      name: img.title + ".jpg",
+      originalUrl: img.src,
+      size: 0,
+    };
+    const newIdx = images.length;
+    setImages((prev) => [...prev, newImg]);
+    setSelectedIdx(newIdx);
+    addToast(`"${img.title}" ajouté à l'éditeur`, "success");
+  };
 
   const handleFiles = useCallback((files: FileList | File[]) => {
     const newImages: ImageFile[] = [];
@@ -110,11 +160,17 @@ export default function ImagesPage() {
 
   const processImage = async (imageFile: ImageFile, action: string, width = 0, height = 0) => {
     setProcessing(true);
+    setProcessingAction(action + (width ? `-${width}x${height}` : ""));
     try {
-      // Fetch the original file blob
-          const blob = await urlToBlob(imageFile.originalUrl);
+
       const formData = new FormData();
-      formData.append("file", blob, imageFile.name);
+      // Support remote URLs (Shopify CDN) via server-side fetch
+      if (imageFile.originalUrl.startsWith("http")) {
+        formData.append("imageUrl", imageFile.originalUrl);
+      } else {
+        const blob = await fetch(imageFile.originalUrl).then((r) => r.blob());
+        formData.append("file", blob, imageFile.name);
+      }
       formData.append("action", action);
       formData.append("format", outputFormat);
       formData.append("quality", quality.toString());
@@ -142,13 +198,14 @@ export default function ImagesPage() {
           ? { ...img, processedUrl: data.image, processedSize: data.processedSize, compression: data.compression }
           : img
       ));
-      addToast(`Image traitée — ${data.compression}% de compression`, "success");
+      addToast(`Image traitée${data.compression !== undefined ? ` — ${data.compression}% de compression` : ""}`, "success");
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Erreur de traitement";
       addToast(`Échec : ${errorMsg}`, "error");
       console.error("Image processing error:", err);
     }
     setProcessing(false);
+    setProcessingAction(null);
   };
 
   const handleBatchProcess = async (action: string, width = 0, height = 0) => {
@@ -244,6 +301,20 @@ export default function ImagesPage() {
         </div>
       </div>
 
+      {/* Source selector */}
+      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+        <button onClick={() => setImageSource("upload")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${imageSource === "upload" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
+          style={{ color: imageSource === "upload" ? "#0f172a" : "#64748b" }}>
+          <Upload className="w-4 h-4" /> Mes fichiers
+        </button>
+        <button onClick={() => setImageSource("shopify")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${imageSource === "shopify" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
+          style={{ color: imageSource === "shopify" ? "#0f172a" : "#64748b" }}>
+          <Package className="w-4 h-4" /> Produits Shopify
+        </button>
+      </div>
+
       {/* Image thumbnails strip */}
       {images.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -268,6 +339,38 @@ export default function ImagesPage() {
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             {!selectedImage ? (
+              imageSource === "shopify" ? (
+                <div className="p-4">
+                  {loadingShopify ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <Loader2 className="w-8 h-8 animate-spin mb-3" style={{ color: "#3b82f6" }} />
+                      <p className="text-sm" style={{ color: "#64748b" }}>Chargement des images produits...</p>
+                    </div>
+                  ) : shopifyImages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <Package className="w-12 h-12 mb-4" style={{ color: "#cbd5e1" }} />
+                      <p className="text-sm font-medium" style={{ color: "#64748b" }}>Aucune image produit disponible</p>
+                      <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Connectez votre boutique Shopify pour accéder à vos images</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs font-medium mb-3" style={{ color: "#64748b" }}>Cliquez sur une image pour la charger dans l&apos;éditeur</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto">
+                        {shopifyImages.map((img) => (
+                          <button key={img.id} onClick={() => addShopifyImage(img)}
+                            className="group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-all">
+                            <img src={img.src} alt={img.title} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <Plus className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#fff" }} />
+                            </div>
+                            <p className="absolute bottom-0 left-0 right-0 text-[10px] px-1.5 py-1 bg-black/60 truncate" style={{ color: "#fff" }}>{img.title}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
               <div className={`flex flex-col items-center justify-center p-16 border-2 border-dashed rounded-xl m-4 transition-colors ${dragOver ? "border-blue-400 bg-blue-50" : "border-gray-300"}`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
@@ -282,6 +385,7 @@ export default function ImagesPage() {
                   Choisir des fichiers
                 </button>
               </div>
+              )
             ) : (
               <div className="relative">
                 {/* Toolbar */}
@@ -365,8 +469,10 @@ export default function ImagesPage() {
                 <button key={action.id} onClick={() => selectedImage && processImage(selectedImage, action.id)}
                   disabled={!selectedImage || processing}
                   className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#eff6ff" }}>
-                    <action.icon className="w-4 h-4" style={{ color: "#2563eb" }} />
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-50">
+                    {processing && processingAction === action.id
+                      ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#2563eb" }} />
+                      : <action.icon className="w-4 h-4" style={{ color: "#2563eb" }} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{action.label}</p>
@@ -452,15 +558,23 @@ export default function ImagesPage() {
             <p className="text-xs font-medium mb-2" style={{ color: "#64748b" }}>Redimensionner</p>          {/* Preset sizes */}
           
             <div className="grid grid-cols-2 gap-2">
-              {presetSizes.map((preset) => (
-                <button key={preset.label}
-                  onClick={() => selectedImage && processImage(selectedImage, "resize", preset.width, preset.height)}
-                  disabled={!selectedImage || processing}
-                  className="p-2.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left disabled:opacity-50">
-                  <p className="text-xs font-medium" style={{ color: "#0f172a" }}>{preset.label}</p>
-                  <p className="text-[10px]" style={{ color: "#94a3b8" }}>{preset.width}×{preset.height}</p>
-                </button>
-              ))}
+              {presetSizes.map((preset) => {
+                const presetKey = `resize-${preset.width}x${preset.height}`;
+                return (
+                  <button key={preset.label}
+                    onClick={() => selectedImage && processImage(selectedImage, "resize", preset.width, preset.height)}
+                    disabled={!selectedImage || processing}
+                    className="p-2.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all text-left disabled:opacity-50">
+                    <div className="flex items-center gap-1.5">
+                      {processing && processingAction === presetKey
+                        ? <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" style={{ color: "#2563eb" }} />
+                        : null}
+                      <p className="text-xs font-medium" style={{ color: "#0f172a" }}>{preset.label}</p>
+                    </div>
+                    <p className="text-[10px]" style={{ color: "#94a3b8" }}>{preset.width}×{preset.height}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

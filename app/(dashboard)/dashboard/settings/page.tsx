@@ -548,11 +548,18 @@ export default function SettingsPage() {
                   <Shield className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Options avancées
                 </h2>
+                <ToggleSwitch on={compactMode} onToggle={() => handleCompactChange(!compactMode)} label="Mode compact (tableaux denses)" />
                 <ToggleSwitch on={devMode} onToggle={() => handleDevChange(!devMode)} label="Mode développeur (logs console)" />
               </div>
 
-              <div className="pt-2">
-                <a href="/dashboard/account" className="text-xs underline underline-offset-2" style={{ color: "#94a3b8" }}>Supprimer mon compte</a>
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+                <h2 className="text-sm font-semibold mb-1" style={{ color: "#94a3b8" }}>Compte</h2>
+                <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>Gestion et suppression de votre compte</p>
+                <a href="/dashboard/account"
+                  className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                  style={{ color: "#64748b" }}>
+                  Supprimer mon compte
+                </a>
               </div>
             </div>
           )}
