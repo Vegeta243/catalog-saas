@@ -157,14 +157,56 @@ export default function ImagesPage() {
     return new Blob([bytes], { type: mimeType });
   };
 
+  // Canvas-based processing for local files — works without any network call
+  const processImageCanvas = (imageFile: ImageFile, action: string): Promise<void> =>
+    new Promise<void>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d")!;
+
+        let cssFilter = "";
+        if (action === "grayscale") cssFilter = "grayscale(1)";
+        else if (action === "enhance") cssFilter = "brightness(1.05) contrast(1.1) saturate(1.1)";
+        else if (action === "adjust") cssFilter = `brightness(${brightness / 100}) contrast(${contrast / 100}) saturate(${saturation / 100})`;
+
+        if (cssFilter) ctx.filter = cssFilter;
+        ctx.drawImage(img, 0, 0);
+
+        const mime = outputFormat === "png" ? "image/png" : outputFormat === "jpeg" ? "image/jpeg" : "image/webp";
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { addToast("Erreur traitement Canvas", "error"); resolve(); return; }
+            const url = URL.createObjectURL(blob);
+            const comp = imageFile.size > 0 ? Math.max(0, Math.round((1 - blob.size / imageFile.size) * 100)) : 0;
+            setImages((prev) => prev.map((i) =>
+              i.id === imageFile.id ? { ...i, processedUrl: url, processedSize: blob.size, compression: comp } : i
+            ));
+            addToast(`Image traitée${comp > 0 ? ` — ${comp}% de compression` : ""}`, "success");
+            resolve();
+          },
+          mime,
+          quality / 100
+        );
+      };
+      img.onerror = () => { addToast("Impossible de charger l'image", "error"); resolve(); };
+      img.src = imageFile.originalUrl;
+    });
 
   const processImage = async (imageFile: ImageFile, action: string, width = 0, height = 0) => {
     setProcessing(true);
     setProcessingAction(action + (width ? `-${width}x${height}` : ""));
     try {
+      // Local files + non-resize → Canvas (instant, no network, works everywhere)
+      if (action !== "resize" && !imageFile.originalUrl.startsWith("http")) {
+        await processImageCanvas(imageFile, action);
+        return;
+      }
 
+      // Resize or Shopify CDN → server-side Sharp
       const formData = new FormData();
-      // Support remote URLs (Shopify CDN) via server-side fetch
       if (imageFile.originalUrl.startsWith("http")) {
         formData.append("imageUrl", imageFile.originalUrl);
       } else {
@@ -181,17 +223,12 @@ export default function ImagesPage() {
       if (height) formData.append("height", height.toString());
 
       const res = await fetch("/api/images/process", { method: "POST", body: formData });
-      
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Erreur serveur (${res.status})`);
+        throw new Error(errData.message || errData.error || `Erreur serveur (${res.status})`);
       }
-      
       const data = await res.json();
-
-      if (!data.image) {
-        throw new Error("Aucune image retournée par le serveur");
-      }
+      if (!data.image) throw new Error("Aucune image retournée par le serveur");
 
       setImages((prev) => prev.map((img) =>
         img.id === imageFile.id
@@ -200,12 +237,12 @@ export default function ImagesPage() {
       ));
       addToast(`Image traitée${data.compression !== undefined ? ` — ${data.compression}% de compression` : ""}`, "success");
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Erreur de traitement";
-      addToast(`Échec : ${errorMsg}`, "error");
-      console.error("Image processing error:", err);
+      addToast(`Échec : ${err instanceof Error ? err.message : "Erreur de traitement"}`, "error");
+      console.error("processImage error:", err);
+    } finally {
+      setProcessing(false);
+      setProcessingAction(null);
     }
-    setProcessing(false);
-    setProcessingAction(null);
   };
 
   const handleBatchProcess = async (action: string, width = 0, height = 0) => {
@@ -238,16 +275,36 @@ export default function ImagesPage() {
     setSaturation(100);
   };
 
-  const downloadImage = (img: ImageFile) => {
+  const downloadImage = async (img: ImageFile) => {
     const url = img.processedUrl || img.originalUrl;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = img.name.replace(/\.[^.]+$/, `.${outputFormat}`);
-    a.click();
+    const filename = img.name.replace(/\.[^.]+$/, `.${outputFormat}`);
+    try {
+      let blobUrl = url;
+      let needRevoke = false;
+      if (url.startsWith("data:")) {
+        // Convert base64 data URL to a real blob URL — avoids browser limits on data: hrefs
+        const resp = await fetch(url);
+        const blob = await resp.blob();
+        blobUrl = URL.createObjectURL(blob);
+        needRevoke = true;
+      }
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      if (needRevoke) setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch {
+      addToast("Impossible de télécharger l'image", "error");
+    }
   };
 
-  const downloadAll = () => {
-    images.forEach((img) => downloadImage(img));
+  const downloadAll = async () => {
+    for (const img of images) {
+      await downloadImage(img);
+      await new Promise((r) => setTimeout(r, 120)); // small gap to avoid browser blocking multiple downloads
+    }
     addToast(`${images.length} image${images.length > 1 ? "s" : ""} téléchargée${images.length > 1 ? "s" : ""}`, "success");
   };
 
