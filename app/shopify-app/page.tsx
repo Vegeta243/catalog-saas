@@ -167,7 +167,7 @@ export default function ShopifyAppPage() {
               </div>
               <p className="text-base sm:text-lg leading-relaxed max-w-2xl" style={{ color: "#475569" }}>
                 Générez des descriptions IA, optimisez votre SEO, éditez en masse et automatisez votre
-                catalogue Shopify. <strong style={{ color: "#0f172a" }}>50 actions gratuites, sans carte bancaire.</strong>
+                catalogue Shopify. <strong style={{ color: "#0f172a" }}>30 actions gratuites, sans carte bancaire.</strong>
               </p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {["IA GPT-4o", "SEO intégré", "Import fournisseurs", "Édition en masse", "RGPD"].map((tag) => (
@@ -187,7 +187,7 @@ export default function ShopifyAppPage() {
                   Commencez gratuitement dès aujourd&apos;hui
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  {["50 actions offertes", "Aucune carte requise", "Installation en 1 min"].map((item) => (
+                  {["30 actions offertes", "Aucune carte requise", "Installation en 1 min"].map((item) => (
                     <p key={item} className="flex items-center gap-1.5 text-sm" style={{ color: "#475569" }}>
                       <Check className="w-4 h-4" style={{ color: "#059669" }} /> {item}
                     </p>
@@ -380,7 +380,7 @@ export default function ShopifyAppPage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {[
-              { name: "Gratuit", price: "0€", tasks: "50 actions", color: "#64748b", popular: false },
+              { name: "Gratuit", price: "0€", tasks: "30 actions", color: "#64748b", popular: false },
               { name: "Starter", price: "29€", tasks: "1 000 actions/mois", color: "#2563eb", popular: false },
               { name: "Pro", price: "89€", tasks: "20 000 actions/mois", color: "#7c3aed", popular: true },
               { name: "Scale", price: "129€", tasks: "100 000 actions/mois", color: "#059669", popular: false },
@@ -451,7 +451,7 @@ export default function ShopifyAppPage() {
             Prêt à transformer votre catalogue Shopify ?
           </h2>
           <p className="text-base sm:text-lg mb-8" style={{ color: "#94a3b8" }}>
-            50 actions gratuites · Sans carte bancaire · Installation en 1 minute
+            30 actions gratuites · Sans carte bancaire · Installation en 1 minute
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a

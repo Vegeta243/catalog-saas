@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s | EcomPilot",
   },
   description:
-    "EcomPilot est le copilote IA pour Shopify : générez des descriptions, optimisez votre SEO, éditez en masse et automatisez votre catalogue. 50 actions gratuites, sans carte bancaire.",
+    "EcomPilot est le copilote IA pour Shopify : générez des descriptions, optimisez votre SEO, éditez en masse et automatisez votre catalogue. 30 actions gratuites, sans carte bancaire.",
   keywords: [
     "Shopify",
     "catalogue Shopify",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "EcomPilot — Copilote IA pour Shopify",
-    description: "50 actions gratuites. Descriptions IA, édition en masse, automatisations. Sans carte bancaire.",
+    description: "30 actions gratuites. Descriptions IA, édition en masse, automatisations. Sans carte bancaire.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -90,7 +90,7 @@ export default function RootLayout({
                 "@type": "Offer",
                 price: "0",
                 priceCurrency: "EUR",
-                description: "50 actions gratuites sans carte bancaire",
+                description: "30 actions gratuites sans carte bancaire",
               },
               aggregateRating: {
                 "@type": "AggregateRating",

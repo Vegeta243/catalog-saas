@@ -2,7 +2,7 @@
 // Tâches mensuelles par plan (serveur uniquement)
 
 export const PLAN_TASKS: Record<string, number> = {
-  free: 50,
+  free: 30,
   starter: 1000,
   pro: 20000,
   scale: 100000,

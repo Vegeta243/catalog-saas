@@ -10,10 +10,10 @@ const PLANS = [
     name: "Free",
     icon: Star,
     monthlyPrice: 0,
-    yearlyPrice: 0,
+    yearlyPrice: 20,
     description: "Pour tester EcomPilot",
     features: [
-      "50 actions gratuites",
+      "30 actions gratuites",
       "1 boutique connectée",
       "Export CSV basique",
       "Support communautaire",
@@ -26,8 +26,8 @@ const PLANS = [
     id: "starter",
     name: "Starter",
     icon: Zap,
-    monthlyPrice: 39,
-    yearlyPrice: 23,
+    monthlyPrice: 29,
+    yearlyPrice: 20,
     description: "Pour les petites boutiques qui démarrent",
     features: [
       "1 boutique Shopify",
@@ -48,7 +48,7 @@ const PLANS = [
     name: "Pro",
     icon: Crown,
     monthlyPrice: 89,
-    yearlyPrice: 71,
+    yearlyPrice: 62,
     description: "Pour les boutiques en croissance",
     features: [
       "Jusqu'à 3 boutiques",
@@ -70,8 +70,8 @@ const PLANS = [
     id: "scale",
     name: "Scale",
     icon: Rocket,
-    monthlyPrice: 179,
-    yearlyPrice: 103,
+    monthlyPrice: 129,
+    yearlyPrice: 90,
     description: "Pour les boutiques à grande échelle",
     features: [
       "Boutiques illimitées",
@@ -114,7 +114,7 @@ export default function PricingPage() {
           Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
         </h1>
         <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "#64748b" }}>
-          50 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
+          30 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
         </p>
 
         {/* Toggle */}
@@ -126,7 +126,7 @@ export default function PricingPage() {
               : <ToggleLeft className="w-10 h-10" style={{ color: "#94a3b8" }} />}
           </button>
           <span className="text-sm font-medium" style={{ color: yearly ? "#0f172a" : "#94a3b8" }}>
-            Annuel <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100" style={{ color: "#059669" }}>-20%</span>
+            Annuel <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100" style={{ color: "#059669" }}>-30%</span>
           </span>
         </div>
       </div>

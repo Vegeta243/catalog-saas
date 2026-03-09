@@ -385,7 +385,7 @@ export default function AccountPage() {
                       {currentPlan === "free" ? "Gratuit" : currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
                     </p>
                     <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
-                      {currentPlan === "free" ? "50 actions gratuites" : `${PLAN_PRICES[currentPlan]} / mois`}
+                      {currentPlan === "free" ? "30 actions gratuites" : `${PLAN_PRICES[currentPlan]} / mois`}
                     </p>
                   </div>
                   <div className="text-right">

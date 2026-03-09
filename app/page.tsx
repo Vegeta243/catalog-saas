@@ -40,21 +40,21 @@ const FEATURES = [
 const PLANS = [
   {
     id: "starter", name: "Starter", badge: "🥉",
-    monthlyPrice: 29, yearlyPrice: 23, popular: false,
+    monthlyPrice: 29, yearlyPrice: 20, popular: false,
     target: "Pour les petites boutiques qui démarrent",
     fit: "Vous avez moins de 500 produits et cherchez à gagner du temps sur les tâches répétitives.",
-    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "1 000 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "50 actions gratuites pour démarrer"],
+    features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "1 000 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "30 actions gratuites pour démarrer"],
   },
   {
     id: "pro", name: "Pro", badge: "🥇",
-    monthlyPrice: 89, yearlyPrice: 71, popular: true,
+    monthlyPrice: 89, yearlyPrice: 62, popular: true,
     target: "Pour les boutiques en croissance",
     fit: "Vous gérez un catalogue important et voulez automatiser votre croissance avec l'IA.",
     features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "20 000 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score visibilité par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Démarrage immédiat • sans engagement"],
   },
   {
     id: "scale", name: "Scale", badge: "🏆",
-    monthlyPrice: 129, yearlyPrice: 103, popular: false,
+    monthlyPrice: 129, yearlyPrice: 90, popular: false,
     target: "Pour les boutiques à grande échelle",
     fit: "Vous gérez plusieurs boutiques et avez besoin de performances maximales.",
     features: ["Boutiques illimitées", "Tout Pro +", "100 000 tâches IA/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (4h)", "Accès anticipé nouveautés", "Accès immédiat dès le paiement"],
@@ -64,12 +64,12 @@ const PLANS = [
 const FAQ_ITEMS = [
   { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer. Chaque modification passe par votre approbation — produit par produit ou en masse. Vous gardez le contrôle total." },
   { q: "Combien de temps faut-il pour tout mettre en place ?", a: "30 secondes pour connecter votre boutique. Vos produits se synchronisent automatiquement. En 5 minutes, vous pouvez déjà générer vos premières descriptions IA et modifier vos prix en masse." },
-  { q: "C'est quoi exactement une action gratuite ?", a: "Chaque génération IA (titre, description, tags) ou import de produit compte pour 1 action. Vous démarrez avec 50 actions gratuites, sans carte bancaire. Une fois la limite atteinte, vous choisissez un plan adapté à vos besoins pour continuer." },
+  { q: "C'est quoi exactement une action gratuite ?", a: "Chaque génération IA (titre, description, tags) ou import de produit compte pour 1 action. Vous démarrez avec 30 actions gratuites, sans carte bancaire. Une fois la limite atteinte, vous choisissez un plan adapté à vos besoins pour continuer." },
   { q: "Est-ce que ça fonctionne bien pour le dropshipping ?", a: "Absolument. EcomPilot est conçu pour les dropshippers : import direct depuis AliExpress et CJ Dropshipping, génération IA de descriptions uniques, ajustement automatique des marges." },
   { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic depuis votre tableau de bord. Aucun engagement, aucun frais caché. Si vous annulez, vous gardez l'accès jusqu'à la fin de votre période payée." },
   { q: "Quelle est la différence avec les apps Shopify classiques ?", a: "Les apps Shopify font une seule chose. EcomPilot centralise tout : édition en masse, IA, images, import, automatisations, score de visibilité. Un seul outil à la place de 5 apps séparées." },
   { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec vos 50 premières actions, sans renseigner de carte. Vous n'en avez besoin que lorsque vous choisissez un plan payant, après avoir constaté la valeur de l'outil par vous-même." },
-  { q: "Que se passe-t-il quand on atteint la limite des 50 actions ?", a: "Un message clair s'affiche pour vous proposer de passer à un plan payant. Vos données et votre boutique restent intactes. Vous choisissez votre plan et continuez là où vous vous êtes arrêté(e), immédiatement." },
+  { q: "Que se passe-t-il quand on atteint la limite des 30 actions ?", a: "Un message clair s'affiche pour vous proposer de passer à un plan payant. Vos données et votre boutique restent intactes. Vous choisissez votre plan et continuez là où vous vous êtes arrêté(e), immédiatement." },
 ];
 
 const TESTIMONIALS = [
@@ -162,7 +162,7 @@ export default function HomePage() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6 mt-4 mb-8">
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
-              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Sans carte bancaire • 50 actions offertes
+              <Shield className="w-4 h-4" style={{ color: "#059669" }} /> Sans carte bancaire • 30 actions offertes
             </p>
             <p className="flex items-center gap-1 text-sm" style={{ color: "#64748b" }}>
               <Check className="w-4 h-4" style={{ color: "#059669" }} /> Résiliation en 1 clic
@@ -356,7 +356,7 @@ export default function HomePage() {
               Des prix simples. Pas de surprise.
             </h2>
             <p className="text-lg mb-8" style={{ color: "#64748b" }}>
-              Commencez avec <strong>50 actions gratuites</strong> — sans carte bancaire. Passez à un plan payant quand vous êtes convaincu(e).
+              Commencez avec <strong>30 actions gratuites</strong> — sans carte bancaire. Passez à un plan payant quand vous êtes convaincu(e).
             </p>
             <div className="inline-flex items-center gap-3 bg-gray-100 border border-gray-200 rounded-full px-2 py-1.5">
               <button
@@ -371,7 +371,7 @@ export default function HomePage() {
                 className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${billingPeriod === "yearly" ? "bg-blue-600 shadow-md" : "hover:bg-white"}`}
                 style={{ color: billingPeriod === "yearly" ? "#fff" : "#475569" }}
               >
-                Annuel <span className="text-[11px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: billingPeriod === "yearly" ? "rgba(255,255,255,0.2)" : "#dcfce7", color: billingPeriod === "yearly" ? "#fff" : "#16a34a" }}>-20%</span>
+                Annuel <span className="text-[11px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: billingPeriod === "yearly" ? "rgba(255,255,255,0.2)" : "#dcfce7", color: billingPeriod === "yearly" ? "#fff" : "#16a34a" }}>-30%</span>
               </button>
             </div>
           </div>
@@ -398,7 +398,7 @@ export default function HomePage() {
                       <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>soit {plan.yearlyPrice * 12}€/an au lieu de {plan.monthlyPrice * 12}€</p>
                     )}
                     {billingPeriod === "monthly" && (
-                      <p className="text-xs mt-1" style={{ color: "#059669" }}>ou {plan.yearlyPrice}€/mois en annuel <span className="font-bold" style={{ color: "#dc2626" }}>(-20%)</span></p>
+                      <p className="text-xs mt-1" style={{ color: "#059669" }}>ou {plan.yearlyPrice}€/mois en annuel <span className="font-bold" style={{ color: "#dc2626" }}>(-30%)</span></p>
                     )}
                   </div>
                   <ul className="space-y-3 mb-6 flex-1">
@@ -464,7 +464,7 @@ export default function HomePage() {
             {[
               { plan: "Starter → Pro", icon: "🚀", trigger: "Vous dépassez 500 produits ou avez besoin de plus d'IA", benefits: ["×6 tâches IA (300/mois)", "Import illimité AliExpress & CJ", "Jusqu'à 3 boutiques", "Support prioritaire 24h"] },
               { plan: "Pro → Scale", icon: "🏆", trigger: "Vous gérez plusieurs boutiques ou voulez des performances maximales", benefits: ["×3.3 tâches IA (1 000/mois)", "Boutiques illimitées", "Automatisations illimitées", "Support dédié en 4h"] },
-              { plan: "Annuel (-20%)", icon: "💰", trigger: "Vous utilisez EcomPilot depuis plus d'un mois", benefits: ["20% d'économies garanties", "Même plan, moins cher", "Changement en 1 clic", "Accès anticipé nouveautés"] },
+              { plan: "Annuel (-30%)", icon: "💰", trigger: "Vous utilisez EcomPilot depuis plus d'un mois", benefits: ["30% d'économies garanties", "Même plan, moins cher", "Changement en 1 clic", "Accès anticipé nouveautés"] },
             ].map((u) => (
               <div key={u.plan} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all">
                 <span className="text-3xl mb-4 block">{u.icon}</span>
@@ -520,7 +520,7 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 px-10 py-5 bg-blue-600 hover:bg-blue-700 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/25"
               style={{ color: "#fff" }}
             >
-              <Target className="w-5 h-5" /> Reprendre le contrôle — 50 actions offertes
+              <Target className="w-5 h-5" /> Reprendre le contrôle — 30 actions offertes
             </button>
             <button
               onClick={() => handleNavigate("/login")}
@@ -600,7 +600,7 @@ export default function HomePage() {
             Rejoignez les marchands qui ont choisi de travailler plus intelligemment.
           </p>
           <p className="text-lg mb-10 font-medium" style={{ color: "#60a5fa" }}>
-            50 actions gratuites · Aucune carte requise · Accès immédiat
+            30 actions gratuites · Aucune carte requise · Accès immédiat
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
