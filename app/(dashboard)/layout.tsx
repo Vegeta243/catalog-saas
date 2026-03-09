@@ -260,96 +260,113 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
 
-        {/* Tasks counter + plan */}
-        {!sidebarCollapsed && (
-          <>
-          <div className="mx-3 mb-2 rounded-xl overflow-hidden border border-gray-600" style={{ backgroundColor: '#1e293b' }}>
-            <div className="px-3 pt-3 pb-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold text-white">Tâches ce mois</span>
-                <span className={`text-sm font-black ${
-                  tasksRemaining <= 3 ? 'text-red-300' :
-                  tasksRemaining <= 10 ? 'text-orange-300' :
-                  'text-green-300'
-                }`}>
-                  {tasksRemaining}/{tasksTotal}
-                </span>
-              </div>
-              <div className="w-full rounded-full h-3" style={{ backgroundColor: '#374151' }}>
-                <div
-                  className={`h-3 rounded-full transition-all duration-700 ${
-                    tasksRemaining <= 3 ? 'bg-red-400' :
-                    tasksRemaining <= 10 ? 'bg-orange-400' :
-                    'bg-blue-400'
-                  }`}
-                  style={{
-                    width: `${tasksTotal > 0 ? Math.min(100, Math.max(4, (tasksUsed / tasksTotal) * 100)) : 4}%`,
-                    minWidth: tasksUsed > 0 ? '12px' : '0'
-                  }}
-                />
-              </div>
-              <p className="text-xs text-gray-300 mt-1.5 mb-2">
-                <span className="font-semibold text-white">{tasksUsed}</span> utilisées
-              </p>
-            </div>
-            <div className="border-t border-gray-600 px-3 py-2 space-y-1">
-              {([
-                { label: '✨ Titre IA', cost: '1 tâche' },
-                { label: '📝 Description IA', cost: '3 tâches' },
-                { label: '🖼️ Image', cost: '1 tâche' },
-                { label: '✏️ Bulk edit', cost: 'Gratuit', free: true },
-              ] as { label: string; cost: string; free?: boolean }[]).map(item => (
-                <div key={item.label} className="flex justify-between items-center">
-                  <span className="text-xs text-gray-300">{item.label}</span>
-                  <span className={`text-xs font-medium ${item.free ? 'text-green-400' : 'text-gray-300'}`}>
-                    {item.cost}
-                  </span>
+        {/* SIDEBAR BOTTOM */}
+        <div className="mt-auto">
+
+          {!sidebarCollapsed && (
+            <>
+            {/* Task counter — dark card, max contrast */}
+            <div className="mx-3 mb-3 rounded-2xl overflow-hidden" style={{ background: '#0f172a', border: '1px solid #334155' }}>
+              <div className="px-4 pt-4 pb-3">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-bold text-white">Tâches ce mois</span>
+                  <span className={`text-sm font-black tabular-nums ${
+                    tasksRemaining <= 3 ? 'text-red-400' :
+                    tasksRemaining <= 10 ? 'text-orange-300' : 'text-emerald-400'
+                  }`}>{tasksRemaining}<span className="text-gray-500 font-normal">/{tasksTotal}</span></span>
                 </div>
-              ))}
+                {/* Bar */}
+                <div className="h-2.5 rounded-full w-full mb-3" style={{ background: '#1e293b' }}>
+                  <div className={`h-2.5 rounded-full transition-all duration-700 ${
+                    tasksRemaining <= 3 ? 'bg-red-500' :
+                    tasksRemaining <= 10 ? 'bg-orange-400' : 'bg-blue-500'
+                  }`} style={{ width: `${tasksTotal > 0 ? Math.min(100, Math.max(5, (tasksUsed / tasksTotal) * 100)) : 5}%` }} />
+                </div>
+                <p className="text-xs" style={{ color: '#94a3b8' }}>
+                  <span className="text-white font-semibold">{tasksUsed}</span> utilisées · renouvellement le 1er
+                </p>
+              </div>
+              {/* Cost table */}
+              <div className="px-4 pb-4 pt-2" style={{ borderTop: '1px solid #1e293b' }}>
+                {([
+                  ['✨', 'Titre IA', '1 tâche', false],
+                  ['📝', 'Description IA', '3 tâches', false],
+                  ['🖼️', 'Image', '1 tâche', false],
+                  ['✏️', 'Bulk edit', 'Gratuit', true],
+                ] as [string, string, string, boolean][]).map(([icon, label, cost, free]) => (
+                  <div key={label} className="flex justify-between items-center py-0.5">
+                    <span className="text-xs" style={{ color: '#94a3b8' }}>{icon} {label}</span>
+                    <span className={`text-xs font-semibold ${free ? 'text-emerald-400' : 'text-slate-300'}`}>{cost}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {(plan === 'free' || plan === 'starter') && (
-            <div className="mx-3 mb-3 rounded-xl p-3" style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}>
-              <p className="text-xs font-bold text-white mb-0.5">
-                {plan === 'free' ? '🚀 Passez au Starter' : '🚀 Passez au plan Pro'}
-              </p>
-              <p className="text-xs text-blue-200 mb-2 leading-snug">
-                {plan === 'free'
-                  ? '1 000 tâches IA · 500 produits'
-                  : '20 000 tâches et 3 boutiques'
-                }
-              </p>
-              <a href="/dashboard/account?tab=subscription"
-                className="block text-center text-xs font-bold bg-white text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-                {plan === 'free' ? '29€/mois — Voir l\'offre →' : '89€/mois — Voir l\'offre →'}
-              </a>
-            </div>
+            {/* Upsell banner */}
+            {plan === 'free' && (
+              <div className="mx-3 mb-3 rounded-2xl p-4 relative overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 50%, #2563eb 100%)' }}>
+                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-20" style={{ background: 'white' }} />
+                <div className="absolute -bottom-6 -right-2 w-20 h-20 rounded-full opacity-10" style={{ background: 'white' }} />
+                <div className="relative">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-sm font-black text-white">🚀 Starter</span>
+                    <span className="text-xs font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">29€/mois</span>
+                  </div>
+                  <p className="text-xs text-blue-200 mb-3 leading-relaxed">
+                    1 000 tâches IA · 500 produits<br/>Import AliExpress inclus
+                  </p>
+                  <a href="/dashboard/account?tab=subscription"
+                    className="block text-center text-xs font-black py-2 rounded-xl transition-all hover:scale-105"
+                    style={{ background: 'white', color: '#1d4ed8' }}>
+                    Débloquer maintenant →
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {plan === 'starter' && (
+              <div className="mx-3 mb-3 rounded-2xl p-4 relative overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)' }}>
+                <div className="relative">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-sm font-black text-white">⚡ Pro</span>
+                    <span className="text-xs font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">89€/mois</span>
+                  </div>
+                  <p className="text-xs text-green-200 mb-3 leading-relaxed">
+                    20 000 tâches · 3 boutiques<br/>Webhooks &amp; automatisations avancées
+                  </p>
+                  <a href="/dashboard/account?tab=subscription"
+                    className="block text-center text-xs font-black py-2 rounded-xl transition-all hover:scale-105"
+                    style={{ background: 'white', color: '#065f46' }}>
+                    Passer au Pro →
+                  </a>
+                </div>
+              </div>
+            )}
+            </>
           )}
-          </>
-        )}
 
-        {/* Bottom user area */}
-        <div className="border-t border-slate-700/50 p-3">
-          <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-2'} py-2`}>
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-bold">{userEmail?.[0]?.toUpperCase() || 'U'}</span>
+          {/* User row */}
+          <div className={`px-3 pb-4 pt-3 flex items-center gap-2.5`} style={{ borderTop: '1px solid #1f2937' }}>
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-black">
+              {userEmail?.[0]?.toUpperCase() || 'U'}
             </div>
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold truncate text-gray-100">{userEmail || 'Chargement…'}</p>
-                <p className="text-xs text-gray-400 capitalize">{plan || 'free'}</p>
+                <p className="text-xs font-semibold text-white truncate">{userEmail || 'Chargement…'}</p>
+                <p className="text-xs font-medium capitalize" style={{ color: '#60a5fa' }}>{plan}</p>
               </div>
             )}
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg hover:bg-red-500/20 transition-all flex-shrink-0"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4" style={{ color: '#f87171' }} />
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'} py-2.5 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-all w-full mt-1`}
-            title={sidebarCollapsed ? 'Déconnexion' : undefined}
-          >
-            <LogOut className="w-[18px] h-[18px] flex-shrink-0" style={{ color: '#f87171' }} />
-            {!sidebarCollapsed && <span style={{ color: '#f87171' }}>Déconnexion</span>}
-          </button>
+
         </div>
 
         {/* Collapse toggle — desktop only */}
