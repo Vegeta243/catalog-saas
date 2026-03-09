@@ -555,11 +555,18 @@ export default function SettingsPage() {
               <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
                 <h2 className="text-sm font-semibold mb-1" style={{ color: "#94a3b8" }}>Compte</h2>
                 <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>Gestion et suppression de votre compte</p>
-                <a href="/dashboard/account"
-                  className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
-                  style={{ color: "#64748b" }}>
-                  Supprimer mon compte
-                </a>
+                <div className="flex flex-wrap gap-3">
+                  <a href="/api/user/export-data" download
+                    className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                    style={{ color: "#64748b" }}>
+                    ⬇️ Exporter mes données (RGPD)
+                  </a>
+                  <a href="/dashboard/account"
+                    className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                    style={{ color: "#64748b" }}>
+                    Supprimer mon compte
+                  </a>
+                </div>
               </div>
             </div>
           )}

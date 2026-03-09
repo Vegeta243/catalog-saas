@@ -23,6 +23,12 @@ export default function MentionsLegalesPage() {
           Dernière mise à jour : 1er janvier 2026
         </p>
 
+        {process.env.NODE_ENV === "development" && (
+          <div className="mb-6 p-4 rounded-lg border text-sm" style={{ backgroundColor: "#fffbeb", borderColor: "#fde68a", color: "#92400e" }}>
+            ⚠️ Complétez les champs [À COMPLÉTER] avant mise en production (obligation LCEN art. 6).
+          </div>
+        )}
+
         <div className="space-y-6 text-sm leading-relaxed" style={{ color: "#374151" }}>
           <section>
             <h2 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>1. Éditeur du site</h2>
@@ -31,12 +37,13 @@ export default function MentionsLegalesPage() {
               <li><strong>Raison sociale</strong> : EcomPilot SAS</li>
               <li><strong>Forme juridique</strong> : Société par Actions Simplifiée (SAS)</li>
               <li><strong>Siège social</strong> : France</li>
-              <li><strong>Directeur de la publication</strong> : À compléter</li>
+              <li><strong>SIRET</strong> : [À COMPLÉTER]</li>
+              <li><strong>RCS</strong> : [À COMPLÉTER]</li>
+              <li><strong>Capital social</strong> : [À COMPLÉTER] €</li>
+              <li><strong>TVA intracommunautaire</strong> : [À COMPLÉTER]</li>
+              <li><strong>Directeur de la publication</strong> : [À COMPLÉTER]</li>
               <li><strong>Email</strong> : <a href="mailto:contact@ecompilot.fr" className="underline" style={{ color: "#2563eb" }}>contact@ecompilot.fr</a></li>
             </ul>
-            <p className="mt-2 text-xs p-2 rounded border" style={{ color: "#d97706", backgroundColor: "#fffbeb", borderColor: "#fde68a" }}>
-              ⚠️ Ces informations sont provisoires. Les mentions légales doivent être complétées avec les données réelles de la société avant toute mise en ligne commerciale (SIRET, RCS, capital, dirigeant).
-            </p>
           </section>
 
           <section>

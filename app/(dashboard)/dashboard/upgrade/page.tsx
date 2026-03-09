@@ -54,6 +54,7 @@ function UpgradeContent() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     // Read billing period from URL param
@@ -152,6 +153,21 @@ function UpgradeContent() {
         </button>
       </div>
 
+      {/* Consent checkbox — required before checkout */}
+      <label className="flex items-center gap-2 text-sm mb-4 max-w-md cursor-pointer" style={{ color: "#64748b" }}>
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+          className="w-4 h-4 rounded border-gray-300 text-blue-600"
+        />
+        <span>
+          J&apos;accepte les{" "}
+          <a href="/cgu" className="underline" style={{ color: "#2563eb" }} target="_blank" rel="noopener noreferrer">CGU</a>
+          {" "}et la facturation mensuelle automatique.
+        </span>
+      </label>
+
       {/* Plan cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mb-8">
         {PLANS.map((plan) => {
@@ -187,7 +203,7 @@ function UpgradeContent() {
               </ul>
               <button
                 onClick={() => handleChoosePlan(plan.id)}
-                disabled={isLoading || !!loadingPlan}
+                disabled={isLoading || !!loadingPlan || !consent}
                 className="w-full py-3 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 style={{ backgroundColor: plan.color, color: "#fff" }}
               >

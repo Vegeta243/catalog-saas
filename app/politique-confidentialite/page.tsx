@@ -107,6 +107,10 @@ export default function PrivacyPolicyPage() {
               Pour exercer ces droits, contactez-nous à : <a href="mailto:support@ecompilot.fr" className="underline" style={{ color: "#2563eb" }}>support@ecompilot.fr</a>.
               Nous répondrons dans un délai de 30 jours.
             </p>
+            <p className="mt-2">
+              <strong>DPO (Responsable de la protection des données)</strong> :{" "}
+              <a href="mailto:dpo@ecompilotelite.com" className="underline" style={{ color: "#2563eb" }}>dpo@ecompilotelite.com</a>
+            </p>
           </section>
 
           <section>
