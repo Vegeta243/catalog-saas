@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2"
-              style={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff', focusRingColor: '#dc2626' }}
+              style={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff' }}
               placeholder="admin@ecompilotelite.com"
               required
               autoComplete="email"

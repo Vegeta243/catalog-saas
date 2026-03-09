@@ -253,7 +253,7 @@ export default function ImagesPage() {
     await previewFilter("filter", { filter: filterId });
   };
 
-  const sliderDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const sliderDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleSliderChange = (type: "brightness" | "contrast" | "saturation" | "sharpness", value: number) => {
     if (type === "brightness") setBrightness(value);
