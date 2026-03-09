@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import {
   LayoutDashboard, Users, CreditCard, BarChart3,
@@ -17,13 +17,25 @@ const adminNav = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "elliottshilenge5@gmail.com")
-    .split(",").map((e) => e.trim()).filter(Boolean);
-  console.log("Admin check:", user?.email, "allowed:", ADMIN_EMAILS, "result:", ADMIN_EMAILS.includes(user?.email || ""));
-  if (!user || !ADMIN_EMAILS.includes(user.email || "")) {
-    redirect("/dashboard");
+  const cookieStore = await cookies();
+  const adminSession = cookieStore.get("admin_session");
+
+  if (!adminSession?.value) {
+    redirect("/admin/login");
+  }
+
+  try {
+    const decoded = Buffer.from(adminSession.value, "base64").toString();
+    const colonIdx = decoded.lastIndexOf(":");
+    const email = decoded.slice(0, colonIdx);
+    const timestamp = Number(decoded.slice(colonIdx + 1));
+    const age = Date.now() - timestamp;
+
+    if (age > 8 * 60 * 60 * 1000 || email !== process.env.ADMIN_EMAIL) {
+      redirect("/admin/login");
+    }
+  } catch {
+    redirect("/admin/login");
   }
 
   return (
