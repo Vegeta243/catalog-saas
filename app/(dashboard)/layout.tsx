@@ -89,10 +89,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Real user data from Supabase
   const [plan, setPlan] = useState("free");
   const [tasksUsed, setTasksUsed] = useState(0);
+  const [tasksTotalOverride, setTasksTotalOverride] = useState<number | null>(null);
   const [userName, setUserName] = useState("Mon compte");
   const [userEmail, setUserEmail] = useState("");
 
-  const tasksTotal = PLAN_TASKS[plan] || PLAN_TASKS.free || 50;
+  const tasksTotal = tasksTotalOverride ?? (PLAN_TASKS[plan] || PLAN_TASKS.free || 30);
   const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
 
   useEffect(() => {
@@ -116,7 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setUserName(firstName);
         const { data } = await supabase
           .from("users")
-          .select("plan, actions_used, deleted_at")
+          .select("plan, actions_used, actions_limit, deleted_at")
           .eq("id", user.id)
           .single();
         if (data) {
@@ -125,8 +126,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             router.push("/account-recovery");
             return;
           }
-          setPlan(data.plan || "free");
+          const p = data.plan || "free";
+          setPlan(p);
           setTasksUsed(data.actions_used || 0);
+          if (data.actions_limit) {
+            setTasksTotalOverride(data.actions_limit);
+          }
         }
       } catch { /* silent — Supabase may not be configured locally */ }
     };
@@ -165,8 +170,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div>
           <div className="flex items-center justify-between">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors flex-1`}>
-              <div className="flex items-center gap-3">
-                <img src="/logo.svg" alt="EcomPilot Elite" className="h-8 w-auto" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-black text-sm">E</span>
+                </div>
+                <div>
+                  <span className="text-white font-bold text-base leading-none">EcomPilot</span>
+                  <span className="block text-blue-400 text-xs font-semibold tracking-widest">ELITE</span>
+                </div>
               </div>
             </Link>
             {/* Close button mobile only */}
@@ -258,57 +269,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <>
           <div className="mx-3 mb-3 p-3 rounded-xl bg-gray-900 border border-gray-800">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Tâches ce mois</span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                tasksRemaining <= 5 ? 'bg-red-900 text-red-300' :
-                tasksRemaining <= 20 ? 'bg-orange-900 text-orange-300' :
-                'bg-green-900 text-green-300'
+              <span className="text-xs font-semibold text-gray-300">Tâches ce mois</span>
+              <span className={`text-xs font-bold ${
+                tasksRemaining <= 5 ? 'text-red-400' :
+                tasksRemaining <= 10 ? 'text-orange-400' : 'text-green-400'
               }`}>
-                {tasksRemaining} restantes
+                {tasksRemaining} / {tasksTotal}
               </span>
             </div>
 
-            <div className="w-full bg-gray-800 rounded-full h-2 mb-2">
+            <div className="w-full bg-gray-800 rounded-full h-1.5 mb-2">
               <div
-                className={`h-2 rounded-full transition-all ${
+                className={`h-1.5 rounded-full transition-all duration-500 ${
                   tasksRemaining <= 5 ? 'bg-red-500' :
-                  tasksRemaining <= 20 ? 'bg-orange-500' :
-                  'bg-blue-500'
+                  tasksRemaining <= 10 ? 'bg-orange-500' : 'bg-blue-500'
                 }`}
-                style={{ width: `${Math.min(100, ((tasksTotal - tasksRemaining) / tasksTotal) * 100)}%` }}
+                style={{ width: `${Math.max(2, Math.min(100, (tasksUsed / Math.max(tasksTotal, 1)) * 100))}%` }}
               />
             </div>
 
-            <div className="flex justify-between text-xs text-gray-500 mb-3">
-              <span>{tasksTotal - tasksRemaining} utilisées</span>
-              <span>{tasksTotal} total</span>
-            </div>
-
-            <div className="space-y-1 border-t border-gray-800 pt-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-400">✨ Titre IA</span>
-                <span className="text-gray-500">1 tâche</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-400">📝 Description IA</span>
-                <span className="text-gray-500">3 tâches</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-400">🖼️ Image</span>
-                <span className="text-gray-500">1 tâche</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-400">🔍 Concurrence</span>
-                <span className="text-gray-500">5 tâches</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-400">✏️ Bulk edit</span>
-                <span className="text-green-600">Gratuit</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-600 mt-2 text-center">
-              Renouvellement le {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+            <p className="text-xs text-gray-600">
+              {tasksUsed} utilisées · renouvellement le 1er
             </p>
           </div>
 
