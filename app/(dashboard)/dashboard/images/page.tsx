@@ -253,6 +253,34 @@ export default function ImagesPage() {
     await previewFilter("filter", { filter: filterId });
   };
 
+  const sliderDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleSliderChange = (type: "brightness" | "contrast" | "saturation" | "sharpness", value: number) => {
+    if (type === "brightness") setBrightness(value);
+    if (type === "contrast") setContrast(value);
+    if (type === "saturation") setSaturation(value);
+    if (type === "sharpness") setSharpness(value);
+
+    clearTimeout(sliderDebounceRef.current);
+    sliderDebounceRef.current = setTimeout(async () => {
+      if (loadedImages.length === 0) return;
+      const newVals = {
+        brightness: type === "brightness" ? value : brightness,
+        contrast: type === "contrast" ? value : contrast,
+        saturation: type === "saturation" ? value : saturation,
+        sharpness: type === "sharpness" ? value : sharpness,
+      };
+      try {
+        const currentSrc = processedImages[activeIndex] || loadedImages.find((i) => i.idx === activeIndex)?.src || "";
+        const b64 = await fetchAsBase64(currentSrc);
+        const result = await callProcess(b64, "adjustments", newVals);
+        setPendingPreview(result);
+      } catch {
+        // silent fail — user can still click Appliquer manually
+      }
+    }, 400);
+  };
+
   const handleReset = () => {
     setBrightness(100); setContrast(100); setSaturation(100); setSharpness(0);
     setActiveFilter("original");
@@ -662,18 +690,18 @@ export default function ImagesPage() {
             </h3>
             <div className="space-y-3">
               {([
-                { label: "Luminosite", val: brightness, set: setBrightness, min: 50, max: 150 },
-                { label: "Contraste", val: contrast, set: setContrast, min: 50, max: 150 },
-                { label: "Saturation", val: saturation, set: setSaturation, min: 0, max: 200 },
-                { label: "Nettete", val: sharpness, set: setSharpness, min: 0, max: 100 },
-              ] as { label: string; val: number; set: (v: number) => void; min: number; max: number }[]).map((adj) => (
+                { label: "Luminosite", val: brightness, type: "brightness" as const, set: setBrightness, min: 50, max: 150 },
+                { label: "Contraste", val: contrast, type: "contrast" as const, set: setContrast, min: 50, max: 150 },
+                { label: "Saturation", val: saturation, type: "saturation" as const, set: setSaturation, min: 0, max: 200 },
+                { label: "Nettete", val: sharpness, type: "sharpness" as const, set: setSharpness, min: 0, max: 100 },
+              ] as { label: string; val: number; type: "brightness" | "contrast" | "saturation" | "sharpness"; set: (v: number) => void; min: number; max: number }[]).map((adj) => (
                 <div key={adj.label}>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-medium" style={{ color: "#64748b" }}>{adj.label}</label>
                     <span className="text-xs font-mono" style={{ color: "#94a3b8" }}>{adj.val}%</span>
                   </div>
                   <input type="range" min={adj.min} max={adj.max} value={adj.val}
-                    onChange={(e) => adj.set(Number(e.target.value))}
+                    onChange={(e) => handleSliderChange(adj.type, Number(e.target.value))}
                     className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600" />
                 </div>
               ))}
