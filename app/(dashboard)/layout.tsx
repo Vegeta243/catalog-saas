@@ -150,8 +150,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center justify-between">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors flex-1`}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-4 h-4" style={{ color: '#ffffff' }} />
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <span className="text-white font-black text-sm select-none">E</span>
                 </div>
                 {!sidebarCollapsed && (
                   <span className="text-lg font-bold tracking-tight" style={{ color: '#ffffff' }}>EcomPilot</span>
