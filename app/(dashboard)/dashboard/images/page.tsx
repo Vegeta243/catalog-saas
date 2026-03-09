@@ -79,11 +79,40 @@ export default function ImagesPage() {
     handleFiles(e.dataTransfer.files);
   };
 
+    // Helper: convert URL (CDN or blob) to Blob
+  const urlToBlob = async (url: string): Promise<Blob> => {
+    // If blob URL (local upload), fetch directly
+    if (url.startsWith('blob:')) {
+      const response = await fetch(url);
+      return response.blob();
+    }
+    // If external URL (Shopify CDN), proxy through our server to avoid CORS
+    const proxyRes = await fetch('/api/images/fetch-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!proxyRes.ok) throw new Error('Failed to fetch CDN image');
+    const { base64, error } = await proxyRes.json();
+    if (error) throw new Error(error);
+    // Convert base64 back to Blob
+    const dataUrlParts = base64.match(/^data:(.*?);base64,(.*)$/);
+    if (!dataUrlParts) throw new Error('Invalid base64 data URL');
+    const mimeType = dataUrlParts[1];
+    const binaryString = atob(dataUrlParts[2]);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mimeType });
+  };
+
+
   const processImage = async (imageFile: ImageFile, action: string, width = 0, height = 0) => {
     setProcessing(true);
     try {
       // Fetch the original file blob
-      const blob = await fetch(imageFile.originalUrl).then((r) => r.blob());
+          const blob = await urlToBlob(imageFile.originalUrl);
       const formData = new FormData();
       formData.append("file", blob, imageFile.name);
       formData.append("action", action);
@@ -280,7 +309,8 @@ export default function ImagesPage() {
                 {/* Preview */}
                 <div className="flex items-center justify-center p-8 min-h-[400px]" style={{ backgroundColor: "#f1f5f9" }}>
                   <div className="relative rounded-lg overflow-hidden shadow-lg max-w-full max-h-[400px]" style={adjustmentStyle}>
-                    <img src={selectedImage.processedUrl || selectedImage.originalUrl} alt={selectedImage.name}
+                    <img
+                                  key={selectedImage.processedUrl ? `processed-${selectedIdx}` : `original-${selectedIdx}`} src={selectedImage.processedUrl || selectedImage.originalUrl} alt={selectedImage.name}
                       className="max-w-full max-h-[400px] object-contain" />
                   </div>
                   {processing && (
