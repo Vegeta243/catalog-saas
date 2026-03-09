@@ -169,11 +169,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Logo — links to landing page */}
         <div>
           <div className="flex items-center justify-between">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors flex-1`}>
-              {sidebarCollapsed ? (
-                <img src="/logo-icon-white.png" alt="EcomPilot Elite" className="w-8 h-8 object-contain" />
-              ) : (
-                <img src="/logo-white.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain" style={{ maxWidth: '160px' }} />
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors flex-1`}>
+              <img
+                src="/logo-icon.png"
+                alt=""
+                className="w-9 h-9 object-contain flex-shrink-0"
+                style={{ filter: 'brightness(0) invert(1)' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+              {!sidebarCollapsed && (
+                <div>
+                  <span className="text-white font-black text-lg leading-none tracking-tight">
+                    Ecom<span className="text-blue-400">Pilot</span>
+                  </span>
+                  <span className="block text-blue-400 text-xs font-bold tracking-[0.2em] leading-none mt-0.5">
+                    ELITE
+                  </span>
+                </div>
               )}
             </Link>
             {/* Close button mobile only */}
@@ -263,43 +275,66 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Tasks counter + plan */}
         {!sidebarCollapsed && (
           <>
-          <div className="mx-3 mb-2 p-3 rounded-xl bg-gray-800 border border-gray-700">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-semibold text-gray-100">Tâches ce mois</span>
-              <span className={`text-xs font-bold ${
-                tasksRemaining <= 5 ? 'text-red-400' :
-                tasksRemaining <= 10 ? 'text-orange-400' :
-                'text-green-400'
-              }`}>
-                {tasksRemaining} / {tasksTotal}
-              </span>
+          <div className="mx-3 mb-2 rounded-xl overflow-hidden border border-gray-600" style={{ backgroundColor: '#1e293b' }}>
+            <div className="px-3 pt-3 pb-1">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-white">Tâches ce mois</span>
+                <span className={`text-sm font-black ${
+                  tasksRemaining <= 3 ? 'text-red-300' :
+                  tasksRemaining <= 10 ? 'text-orange-300' :
+                  'text-green-300'
+                }`}>
+                  {tasksRemaining}/{tasksTotal}
+                </span>
+              </div>
+              <div className="w-full rounded-full h-3" style={{ backgroundColor: '#374151' }}>
+                <div
+                  className={`h-3 rounded-full transition-all duration-700 ${
+                    tasksRemaining <= 3 ? 'bg-red-400' :
+                    tasksRemaining <= 10 ? 'bg-orange-400' :
+                    'bg-blue-400'
+                  }`}
+                  style={{
+                    width: `${tasksTotal > 0 ? Math.min(100, Math.max(4, (tasksUsed / tasksTotal) * 100)) : 4}%`,
+                    minWidth: tasksUsed > 0 ? '12px' : '0'
+                  }}
+                />
+              </div>
+              <p className="text-xs text-gray-300 mt-1.5 mb-2">
+                <span className="font-semibold text-white">{tasksUsed}</span> utilisées
+              </p>
             </div>
-            <div className="w-full bg-gray-600 rounded-full h-2 mb-1.5">
-              <div
-                className={`h-2 rounded-full transition-all ${
-                  tasksRemaining <= 5 ? 'bg-red-400' :
-                  tasksRemaining <= 10 ? 'bg-orange-400' : 'bg-blue-400'
-                }`}
-                style={{ width: `${Math.max(3, Math.min(100, (tasksUsed / Math.max(tasksTotal, 1)) * 100))}%` }}
-              />
+            <div className="border-t border-gray-600 px-3 py-2 space-y-1">
+              {([
+                { label: '✨ Titre IA', cost: '1 tâche' },
+                { label: '📝 Description IA', cost: '3 tâches' },
+                { label: '🖼️ Image', cost: '1 tâche' },
+                { label: '✏️ Bulk edit', cost: 'Gratuit', free: true },
+              ] as { label: string; cost: string; free?: boolean }[]).map(item => (
+                <div key={item.label} className="flex justify-between items-center">
+                  <span className="text-xs text-gray-300">{item.label}</span>
+                  <span className={`text-xs font-medium ${item.free ? 'text-green-400' : 'text-gray-300'}`}>
+                    {item.cost}
+                  </span>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-gray-300">{tasksUsed} utilisées · renouvellement le 1er</p>
           </div>
 
           {(plan === 'free' || plan === 'starter') && (
             <div className="mx-3 mb-3 rounded-xl p-3" style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}>
               <p className="text-xs font-bold text-white mb-0.5">
-                {plan === 'free' ? 'Passez au plan Starter' : 'Passez au plan Pro'}
+                {plan === 'free' ? '🚀 Passez au Starter' : '🚀 Passez au plan Pro'}
               </p>
               <p className="text-xs text-blue-200 mb-2 leading-snug">
                 {plan === 'free'
-                  ? 'Débloquez 1 000 tâches IA et 500 produits'
-                  : 'Débloquez 20 000 tâches et 3 boutiques'
+                  ? '1 000 tâches IA · 500 produits'
+                  : '20 000 tâches et 3 boutiques'
                 }
               </p>
               <a href="/dashboard/account?tab=subscription"
-                className="block text-center text-xs font-semibold bg-white text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-                Voir les offres →
+                className="block text-center text-xs font-bold bg-white text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                {plan === 'free' ? '29€/mois — Voir l\'offre →' : '89€/mois — Voir l\'offre →'}
               </a>
             </div>
           )}
