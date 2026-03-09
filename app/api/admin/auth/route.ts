@@ -40,18 +40,6 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true })
 }
 
-  const cookieStore = await cookies()
-  cookieStore.set('admin_session', sessionValue, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 8, // 8 hours
-    path: '/',
-  })
-
-  return NextResponse.json({ success: true })
-}
-
 export async function DELETE() {
   const cookieStore = await cookies()
   cookieStore.delete('admin_session')
