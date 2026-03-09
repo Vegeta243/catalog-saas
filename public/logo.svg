@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 44" fill="none">
+  <!-- Icon: blue rounded square with E + bolt -->
+  <rect x="0" y="2" width="40" height="40" rx="9" fill="#2563EB"/>
+  <path d="M10 10h18v5H16v6h11v5H16v6h12v5H10z" fill="white"/>
+  <path d="M22 17l-4 9h9l-4 9" stroke="#93C5FD" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Wordmark -->
+  <text x="50" y="28" font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif" font-weight="800" font-size="20" fill="#111827">Ecom</text>
+  <text x="96" y="28" font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif" font-weight="800" font-size="20" fill="#2563EB">Pilot</text>
+  <text x="50" y="40" font-family="system-ui,-apple-system,BlinkMacSystemFont,sans-serif" font-weight="600" font-size="9" fill="#6B7280" letter-spacing="3">ELITE</text>
+</svg>
