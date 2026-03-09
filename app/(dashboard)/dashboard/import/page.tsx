@@ -123,7 +123,11 @@ export default function ImportPage() {
           return r;
         }));
 
-        addToast(`${data.summary?.succeeded || 0} produit${(data.summary?.succeeded || 0) > 1 ? "s" : ""} importé${(data.summary?.succeeded || 0) > 1 ? "s" : ""}`, "success");
+        const succeeded = data.summary?.succeeded || 0;
+        addToast(
+          `✅ ${succeeded} produit${succeeded > 1 ? "s" : ""} importé${succeeded > 1 ? "s" : ""} en brouillon — publiez-les dans le catalogue quand vous êtes prêt`,
+          "success"
+        );
       }
     } catch (err) {
       const errorMsg = hasShop === false ? "Boutique non connectée — connectez votre boutique dans Mes boutiques" : "Erreur réseau — vérifiez votre connexion";
@@ -199,7 +203,11 @@ export default function ImportPage() {
         <div className="space-y-6">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h2 className="text-base font-semibold mb-1" style={{ color: "#0f172a" }}>Collez vos URLs (une par ligne, max 20)</h2>
-            <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>Compatible AliExpress, CJ Dropshipping, et toute page produit</p>
+            <p className="text-xs mb-1" style={{ color: "#94a3b8" }}>Compatible AliExpress, CJ Dropshipping, et toute page produit</p>
+            <p className="text-xs mb-4 flex items-center gap-1" style={{ color: "#d97706" }}>
+              <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+              CJ Dropshipping et AliExpress utilisent du JS rendu côté client — des données de démonstration seront utilisées si le scraping échoue.
+            </p>
             <textarea value={urls} onChange={(e) => setUrls(e.target.value)} rows={5}
               placeholder={"https://www.aliexpress.com/item/...\nhttps://cjdropshipping.com/product/..."}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"

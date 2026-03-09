@@ -6,6 +6,7 @@ import {
   CheckSquare, Square, ImageOff, ArrowUpDown, DollarSign,
   X, Copy, Archive, CheckCircle2, Tag, Type, FileText, Sparkles,
   AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3,
+  Globe, PenLine, FilePen,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import Link from "next/link";
@@ -96,6 +97,14 @@ export default function ProductsPage() {
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, AISuggestion>>({});
   const [aiBatchLoading, setAiBatchLoading] = useState(false);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  /* ── Edit drawer state ── */
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [modifiedProducts, setModifiedProducts] = useState<Set<string>>(new Set());
   const [plan, setPlan] = useState("free");
   const [tasksUsed, setTasksUsed] = useState(0);
   const itemsPerPage = 50;
@@ -434,6 +443,57 @@ export default function ProductsPage() {
     finally { setActionLoading(null); }
   };
 
+  /* ──────── Edit drawer ──────── */
+  const openEditDrawer = (product: Product) => {
+    setEditProduct(product);
+    setEditTitle(product.title);
+    setEditDescription(product.body_html || "");
+    setEditTags(product.tags || "");
+    setEditStatus(product.status);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editProduct) return;
+    setEditSaving(true);
+    try {
+      const fields: { field: string; value: string }[] = [];
+      if (editTitle !== editProduct.title) fields.push({ field: "title", value: editTitle });
+      if (editDescription !== (editProduct.body_html || "")) fields.push({ field: "body_html", value: editDescription });
+      if (editTags !== (editProduct.tags || "")) fields.push({ field: "tags", value: editTags });
+      if (editStatus !== editProduct.status) fields.push({ field: "status", value: editStatus });
+
+      if (fields.length === 0) { addToast("Aucune modification à sauvegarder", "info"); setEditSaving(false); return; }
+
+      await Promise.all(fields.map((f) =>
+        fetch("/api/shopify/bulk-edit", {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productIds: [editProduct.id], field: f.field, value: f.value }),
+        })
+      ));
+      setModifiedProducts((prev) => new Set([...prev, editProduct.id]));
+      addToast(`✅ Produit "${editTitle.slice(0, 40)}" mis à jour`, "success");
+      setEditProduct(null);
+      fetchProducts(true);
+    } catch { addToast("❌ Erreur lors de la sauvegarde — réessayez", "error"); }
+    finally { setEditSaving(false); }
+  };
+
+  /* ──────── Individual product status ──────── */
+  const handleProductStatus = async (productId: string, status: string) => {
+    setActionLoading(`status-${productId}`);
+    try {
+      const res = await fetch("/api/shopify/bulk-edit", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: [productId], field: "status", value: status }),
+      });
+      if (!res.ok) throw new Error();
+      const labels: Record<string, string> = { archived: "archivé", active: "publié", draft: "mis en brouillon" };
+      addToast(`✅ Produit ${labels[status] || status}`, "success");
+      fetchProducts(true);
+    } catch { addToast("❌ Erreur — réessayez", "error"); }
+    finally { setActionLoading(null); }
+  };
+
   /* ──────── Export CSV ──────── */
   const exportCSV = () => {
     const headers = ["Titre", "Prix", "Statut", "Tags", "Score SEO", "Image URL"];
@@ -523,6 +583,93 @@ export default function ProductsPage() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Drawer ── */}
+      {editProduct && (
+        <div className="fixed inset-0 z-50 flex" onClick={() => setEditProduct(null)}>
+          <div className="flex-1" />
+          <div className="w-full max-w-lg bg-white shadow-2xl flex flex-col h-full overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <div>
+                <h3 className="text-base font-bold" style={{ color: "#0f172a" }}>Modifier le produit</h3>
+                <p className="text-xs mt-0.5 truncate max-w-[250px]" style={{ color: "#64748b" }}>{editProduct.title}</p>
+              </div>
+              <button onClick={() => setEditProduct(null)} className="p-2 hover:bg-gray-200 rounded-lg">
+                <X className="w-5 h-5" style={{ color: "#64748b" }} />
+              </button>
+            </div>
+
+            {editProduct.images?.[0]?.src && (
+              <div className="px-6 pt-4">
+                <img src={editProduct.images[0].src} alt="" className="w-full h-40 object-cover rounded-xl border border-gray-200" />
+              </div>
+            )}
+
+            <div className="px-6 py-4 flex-1 space-y-4">
+              <div>
+                <label className="text-sm font-semibold block mb-1.5" style={{ color: "#374151" }}>Titre</label>
+                <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                  style={{ color: "#0f172a" }} />
+                <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8" }}>Idéal : 50–70 caractères ({editTitle.length} actuellement)</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold block mb-1.5" style={{ color: "#374151" }}>Description (HTML)</label>
+                <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={6}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                  style={{ color: "#0f172a" }} />
+              </div>
+              <div>
+                <label className="text-sm font-semibold block mb-1.5" style={{ color: "#374151" }}>Tags</label>
+                <input type="text" value={editTags} onChange={(e) => setEditTags(e.target.value)}
+                  placeholder="tag1, tag2, tag3"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                  style={{ color: "#0f172a" }} />
+                <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8" }}>Séparez les tags par des virgules. Idéal : 5+ tags.</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold block mb-1.5" style={{ color: "#374151" }}>Statut</label>
+                <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  style={{ color: "#0f172a" }}>
+                  <option value="active">Publié (active)</option>
+                  <option value="draft">Brouillon (draft)</option>
+                  <option value="archived">Archivé (archived)</option>
+                </select>
+              </div>
+
+              {/* Read-only info */}
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium" style={{ color: "#64748b" }}>Prix</span>
+                  <span className="text-xs font-bold" style={{ color: "#059669" }}>{parseFloat(editProduct.price).toFixed(2)} €</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium" style={{ color: "#64748b" }}>Score SEO</span>
+                  <ScoreBadge score={seoScore(editProduct)} />
+                </div>
+                {editProduct.vendor && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium" style={{ color: "#64748b" }}>Fournisseur</span>
+                    <span className="text-xs" style={{ color: "#374151" }}>{editProduct.vendor}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-3">
+              <button onClick={() => setEditProduct(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100"
+                style={{ color: "#374151" }}>Annuler</button>
+              <button onClick={handleSaveEdit} disabled={editSaving}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
+                {editSaving ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#fff" }} /> : <CheckCircle2 className="w-4 h-4" style={{ color: "#fff" }} />}
+                <span style={{ color: "#fff" }}>Sauvegarder</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -633,9 +780,13 @@ export default function ProductsPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100">
                 <Archive className="w-3.5 h-3.5" style={{ color: "#d97706" }} /><span style={{ color: "#92400e" }}>Archiver</span>
               </button>
-              <button onClick={() => handleBulkStatus("active")}
+              <button onClick={() => handleBulkStatus("draft")} title="Met les produits en brouillon (non visibles en boutique)"
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100">
-                <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#059669" }} /><span style={{ color: "#065f46" }}>Activer</span>
+                <FilePen className="w-3.5 h-3.5" style={{ color: "#64748b" }} /><span style={{ color: "#374151" }}>Brouillon</span>
+              </button>
+              <button onClick={() => handleBulkStatus("active")} title="Publie les produits sur votre boutique Shopify (statut: active)"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100">
+                <Globe className="w-3.5 h-3.5" style={{ color: "#059669" }} /><span style={{ color: "#065f46" }}>Publier</span>
               </button>
               <button onClick={() => { setSelectedProducts([]); setActiveAction(null); }}
                 className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50" style={{ color: "#374151" }}>Annuler</button>
@@ -813,6 +964,7 @@ export default function ProductsPage() {
                   const score = seoScore(product);
                   const hasLowStock = product.variants?.some((v) => (v.inventory_quantity ?? 999) < 5);
                   const suggestion = aiSuggestions[product.id];
+                  const isModified = modifiedProducts.has(product.id);
                   return (
                     <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}>
                       <td className="px-3 md:px-4 py-3"><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
@@ -821,7 +973,10 @@ export default function ProductsPage() {
                           : <div className="w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
                       </td>
                       <td className="px-3 md:px-4 py-3">
-                        <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none" style={{ color: "#0f172a" }}>{product.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none" style={{ color: "#0f172a" }}>{product.title}</p>
+                          {isModified && <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 rounded-full font-semibold flex-shrink-0" style={{ color: "#059669" }}>✓ Modifié</span>}
+                        </div>
                         {product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
                         {hasLowStock && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 bg-red-50 rounded mt-1" style={{ color: "#dc2626" }}><AlertTriangle className="w-2.5 h-2.5" /> Stock bas</span>}
                         {suggestion?.title && (
@@ -869,7 +1024,10 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-3 md:px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => setPreviewProduct(product)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Aperçu">
+                          <button onClick={() => openEditDrawer(product)} className="p-1.5 hover:bg-blue-50 rounded-lg" title="Modifier le produit">
+                            <PenLine className="w-4 h-4" style={{ color: "#2563eb" }} />
+                          </button>
+                          <button onClick={() => setPreviewProduct(product)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Aperçu rapide">
                             <Eye className="w-4 h-4" style={{ color: "#64748b" }} />
                           </button>
                           <button onClick={() => handleAiTitle(product)} disabled={actionLoading === `ai-${product.id}`}
@@ -880,9 +1038,10 @@ export default function ProductsPage() {
                             className="p-1.5 hover:bg-blue-50 rounded-lg" title="Dupliquer">
                             {actionLoading === `dup-${product.id}` ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#3b82f6" }} /> : <Copy className="w-4 h-4" style={{ color: "#3b82f6" }} />}
                           </button>
-                          <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver "${product.title}" ?`, action: () => handleBulkStatus("archived") })}
-                            className="p-1.5 hover:bg-red-50 rounded-lg" title="Archiver">
-                            <Archive className="w-4 h-4" style={{ color: "#ef4444" }} />
+                          <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver "${product.title}" ?`, action: () => handleProductStatus(product.id, "archived") })}
+                            disabled={actionLoading === `status-${product.id}`}
+                            className="p-1.5 hover:bg-red-50 rounded-lg" title="Archiver ce produit">
+                            {actionLoading === `status-${product.id}` ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#ef4444" }} /> : <Archive className="w-4 h-4" style={{ color: "#ef4444" }} />}
                           </button>
                         </div>
                       </td>

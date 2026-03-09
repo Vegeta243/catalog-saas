@@ -38,6 +38,96 @@ const presetSizes = [
   { label: "Carré HD", width: 1500, height: 1500 },
 ];
 
+/* ────────────────────────────────────────────
+   Client-side Canvas image processing helper
+   ──────────────────────────────────────────── */
+function processImageWithCanvas(
+  src: string,
+  action: string,
+  targetWidth: number,
+  targetHeight: number,
+  brightness: number,
+  contrast: number,
+  saturation: number,
+  format: string,
+  quality: number,
+): Promise<{ dataUrl: string; processedSize: number; compression: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let outWidth = img.naturalWidth;
+        let outHeight = img.naturalHeight;
+
+        // Resize
+        if ((targetWidth > 0 || targetHeight > 0) && action === "resize") {
+          if (targetWidth > 0 && targetHeight > 0) {
+            outWidth = targetWidth;
+            outHeight = targetHeight;
+          } else if (targetWidth > 0) {
+            outHeight = Math.round((img.naturalHeight / img.naturalWidth) * targetWidth);
+            outWidth = targetWidth;
+          } else {
+            outWidth = Math.round((img.naturalWidth / img.naturalHeight) * targetHeight);
+            outHeight = targetHeight;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = outWidth;
+        canvas.height = outHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Impossible d'initialiser le contexte Canvas 2D");
+
+        // Build CSS filter string
+        const filters: string[] = [];
+        if (action === "enhance") {
+          filters.push("contrast(1.1)", "saturate(1.15)", "brightness(1.05)");
+        } else if (action === "grayscale") {
+          filters.push("grayscale(1)");
+        } else if (action === "adjust") {
+          filters.push(`brightness(${brightness / 100})`);
+          filters.push(`contrast(${contrast / 100})`);
+          filters.push(`saturate(${saturation / 100})`);
+        }
+        if (filters.length > 0) ctx.filter = filters.join(" ");
+
+        ctx.drawImage(img, 0, 0, outWidth, outHeight);
+
+        // For grayscale, also process pixel data for full desaturation
+        if (action === "grayscale") {
+          ctx.filter = "none";
+          const imageData = ctx.getImageData(0, 0, outWidth, outHeight);
+          const data = imageData.data;
+          for (let i = 0; i < data.length; i += 4) {
+            const gray = Math.round(data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+            data[i] = gray;
+            data[i + 1] = gray;
+            data[i + 2] = gray;
+          }
+          ctx.putImageData(imageData, 0, 0);
+        }
+
+        const mimeType = format === "png" ? "image/png" : format === "jpeg" || format === "jpg" ? "image/jpeg" : "image/webp";
+        const q = quality / 100;
+        const dataUrl = canvas.toDataURL(mimeType, q);
+
+        // Estimate size
+        const processedSize = Math.round((dataUrl.length - (dataUrl.indexOf(",") + 1)) * 0.75);
+        const originalEstimate = img.naturalWidth * img.naturalHeight * 3;
+        const compression = Math.max(0, Math.round((1 - processedSize / originalEstimate) * 100));
+
+        resolve({ dataUrl, processedSize, compression });
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => reject(new Error("Impossible de charger l'image"));
+    img.crossOrigin = "anonymous";
+    img.src = src;
+  });
+}
+
 export default function ImagesPage() {
   const { addToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,42 +172,15 @@ export default function ImagesPage() {
   const processImage = async (imageFile: ImageFile, action: string, width = 0, height = 0) => {
     setProcessing(true);
     try {
-      // Fetch the original file blob
-      const blob = await fetch(imageFile.originalUrl).then((r) => r.blob());
-      const formData = new FormData();
-      formData.append("file", blob, imageFile.name);
-      formData.append("action", action);
-      formData.append("format", outputFormat);
-      formData.append("quality", quality.toString());
-      formData.append("brightness", (brightness / 100).toString());
-      formData.append("contrast", (contrast / 100).toString());
-      formData.append("saturation", (saturation / 100).toString());
-      if (width) formData.append("width", width.toString());
-      if (height) formData.append("height", height.toString());
-
-      const res = await fetch("/api/images/process", { method: "POST", body: formData });
-      
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Erreur serveur (${res.status})`);
-      }
-      
-      const data = await res.json();
-
-      if (!data.image) {
-        throw new Error("Aucune image retournée par le serveur");
-      }
-
+      const result = await processImageWithCanvas(imageFile.originalUrl, action, width, height, brightness, contrast, saturation, outputFormat, quality);
       setImages((prev) => prev.map((img) =>
         img.id === imageFile.id
-          ? { ...img, processedUrl: data.image, processedSize: data.processedSize, compression: data.compression }
+          ? { ...img, processedUrl: result.dataUrl, processedSize: result.processedSize, compression: result.compression }
           : img
       ));
-      addToast(`Image traitée — ${data.compression}% de compression`, "success");
+      addToast(`Image traitée${result.compression ? ` — ${result.compression}% de compression` : ""}`, "success");
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Erreur de traitement";
-      addToast(`Échec : ${errorMsg}`, "error");
-      console.error("Image processing error:", err);
+      addToast(`Échec : ${err instanceof Error ? err.message : "Erreur de traitement"}`, "error");
     }
     setProcessing(false);
   };
@@ -152,16 +215,33 @@ export default function ImagesPage() {
     setSaturation(100);
   };
 
-  const downloadImage = (img: ImageFile) => {
-    const url = img.processedUrl || img.originalUrl;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = img.name.replace(/\.[^.]+$/, `.${outputFormat}`);
-    a.click();
+  const downloadImage = async (img: ImageFile) => {
+    try {
+      // Apply current adjustments/filter and export in selected format
+      const activeFilterCss = filters.find((f) => f.id === activeFilter)?.css || "";
+      const srcUrl = img.processedUrl || img.originalUrl;
+      const result = await processImageWithCanvas(
+        srcUrl,
+        activeFilterCss ? "adjust" : (brightness !== 100 || contrast !== 100 || saturation !== 100 ? "adjust" : "none"),
+        0, 0, brightness, contrast, saturation, outputFormat, quality,
+      );
+      const a = document.createElement("a");
+      a.href = result.dataUrl;
+      a.download = img.name.replace(/\.[^.]+$/, `.${outputFormat}`);
+      a.click();
+      addToast(`Image exportée en ${outputFormat.toUpperCase()}`, "success");
+    } catch {
+      // Fallback: direct download
+      const url = img.processedUrl || img.originalUrl;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = img.name.replace(/\.[^.]+$/, `.${outputFormat}`);
+      a.click();
+    }
   };
 
-  const downloadAll = () => {
-    images.forEach((img) => downloadImage(img));
+  const downloadAll = async () => {
+    await Promise.all(images.map((img) => downloadImage(img)));
     addToast(`${images.length} image${images.length > 1 ? "s" : ""} téléchargée${images.length > 1 ? "s" : ""}`, "success");
   };
 

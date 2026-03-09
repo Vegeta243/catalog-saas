@@ -152,14 +152,42 @@ input:focus, select:focus, textarea:focus {
   border-color: #93c5fd;
 }
 
-/* Skeleton loading */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Dark mode */
+html.dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
 }
 
-.skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+html.dark body {
+  background: #0f172a;
+  color: #e2e8f0;
 }
+
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6,
+html.dark p, html.dark span, html.dark td, html.dark th, html.dark label,
+html.dark li, html.dark div, html.dark input, html.dark textarea, html.dark select {
+  color: #e2e8f0;
+}
+
+html.dark .bg-white { background-color: #1e293b !important; }
+html.dark .bg-gray-50 { background-color: #1e293b !important; }
+html.dark .bg-gray-100 { background-color: #334155 !important; }
+html.dark .border-gray-200 { border-color: #334155 !important; }
+html.dark .text-gray-600, html.dark [style*="color: #64748b"] { color: #94a3b8 !important; }
+html.dark [style*="color: #0f172a"] { color: #f1f5f9 !important; }
+html.dark [style*="color: #374151"] { color: #cbd5e1 !important; }
+html.dark [style*="background-color: white"], html.dark [style*="backgroundColor: white"] { background-color: #1e293b !important; }
+
+/* Compact mode */
+body.compact table td,
+body.compact table th {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+body.compact .gap-6 { gap: 12px !important; }
+body.compact .gap-4 { gap: 8px !important; }
+body.compact .py-3 { padding-top: 6px !important; padding-bottom: 6px !important; }
+body.compact .px-5 { padding-left: 12px !important; padding-right: 12px !important; }
+
+
