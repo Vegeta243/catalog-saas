@@ -105,10 +105,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setUserName(firstName);
         const { data } = await supabase
           .from("users")
-          .select("plan, actions_used")
+          .select("plan, actions_used, deleted_at")
           .eq("id", user.id)
           .single();
         if (data) {
+          // Redirect soft-deleted users to recovery page
+          if (data.deleted_at) {
+            router.push("/account-recovery");
+            return;
+          }
           setPlan(data.plan || "free");
           setTasksUsed(data.actions_used || 0);
         }
