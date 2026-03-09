@@ -25,6 +25,7 @@ import {
   Coins,
   Menu,
   X,
+  CalendarDays,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 
@@ -50,6 +51,7 @@ const NAV_SECTIONS = [
     label: "AUTOMATISATION",
     items: [
       { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
+      { href: '/dashboard/calendrier', label: 'Calendrier', icon: CalendarDays },
     ],
   },
   {
