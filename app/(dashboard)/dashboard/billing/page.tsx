@@ -10,9 +10,9 @@ import { createClient } from "@/lib/supabase/client";
 
 const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string }> = {
   free:    { name: "Free",    icon: Star,   price: 0,   yearlyPrice: 0,   color: "#6b7280" },
-  starter: { name: "Starter", icon: Zap,    price: 39,  yearlyPrice: 29,  color: "#2563eb" },
-  pro:     { name: "Pro",     icon: Crown,  price: 89,  yearlyPrice: 69,  color: "#8b5cf6" },
-  scale:   { name: "Scale",   icon: Rocket, price: 179, yearlyPrice: 139, color: "#059669" },
+  starter: { name: "Starter", icon: Zap,    price: 29,  yearlyPrice: 20,  color: "#2563eb" },
+  pro:     { name: "Pro",     icon: Crown,  price: 89,  yearlyPrice: 62,  color: "#8b5cf6" },
+  scale:   { name: "Scale",   icon: Rocket, price: 129, yearlyPrice: 90,  color: "#059669" },
 };
 
 function BillingContent() {

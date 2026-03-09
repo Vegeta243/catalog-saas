@@ -9,6 +9,11 @@ function getStripe() {
   });
 }
 
+// TODO: Update Stripe price IDs in dashboard for new pricing:
+// Starter: 29€/mo monthly, 20€/mo annual (245€/year)
+// Pro:     89€/mo monthly, 62€/mo annual (749€/year)
+// Scale:   129€/mo monthly, 90€/mo annual (1085€/year)
+// Set env vars: STRIPE_STARTER_MONTHLY_PRICE_ID, STRIPE_STARTER_YEARLY_PRICE_ID, etc.
 const PLANS = {
   starter: {
     monthly: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID,
