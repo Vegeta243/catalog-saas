@@ -8,6 +8,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
+import { hasFeature } from "@/lib/credits";
+import { createClient } from "@/lib/supabase/client";
 
 interface AutomationRule {
   id: string;
@@ -62,6 +64,7 @@ const SCHEDULE_OPTIONS = [
 
 export default function AutomationPage() {
   const { addToast } = useToast();
+  const [userPlan, setUserPlan] = useState<string | null>(null);
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -92,6 +95,38 @@ export default function AutomationPage() {
 
   useEffect(() => { fetchRules(); }, [fetchRules]);
 
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setUserPlan('free'); return; }
+        const { data } = await supabase.from('users').select('plan').eq('id', user.id).single();
+        setUserPlan(data?.plan || 'free');
+      } catch {
+        setUserPlan('free');
+      }
+    };
+    fetchPlan();
+  }, []);
+
+  // Show gate UI for plans without automations
+  if (userPlan !== null && !hasFeature(userPlan, 'automations')) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center p-8" style={{ minHeight: '60vh' }}>
+        <div className="text-5xl mb-4">⚡</div>
+        <h2 className="text-2xl font-bold mb-2">Automatisations</h2>
+        <p className="text-gray-500 mb-6 max-w-md">
+          Les automatisations sont disponibles à partir du plan <strong>Starter</strong>.
+          Créez des règles pour modifier vos prix, optimiser vos titres, et plus encore — automatiquement.
+        </p>
+        <a href="/dashboard/account?tab=subscription"
+          className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700">
+          Passer au Starter — 29€/mois →
+        </a>
+      </div>
+    );
+  }
   const toggleRule = async (rule: AutomationRule) => {
     try {
       const res = await fetch("/api/automation", {

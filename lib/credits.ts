@@ -8,6 +8,84 @@ export const PLAN_TASKS: Record<string, number> = {
   scale: 100000,
 };
 
+export const PLAN_FEATURES = {
+  free: {
+    tasks: 30,
+    shops: 1,
+    products: 50,
+    ai_titles: true,
+    ai_descriptions: true,
+    bulk_edit: true,
+    image_editor: true,
+    import_aliexpress: false,
+    automations: false,
+    calendar: true,
+    competitor_analysis: false,
+    api_access: false,
+    webhooks: false,
+    advanced_automations: false,
+  },
+  starter: {
+    tasks: 1000,
+    shops: 1,
+    products: 500,
+    ai_titles: true,
+    ai_descriptions: true,
+    bulk_edit: true,
+    image_editor: true,
+    import_aliexpress: true,
+    automations: true,
+    calendar: true,
+    competitor_analysis: false,
+    api_access: false,
+    webhooks: false,
+    advanced_automations: false,
+  },
+  pro: {
+    tasks: 20000,
+    shops: 3,
+    products: -1,
+    ai_titles: true,
+    ai_descriptions: true,
+    bulk_edit: true,
+    image_editor: true,
+    import_aliexpress: true,
+    automations: true,
+    calendar: true,
+    competitor_analysis: true,
+    api_access: false,
+    webhooks: true,
+    advanced_automations: true,
+  },
+  scale: {
+    tasks: 100000,
+    shops: -1,
+    products: -1,
+    ai_titles: true,
+    ai_descriptions: true,
+    bulk_edit: true,
+    image_editor: true,
+    import_aliexpress: true,
+    automations: true,
+    calendar: true,
+    competitor_analysis: true,
+    api_access: true,
+    webhooks: true,
+    advanced_automations: true,
+  },
+} as const;
+
+export type PlanFeature = keyof typeof PLAN_FEATURES['free'];
+
+export function hasFeature(plan: string, feature: PlanFeature): boolean {
+  const planFeatures = PLAN_FEATURES[plan as keyof typeof PLAN_FEATURES];
+  if (!planFeatures) return false;
+  const value = planFeatures[feature];
+  return value === true;
+}
+
+
+
 export const PLAN_PRICES: Record<string, string> = {
   starter: "29€",
   pro: "89€",
