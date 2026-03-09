@@ -93,7 +93,7 @@ export default function HomePage() {
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <img src="/logo.png" alt="EcomPilot Elite" className="h-10 w-auto object-contain" />
+            <img src="/logo.svg" alt="EcomPilot Elite" className="h-10 w-auto object-contain" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#problemes" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Pourquoi ?</a>
@@ -623,7 +623,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="EcomPilot Elite" className="h-8 w-auto object-contain" />
+              <img src="/logo.svg" alt="EcomPilot Elite" className="h-8 w-auto object-contain" />
               <span className="text-xs ml-2" style={{ color: "#94a3b8" }}>Le copilote de votre catalogue Shopify</span>
             </div>
             <div className="flex items-center gap-6 text-sm" style={{ color: "#64748b" }}>

@@ -170,22 +170,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div>
           <div className="flex items-center justify-between">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center px-2' : 'px-4'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors flex-1`}>
-              <img
-                src="/logo-icon.png"
-                alt=""
-                className="w-9 h-9 object-contain flex-shrink-0"
-                style={{ filter: 'brightness(0) invert(1)' }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
-              {!sidebarCollapsed && (
-                <div>
-                  <span className="text-white font-black text-lg leading-none tracking-tight">
-                    Ecom<span className="text-blue-400">Pilot</span>
-                  </span>
-                  <span className="block text-blue-400 text-xs font-bold tracking-[0.2em] leading-none mt-0.5">
-                    ELITE
-                  </span>
-                </div>
+              {sidebarCollapsed ? (
+                <img src="/logo-icon.svg" alt="" className="w-9 h-9 flex-shrink-0" style={{ filter: 'brightness(0) invert(1)' }} />
+              ) : (
+                <img src="/logo-white.svg" alt="EcomPilot Elite" className="h-9 w-auto" style={{ maxWidth: '170px' }} />
               )}
             </Link>
             {/* Close button mobile only */}

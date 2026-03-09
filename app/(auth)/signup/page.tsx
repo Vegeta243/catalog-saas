@@ -93,7 +93,7 @@ function SignupContent() {
       {/* -- Left panel -- */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12" style={{ backgroundColor: "#0f172a" }}>
         <div>
-          <Link href="/"><img src="/logo-white.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain" /></Link>
+          <Link href="/"><img src="/logo-white.svg" alt="EcomPilot Elite" className="h-9 w-auto object-contain" /></Link>
           <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>Le copilote de votre catalogue Shopify</p>
         </div>
         <div className="space-y-8">
@@ -139,7 +139,7 @@ function SignupContent() {
       <div className="flex-1 flex items-center justify-center p-8" style={{ backgroundColor: "#f8fafc" }}>
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8">
-            <Link href="/"><img src="/logo.png" alt="EcomPilot Elite" className="h-10 w-auto object-contain" /></Link>
+            <Link href="/"><img src="/logo.svg" alt="EcomPilot Elite" className="h-10 w-auto object-contain" /></Link>
           </div>
 
           {error && (
