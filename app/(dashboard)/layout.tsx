@@ -30,6 +30,7 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
+import SidebarTaskCounter from '@/components/sidebar-task-counter';
 
 const NAV_SECTIONS = [
   {
@@ -267,31 +268,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Tasks counter + plan */}
         {!sidebarCollapsed && (
           <>
-          <div className="mx-3 mb-3 p-3 rounded-xl bg-gray-900 border border-gray-800">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-300">Tâches ce mois</span>
-              <span className={`text-xs font-bold ${
-                tasksRemaining <= 5 ? 'text-red-400' :
-                tasksRemaining <= 10 ? 'text-orange-400' : 'text-green-400'
-              }`}>
-                {tasksRemaining} / {tasksTotal}
-              </span>
-            </div>
-
-            <div className="w-full bg-gray-800 rounded-full h-1.5 mb-2">
-              <div
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  tasksRemaining <= 5 ? 'bg-red-500' :
-                  tasksRemaining <= 10 ? 'bg-orange-500' : 'bg-blue-500'
-                }`}
-                style={{ width: `${Math.max(2, Math.min(100, (tasksUsed / Math.max(tasksTotal, 1)) * 100))}%` }}
-              />
-            </div>
-
-            <p className="text-xs text-gray-600">
-              {tasksUsed} utilisées · renouvellement le 1er
-            </p>
-          </div>
+          <SidebarTaskCounter initialUsed={tasksUsed} initialTotal={tasksTotal} plan={plan} />
 
           {(plan === 'free' || plan === 'starter') && (
             <div className="mx-3 mb-3 p-3 rounded-lg border" style={{ backgroundColor: 'rgba(99,102,241,0.1)', borderColor: 'rgba(99,102,241,0.3)' }}>
