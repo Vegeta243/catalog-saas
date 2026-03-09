@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#030712' }}>
       <div className="w-full max-w-sm rounded-2xl border p-8" style={{ backgroundColor: '#111827', borderColor: '#7f1d1d' }}>
         <div className="text-center mb-8">
-          <img src="/logo-icon.png" alt="EcomPilot Elite" className="w-12 h-12 object-contain mx-auto mb-3" />
+          <img src="/logo-icon.png" alt="EcomPilot Elite" className="w-12 h-12 object-contain mx-auto mb-3 brightness-0 invert" />
           <h1 className="text-xl font-bold" style={{ color: '#fff' }}>Administration</h1>
           <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>EcomPilot Elite</p>
         </div>

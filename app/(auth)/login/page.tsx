@@ -236,7 +236,7 @@ function AuthContent() {
       <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12" style={{ backgroundColor: "#0f172a" }}>
         <div>
           <Link href="/">
-            <img src="/logo.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain brightness-[10]" />
+            <img src="/logo.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain brightness-0 invert" />
           </Link>
           <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>Le copilote de votre catalogue Shopify</p>
         </div>
