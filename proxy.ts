@@ -27,6 +27,12 @@ function isApiRateLimited(ip: string): boolean {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // ⚠️ Skip middleware for all admin routes
+  // Admin has its own cookie-based auth in app/admin/(protected)/layout.tsx
+  if (pathname.startsWith('/admin')) {
+    return NextResponse.next();
+  }
+
   // ── Rate limit API routes ──
   if (pathname.startsWith('/api/')) {
     const ip = getIp(request);
@@ -60,20 +66,12 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Protected routes: /dashboard/*, /admin/*
-  const isProtected = pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
+  // Protected routes: /dashboard/*
+  const isProtected = pathname.startsWith('/dashboard');
   if (isProtected && !user) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // Admin routes: check admin email list
-  if (pathname.startsWith('/admin') && user) {
-    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
-    if (!adminEmails.includes(user.email?.toLowerCase() || '')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
   }
 
   // Redirect authenticated users away from auth pages
