@@ -19,8 +19,10 @@ const adminNav = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim()).filter(Boolean);
-  if (!user || !adminEmails.includes(user.email || "")) {
+  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "elliottshilenge5@gmail.com")
+    .split(",").map((e) => e.trim()).filter(Boolean);
+  console.log("Admin check:", user?.email, "allowed:", ADMIN_EMAILS, "result:", ADMIN_EMAILS.includes(user?.email || ""));
+  if (!user || !ADMIN_EMAILS.includes(user.email || "")) {
     redirect("/dashboard");
   }
 
