@@ -7,6 +7,13 @@ function getAdminClient() {
   );
 }
 
+const PLAN_COSTS: Record<string, number> = {
+  free: 0,
+  starter: 29,
+  pro: 89,
+  scale: 129,
+};
+
 const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
   free: { bg: "#f1f5f9", text: "#64748b" },
   starter: { bg: "#eff6ff", text: "#2563eb" },
@@ -49,6 +56,9 @@ export default async function AdminUsersPage({
   const shopCountMap: Record<string, number> = {};
   (shops || []).forEach(s => { shopCountMap[s.user_id] = (shopCountMap[s.user_id] || 0) + 1; });
 
+  const mrr = (users || []).reduce((sum, u) => sum + (PLAN_COSTS[u.plan] || 0), 0);
+  const activeCount = (users || []).filter(u => u.subscription_status === 'active').length;
+
   const plans = ["all", "free", "starter", "pro", "scale", "deleted"];
 
   return (
@@ -62,6 +72,22 @@ export default async function AdminUsersPage({
             style={{ color: "#64748b" }}>
             📥 Export CSV
           </a>
+        </div>
+      </div>
+
+      {/* MRR stats */}
+      <div className="flex gap-4 mb-6">
+        <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-3">
+          <p className="text-xs text-green-600 font-medium">MRR estimé</p>
+          <p className="text-2xl font-bold text-green-700">{mrr}€</p>
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
+          <p className="text-xs text-blue-600 font-medium">Total utilisateurs</p>
+          <p className="text-2xl font-bold text-blue-700">{users.length}</p>
+        </div>
+        <div className="bg-purple-50 border border-purple-200 rounded-xl px-5 py-3">
+          <p className="text-xs text-purple-600 font-medium">Abonnements actifs</p>
+          <p className="text-2xl font-bold text-purple-700">{activeCount}</p>
         </div>
       </div>
 
@@ -103,6 +129,7 @@ export default async function AdminUsersPage({
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Plan</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Tâches</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Boutiques</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Coût/mois</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Statut</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Inscription</th>
               <th className="text-right px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Actions</th>
@@ -154,6 +181,9 @@ export default async function AdminUsersPage({
                   <td className="px-4 py-3 text-xs" style={{ color: "#64748b" }}>
                     {shopCountMap[user.id] || 0}
                   </td>
+                  <td className="px-4 py-3 text-sm font-semibold" style={{ color: PLAN_COSTS[user.plan] ? '#059669' : '#94a3b8' }}>
+                    {PLAN_COSTS[user.plan] || 0}€/mois
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className="text-xs font-medium capitalize"
@@ -200,7 +230,7 @@ export default async function AdminUsersPage({
             })}
             {users.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm" style={{ color: "#94a3b8" }}>
+                <td colSpan={8} className="px-4 py-8 text-center text-sm" style={{ color: "#94a3b8" }}>
                   Aucun utilisateur trouvé
                 </td>
               </tr>
