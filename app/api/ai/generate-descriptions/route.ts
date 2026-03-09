@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCreditCost } from "@/lib/credits";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Maximum 10 produits par lot." }, { status: 400 });
     }
 
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    }
+
+    const taskCost = getCreditCost("ai.generate.description") * products.length;
+    const { data: userData } = await supabase
+      .from("users")
+      .select("actions_used, actions_limit")
+      .eq("id", user.id)
+      .single();
+    if (userData && userData.actions_used + taskCost > userData.actions_limit) {
+      return NextResponse.json({
+        error: "limit_exceeded",
+        message: "Vous avez atteint votre limite de tâches. Passez à un plan supérieur pour continuer.",
+        remaining: Math.max(0, userData.actions_limit - userData.actions_used),
+      }, { status: 429 });
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       // Démo mode — descriptions détaillées centrées sur le produit
@@ -20,10 +41,11 @@ export async function POST(req: Request) {
         id: p.id,
         description: `<ul><li><strong>Fabrication soignée</strong> — ${p.title} est conçu pour répondre aux exigences les plus élevées. Chaque détail compte pour vous garantir une expérience durable et agréable à chaque utilisation.</li><li><strong>Matériaux sélectionnés</strong> — Nous avons choisi des matériaux de premier choix pour ce produit, alliant résistance, confort et esthétique. Un investissement qui tient dans le temps.</li><li><strong>Expédition sous 24h</strong> — Votre commande est préparée en 24 heures et livrée en 48 à 72 heures en France métropolitaine. Numéro de suivi inclus.</li><li><strong>Retour gratuit</strong> — Vous disposez de 30 jours pour retourner l'article si vous n'êtes pas entièrement satisfait. Procédure simple, sans conditions.</li><li><strong>Équipe disponible</strong> — Notre service client est joignable du lundi au vendredi pour répondre à toutes vos questions avant ou après achat.</li></ul>`,
       }));
-      return NextResponse.json({ success: true, demo: true, taskCost: 0, descriptions: mockDescriptions });
+      if (taskCost > 0) {
+        await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: taskCost });
+      }
+      return NextResponse.json({ success: true, demo: true, taskCost, descriptions: mockDescriptions });
     }
-
-    const taskCost = getCreditCost("ai.generate.description") * products.length;
 
     const productsList = products
       .map(
@@ -83,6 +105,9 @@ Réponds UNIQUEMENT en JSON valide sans texte avant ni après :
       return NextResponse.json({ error: "Format de réponse IA invalide." }, { status: 500 });
     }
 
+    if (taskCost > 0) {
+      await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: taskCost });
+    }
     return NextResponse.json({
       success: true,
       taskCost,

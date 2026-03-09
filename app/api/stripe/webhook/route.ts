@@ -112,7 +112,7 @@ export async function POST(req: Request) {
       const subscription = event.data.object as Stripe.Subscription;
       await supabase
         .from("users")
-        .update({ plan: "free", stripe_subscription_id: null, subscription_status: "cancelled" })
+        .update({ plan: "free", stripe_subscription_id: null, subscription_status: "canceled" })
         .eq("stripe_subscription_id", subscription.id);
     }
 
