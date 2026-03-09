@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logAction } from "@/lib/log-action";
 
 /* ─── GET: list all product images from connected Shopify store ─────────────── */
 export async function GET() {
@@ -114,6 +115,14 @@ export async function POST(request: NextRequest) {
         }
       );
     }
+
+    await logAction(supabase, {
+      userId: user.id,
+      actionType: "image.upload",
+      description: `Image Shopify mise à jour`,
+      creditsUsed: 1,
+      details: { productId, imageId },
+    });
 
     return NextResponse.json({ success: true, newSrc: newImageSrc });
   } catch (err) {

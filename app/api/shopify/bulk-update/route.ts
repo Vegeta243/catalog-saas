@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logAction } from "@/lib/log-action";
 
 export async function PUT(req: Request) {
   try {
@@ -121,6 +122,15 @@ export async function PUT(req: Request) {
         return response.json();
       })
     );
+
+    await logAction(supabase, {
+      userId: user.id,
+      actionType: "bulk.edit",
+      description: `Bulk edit : ${mode} sur ${productIds.length} produit(s)`,
+      productsCount: productIds.length,
+      creditsUsed: 0,
+      details: { field: mode, newPrice },
+    });
 
     return NextResponse.json({ success: true, results, updated: results.length });
   } catch (error) {

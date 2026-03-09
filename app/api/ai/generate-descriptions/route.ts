@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCreditCost } from "@/lib/credits";
 import { createClient } from "@/lib/supabase/server";
+import { logAction } from "@/lib/log-action";
 
 export async function POST(req: Request) {
   try {
@@ -108,6 +109,13 @@ Réponds UNIQUEMENT en JSON valide sans texte avant ni après :
     if (taskCost > 0) {
       await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: taskCost });
     }
+    await logAction(supabase, {
+      userId: user.id,
+      actionType: "ai.generate.description",
+      description: `Description IA — ${products.length} produit(s)`,
+      productsCount: products.length,
+      creditsUsed: taskCost,
+    });
     return NextResponse.json({
       success: true,
       taskCost,

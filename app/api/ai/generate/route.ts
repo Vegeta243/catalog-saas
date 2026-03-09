@@ -3,6 +3,7 @@ import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { aiCache, aiCacheKey } from "@/lib/cache";
 import { getCreditCost } from "@/lib/credits";
 import { createClient } from "@/lib/supabase/server";
+import { logAction } from "@/lib/log-action";
 
 export async function POST(req: Request) {
   try {
@@ -190,6 +191,15 @@ Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","key
     if (taskCost > 0) {
       await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: taskCost });
     }
+
+    await logAction(supabase, {
+      userId: user.id,
+      actionType: `ai.generate.${mode || "full"}`,
+      description: `Titre IA — 1 produit`,
+      productsCount: 1,
+      creditsUsed: taskCost,
+      details: { model: "gpt-4o-mini", mode: mode || "full" },
+    });
 
     return NextResponse.json({
       success: true,

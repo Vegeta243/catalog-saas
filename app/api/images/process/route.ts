@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
+import { logAction } from "@/lib/log-action";
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,6 +91,14 @@ export async function POST(request: NextRequest) {
 
     const mime = format === "png" ? "image/png" : format === "webp" ? "image/webp" : "image/jpeg";
     const result = `data:${mime};base64,${outputBuffer.toString("base64")}`;
+
+    await logAction(supabase, {
+      userId: user.id,
+      actionType: "image.optimize",
+      description: `Image traitée : ${operation}`,
+      creditsUsed: 1,
+      details: { operation, format },
+    });
 
     return NextResponse.json({ result, size: outputBuffer.length, format });
   } catch (error) {
