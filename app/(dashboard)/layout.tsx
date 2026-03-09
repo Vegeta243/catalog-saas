@@ -171,15 +171,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div>
           <div className="flex items-center justify-between">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors flex-1`}>
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-black text-sm">E</span>
-                </div>
-                <div>
-                  <span className="text-white font-bold text-base leading-none">EcomPilot</span>
-                  <span className="block text-blue-400 text-xs font-semibold tracking-widest">ELITE</span>
-                </div>
-              </div>
+              {sidebarCollapsed ? (
+                <img src="/logo-icon.png" alt="EcomPilot Elite" className="w-8 h-8 object-contain" />
+              ) : (
+                <img src="/logo.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain" style={{ maxWidth: '160px' }} />
+              )}
             </Link>
             {/* Close button mobile only */}
             <button

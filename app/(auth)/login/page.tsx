@@ -236,9 +236,7 @@ function AuthContent() {
       <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12" style={{ backgroundColor: "#0f172a" }}>
         <div>
           <Link href="/">
-            <h2 className="text-2xl font-bold" style={{ color: "#fff" }}>
-              Ecom<span style={{ color: "#60a5fa" }}>Pilot</span>
-            </h2>
+            <img src="/logo.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain brightness-[10]" />
           </Link>
           <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>Le copilote de votre catalogue Shopify</p>
         </div>
@@ -309,13 +307,8 @@ function AuthContent() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden mb-6 text-center">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                <Zap className="w-4 h-4" style={{ color: "#fff" }} />
-              </div>
-              <span className="text-xl font-bold" style={{ color: "#0f172a" }}>
-                Ecom<span style={{ color: "#2563eb" }}>Pilot</span>
-              </span>
+            <Link href="/" className="inline-flex items-center">
+              <img src="/logo.png" alt="EcomPilot Elite" className="h-10 w-auto object-contain" />
             </Link>
           </div>
 

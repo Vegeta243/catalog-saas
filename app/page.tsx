@@ -92,11 +92,8 @@ export default function HomePage() {
       {/* ══════ HEADER ══════ */}
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Zap className="w-4 h-4" style={{ color: "#fff" }} />
-            </div>
-            <span className="text-xl font-bold" style={{ color: "#0f172a" }}>Ecom<span style={{ color: "#2563eb" }}>Pilot</span></span>
+          <Link href="/" className="flex items-center">
+            <img src="/logo.png" alt="EcomPilot Elite" className="h-10 w-auto object-contain" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#problemes" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Pourquoi ?</a>
@@ -626,10 +623,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
-                <Zap className="w-3.5 h-3.5" style={{ color: "#fff" }} />
-              </div>
-              <span className="text-lg font-bold" style={{ color: "#0f172a" }}>Ecom<span style={{ color: "#2563eb" }}>Pilot</span></span>
+              <img src="/logo.png" alt="EcomPilot Elite" className="h-8 w-auto object-contain" />
               <span className="text-xs ml-2" style={{ color: "#94a3b8" }}>Le copilote de votre catalogue Shopify</span>
             </div>
             <div className="flex items-center gap-6 text-sm" style={{ color: "#64748b" }}>

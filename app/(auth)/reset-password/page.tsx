@@ -56,10 +56,7 @@ function ResetPasswordContent() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              <Zap className="w-4 h-4" style={{ color: "#fff" }} />
-            </div>
-            <span className="text-xl font-bold" style={{ color: "#0f172a" }}>Ecom<span style={{ color: "#2563eb" }}>Pilot</span></span>
+            <img src="/logo.png" alt="EcomPilot Elite" className="h-10 w-auto object-contain" />
           </Link>
         </div>
 
