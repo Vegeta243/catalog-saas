@@ -254,29 +254,60 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Tasks counter + plan */}
         {!sidebarCollapsed && (
           <>
-          <div className="mx-3 mb-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(96,165,250,0.1)' }}>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <Crown className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
-                <span className="text-xs font-semibold" style={{ color: '#f1f5f9' }}>Plan {plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
-              </div>
-              <span className="text-[10px] font-medium" style={{ color: getTasksColor(tasksRemaining) }}>
-                {tasksRemaining}/{tasksTotal}
+          <div className="mx-3 mb-3 p-3 rounded-xl bg-gray-900 border border-gray-800">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Tâches ce mois</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                tasksRemaining <= 5 ? 'bg-red-900 text-red-300' :
+                tasksRemaining <= 20 ? 'bg-orange-900 text-orange-300' :
+                'bg-green-900 text-green-300'
+              }`}>
+                {tasksRemaining} restantes
               </span>
             </div>
-            <div className="w-full h-1.5 rounded-full mt-1" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-              <div className="h-1.5 rounded-full transition-all" style={{
-                width: `${Math.min(100, (tasksUsed / tasksTotal) * 100)}%`,
-                backgroundColor: getTasksColor(tasksRemaining),
-              }} />
+
+            <div className="w-full bg-gray-800 rounded-full h-2 mb-2">
+              <div
+                className={`h-2 rounded-full transition-all ${
+                  tasksRemaining <= 5 ? 'bg-red-500' :
+                  tasksRemaining <= 20 ? 'bg-orange-500' :
+                  'bg-blue-500'
+                }`}
+                style={{ width: `${Math.min(100, ((tasksTotal - tasksRemaining) / tasksTotal) * 100)}%` }}
+              />
             </div>
-            <p className="text-[10px] mt-1.5" style={{ color: '#64748b' }}>{tasksUsed} / {tasksTotal} tâches utilisées</p>
-            <div className="mt-2 space-y-0.5">
-              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>✨ Titre IA</span><span>1 tâche</span></div>
-              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>📝 Description IA</span><span>3 tâches</span></div>
-              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>🖼️ Image</span><span>1 tâche</span></div>
-              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>✏️ Bulk edit</span><span>Gratuit</span></div>
+
+            <div className="flex justify-between text-xs text-gray-500 mb-3">
+              <span>{tasksTotal - tasksRemaining} utilisées</span>
+              <span>{tasksTotal} total</span>
             </div>
+
+            <div className="space-y-1 border-t border-gray-800 pt-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">✨ Titre IA</span>
+                <span className="text-gray-500">1 tâche</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">📝 Description IA</span>
+                <span className="text-gray-500">3 tâches</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">🖼️ Image</span>
+                <span className="text-gray-500">1 tâche</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">🔍 Concurrence</span>
+                <span className="text-gray-500">5 tâches</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">✏️ Bulk edit</span>
+                <span className="text-green-600">Gratuit</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 mt-2 text-center">
+              Renouvellement le {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+            </p>
           </div>
 
           {(plan === 'free' || plan === 'starter') && (
