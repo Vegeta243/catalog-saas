@@ -421,25 +421,141 @@ export default function AccountPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold mb-4" style={{ color: "#0f172a" }}>Changer de plan</h3>
+                <h3 className="text-sm font-semibold mb-5" style={{ color: "#0f172a" }}>Changer de plan</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {([
-                    { name: "Starter", key: "starter" as const, features: ["1 boutique", "1 000 actions/mois", "Support email"] },
-                    { name: "Pro", key: "pro" as const, features: ["3 boutiques", "20 000 actions/mois", "Support prioritaire"] },
-                    { name: "Scale", key: "scale" as const, features: ["Boutiques illimitées", "100 000 actions/mois", "Support dédié"] },
+                    {
+                      name: "Starter",
+                      key: "starter" as const,
+                      price: "29€",
+                      color: "blue",
+                      features: [
+                        { text: "1 000 tâches IA / mois", highlight: false },
+                        { text: "500 produits max", highlight: false },
+                        { text: "1 boutique Shopify", highlight: false },
+                        { text: "Import AliExpress / CJ", highlight: false },
+                        { text: "Support email", highlight: false },
+                      ],
+                      newVsFree: [
+                        "33× plus de tâches IA",
+                        "500 produits (vs 50 gratuit)",
+                        "Import AliExpress illimité",
+                      ],
+                    },
+                    {
+                      name: "Pro",
+                      key: "pro" as const,
+                      price: "89€",
+                      color: "green",
+                      popular: true,
+                      features: [
+                        { text: "20 000 tâches IA / mois", highlight: true },
+                        { text: "Produits illimités", highlight: true },
+                        { text: "3 boutiques Shopify", highlight: true },
+                        { text: "Automatisations avancées", highlight: true },
+                        { text: "Analyse concurrentielle IA", highlight: true },
+                        { text: "Support prioritaire 24h", highlight: false },
+                      ],
+                      newVsFree: [
+                        "666× plus de tâches IA",
+                        "Produits & boutiques illimités (3)",
+                        "Automatisations complètes",
+                        "Analyse concurrentielle",
+                      ],
+                    },
+                    {
+                      name: "Scale",
+                      key: "scale" as const,
+                      price: "129€",
+                      color: "purple",
+                      features: [
+                        { text: "100 000 tâches IA / mois", highlight: true },
+                        { text: "Boutiques illimitées", highlight: true },
+                        { text: "Automatisations illimitées", highlight: true },
+                        { text: "Support dédié sous 4h", highlight: true },
+                        { text: "Accès anticipé nouveautés", highlight: true },
+                        { text: "Accès API", highlight: true },
+                      ],
+                      newVsFree: [
+                        "3 333× plus de tâches IA",
+                        "Boutiques illimitées",
+                        "Support dédié sous 4h",
+                        "Accès anticipé aux nouvelles fonctions",
+                      ],
+                    },
                   ]).map((p) => {
                     const isCurrent = p.key === currentPlan;
+                    const borderColor = isCurrent
+                      ? "#2563eb"
+                      : p.popular
+                      ? "#059669"
+                      : "#e2e8f0";
+                    const accentColor = p.color === "green" ? "#059669" : p.color === "purple" ? "#7c3aed" : "#2563eb";
+                    const bgAccent = p.color === "green" ? "#f0fdf4" : p.color === "purple" ? "#faf5ff" : "#eff6ff";
+                    const textAccent = p.color === "green" ? "#166534" : p.color === "purple" ? "#6b21a8" : "#1d4ed8";
                     return (
-                      <div key={p.name} className={`rounded-xl border p-4 ${isCurrent ? "border-blue-400 bg-blue-50/50" : "border-gray-200"}`}>
-                        <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>{p.name}</p>
-                        <p className="text-xl font-bold mt-1" style={{ color: "#0f172a" }}>{PLAN_PRICES[p.key]}<span className="text-xs font-normal" style={{ color: "#64748b" }}>/mois</span></p>
+                      <div
+                        key={p.name}
+                        className="rounded-2xl border-2 p-5 relative"
+                        style={{ borderColor }}
+                      >
+                        {p.popular && !isCurrent && (
+                          <div
+                            className="absolute -top-3 left-1/2 -translate-x-1/2 text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap"
+                            style={{ backgroundColor: "#059669" }}
+                          >
+                            LE PLUS POPULAIRE
+                          </div>
+                        )}
+                        {isCurrent && (
+                          <div
+                            className="absolute -top-3 left-1/2 -translate-x-1/2 text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap"
+                            style={{ backgroundColor: "#2563eb" }}
+                          >
+                            PLAN ACTUEL
+                          </div>
+                        )}
+
+                        <h3 className="font-bold text-base" style={{ color: "#0f172a" }}>{p.name}</h3>
+                        <div className="text-2xl font-black mt-0.5" style={{ color: "#0f172a" }}>
+                          {p.price}<span className="text-xs font-normal" style={{ color: "#64748b" }}>/mois</span>
+                        </div>
+
+                        {/* What you gain vs Free */}
+                        {currentPlan === "free" && (
+                          <div className="mt-3 mb-4 p-3 rounded-xl" style={{ backgroundColor: bgAccent }}>
+                            <p className="text-[10px] font-semibold mb-1.5" style={{ color: textAccent }}>
+                              🚀 Ce que vous gagnez vs Gratuit :
+                            </p>
+                            {p.newVsFree.map((item, i) => (
+                              <div key={i} className="flex items-start gap-1.5 text-[11px] mb-1" style={{ color: textAccent }}>
+                                <span className="mt-0.5 flex-shrink-0" style={{ color: accentColor }}>✓</span>
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Feature list */}
                         <ul className="mt-3 space-y-1.5">
-                          {p.features.map((f) => (<li key={f} className="flex items-center gap-1.5 text-xs" style={{ color: "#64748b" }}><Check className="w-3 h-3" style={{ color: "#059669" }} /> {f}</li>))}
+                          {p.features.map((f) => (
+                            <li key={f.text} className={`flex items-center gap-1.5 text-xs ${f.highlight ? "font-medium" : ""}`} style={{ color: f.highlight ? "#0f172a" : "#64748b" }}>
+                              <Check className="w-3 h-3 flex-shrink-0" style={{ color: f.highlight ? accentColor : "#94a3b8" }} />
+                              {f.text}
+                            </li>
+                          ))}
                         </ul>
+
                         {isCurrent ? (
-                          <div className="w-full mt-4 py-2 rounded-lg text-xs font-medium text-center bg-blue-600" style={{ color: "#fff" }}>Plan actuel</div>
+                          <div className="w-full mt-4 py-2 rounded-xl text-xs font-semibold text-center" style={{ backgroundColor: "#2563eb", color: "#fff" }}>Plan actuel ✓</div>
                         ) : (
-                          <Link href="/dashboard/upgrade" className="block w-full mt-4 py-2 rounded-lg text-xs font-medium text-center bg-gray-100 hover:bg-gray-200" style={{ color: "#374151" }}>Changer</Link>
+                          <Link
+                            href="/dashboard/upgrade"
+                            className="block w-full mt-4 py-2 rounded-xl text-xs font-semibold text-center transition-opacity hover:opacity-90"
+                            style={{ backgroundColor: accentColor, color: "#fff" }}
+                          >
+                            Passer au {p.name} →
+                          </Link>
                         )}
                       </div>
                     );
