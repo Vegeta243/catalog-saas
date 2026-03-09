@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username: email, password }),
       })
 
       const data = await res.json()
@@ -47,16 +47,16 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm mb-1" style={{ color: '#9ca3af' }}>Email admin</label>
+            <label className="block text-sm mb-1" style={{ color: '#9ca3af' }}>Identifiant</label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2"
               style={{ backgroundColor: '#1f2937', border: '1px solid #374151', color: '#fff' }}
-              placeholder="admin@ecompilotelite.com"
+              placeholder="Identifiant ou email admin"
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
           <div>
