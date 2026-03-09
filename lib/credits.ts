@@ -9,9 +9,9 @@ export const PLAN_TASKS: Record<string, number> = {
 };
 
 export const PLAN_PRICES: Record<string, string> = {
-  starter: "39€",
+  starter: "29€",
   pro: "89€",
-  scale: "179€",
+  scale: "129€",
 };
 
 // Coût en tâches par action (invisible pour l'utilisateur)
