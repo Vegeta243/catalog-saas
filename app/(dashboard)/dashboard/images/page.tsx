@@ -77,6 +77,7 @@ export default function ImagesPage() {
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
 
   /* Load Shopify products */
   const loadShopifyProducts = useCallback(async () => {
@@ -228,13 +229,28 @@ export default function ImagesPage() {
     setIsProcessing(false);
   };
 
+  const previewFilter = async (operation: string, extraParams: Record<string, unknown> = {}) => {
+    if (loadedImages.length === 0) { addToast("Chargez d'abord des images", "error"); return; }
+    setIsProcessing(true);
+    try {
+      const currentSrc = processedImages[activeIndex] || loadedImages.find((i) => i.idx === activeIndex)?.src || "";
+      const b64 = await fetchAsBase64(currentSrc);
+      const result = await callProcess(b64, operation, extraParams);
+      setPendingPreview(result);
+    } catch (err) {
+      addToast(`Echec: ${(err as Error).message}`, "error");
+    }
+    setIsProcessing(false);
+  };
+
   const applyFilter = async (filterId: string) => {
     setActiveFilter(filterId);
     if (filterId === "original") {
       setProcessedImages((prev) => { const next = { ...prev }; delete next[activeIndex]; return next; });
+      setPendingPreview(null);
       return;
     }
-    await applyToActive("filter", { filter: filterId });
+    await previewFilter("filter", { filter: filterId });
   };
 
   const handleReset = () => {
@@ -368,7 +384,7 @@ export default function ImagesPage() {
                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${source === tab ? "bg-blue-50 border-b-2 border-blue-500" : "hover:bg-gray-50"}`}
                 style={{ color: source === tab ? "#2563eb" : "#64748b" }}>
                 {tab === "shopify" ? <Package className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                {tab === "shopify" ? "Shopify" : "Mes fichiers"}
+                {tab === "shopify" ? "🛍️ Depuis Shopify" : "💻 Depuis mon PC"}
               </button>
             ))}
           </div>
@@ -512,20 +528,35 @@ export default function ImagesPage() {
               </div>
             </div>
 
-            <div className="relative flex items-center justify-center bg-slate-100" style={{ minHeight: "380px" }}>
+            <div className="relative bg-slate-100" style={{ minHeight: "380px" }}>
               {activeSrc ? (
-                <>
-                  <img src={activeSrc} alt={activeItem?.name}
-                    className="max-w-full max-h-96 object-contain select-none" />
-                  {isProcessing && (
-                    <div className="absolute inset-0 bg-white/75 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="w-10 h-10 animate-spin" style={{ color: "#2563eb" }} />
-                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Traitement...</p>
+                pendingPreview ? (
+                  <div className="flex" style={{ minHeight: "380px" }}>
+                    <div className="flex-1 relative flex items-center justify-center p-3" style={{ minHeight: "380px" }}>
+                      <span className="absolute top-2 left-2 z-10 bg-black/60 text-white text-xs px-2 py-1 rounded font-medium">Avant</span>
+                      <img src={processedImages[activeIndex] ?? loadedImages.find((i) => i.idx === activeIndex)?.src ?? ""}
+                        alt="avant" className="max-w-full max-h-80 object-contain" />
                     </div>
-                  )}
-                </>
+                    <div className="w-px bg-gray-300 self-stretch" />
+                    <div className="flex-1 relative flex items-center justify-center p-3">
+                      <span className="absolute top-2 left-2 z-10 bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium">Après</span>
+                      <img src={pendingPreview} alt="apres" className="max-w-full max-h-80 object-contain" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center" style={{ minHeight: "380px" }}>
+                    <img src={activeSrc} alt={activeItem?.name}
+                      className="max-w-full max-h-96 object-contain select-none" />
+                    {isProcessing && (
+                      <div className="absolute inset-0 bg-white/75 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                        <Loader2 className="w-10 h-10 animate-spin" style={{ color: "#2563eb" }} />
+                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Traitement...</p>
+                      </div>
+                    )}
+                  </div>
+                )
               ) : (
-                <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+                <div className="flex flex-col items-center justify-center py-16 px-8 text-center" style={{ minHeight: "380px" }}>
                   <ImageIcon className="w-16 h-16 mb-4" style={{ color: "#cbd5e1" }} />
                   <p className="text-sm font-medium" style={{ color: "#64748b" }}>Aucune image chargee</p>
                   <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
@@ -534,6 +565,21 @@ export default function ImagesPage() {
                 </div>
               )}
             </div>
+
+            {pendingPreview && (
+              <div className="flex gap-2 px-4 py-3 border-t border-gray-100 bg-blue-50">
+                <button
+                  onClick={() => { setProcessedImages((prev) => ({ ...prev, [activeIndex]: pendingPreview })); setPendingPreview(null); addToast("Modification appliquee ✅", "success"); }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5">
+                  ✅ Appliquer
+                </button>
+                <button
+                  onClick={() => setPendingPreview(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50" style={{ color: "#374151" }}>
+                  ✗ Annuler
+                </button>
+              </div>
+            )}
 
             {batchProcessing && (
               <div className="px-4 py-3 border-t border-gray-100 bg-blue-50">
@@ -558,7 +604,7 @@ export default function ImagesPage() {
                   return (
                     <div key={img.idx}
                       className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${isActive ? "border-blue-500 ring-2 ring-blue-200" : isSelected ? "border-blue-300" : "border-gray-200 hover:border-gray-300"}`}
-                      onClick={() => { setActiveIndex(img.idx); setShowOriginal(false); }}>
+                      onClick={() => { setActiveIndex(img.idx); setShowOriginal(false); setPendingPreview(null); }}>
                       <img src={processedImages[img.idx] || img.src} alt={img.name} className="w-full h-full object-cover" />
                       {processedImages[img.idx] !== undefined && (
                         <div className="absolute top-0.5 right-0.5">
