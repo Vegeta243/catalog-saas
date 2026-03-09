@@ -62,6 +62,7 @@ function ShopsContent() {
         token_exchange: "Échange de token Shopify échoué. Réessayez.",
         no_token: "Aucun token reçu de Shopify. Réessayez.",
         config_missing: "Configuration serveur incomplète (clés Shopify). Contactez le support.",
+        already_connected: `⚠️ La boutique ${searchParams.get('shop') || ''} est déjà connectée à un autre compte EcomPilot. Chaque boutique ne peut être liée qu'à un seul compte.`,
       };
       addToast(errorMessages[error] ?? `Erreur OAuth : ${error}`, "error");
       router.replace("/dashboard/shops");

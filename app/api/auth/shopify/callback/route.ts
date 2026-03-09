@@ -165,6 +165,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/login?error=auth&reason=shopify_oauth`);
   }
 
+  // ── Block if shop already belongs to a DIFFERENT user ──
+  try {
+    const supabaseCheck = createClient(supabaseUrl, serviceKey);
+    const { data: shopOwner } = await supabaseCheck
+      .from('shops')
+      .select('user_id')
+      .eq('shop_domain', shop)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (shopOwner && shopOwner.user_id !== userId) {
+      console.warn(`[Shopify OAuth] Shop ${shop} already belongs to ${shopOwner.user_id}, blocking for ${userId}`);
+      return NextResponse.redirect(
+        `${siteUrl}/dashboard/shops?error=already_connected&shop=${encodeURIComponent(shop)}`
+      );
+    }
+  } catch { /* non-fatal — allow flow to continue */ }
+
   // ── Save to Supabase ──
   const supabase = createClient(supabaseUrl, serviceKey);
 
