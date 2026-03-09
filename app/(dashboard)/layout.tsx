@@ -252,16 +252,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span className="text-xs font-semibold" style={{ color: '#f1f5f9' }}>Plan {plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
               </div>
               <span className="text-[10px] font-medium" style={{ color: getTasksColor(tasksRemaining) }}>
-                {tasksRemaining} tâches
+                {tasksRemaining}/{tasksTotal}
               </span>
             </div>
             <div className="w-full h-1.5 rounded-full mt-1" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
               <div className="h-1.5 rounded-full transition-all" style={{
-                width: `${(tasksRemaining / tasksTotal) * 100}%`,
+                width: `${Math.min(100, (tasksUsed / tasksTotal) * 100)}%`,
                 backgroundColor: getTasksColor(tasksRemaining),
               }} />
             </div>
             <p className="text-[10px] mt-1.5" style={{ color: '#64748b' }}>{tasksUsed} / {tasksTotal} tâches utilisées</p>
+            <div className="mt-2 space-y-0.5">
+              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>✨ Titre IA</span><span>1 tâche</span></div>
+              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>📝 Description IA</span><span>3 tâches</span></div>
+              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>🖼️ Image</span><span>1 tâche</span></div>
+              <div className="flex justify-between text-[10px]" style={{ color: '#64748b' }}><span>✏️ Bulk edit</span><span>Gratuit</span></div>
+            </div>
           </div>
 
           {(plan === 'free' || plan === 'starter') && (
