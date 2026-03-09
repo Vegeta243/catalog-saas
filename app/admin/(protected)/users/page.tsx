@@ -29,26 +29,58 @@ export default async function AdminUsersPage({
   const { plan: planFilter, q: searchQuery } = await searchParams;
   const supabase = getAdminClient();
 
-  let query = supabase
+  // Try public.users first (has plan/subscription data)
+  const { data: publicUsers } = await supabase
     .from("users")
     .select("id, email, plan, actions_used, actions_limit, subscription_status, created_at, deleted_at, deletion_scheduled_at")
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(500);
 
-  if (planFilter === "deleted") {
-    query = query.not("deleted_at", "is", null);
-  } else if (planFilter && planFilter !== "all") {
-    query = query.eq("plan", planFilter).is("deleted_at", null);
+  // If public.users is empty, fall back to auth.users (users never synced)
+  type UserRow = {
+    id: string;
+    email: string;
+    plan: string;
+    actions_used: number;
+    actions_limit: number;
+    subscription_status: string;
+    created_at: string;
+    deleted_at: string | null;
+    deletion_scheduled_at?: string | null;
+  };
+
+  let allUsers: UserRow[];
+  if (publicUsers && publicUsers.length > 0) {
+    allUsers = publicUsers as UserRow[];
   } else {
-    query = query.is("deleted_at", null);
+    const { data: authData } = await supabase.auth.admin.listUsers({ perPage: 500 });
+    allUsers = (authData?.users || []).map(u => ({
+      id: u.id,
+      email: u.email || "",
+      plan: (u.user_metadata?.plan as string) || "free",
+      actions_used: 0,
+      actions_limit: 30,
+      subscription_status: "inactive",
+      created_at: u.created_at,
+      deleted_at: null,
+      deletion_scheduled_at: null,
+    }));
   }
 
-  const { data: allUsers } = await query;
+  // Apply filters
+  let filtered = allUsers;
+  if (planFilter === "deleted") {
+    filtered = filtered.filter(u => u.deleted_at);
+  } else if (planFilter && planFilter !== "all") {
+    filtered = filtered.filter(u => u.plan === planFilter && !u.deleted_at);
+  } else {
+    filtered = filtered.filter(u => !u.deleted_at);
+  }
 
-  // Client-side search filter
+  // Search
   const users = searchQuery
-    ? (allUsers || []).filter(u => u.email?.toLowerCase().includes(searchQuery.toLowerCase()))
-    : (allUsers || []);
+    ? filtered.filter(u => u.email?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : filtered;
 
   // Count shops per user
   const userIds = users.map(u => u.id);
@@ -56,8 +88,8 @@ export default async function AdminUsersPage({
   const shopCountMap: Record<string, number> = {};
   (shops || []).forEach(s => { shopCountMap[s.user_id] = (shopCountMap[s.user_id] || 0) + 1; });
 
-  const mrr = (users || []).reduce((sum, u) => sum + (PLAN_COSTS[u.plan] || 0), 0);
-  const activeCount = (users || []).filter(u => u.subscription_status === 'active').length;
+  const mrr = users.reduce((sum, u) => sum + (PLAN_COSTS[u.plan] || 0), 0);
+  const activeCount = users.filter(u => u.subscription_status === "active").length;
 
   const plans = ["all", "free", "starter", "pro", "scale", "deleted"];
 
