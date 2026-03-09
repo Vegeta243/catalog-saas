@@ -26,6 +26,8 @@ import {
   Menu,
   X,
   CalendarDays,
+  Eye,
+  ListChecks,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 
@@ -52,6 +54,13 @@ const NAV_SECTIONS = [
     items: [
       { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
       { href: '/dashboard/calendrier', label: 'Calendrier', icon: CalendarDays },
+      { href: '/dashboard/taches', label: 'Mes tâches', icon: ListChecks },
+    ],
+  },
+  {
+    label: "ANALYSE",
+    items: [
+      { href: '/dashboard/concurrence', label: 'Concurrence', icon: Eye },
     ],
   },
   {
