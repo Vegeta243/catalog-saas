@@ -50,14 +50,17 @@ export default function ConcurrencePage() {
     setLoading(true);
     try {
       const [compRes, alertRes] = await Promise.all([
-        fetch("/api/concurrence/analyze"),
+        fetch("/api/concurrence/competitors"),
         fetch("/api/concurrence/alert"),
       ]);
       const compData = await compRes.json();
       const alertData = await alertRes.json();
+      console.log("Competitors fetched:", compData.competitors?.length, "Alerts:", alertData.alerts?.length);
       setCompetitors(compData.competitors || []);
       setAlerts(alertData.alerts || []);
-    } catch { /* silent */ }
+    } catch (e) {
+      console.error("fetchCompetitors error:", e);
+    }
     setLoading(false);
   }, []);
 
@@ -66,16 +69,25 @@ export default function ConcurrencePage() {
   const handleAdd = async () => {
     if (!addName || !addUrl) return;
     setAdding(true);
-    await fetch("/api/concurrence/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "add", name: addName, url: addUrl }),
-    });
+    console.log("Adding competitor:", addName, addUrl);
+    try {
+      const res = await fetch("/api/concurrence/competitors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: addName, url: addUrl }),
+      });
+      const data = await res.json();
+      console.log("Add competitor response:", res.status, data);
+      if (!res.ok) throw new Error(data.error || "Erreur serveur");
+      setShowAddModal(false);
+      setAddName("");
+      setAddUrl("");
+      fetchCompetitors();
+    } catch (e) {
+      console.error("Add competitor error:", e);
+      alert(`Erreur: ${(e as Error).message}`);
+    }
     setAdding(false);
-    setShowAddModal(false);
-    setAddName("");
-    setAddUrl("");
-    fetchCompetitors();
   };
 
   const handleAnalyze = async (comp: Competitor) => {
@@ -98,7 +110,7 @@ export default function ConcurrencePage() {
   };
 
   const handleDelete = async (id: string) => {
-    await fetch("/api/concurrence/analyze", {
+    await fetch("/api/concurrence/competitors", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
