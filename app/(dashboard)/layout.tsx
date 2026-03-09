@@ -171,9 +171,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center justify-between">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'px-5'} h-16 border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors flex-1`}>
               {sidebarCollapsed ? (
-                <img src="/logo-icon.png" alt="EcomPilot Elite" className="w-8 h-8 object-contain brightness-0 invert" />
+                <img src="/logo-icon-white.png" alt="EcomPilot Elite" className="w-8 h-8 object-contain" />
               ) : (
-                <img src="/logo.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain brightness-0 invert" style={{ maxWidth: '160px' }} />
+                <img src="/logo-white.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain" style={{ maxWidth: '160px' }} />
               )}
             </Link>
             {/* Close button mobile only */}
@@ -263,9 +263,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Tasks counter + plan */}
         {!sidebarCollapsed && (
           <>
-          <div className="mx-3 mb-2 p-3 rounded-xl bg-gray-900 border border-gray-800">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-300">Tâches ce mois</span>
+          <div className="mx-3 mb-2 p-3 rounded-xl bg-gray-800 border border-gray-700">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-semibold text-gray-100">Tâches ce mois</span>
               <span className={`text-xs font-bold ${
                 tasksRemaining <= 5 ? 'text-red-400' :
                 tasksRemaining <= 10 ? 'text-orange-400' :
@@ -274,29 +274,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {tasksRemaining} / {tasksTotal}
               </span>
             </div>
-            <div className="w-full bg-gray-800 rounded-full h-1.5 mb-2">
+            <div className="w-full bg-gray-600 rounded-full h-2 mb-1.5">
               <div
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  tasksRemaining <= 5 ? 'bg-red-500' :
-                  tasksRemaining <= 10 ? 'bg-orange-500' : 'bg-blue-500'
+                className={`h-2 rounded-full transition-all ${
+                  tasksRemaining <= 5 ? 'bg-red-400' :
+                  tasksRemaining <= 10 ? 'bg-orange-400' : 'bg-blue-400'
                 }`}
-                style={{ width: `${Math.max(2, Math.min(100, (tasksUsed / Math.max(tasksTotal, 1)) * 100))}%` }}
+                style={{ width: `${Math.max(3, Math.min(100, (tasksUsed / Math.max(tasksTotal, 1)) * 100))}%` }}
               />
             </div>
-            <p className="text-xs text-gray-600">
-              {tasksUsed} utilisées · renouvellement le 1er
-            </p>
+            <p className="text-xs text-gray-300">{tasksUsed} utilisées · renouvellement le 1er</p>
           </div>
 
           {(plan === 'free' || plan === 'starter') && (
-            <div className="mx-3 mb-3 p-3 rounded-lg border" style={{ backgroundColor: 'rgba(99,102,241,0.1)', borderColor: 'rgba(99,102,241,0.3)' }}>
-              <p className="text-xs font-semibold mb-1" style={{ color: '#a5b4fc' }}>🚀 Passez au plan Pro</p>
-              <p className="text-[10px] leading-relaxed mb-2" style={{ color: '#94a3b8' }}>
-                Débloquez 20 000 actions IA, 3 boutiques et le support prioritaire.
+            <div className="mx-3 mb-3 rounded-xl p-3" style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}>
+              <p className="text-xs font-bold text-white mb-0.5">
+                {plan === 'free' ? 'Passez au plan Starter' : 'Passez au plan Pro'}
               </p>
-              <a href="/dashboard/billing"
-                className="block w-full text-center py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90"
-                style={{ backgroundColor: '#6366f1', color: '#fff' }}>
+              <p className="text-xs text-blue-200 mb-2 leading-snug">
+                {plan === 'free'
+                  ? 'Débloquez 1 000 tâches IA et 500 produits'
+                  : 'Débloquez 20 000 tâches et 3 boutiques'
+                }
+              </p>
+              <a href="/dashboard/account?tab=subscription"
+                className="block text-center text-xs font-semibold bg-white text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
                 Voir les offres →
               </a>
             </div>
@@ -307,13 +309,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Bottom user area */}
         <div className="border-t border-slate-700/50 p-3">
           <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3 px-2'} py-2`}>
-            <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4" style={{ color: '#ffffff' }} />
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xs font-bold">{userEmail?.[0]?.toUpperCase() || 'U'}</span>
             </div>
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: '#f1f5f9' }}>{userName}</p>
-                <p className="text-xs truncate" style={{ color: '#64748b' }}>{userEmail || "Chargement…"}</p>
+                <p className="text-xs font-semibold truncate text-gray-100">{userEmail || 'Chargement…'}</p>
+                <p className="text-xs text-gray-400 capitalize">{plan || 'free'}</p>
               </div>
             )}
           </div>

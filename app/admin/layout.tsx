@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen flex" style={{ backgroundColor: "#f8fafc" }}>
       <aside className="w-64 flex flex-col flex-shrink-0" style={{ backgroundColor: "#1c1917" }}>
         <div className="flex items-center gap-3 px-5 h-16 border-b" style={{ borderColor: "rgba(127,29,29,0.3)" }}>
-          <img src="/logo-icon.png" alt="EcomPilot Elite" className="w-8 h-8 object-contain brightness-0 invert" />
+          <img src="/logo-icon-white.png" alt="EcomPilot Elite" className="w-8 h-8 object-contain" />
           <span className="text-lg font-bold tracking-tight" style={{ color: "#fff" }}>Admin</span>
         </div>
 

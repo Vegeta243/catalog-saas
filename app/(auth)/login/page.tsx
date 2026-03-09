@@ -236,7 +236,7 @@ function AuthContent() {
       <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12" style={{ backgroundColor: "#0f172a" }}>
         <div>
           <Link href="/">
-            <img src="/logo.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain brightness-0 invert" />
+            <img src="/logo-white.png" alt="EcomPilot Elite" className="h-9 w-auto object-contain" />
           </Link>
           <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>Le copilote de votre catalogue Shopify</p>
         </div>
@@ -288,7 +288,7 @@ function AuthContent() {
           <div className="grid grid-cols-3 gap-4">
             {[
               { val: "2 min", label: "Configuration" },
-              { val: "50", label: "Actions gratuites" },
+              { val: "30", label: "Actions gratuites" },
               { val: "0 €", label: "Pour demarrer" },
             ].map((s) => (
               <div key={s.label} className="text-center p-3 rounded-xl" style={{ backgroundColor: "rgba(96,165,250,0.08)" }}>
@@ -852,6 +852,15 @@ function AuthContent() {
                   <ArrowLeft className="w-3.5 h-3.5" /> Retour a l&apos;accueil
                 </Link>
               </div>
+
+              {/* Discreet admin access */}
+              <p className="text-center mt-4">
+                <a href="/admin/login" className="text-xs transition-opacity" style={{ color: "#94a3b8", opacity: 0.4 }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}>
+                  · Administration ·
+                </a>
+              </p>
             </>
           )}
         </div>
