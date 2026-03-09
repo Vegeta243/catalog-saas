@@ -1,146 +1,151 @@
-"use client";
+import { createClient } from "@supabase/supabase-js";
 
-import { useState } from "react";
-import { Search, Filter, MoreHorizontal, Mail, Ban, CheckCircle, Crown, Download } from "lucide-react";
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
-const mockUsers = [
-  { id: "1", name: "Marie Dupont", email: "marie@example.com", plan: "Pro", status: "active", tasks: 250, products: 342, joined: "2025-12-15" },
-  { id: "2", name: "Jean Martin", email: "jean@example.com", plan: "Starter", status: "active", tasks: 30, products: 89, joined: "2026-01-20" },
-  { id: "3", name: "Sophie Bernard", email: "sophie@example.com", plan: "Scale", status: "active", tasks: 800, products: 1250, joined: "2025-11-03" },
-  { id: "4", name: "Lucas Petit", email: "lucas@example.com", plan: "Starter", status: "inactive", tasks: 0, products: 12, joined: "2026-02-14" },
-  { id: "5", name: "Emma Leroy", email: "emma@example.com", plan: "Pro", status: "active", tasks: 180, products: 567, joined: "2025-10-28" },
-  { id: "6", name: "Thomas Richard", email: "thomas@example.com", plan: "Starter", status: "suspended", tasks: 15, products: 45, joined: "2026-01-05" },
-  { id: "7", name: "Camille Moreau", email: "camille@example.com", plan: "Pro", status: "active", tasks: 210, products: 234, joined: "2025-09-12" },
-  { id: "8", name: "Alexandre Simon", email: "alex@example.com", plan: "Starter", status: "active", tasks: 10, products: 8, joined: "2026-03-01" },
-];
-
-const planColors: Record<string, { bg: string; text: string }> = {
-  Free: { bg: "#f1f5f9", text: "#475569" },
-  Starter: { bg: "#dbeafe", text: "#1d4ed8" },
-  Pro: { bg: "#d1fae5", text: "#065f46" },
-  Scale: { bg: "#ede9fe", text: "#5b21b6" },
+const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
+  free: { bg: "#f1f5f9", text: "#64748b" },
+  starter: { bg: "#eff6ff", text: "#2563eb" },
+  pro: { bg: "#ecfdf5", text: "#059669" },
+  scale: { bg: "#faf5ff", text: "#7c3aed" },
 };
 
-const statusColors: Record<string, { bg: string; text: string }> = {
-  active: { bg: "#d1fae5", text: "#065f46" },
-  inactive: { bg: "#f1f5f9", text: "#475569" },
-  suspended: { bg: "#fef2f2", text: "#991b1b" },
-};
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ plan?: string }>;
+}) {
+  const { plan: planFilter } = await searchParams;
+  const supabase = getAdminClient();
 
-const statusLabels: Record<string, string> = {
-  active: "Actif",
-  inactive: "Inactif",
-  suspended: "Suspendu",
-};
+  let query = supabase
+    .from("users")
+    .select("id, email, plan, actions_used, actions_limit, subscription_status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
 
-export default function AdminUsersPage() {
-  const [search, setSearch] = useState("");
-  const [filterPlan, setFilterPlan] = useState("all");
+  if (planFilter && planFilter !== "all") {
+    query = query.eq("plan", planFilter);
+  }
 
-  const filtered = mockUsers.filter((u) => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
-    const matchPlan = filterPlan === "all" || u.plan === filterPlan;
-    return matchSearch && matchPlan;
-  });
+  const { data: users } = await query;
+
+  const plans = ["all", "free", "starter", "pro", "scale"];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Utilisateurs</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>{mockUsers.length} utilisateurs enregistrés</p>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors">
-          <Download className="w-4 h-4" style={{ color: "#64748b" }} />
-          <span style={{ color: "#374151" }}>Exporter CSV</span>
-        </button>
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Utilisateurs</h1>
+        <span className="text-sm" style={{ color: "#64748b" }}>{(users || []).length} résultats</span>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par nom ou email..."
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-300"
-            style={{ color: "#0f172a" }} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4" style={{ color: "#94a3b8" }} />
-          {["all", "Free", "Starter", "Pro", "Scale"].map((p) => (
-            <button key={p} onClick={() => setFilterPlan(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filterPlan === p ? "text-white" : "hover:bg-gray-100"
-              }`}
-              style={filterPlan === p ? { backgroundColor: "#dc2626", color: "#fff" } : { color: "#64748b" }}>
-              {p === "all" ? "Tous" : p}
-            </button>
-          ))}
-        </div>
+      {/* Filter tabs */}
+      <div className="flex gap-2 mb-6">
+        {plans.map((p) => (
+          <a
+            key={p}
+            href={p === "all" ? "/admin/users" : `/admin/users?plan=${p}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              (planFilter || "all") === p
+                ? "bg-blue-600 text-white"
+                : "bg-white border border-gray-200 hover:bg-gray-50"
+            }`}
+            style={(planFilter || "all") === p ? {} : { color: "#64748b" }}
+          >
+            {p === "all" ? "Tous" : p.charAt(0).toUpperCase() + p.slice(1)}
+          </a>
+        ))}
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100" style={{ backgroundColor: "#fafafa" }}>
-              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Utilisateur</th>
-              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Plan</th>
-              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Statut</th>
-              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Tâches</th>
-              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Produits</th>
-              <th className="text-left text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Inscription</th>
-              <th className="text-right text-xs font-semibold px-5 py-3" style={{ color: "#64748b" }}>Actions</th>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Email</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Plan</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Tâches</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Statut</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Inscription</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filtered.map((u) => (
-              <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold" style={{ color: "#fff" }}>{u.name.charAt(0)}</span>
+          <tbody>
+            {(users || []).map((user) => {
+              const planStyle = PLAN_COLORS[user.plan] || PLAN_COLORS.free;
+              const usagePct = user.actions_limit > 0 ? (user.actions_used / user.actions_limit) * 100 : 0;
+              return (
+                <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="px-4 py-3 text-xs font-medium" style={{ color: "#0f172a" }}>{user.email}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
+                      style={{ backgroundColor: planStyle.bg, color: planStyle.text }}
+                    >
+                      {user.plan}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 bg-gray-100 rounded-full">
+                        <div
+                          className="h-1.5 rounded-full"
+                          style={{
+                            width: `${Math.min(100, usagePct)}%`,
+                            backgroundColor: usagePct >= 100 ? "#dc2626" : usagePct >= 80 ? "#f59e0b" : "#22c55e",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs" style={{ color: "#64748b" }}>
+                        {user.actions_used}/{user.actions_limit}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{u.name}</p>
-                      <p className="text-xs" style={{ color: "#94a3b8" }}>{u.email}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className="text-xs font-medium capitalize"
+                      style={{
+                        color: user.subscription_status === "active" ? "#059669"
+                          : user.subscription_status === "past_due" ? "#dc2626"
+                          : "#94a3b8",
+                      }}
+                    >
+                      {user.subscription_status || "inactive"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs" style={{ color: "#64748b" }}>
+                    {new Date(user.created_at).toLocaleDateString("fr-FR")}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <form action={`/api/admin/users/${user.id}/reset-tasks`} method="POST">
+                        <button
+                          type="submit"
+                          className="text-xs px-2 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                          style={{ color: "#64748b" }}
+                        >
+                          Reset tâches
+                        </button>
+                      </form>
                     </div>
-                  </div>
-                </td>
-                <td className="px-5 py-3">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
-                    style={{ backgroundColor: planColors[u.plan].bg, color: planColors[u.plan].text }}>
-                    {u.plan === "Scale" && <Crown className="w-3 h-3" />}{u.plan}
-                  </span>
-                </td>
-                <td className="px-5 py-3">
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: statusColors[u.status].bg, color: statusColors[u.status].text }}>
-                    {statusLabels[u.status]}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-sm font-medium" style={{ color: "#0f172a" }}>{u.tasks}</td>
-                <td className="px-5 py-3 text-sm" style={{ color: "#64748b" }}>{u.products}</td>
-                <td className="px-5 py-3 text-sm" style={{ color: "#64748b" }}>{u.joined}</td>
-                <td className="px-5 py-3 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <button className="p-1.5 hover:bg-gray-100 rounded-lg" title="Email"><Mail className="w-4 h-4" style={{ color: "#64748b" }} /></button>
-                    <button className="p-1.5 hover:bg-gray-100 rounded-lg" title={u.status === "suspended" ? "Réactiver" : "Suspendre"}>
-                      {u.status === "suspended" ? <CheckCircle className="w-4 h-4" style={{ color: "#059669" }} /> : <Ban className="w-4 h-4" style={{ color: "#dc2626" }} />}
-                    </button>
-                    <button className="p-1.5 hover:bg-gray-100 rounded-lg"><MoreHorizontal className="w-4 h-4" style={{ color: "#64748b" }} /></button>
-                  </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {(!users || users.length === 0) && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm" style={{ color: "#94a3b8" }}>
+                  Aucun utilisateur trouvé
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
-        {filtered.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Aucun utilisateur trouvé</p>
-          </div>
-        )}
       </div>
     </div>
   );
 }
+
