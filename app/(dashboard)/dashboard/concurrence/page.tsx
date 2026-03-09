@@ -25,6 +25,15 @@ interface AnalysisResult {
   insights: string[];
 }
 
+interface Alert {
+  competitor_id: string;
+  competitor_name: string;
+  type: "price_change" | "new_product" | "removed_product";
+  message: string;
+  severity: "low" | "medium" | "high";
+  detected_at: string;
+}
+
 export default function ConcurrencePage() {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,13 +44,19 @@ export default function ConcurrencePage() {
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [analysisCompetitor, setAnalysisCompetitor] = useState<string>("");
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   const fetchCompetitors = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/concurrence/analyze");
-      const data = await res.json();
-      setCompetitors(data.competitors || []);
+      const [compRes, alertRes] = await Promise.all([
+        fetch("/api/concurrence/analyze"),
+        fetch("/api/concurrence/alert"),
+      ]);
+      const compData = await compRes.json();
+      const alertData = await alertRes.json();
+      setCompetitors(compData.competitors || []);
+      setAlerts(alertData.alerts || []);
     } catch { /* silent */ }
     setLoading(false);
   }, []);
@@ -189,15 +204,36 @@ export default function ConcurrencePage() {
         {/* Right panel — Analysis results */}
         <div>
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">
-              {analysisResult ? `Résultats — ${analysisCompetitor}` : "Changements détectés"}
+            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3 flex items-center justify-between">
+              <span>{analysisResult ? `Résultats — ${analysisCompetitor}` : "Alertes concurrentielles"}</span>
+              {alerts.length > 0 && !analysisResult && (
+                <span className="px-1.5 py-0.5 text-[9px] font-bold bg-red-100 text-red-600 rounded-full">{alerts.length}</span>
+              )}
             </h3>
 
             {!analysisResult ? (
+              alerts.length > 0 ? (
+                <div className="space-y-2">
+                  {alerts.map((alert, i) => (
+                    <div key={i} className={`p-2 rounded-lg text-[10px] ${
+                      alert.severity === "high" ? "bg-red-50 text-red-700 border border-red-100"
+                      : alert.severity === "medium" ? "bg-yellow-50 text-yellow-700 border border-yellow-100"
+                      : "bg-gray-50 text-gray-600 border border-gray-100"
+                    }`}>
+                      <div className="flex items-start gap-1.5">
+                        <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                        <p>{alert.message}</p>
+                      </div>
+                      <p className="mt-1 opacity-60">{new Date(alert.detected_at).toLocaleDateString("fr-FR")}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className="text-center py-8">
                 <RefreshCw className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-xs text-gray-400">Cliquez sur &quot;Analyser&quot; pour voir les résultats</p>
               </div>
+              )
             ) : (
               <div className="space-y-4">
                 {/* Products found */}
