@@ -40,21 +40,21 @@ const FEATURES = [
 const PLANS = [
   {
     id: "starter", name: "Starter", badge: "🥉",
-    monthlyPrice: 29, yearlyPrice: 20, popular: false,
+    monthlyPrice: 29, yearlyPrice: 23, popular: false,
     target: "Pour les petites boutiques qui démarrent",
     fit: "Vous avez moins de 500 produits et cherchez à gagner du temps sur les tâches répétitives.",
     features: ["1 boutique Shopify", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "1 000 tâches IA/mois", "Export CSV", "Alertes stock bas", "Support email (48h)", "50 actions gratuites pour démarrer"],
   },
   {
     id: "pro", name: "Pro", badge: "🥇",
-    monthlyPrice: 89, yearlyPrice: 62, popular: true,
+    monthlyPrice: 89, yearlyPrice: 71, popular: true,
     target: "Pour les boutiques en croissance",
     fit: "Vous gérez un catalogue important et voulez automatiser votre croissance avec l'IA.",
     features: ["Jusqu'à 3 boutiques", "Produits illimités", "Tout Starter +", "Import illimité AliExpress & CJ", "20 000 tâches IA/mois", "Automatisations avancées", "Traitement images en masse", "Score visibilité par produit", "Alertes personnalisées", "Support prioritaire (24h)", "Démarrage immédiat • sans engagement"],
   },
   {
     id: "scale", name: "Scale", badge: "🏆",
-    monthlyPrice: 129, yearlyPrice: 90, popular: false,
+    monthlyPrice: 129, yearlyPrice: 103, popular: false,
     target: "Pour les boutiques à grande échelle",
     fit: "Vous gérez plusieurs boutiques et avez besoin de performances maximales.",
     features: ["Boutiques illimitées", "Tout Pro +", "100 000 tâches IA/mois", "Automatisations illimitées", "Performance gros catalogues", "Support dédié (4h)", "Accès anticipé nouveautés", "Accès immédiat dès le paiement"],
@@ -371,7 +371,7 @@ export default function HomePage() {
                 className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${billingPeriod === "yearly" ? "bg-blue-600 shadow-md" : "hover:bg-white"}`}
                 style={{ color: billingPeriod === "yearly" ? "#fff" : "#475569" }}
               >
-                Annuel <span className="text-[11px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: billingPeriod === "yearly" ? "rgba(255,255,255,0.2)" : "#dcfce7", color: billingPeriod === "yearly" ? "#fff" : "#16a34a" }}>-30%</span>
+                Annuel <span className="text-[11px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: billingPeriod === "yearly" ? "rgba(255,255,255,0.2)" : "#dcfce7", color: billingPeriod === "yearly" ? "#fff" : "#16a34a" }}>-20%</span>
               </button>
             </div>
           </div>
@@ -398,7 +398,7 @@ export default function HomePage() {
                       <p className="text-xs mt-1 font-medium" style={{ color: "#059669" }}>soit {plan.yearlyPrice * 12}€/an au lieu de {plan.monthlyPrice * 12}€</p>
                     )}
                     {billingPeriod === "monthly" && (
-                      <p className="text-xs mt-1" style={{ color: "#059669" }}>ou {plan.yearlyPrice}€/mois en annuel <span className="font-bold" style={{ color: "#dc2626" }}>(-30%)</span></p>
+                      <p className="text-xs mt-1" style={{ color: "#059669" }}>ou {plan.yearlyPrice}€/mois en annuel <span className="font-bold" style={{ color: "#dc2626" }}>(-20%)</span></p>
                     )}
                   </div>
                   <ul className="space-y-3 mb-6 flex-1">
@@ -464,7 +464,7 @@ export default function HomePage() {
             {[
               { plan: "Starter → Pro", icon: "🚀", trigger: "Vous dépassez 500 produits ou avez besoin de plus d'IA", benefits: ["×6 tâches IA (300/mois)", "Import illimité AliExpress & CJ", "Jusqu'à 3 boutiques", "Support prioritaire 24h"] },
               { plan: "Pro → Scale", icon: "🏆", trigger: "Vous gérez plusieurs boutiques ou voulez des performances maximales", benefits: ["×3.3 tâches IA (1 000/mois)", "Boutiques illimitées", "Automatisations illimitées", "Support dédié en 4h"] },
-              { plan: "Annuel (-30%)", icon: "💰", trigger: "Vous utilisez EcomPilot depuis plus d'un mois", benefits: ["30% d'économies garanties", "Même plan, moins cher", "Changement en 1 clic", "Accès anticipé nouveautés"] },
+              { plan: "Annuel (-20%)", icon: "💰", trigger: "Vous utilisez EcomPilot depuis plus d'un mois", benefits: ["20% d'économies garanties", "Même plan, moins cher", "Changement en 1 clic", "Accès anticipé nouveautés"] },
             ].map((u) => (
               <div key={u.plan} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all">
                 <span className="text-3xl mb-4 block">{u.icon}</span>

@@ -27,7 +27,7 @@ const PLANS = [
     name: "Starter",
     icon: Zap,
     monthlyPrice: 39,
-    yearlyPrice: 29,
+    yearlyPrice: 23,
     description: "Pour les petites boutiques qui démarrent",
     features: [
       "1 boutique Shopify",
@@ -48,7 +48,7 @@ const PLANS = [
     name: "Pro",
     icon: Crown,
     monthlyPrice: 89,
-    yearlyPrice: 69,
+    yearlyPrice: 71,
     description: "Pour les boutiques en croissance",
     features: [
       "Jusqu'à 3 boutiques",
@@ -71,7 +71,7 @@ const PLANS = [
     name: "Scale",
     icon: Rocket,
     monthlyPrice: 179,
-    yearlyPrice: 139,
+    yearlyPrice: 103,
     description: "Pour les boutiques à grande échelle",
     features: [
       "Boutiques illimitées",

@@ -10,7 +10,7 @@ const PLANS = [
     id: "starter",
     name: "Starter",
     price: 29,
-    yearlyPrice: 20,
+    yearlyPrice: 23,
     color: "#2563eb",
     bg: "#eff6ff",
     features: ["1 000 tâches IA / mois", "Jusqu'à 500 produits", "Import : 20/mois", "1 boutique Shopify", "Support email"],
@@ -19,7 +19,7 @@ const PLANS = [
     id: "pro",
     name: "Pro",
     price: 89,
-    yearlyPrice: 62,
+    yearlyPrice: 71,
     color: "#059669",
     bg: "#ecfdf5",
     popular: true,
@@ -29,7 +29,7 @@ const PLANS = [
     id: "scale",
     name: "Scale",
     price: 129,
-    yearlyPrice: 90,
+    yearlyPrice: 103,
     color: "#7c3aed",
     bg: "#faf5ff",
     features: ["100 000 tâches IA / mois", "Boutiques illimitées", "Automatisations illimitées", "Support dédié 4h", "Accès anticipé nouveautés"],
@@ -149,7 +149,7 @@ function UpgradeContent() {
           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${billing === "yearly" ? "bg-blue-600 shadow-sm" : "bg-white border border-gray-200 hover:bg-gray-50"}`}
           style={{ color: billing === "yearly" ? "#fff" : "#374151" }}
         >
-          Annuel <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#dcfce7", color: "#15803d" }}>-30%</span>
+          Annuel <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#dcfce7", color: "#15803d" }}>-20%</span>
         </button>
       </div>
 
