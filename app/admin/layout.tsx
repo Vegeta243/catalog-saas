@@ -3,14 +3,16 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import {
   LayoutDashboard, Users, CreditCard, BarChart3,
-  Shield, Zap, Settings
+  Shield, Zap, Settings, DollarSign, FileSearch
 } from "lucide-react";
 
 const adminNav = [
   { href: "/admin", label: "📊 Vue d'ensemble", icon: LayoutDashboard },
   { href: "/admin/users", label: "👥 Utilisateurs", icon: Users },
   { href: "/admin/subscriptions", label: "💳 Abonnements", icon: CreditCard },
+  { href: "/admin/revenue", label: "💰 Revenus", icon: DollarSign },
   { href: "/admin/stats", label: "📈 Analytics", icon: BarChart3 },
+  { href: "/admin/content-monitoring", label: "🔍 Contenu IA", icon: FileSearch },
   { href: "/admin/system", label: "⚙️ Système", icon: Settings },
 ];
 

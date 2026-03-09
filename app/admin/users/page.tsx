@@ -17,30 +17,64 @@ const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string }>;
+  searchParams: Promise<{ plan?: string; q?: string }>;
 }) {
-  const { plan: planFilter } = await searchParams;
+  const { plan: planFilter, q: searchQuery } = await searchParams;
   const supabase = getAdminClient();
 
   let query = supabase
     .from("users")
-    .select("id, email, plan, actions_used, actions_limit, subscription_status, created_at")
+    .select("id, email, plan, actions_used, actions_limit, subscription_status, created_at, deleted_at, deletion_scheduled_at")
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(200);
 
-  if (planFilter && planFilter !== "all") {
-    query = query.eq("plan", planFilter);
+  if (planFilter === "deleted") {
+    query = query.not("deleted_at", "is", null);
+  } else if (planFilter && planFilter !== "all") {
+    query = query.eq("plan", planFilter).is("deleted_at", null);
+  } else {
+    query = query.is("deleted_at", null);
   }
 
-  const { data: users } = await query;
+  const { data: allUsers } = await query;
 
-  const plans = ["all", "free", "starter", "pro", "scale"];
+  // Client-side search filter
+  const users = searchQuery
+    ? (allUsers || []).filter(u => u.email?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : (allUsers || []);
+
+  // Count shops per user
+  const userIds = users.map(u => u.id);
+  const { data: shops } = await supabase.from("shops").select("user_id").in("user_id", userIds.length > 0 ? userIds : ["none"]);
+  const shopCountMap: Record<string, number> = {};
+  (shops || []).forEach(s => { shopCountMap[s.user_id] = (shopCountMap[s.user_id] || 0) + 1; });
+
+  const plans = ["all", "free", "starter", "pro", "scale", "deleted"];
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Utilisateurs</h1>
-        <span className="text-sm" style={{ color: "#64748b" }}>{(users || []).length} résultats</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm" style={{ color: "#64748b" }}>{users.length} résultats</span>
+          <a href="/api/admin/export-users"
+            className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            style={{ color: "#64748b" }}>
+            📥 Export CSV
+          </a>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="mb-4">
+        <form method="GET" className="flex gap-2">
+          <input name="q" defaultValue={searchQuery || ""} placeholder="Rechercher par email..." 
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none" />
+          {planFilter && <input type="hidden" name="plan" value={planFilter} />}
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700">
+            Rechercher
+          </button>
+        </form>
       </div>
 
       {/* Filter tabs */}
@@ -54,9 +88,9 @@ export default async function AdminUsersPage({
                 ? "bg-blue-600 text-white"
                 : "bg-white border border-gray-200 hover:bg-gray-50"
             }`}
-            style={(planFilter || "all") === p ? {} : { color: "#64748b" }}
+            style={(planFilter || "all") === p ? {} : { color: p === "deleted" ? "#dc2626" : "#64748b" }}
           >
-            {p === "all" ? "Tous" : p.charAt(0).toUpperCase() + p.slice(1)}
+            {p === "all" ? "Tous" : p === "deleted" ? "🗑️ Supprimés" : p.charAt(0).toUpperCase() + p.slice(1)}
           </a>
         ))}
       </div>
@@ -68,18 +102,31 @@ export default async function AdminUsersPage({
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Email</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Plan</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Tâches</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Boutiques</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Statut</th>
               <th className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Inscription</th>
               <th className="text-right px-4 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {(users || []).map((user) => {
+            {users.map((user) => {
               const planStyle = PLAN_COLORS[user.plan] || PLAN_COLORS.free;
               const usagePct = user.actions_limit > 0 ? (user.actions_used / user.actions_limit) * 100 : 0;
+              const isDeleted = !!user.deleted_at;
+              const daysUntilDeletion = user.deletion_scheduled_at
+                ? Math.max(0, Math.ceil((new Date(user.deletion_scheduled_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                : null;
+
               return (
-                <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-xs font-medium" style={{ color: "#0f172a" }}>{user.email}</td>
+                <tr key={user.id} className={`border-b border-gray-100 hover:bg-gray-50 ${isDeleted ? "opacity-60" : ""}`}>
+                  <td className="px-4 py-3">
+                    <div className="text-xs font-medium" style={{ color: "#0f172a" }}>{user.email}</div>
+                    {isDeleted && daysUntilDeletion !== null && (
+                      <div className="text-[10px] text-red-500 mt-0.5">
+                        Suppression dans {daysUntilDeletion}j
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
@@ -104,40 +151,56 @@ export default async function AdminUsersPage({
                       </span>
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-xs" style={{ color: "#64748b" }}>
+                    {shopCountMap[user.id] || 0}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className="text-xs font-medium capitalize"
                       style={{
-                        color: user.subscription_status === "active" ? "#059669"
+                        color: isDeleted ? "#dc2626"
+                          : user.subscription_status === "active" ? "#059669"
                           : user.subscription_status === "past_due" ? "#dc2626"
                           : "#94a3b8",
                       }}
                     >
-                      {user.subscription_status || "inactive"}
+                      {isDeleted ? "supprimé" : user.subscription_status || "inactive"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs" style={{ color: "#64748b" }}>
                     {new Date(user.created_at).toLocaleDateString("fr-FR")}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <form action={`/api/admin/users/${user.id}/reset-tasks`} method="POST">
-                        <button
-                          type="submit"
-                          className="text-xs px-2 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                          style={{ color: "#64748b" }}
-                        >
-                          Reset tâches
-                        </button>
-                      </form>
+                    <div className="flex items-center justify-end gap-1">
+                      {!isDeleted && (
+                        <>
+                          <form action={`/api/admin/users/${user.id}/reset-tasks`} method="POST" className="inline">
+                            <button type="submit"
+                              className="text-[10px] px-2 py-1 border border-gray-200 rounded hover:bg-gray-50"
+                              style={{ color: "#64748b" }}>
+                              Reset
+                            </button>
+                          </form>
+                          <PlanDropdown userId={user.id} currentPlan={user.plan} />
+                        </>
+                      )}
+                      {isDeleted && (
+                        <form action={`/api/admin/users/${user.id}/plan`} method="POST" className="inline">
+                          <input type="hidden" name="_action" value="recover" />
+                          <button type="submit"
+                            className="text-[10px] px-2 py-1 border border-green-200 text-green-600 rounded hover:bg-green-50">
+                            Récupérer
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </td>
                 </tr>
               );
             })}
-            {(!users || users.length === 0) && (
+            {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm" style={{ color: "#94a3b8" }}>
+                <td colSpan={7} className="px-4 py-8 text-center text-sm" style={{ color: "#94a3b8" }}>
                   Aucun utilisateur trouvé
                 </td>
               </tr>
@@ -146,6 +209,20 @@ export default async function AdminUsersPage({
         </table>
       </div>
     </div>
+  );
+}
+
+function PlanDropdown({ userId, currentPlan }: { userId: string; currentPlan: string }) {
+  const plans = ["free", "starter", "pro", "scale"];
+  return (
+    <form action={`/api/admin/users/${userId}/plan`} method="POST" className="inline">
+      <select name="plan" defaultValue={currentPlan}
+        onChange={(e) => (e.target.closest("form") as HTMLFormElement)?.requestSubmit()}
+        className="text-[10px] px-1 py-1 border border-gray-200 rounded bg-white cursor-pointer"
+        style={{ color: "#64748b" }}>
+        {plans.map(p => <option key={p} value={p}>{p}</option>)}
+      </select>
+    </form>
   );
 }
 

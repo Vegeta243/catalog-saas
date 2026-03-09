@@ -4,8 +4,6 @@ import * as cheerio from "cheerio";
 import OpenAI from "openai";
 import { logAction } from "@/lib/log-action";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 // GET — list user's competitors
 export async function GET() {
   const supabase = await createClient();
@@ -160,6 +158,7 @@ export async function POST(request: NextRequest) {
     let insights: string[] = [];
     if (priceChanges.length > 0 || newProducts.length > 0 || removedProducts.length > 0) {
       try {
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [

@@ -3,9 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 import { logAction } from "@/lib/log-action";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 export async function POST() {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
