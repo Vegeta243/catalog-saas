@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("competitors")
-    .select("*, competitor_snapshots(id, analyzed_at, products_found, avg_price, price_changes, new_products, removed_products)")
+    .select("*, competitor_snapshots(id, analyzed_at, products_found, avg_price, price_changes, new_products, removed_products, raw_data)")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .order("created_at", { ascending: false });
@@ -19,7 +19,19 @@ export async function GET() {
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ competitors: data || [] });
+
+  const competitors = (data || []).map(c => {
+    const snap = c.competitor_snapshots?.[0];
+    if (!snap) return { ...c, competitor_snapshots: undefined, snapshot: null };
+    const { raw_data, ...snapFields } = snap as Record<string, unknown> & { raw_data?: Record<string, unknown> };
+    return {
+      ...c,
+      competitor_snapshots: undefined,
+      snapshot: { ...snapFields, ...(raw_data || {}) },
+    };
+  });
+
+  return NextResponse.json({ competitors });
 }
 
 export async function POST(request: NextRequest) {
@@ -31,11 +43,7 @@ export async function POST(request: NextRequest) {
   const { name, url } = body;
   if (!name || !url) return NextResponse.json({ error: "Nom et URL requis." }, { status: 400 });
 
-  try {
-    new URL(url);
-  } catch {
-    return NextResponse.json({ error: "URL invalide." }, { status: 400 });
-  }
+  try { new URL(url); } catch { return NextResponse.json({ error: "URL invalide." }, { status: 400 }); }
 
   const platform = url.includes("myshopify") ? "shopify"
     : url.includes("woocommerce") || url.includes("wp-content") ? "woocommerce"
@@ -52,7 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         error: "Table manquante. Exécutez supabase/migrations/004_new_tables.sql dans Supabase SQL Editor.",
         setup_required: true,
-        sql_file: "supabase/migrations/004_new_tables.sql"
+        sql_file: "supabase/migrations/004_new_tables.sql",
       }, { status: 503 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import * as cheerio from "cheerio";
 import OpenAI from "openai";
@@ -32,23 +32,14 @@ export async function POST(request: NextRequest) {
   if (action === "add") {
     const { name, url } = body;
     if (!name || !url) return NextResponse.json({ error: "Nom et URL requis." }, { status: 400 });
-
-    // Validate URL format
-    try {
-      new URL(url);
-    } catch {
-      return NextResponse.json({ error: "URL invalide." }, { status: 400 });
-    }
+    try { new URL(url); } catch { return NextResponse.json({ error: "URL invalide." }, { status: 400 }); }
 
     const platform = url.includes("shopify") || url.includes("myshopify") ? "shopify"
       : url.includes("woocommerce") || url.includes("wp-content") ? "woocommerce"
       : "other";
 
     const { data, error } = await supabase.from("competitors").insert({
-      user_id: user.id,
-      name,
-      url,
-      shop_platform: platform,
+      user_id: user.id, name, url, shop_platform: platform,
     }).select().single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -90,30 +81,33 @@ export async function POST(request: NextRequest) {
 
     const prevSnapshot = prevSnapshots?.[0] || null;
 
-    // Fetch competitor page
-    let html: string;
+    // Fetch competitor page with 15s timeout — non-fatal on error
+    let html = "";
+    let fetchError = false;
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(competitor.url, {
+        signal: controller.signal,
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         },
       });
+      clearTimeout(timeoutId);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       html = await res.text();
-    } catch (e) {
-      return NextResponse.json({ error: `Impossible d'accéder au site: ${(e as Error).message}` }, { status: 502 });
+    } catch {
+      fetchError = true;
     }
 
-    // Extract product data with cheerio
+    // Extract products with cheerio
     const $ = cheerio.load(html);
     const products: { title: string; price: number | null; url: string }[] = [];
 
-    // Try Shopify-style selectors
     $('[class*="product"], [data-product], .product-card, .product-item, .grid__item').each((_, el) => {
       const title = $(el).find('[class*="title"], [class*="name"], h2, h3').first().text().trim();
       const priceText = $(el).find('[class*="price"], .money, [data-price]').first().text().trim();
       const link = $(el).find('a').first().attr('href') || '';
-
       if (title) {
         const priceMatch = priceText.match(/[\d,.]+/);
         const price = priceMatch ? parseFloat(priceMatch[0].replace(",", ".")) : null;
@@ -122,15 +116,15 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Deduplicate by title
     const uniqueProducts = products.filter((p, i, arr) => arr.findIndex(x => x.title === p.title) === i).slice(0, 50);
+    const prices = uniqueProducts.filter(p => p.price !== null).map(p => p.price as number);
+    const avgPrice = prices.length > 0
+      ? Math.round((prices.reduce((a, b) => a + b, 0) / prices.length) * 100) / 100
+      : null;
 
-    const prices = uniqueProducts.filter(p => p.price !== null).map(p => p.price!);
-    const avgPrice = prices.length > 0 ? Math.round((prices.reduce((a, b) => a + b, 0) / prices.length) * 100) / 100 : null;
-
-    // Detect changes from previous snapshot
+    // Detect changes vs previous snapshot
     const prevProducts = (prevSnapshot?.raw_data as { products?: { title: string; price: number | null }[] })?.products || [];
-    const priceChanges: { title: string; oldPrice: number; newPrice: number }[] = [];
+    const priceChanges: { product: string; old_price: number; new_price: number; direction: string }[] = [];
     const newProducts: string[] = [];
     const removedProducts: string[] = [];
 
@@ -143,40 +137,77 @@ export async function POST(request: NextRequest) {
       } else {
         const prev = prevProducts.find((pp: { title: string; price: number | null }) => pp.title === p.title);
         if (prev && prev.price !== null && p.price !== null && prev.price !== p.price) {
-          priceChanges.push({ title: p.title, oldPrice: prev.price, newPrice: p.price });
+          priceChanges.push({ product: p.title, old_price: prev.price, new_price: p.price, direction: p.price < prev.price ? "down" : "up" });
         }
       }
     }
-
     for (const pp of prevProducts) {
-      if (!currTitles.has(pp.title)) {
-        removedProducts.push(pp.title);
-      }
+      if (!currTitles.has((pp as { title: string }).title)) removedProducts.push((pp as { title: string }).title);
     }
 
-    // AI insights
+    // Enriched signals extraction
+    const fullText = html.toLowerCase();
+    const promo_detected = /soldes|promo|discount|sale|-\d+%|offre|liquidation|flash/.test(fullText);
+
+    let shipping_info = "Non détecté";
+    const shippingMatch = html.match(/livraison gratuite[^<.]{0,60}|free shipping[^<.]{0,60}|frais de port offerts[^<.]{0,60}/i);
+    if (shippingMatch) shipping_info = shippingMatch[0].replace(/<[^>]+>/g, "").trim().slice(0, 100);
+
+    let avg_rating: number | null = null;
+    let review_count = 0;
+    const ratingMatch = fullText.match(/(\d[.,]\d)\s*\/\s*5/);
+    if (ratingMatch) avg_rating = parseFloat(ratingMatch[1].replace(",", "."));
+    const reviewMatch = fullText.match(/(\d+)\s*(avis|reviews|évaluations)/i);
+    if (reviewMatch) review_count = parseInt(reviewMatch[1], 10);
+
+    // Social & payment signals
+    const links = $("a[href]").map((_, el) => $(el).attr("href") || "").get();
+    const social = {
+      facebook: links.some(l => l.includes("facebook.com")),
+      instagram: links.some(l => l.includes("instagram.com")),
+      tiktok: links.some(l => l.includes("tiktok.com")),
+    };
+    const allText = fullText + links.join(" ");
+    const payment = {
+      paypal: /paypal/.test(allText),
+      stripe: /stripe/.test(allText),
+      klarna: /klarna/.test(allText),
+    };
+
+    // SEO signals
+    const seo = {
+      title_tag: $("title").first().text().trim().slice(0, 100),
+      has_meta_description: ($('meta[name="description"]').attr("content") || "").length > 0,
+      h1_count: $("h1").length,
+    };
+
+    // AI insights — always generate 5 recommendations
     let insights: string[] = [];
-    if (priceChanges.length > 0 || newProducts.length > 0 || removedProducts.length > 0) {
+    try {
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un expert e-commerce. Génère exactement 5 recommandations courtes et actionnables en français pour améliorer la compétitivité face à ce concurrent. Retourne un JSON array de 5 strings.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({ competitorName: competitor.name, products_found: uniqueProducts.length, avg_price: avgPrice, promo_detected, shipping_info, avg_rating, priceChanges, newProducts, removedProducts, social, payment }),
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 700,
+      });
+      const content = completion.choices[0]?.message?.content || "[]";
       try {
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: "Tu es un expert e-commerce. Donne 3 recommandations courtes et actionnables en français basées sur les changements concurrentiels. Retourne un JSON array de strings." },
-            { role: "user", content: JSON.stringify({ priceChanges, newProducts, removedProducts, competitorName: competitor.name }) },
-          ],
-          temperature: 0.7,
-          max_tokens: 500,
-        });
-        const content = completion.choices[0]?.message?.content || "[]";
-        try {
-          const match = content.match(/\[[\s\S]*\]/);
-          insights = JSON.parse(match ? match[0] : content);
-        } catch { insights = []; }
-      } catch { /* OpenAI error — skip insights */ }
-    }
+        const match = content.match(/\[[\s\S]*\]/);
+        insights = JSON.parse(match ? match[0] : content);
+      } catch { insights = []; }
+    } catch { /* OpenAI error — skip */ }
 
-    // Save snapshot
+    // Save enriched snapshot
     await supabase.from("competitor_snapshots").insert({
       competitor_id,
       user_id: user.id,
@@ -185,15 +216,11 @@ export async function POST(request: NextRequest) {
       price_changes: priceChanges,
       new_products: newProducts,
       removed_products: removedProducts,
-      raw_data: { products: uniqueProducts },
+      raw_data: { products: uniqueProducts, promo_detected, shipping_info, avg_rating, review_count, social, payment, seo, insights, fetch_error: fetchError },
     });
 
-    // Update competitor last_analyzed_at
     await supabase.from("competitors").update({ last_analyzed_at: new Date().toISOString() }).eq("id", competitor_id);
-
-    // Consume 5 tasks
     await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: 5 });
-
     await logAction(supabase, {
       userId: user.id,
       actionType: "competitor.analyze",
@@ -209,6 +236,13 @@ export async function POST(request: NextRequest) {
       new_products: newProducts,
       removed_products: removedProducts,
       insights,
+      promo_detected,
+      shipping_info,
+      avg_rating,
+      review_count,
+      social,
+      payment,
+      seo,
     });
   }
 
