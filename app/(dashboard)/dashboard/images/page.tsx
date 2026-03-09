@@ -169,17 +169,31 @@ export default function ImagesPage() {
   };
 
   const fetchAsBase64 = async (src: string): Promise<string> => {
-    const res = await fetch(src);
-    const blob = await res.blob();
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+    if (!src) throw new Error("No image source");
+    if (src.startsWith("data:")) return src;
+    if (src.startsWith("blob:")) {
+      const res = await fetch(src);
+      const blob = await res.blob();
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+    // Proxy through server to avoid CORS issues with Shopify CDN URLs
+    const res = await fetch("/api/images/fetch-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: src }),
     });
+    if (!res.ok) throw new Error("Failed to fetch image from CDN");
+    const { base64 } = await res.json();
+    return base64;
   };
 
   const callProcess = async (srcBase64: string, operation: string, extraParams: Record<string, unknown> = {}): Promise<string> => {
+    console.log('SENDING TO API:', { operation, imageIsBase64: srcBase64?.startsWith('data:'), imageLength: srcBase64?.length });
     const res = await fetch("/api/images/process", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -380,8 +394,9 @@ export default function ImagesPage() {
                 ) : shopifyProducts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
                     <Package className="w-10 h-10 mb-3" style={{ color: "#cbd5e1" }} />
-                    <p className="text-sm font-medium" style={{ color: "#64748b" }}>Aucun produit Shopify</p>
-                    <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Connectez votre boutique dans les parametres</p>
+                    <p className="text-sm font-medium" style={{ color: "#64748b" }}>Aucune boutique connectée</p>
+                    <p className="text-xs mt-1 mb-3" style={{ color: "#94a3b8" }}>Connectez votre boutique pour accéder à vos produits</p>
+                    <a href="/dashboard/shops" className="text-blue-600 text-sm underline hover:text-blue-800">Connecter une boutique →</a>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
