@@ -10,9 +10,22 @@ export interface AIPreviewItem {
   id: number;
   productTitle: string;
   productImage?: string;
-  original: { title?: string; description?: string; tags?: string; meta_description?: string };
-  suggested: { title?: string; description?: string; tags?: string; meta_description?: string };
+  original: { title?: string; description?: string; tags?: string; meta_description?: string; meta_title?: string };
+  suggested: { title?: string; description?: string; tags?: string; meta_description?: string; meta_title?: string };
   accepted: boolean;
+}
+
+function CharCounter({ value, min, max, label }: { value: string; min: number; max: number; label: string }) {
+  const len = (value || "").length;
+  const ok = len >= min && len <= max;
+  const warn = len > 0 && len < min;
+  const over = len > max;
+  const color = ok ? "#059669" : over ? "#dc2626" : warn ? "#d97706" : "#94a3b8";
+  return (
+    <span className="text-[10px] font-medium" style={{ color }}>
+      {len}/{max} {ok ? "✓" : over ? "↑ trop long" : warn ? `↑ idéal ≥${min}` : ""} ({label})
+    </span>
+  );
 }
 
 interface AIPreviewModalProps {
@@ -62,7 +75,7 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
     setEditValue("");
   };
 
-  const revertField = (field: "title" | "description" | "tags" | "meta_description") => {
+  const revertField = (field: "title" | "description" | "tags" | "meta_description" | "meta_title") => {
     if (current) {
       setItems((prev) =>
         prev.map((i) =>
@@ -152,11 +165,11 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
           </div>
 
           {/* Diff sections */}
-          {(["title", "description", "tags", "meta_description"] as const).map((field) => {
+          {(["meta_title", "title", "description", "tags", "meta_description"] as const).map((field) => {
             const originalVal = current.original[field];
             const suggestedVal = current.suggested[field];
             if (!suggestedVal && !originalVal) return null;
-            const label = field === "title" ? "Titre" : field === "description" ? "Description" : field === "meta_description" ? "Meta Description" : "Tags";
+            const label = field === "title" ? "Titre produit" : field === "meta_title" ? "Meta-titre (SEO)" : field === "description" ? "Description" : field === "meta_description" ? "Meta Description" : "Tags";
             const isChanged = originalVal !== suggestedVal;
             const isEditing = editingField === field;
 
@@ -172,9 +185,9 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
                       </button>
                     )}
                     <button onClick={() => startEdit(field, suggestedVal || "")}
-                      className="text-[10px] px-2 py-1 hover:bg-blue-50 rounded flex items-center gap-1"
-                      style={{ color: "#2563eb" }}>
-                      <Edit3 className="w-3 h-3" /> Modifier
+                      className="text-[10px] px-2 py-1 hover:bg-violet-50 rounded flex items-center gap-1"
+                      style={{ color: "#7c3aed" }}>
+                      <Edit3 className="w-3 h-3" /> ✏️ Modifier
                     </button>
                   </div>
                 </div>
@@ -193,11 +206,19 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
                   </div>
 
                   {/* After */}
-                  <div className={`p-3 rounded-lg border ${isChanged ? "border-blue-200 bg-blue-50/50" : "border-gray-100 bg-gray-50"}`}>
-                    <p className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: isChanged ? "#2563eb" : "#94a3b8" }}>
-                      <Sparkles className="w-3 h-3" />
-                      {isChanged ? "Après IA" : "Inchangé"}
-                    </p>
+                  <div className={`p-3 rounded-lg border ${isChanged ? "border-violet-200 bg-violet-50/60" : "border-gray-100 bg-gray-50"}`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[10px] font-medium flex items-center gap-1" style={{ color: isChanged ? "#7c3aed" : "#94a3b8" }}>
+                        <Sparkles className="w-3 h-3" />
+                        {isChanged ? "Après IA" : "Inchangé"}
+                      </p>
+                      {isChanged && (field === "title" || field === "meta_title") && suggestedVal && (
+                        <CharCounter value={suggestedVal} min={field === "meta_title" ? 30 : 50} max={field === "meta_title" ? 60 : 70} label={field === "meta_title" ? "SEO" : "titre"} />
+                      )}
+                      {isChanged && field === "meta_description" && suggestedVal && (
+                        <CharCounter value={suggestedVal} min={120} max={160} label="meta" />
+                      )}
+                    </div>
                     {isEditing ? (
                       <div>
                         {field === "description" ? (
@@ -259,17 +280,17 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
           <div className="flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 rounded-lg text-sm font-medium"
               style={{ color: "#374151" }}>
-              Annuler
+              ❌ Annuler
             </button>
             <button onClick={handleApply} disabled={acceptedCount === 0 || loading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg text-sm font-medium"
               style={{ color: "#fff" }}>
               {loading ? (
                 <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#fff" }} />
               ) : (
                 <ArrowRight className="w-4 h-4" style={{ color: "#fff" }} />
               )}
-              Appliquer {acceptedCount} modification{acceptedCount > 1 ? "s" : ""}
+              ✅ Appliquer {acceptedCount} modification{acceptedCount > 1 ? "s" : ""}
             </button>
           </div>
         </div>
