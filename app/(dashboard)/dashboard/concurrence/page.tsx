@@ -127,6 +127,26 @@ export default function ConcurrencePage() {
   }
 
   return (
+    <div className="relative">
+      {/* ── PROCHAINEMENT OVERLAY ── */}
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm rounded-2xl">
+        <div className="text-center px-8 py-10 max-w-md">
+          <div className="text-5xl mb-4">🔭</div>
+          <h2 className="text-2xl font-bold mb-3" style={{ color: '#111827' }}>
+            Analyse concurrentielle
+          </h2>
+          <div className="inline-block bg-blue-100 text-blue-700 text-sm font-bold px-4 py-1.5 rounded-full mb-4">
+            🚀 Prochainement
+          </div>
+          <p className="text-sm leading-relaxed" style={{ color: '#4b5563' }}>
+            Suivez vos concurrents, détectez les changements de prix et recevez des recommandations IA personnalisées. Cette fonctionnalité arrive très bientôt.
+          </p>
+          <p className="text-xs mt-4" style={{ color: '#9ca3af' }}>Disponible dès la prochaine mise à jour</p>
+        </div>
+      </div>
+
+      {/* ── EXISTING PAGE (blurred behind) ── */}
+      <div className="pointer-events-none select-none opacity-40">
     <div className="flex h-full gap-0" style={{ minHeight: 'calc(100vh - 64px)' }}>
       {/* LEFT SIDEBAR */}
       <div className="w-72 flex-shrink-0 border-r border-gray-200 flex flex-col bg-white" style={{ minHeight: '100%' }}>
@@ -468,6 +488,8 @@ export default function ConcurrencePage() {
           </div>
         </div>
       )}
+    </div>
+      </div>
     </div>
   )
 }

@@ -206,7 +206,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       >
                         <Icon className="w-[17px] h-[17px] flex-shrink-0" style={{ color: active ? '#60a5fa' : '#94a3b8' }} />
                         {!sidebarCollapsed && (
-                          <span style={{ color: active ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
+                          <>
+                            <span style={{ color: active ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
+                            {item.href === '/dashboard/concurrence' && (
+                              <span className="ml-auto text-[10px] bg-blue-900 text-blue-300 px-1.5 py-0.5 rounded font-semibold">
+                                Bientôt
+                              </span>
+                            )}
+                          </>
                         )}
                       </a>
                     );
