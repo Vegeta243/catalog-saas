@@ -13,7 +13,12 @@ export async function GET() {
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.message?.includes("does not exist") || error.code === "42P01") {
+      return NextResponse.json({ competitors: [], setup_required: true });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ competitors: data || [] });
 }
 
@@ -42,7 +47,16 @@ export async function POST(request: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.message?.includes("does not exist") || error.code === "42P01") {
+      return NextResponse.json({
+        error: "Table manquante. Exécutez supabase/migrations/004_new_tables.sql dans Supabase SQL Editor.",
+        setup_required: true,
+        sql_file: "supabase/migrations/004_new_tables.sql"
+      }, { status: 503 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ competitor: data }, { status: 201 });
 }
 

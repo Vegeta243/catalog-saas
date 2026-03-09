@@ -49,7 +49,16 @@ export async function POST(request: NextRequest) {
     action_params: { ...(action_params || {}), repeat: repeat || "never" },
   }).select().single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.message?.includes("does not exist") || error.code === "42P01") {
+      return NextResponse.json({
+        error: "Table manquante. Exécutez supabase/migrations/004_new_tables.sql dans Supabase SQL Editor.",
+        setup_required: true,
+        sql_file: "supabase/migrations/004_new_tables.sql"
+      }, { status: 503 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ event: data }, { status: 201 });
 }
