@@ -410,6 +410,42 @@ export default function AIPage() {
               <span style={{ color: "#fff" }}>{massMode ? `${massProgress.current}/${massProgress.total}...` : `Optimiser ${selected.length} produit${selected.length > 1 ? "s" : ""}`}</span>
             </button>
           )}
+          {selected.length > 0 && (
+            <button onClick={async () => {
+              setMassMode(true);
+              try {
+                const prods = selected.map((id) => products.find((p) => p.id === id)).filter(Boolean)
+                  .map((p) => ({ id: p!.id, title: p!.title, description: p!.body_html }));
+                const res = await fetch("/api/ai/generate-meta-titles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ products: prods }) });
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                addToast(data.demo ? `[DEMO] ${(data.metaTitles||[]).length} meta titres simulés` : `${(data.metaTitles||[]).length} meta titres générés`, "success");
+              } catch { addToast("Erreur meta titres", "error"); }
+              finally { setMassMode(false); }
+            }} disabled={massMode}
+              className="flex items-center gap-2 px-4 py-2.5 bg-violet-50 border border-violet-200 hover:bg-violet-100 disabled:opacity-50 rounded-lg text-sm font-medium">
+              <Target className="w-4 h-4" style={{ color: "#8b5cf6" }} />
+              <span style={{ color: "#6d28d9" }}>Meta Titres IA</span>
+            </button>
+          )}
+          {selected.length > 0 && (
+            <button onClick={async () => {
+              setMassMode(true);
+              try {
+                const prods = selected.map((id) => products.find((p) => p.id === id)).filter(Boolean)
+                  .map((p) => ({ id: p!.id, title: p!.title, description: p!.body_html }));
+                const res = await fetch("/api/ai/generate-meta-descriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ products: prods }) });
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                addToast(data.demo ? `[DEMO] ${(data.metaDescriptions||[]).length} meta descriptions simulées` : `${(data.metaDescriptions||[]).length} meta descriptions générées`, "success");
+              } catch { addToast("Erreur meta descriptions", "error"); }
+              finally { setMassMode(false); }
+            }} disabled={massMode}
+              className="flex items-center gap-2 px-4 py-2.5 bg-violet-50 border border-violet-200 hover:bg-violet-100 disabled:opacity-50 rounded-lg text-sm font-medium">
+              <Award className="w-4 h-4" style={{ color: "#8b5cf6" }} />
+              <span style={{ color: "#6d28d9" }}>Meta Desc IA</span>
+            </button>
+          )}
         </div>
       </div>
 

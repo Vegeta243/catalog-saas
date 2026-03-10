@@ -5,7 +5,7 @@ import {
   Search, RefreshCw, Download, Upload, ChevronLeft, ChevronRight, Package,
   CheckSquare, Square, ImageOff, ArrowUpDown, DollarSign,
   X, Copy, Archive, CheckCircle2, Tag, Type, FileText, Sparkles,
-  AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3, LayoutList,
+  AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3, LayoutList, Save,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import Link from "next/link";
@@ -26,6 +26,8 @@ interface Product {
   vendor?: string;
   tags?: string;
   body_html?: string;
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 interface AISuggestion {
@@ -592,8 +594,98 @@ export default function ProductsPage() {
     finally { setActionLoading(null); }
   };
 
-  const handleDuplicate = async (productId: string) => {
-    setActionLoading(`dup-${productId}`);
+  /* ──────── Inline meta field update ──────── */
+  const updateProductField = (productId: string, field: keyof Product, value: string) => {
+    setProducts((prev) => prev.map((p) => p.id === productId ? { ...p, [field]: value } : p));
+  };
+
+  const saveMetaField = async (product: Product) => {
+    const updates: Record<string, string> = {};
+    if (product.metaTitle !== undefined) updates.metaTitle = product.metaTitle;
+    if (product.metaDescription !== undefined) updates.metaDescription = product.metaDescription;
+    if (!Object.keys(updates).length) return;
+    try {
+      await fetch("/api/shopify/bulk-update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: [product.id], updates }),
+      });
+      addToast("Champs SEO sauvegardés sur Shopify", "success");
+    } catch {
+      addToast("Erreur lors de la sauvegarde SEO", "error");
+    }
+  };
+
+  /* ──────── AI meta batch generation ──────── */
+  const aiBatchMetaTitles = async () => {
+    if (selectedProducts.length === 0) return;
+    setAiBatchLoading(true);
+    try {
+      const prods = selectedProducts
+        .map((id) => products.find((x) => x.id === id))
+        .filter(Boolean)
+        .map((p) => ({ id: p!.id, title: p!.title, description: p!.body_html }));
+      const res = await fetch("/api/ai/generate-meta-titles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products: prods }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.metaTitles) {
+        setProducts((prev) => prev.map((p) => {
+          const found = data.metaTitles.find((m: { id: string; metaTitle: string }) => m.id === p.id);
+          return found ? { ...p, metaTitle: found.metaTitle } : p;
+        }));
+        addToast(
+          data.demo
+            ? `[DEMO] ${data.metaTitles.length} meta titres simulés`
+            : `${data.metaTitles.length} meta titres générés — sauvegardez sur Shopify avec le bouton "SEO"`,
+          "success"
+        );
+      }
+    } catch {
+      addToast("Erreur IA meta titres", "error");
+    } finally {
+      setAiBatchLoading(false);
+    }
+  };
+
+  const aiBatchMetaDescriptions = async () => {
+    if (selectedProducts.length === 0) return;
+    setAiBatchLoading(true);
+    try {
+      const prods = selectedProducts
+        .map((id) => products.find((x) => x.id === id))
+        .filter(Boolean)
+        .map((p) => ({ id: p!.id, title: p!.title, description: p!.body_html }));
+      const res = await fetch("/api/ai/generate-meta-descriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products: prods }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.metaDescriptions) {
+        setProducts((prev) => prev.map((p) => {
+          const found = data.metaDescriptions.find((m: { id: string; metaDescription: string }) => m.id === p.id);
+          return found ? { ...p, metaDescription: found.metaDescription } : p;
+        }));
+        addToast(
+          data.demo
+            ? `[DEMO] ${data.metaDescriptions.length} meta descriptions simulées`
+            : `${data.metaDescriptions.length} meta descriptions générées`,
+          "success"
+        );
+      }
+    } catch {
+      addToast("Erreur IA meta descriptions", "error");
+    } finally {
+      setAiBatchLoading(false);
+    }
+  };
+
+  const handleDuplicate = async (productId: string) => {    setActionLoading(`dup-${productId}`);
     try {
       const res = await fetch("/api/shopify/duplicate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId }) });
       if (!res.ok) throw new Error();
@@ -871,6 +963,16 @@ export default function ProductsPage() {
                   <span style={{ color: activeAction === a.key ? "#fff" : "#1e40af" }}>{a.label}</span>
                 </button>
               ))}
+              <button onClick={aiBatchMetaTitles} disabled={aiBatchLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
+                <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                <span style={{ color: "#6d28d9" }}>IA Meta Titres</span>
+              </button>
+              <button onClick={aiBatchMetaDescriptions} disabled={aiBatchLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
+                <Sparkles className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
+                <span style={{ color: "#6d28d9" }}>IA Meta Desc</span>
+              </button>
               <div className="w-px h-6 bg-blue-200 mx-1" />
               <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver ${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} ?`, action: () => handleBulkStatus("archived") })}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100"
@@ -1098,6 +1200,8 @@ export default function ProductsPage() {
                   <th className="px-3 md:px-4 py-3 text-left hidden sm:table-cell"><button onClick={() => handleSort("status")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Statut <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-3 md:px-4 py-3 text-left hidden md:table-cell"><button onClick={() => handleSort("seo")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>SEO <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-3 md:px-4 py-3 text-left hidden lg:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>IA</th>
+                  <th className="px-3 md:px-4 py-3 text-left hidden xl:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Meta Titre <span className="normal-case font-normal text-gray-400">(60)</span></th>
+                  <th className="px-3 md:px-4 py-3 text-left hidden xl:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Meta Desc <span className="normal-case font-normal text-gray-400">(160)</span></th>
                   <th className="px-3 md:px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Actions</th>
                 </tr>
               </thead>
@@ -1163,6 +1267,47 @@ export default function ProductsPage() {
                           <span className="text-[10px]" style={{ color: "#94a3b8" }}>—</span>
                         )}
                       </td>
+                      {/* Meta title inline cell */}
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden xl:table-cell`}>
+                        <div className="relative">
+                          <input
+                            value={product.metaTitle || ""}
+                            onChange={(e) => updateProductField(product.id, "metaTitle", e.target.value)}
+                            onBlur={() => product.metaTitle !== undefined && saveMetaField(product)}
+                            maxLength={70}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                            placeholder="Meta titre SEO…"
+                            style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "160px" }}
+                          />
+                          <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
+                            (product.metaTitle?.length || 0) > 60 ? "text-red-500" :
+                            (product.metaTitle?.length || 0) > 50 ? "text-orange-500" : "text-gray-400"
+                          }`}>
+                            {product.metaTitle?.length || 0}/60
+                          </span>
+                        </div>
+                      </td>
+                      {/* Meta description inline cell */}
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden xl:table-cell`}>
+                        <div className="relative">
+                          <textarea
+                            value={product.metaDescription || ""}
+                            onChange={(e) => updateProductField(product.id, "metaDescription", e.target.value)}
+                            onBlur={() => product.metaDescription !== undefined && saveMetaField(product)}
+                            maxLength={170}
+                            rows={2}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                            placeholder="Meta description SEO…"
+                            style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "200px" }}
+                          />
+                          <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
+                            (product.metaDescription?.length || 0) > 160 ? "text-red-500" :
+                            (product.metaDescription?.length || 0) > 140 ? "text-orange-500" : "text-gray-400"
+                          }`}>
+                            {product.metaDescription?.length || 0}/160
+                          </span>
+                        </div>
+                      </td>
                       <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"}`}>
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => setPreviewProduct(product)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Aperçu">
@@ -1175,6 +1320,9 @@ export default function ProductsPage() {
                           <button onClick={() => handleDuplicate(product.id)} disabled={actionLoading === `dup-${product.id}`}
                             className="p-1.5 hover:bg-blue-50 rounded-lg" title="Dupliquer">
                             {actionLoading === `dup-${product.id}` ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#3b82f6" }} /> : <Copy className="w-4 h-4" style={{ color: "#3b82f6" }} />}
+                          </button>
+                          <button onClick={() => saveMetaField(product)} className="p-1.5 hover:bg-emerald-50 rounded-lg" title="Sauvegarder les champs SEO sur Shopify">
+                            <Save className="w-4 h-4" style={{ color: "#059669" }} />
                           </button>
                           <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver "${product.title}" ?`, action: () => handleBulkStatus("archived") })}
                             className="p-1.5 hover:bg-red-50 rounded-lg" title="Archiver">

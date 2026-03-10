@@ -4,7 +4,62 @@ import { logAction } from "@/lib/log-action";
 
 export async function PUT(req: Request) {
   try {
-    const { productIds, newPrice, mode } = await req.json();
+    const body = await req.json();
+    const { productIds, newPrice, mode, updates } = body;
+
+    // Handle meta field updates separately
+    if (updates && (updates.metaTitle !== undefined || updates.metaDescription !== undefined)) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+      }
+      const { data: shop, error: shopError } = await supabase
+        .from("shops")
+        .select("shop_domain, access_token")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .limit(1)
+        .single();
+      if (shopError || !shop) {
+        return NextResponse.json({ error: "Boutique non connectée." }, { status: 400 });
+      }
+      const { shop_domain, access_token } = shop;
+
+      const metaResults = await Promise.all(
+        (productIds || []).map(async (productId: string) => {
+          const metafields = [
+            updates.metaTitle && {
+              namespace: "global",
+              key: "title_tag",
+              value: updates.metaTitle,
+              type: "single_line_text_field",
+            },
+            updates.metaDescription && {
+              namespace: "global",
+              key: "description_tag",
+              value: updates.metaDescription,
+              type: "multi_line_text_field",
+            },
+          ].filter(Boolean);
+
+          const res = await fetch(
+            `https://${shop_domain}/admin/api/2026-01/products/${productId}.json`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": access_token,
+              },
+              body: JSON.stringify({ product: { id: productId, metafields } }),
+            }
+          );
+          return res.ok ? { id: productId, success: true } : { id: productId, success: false };
+        })
+      );
+
+      return NextResponse.json({ success: true, results: metaResults, updated: metaResults.filter((r) => r.success).length });
+    }
 
     if (!productIds || !newPrice) {
       return NextResponse.json({ error: "Données manquantes." }, { status: 400 });
