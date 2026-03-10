@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import {
   LayoutDashboard, Users, CreditCard, BarChart3,
-  Shield, Zap, Settings, DollarSign, FileSearch
+  Shield, Zap, Settings, DollarSign, FileSearch, ScrollText, Scale
 } from "lucide-react";
+import { verifyAdminSession } from "@/lib/admin-security";
 
 const adminNav = [
   { href: "/admin", label: "📊 Vue d'ensemble", icon: LayoutDashboard },
@@ -13,6 +14,8 @@ const adminNav = [
   { href: "/admin/revenue", label: "💰 Revenus", icon: DollarSign },
   { href: "/admin/stats", label: "📈 Analytics", icon: BarChart3 },
   { href: "/admin/content-monitoring", label: "🔍 Contenu IA", icon: FileSearch },
+  { href: "/admin/audit", label: "📋 Journal d'audit", icon: ScrollText },
+  { href: "/admin/legal", label: "⚖️ Conformité RGPD", icon: Scale },
   { href: "/admin/system", label: "⚙️ Système", icon: Settings },
 ];
 
@@ -24,17 +27,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/admin/login");
   }
 
-  try {
-    const decoded = Buffer.from(adminSession.value, "base64").toString();
-    const colonIdx = decoded.lastIndexOf(":");
-    const email = decoded.slice(0, colonIdx);
-    const timestamp = Number(decoded.slice(colonIdx + 1));
-    const age = Date.now() - timestamp;
-
-    if (age > 8 * 60 * 60 * 1000 || email !== process.env.ADMIN_EMAIL) {
-      redirect("/admin/login");
-    }
-  } catch {
+  const session = verifyAdminSession(adminSession.value);
+  if (!session.valid) {
     redirect("/admin/login");
   }
 
