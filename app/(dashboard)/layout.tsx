@@ -28,6 +28,7 @@ import {
   CalendarDays,
   Eye,
   ListChecks,
+  TrendingUp,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 
@@ -60,6 +61,7 @@ const NAV_SECTIONS = [
   {
     label: "ANALYSE",
     items: [
+      { href: '/dashboard/rentabilite', label: 'Rentabilité', icon: TrendingUp },
       { href: '/dashboard/concurrence', label: 'Concurrence', icon: Eye },
     ],
   },

@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import {
   Settings, User, Store, Bell, CreditCard, Key, Shield, Save,
   Globe, Moon, Sun, Palette, Upload, Eye, EyeOff, Check, Copy,
-  RefreshCw, Mail, Phone, ExternalLink,
+  RefreshCw, Mail, Phone, ExternalLink, TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
 
-type Tab = "profile" | "shop" | "notifications" | "billing" | "api" | "advanced";
+type Tab = "profile" | "shop" | "notifications" | "billing" | "api" | "advanced" | "rentabilite";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "profile", label: "Profil", icon: <User className="w-4 h-4" /> },
@@ -18,6 +18,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "billing", label: "Facturation", icon: <CreditCard className="w-4 h-4" /> },
   { id: "api", label: "Clés API", icon: <Key className="w-4 h-4" /> },
   { id: "advanced", label: "Avancé", icon: <Shield className="w-4 h-4" /> },
+  { id: "rentabilite", label: "Rentabilité", icon: <TrendingUp className="w-4 h-4" /> },
 ];
 
 export default function SettingsPage() {
@@ -107,6 +108,26 @@ export default function SettingsPage() {
   const [compactMode, setCompactMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
 
+  // Rentabilité settings
+  const [profitSettings, setProfitSettings] = useState({
+    shopify_plan_monthly: 32,
+    shopify_transaction_fee_pct: 0.5,
+    payment_processing_fee_pct: 1.4,
+    payment_processing_fixed: 0.25,
+    avg_ad_spend_pct: 15,
+    avg_shipping_cost: 5,
+    avg_return_rate_pct: 3,
+    avg_return_cost: 8,
+    vat_rate_pct: 20,
+    income_tax_rate_pct: 15,
+    ecompilot_monthly: 29,
+    other_tools_monthly: 0,
+    monthly_fixed_costs: 0,
+    avg_orders_per_month: 100,
+  });
+  const [loadingProfitSettings, setLoadingProfitSettings] = useState(false);
+  const [savingProfitSettings, setSavingProfitSettings] = useState(false);
+
   // Load persisted appearance preferences
   useEffect(() => {
     const savedTheme = localStorage.getItem("app-theme") as "light" | "dark" | "auto" | null;
@@ -131,6 +152,63 @@ export default function SettingsPage() {
     }
     localStorage.setItem("app-theme", theme);
   }, [theme]);
+
+  // Load profit settings from Supabase
+  useEffect(() => {
+    if (activeTab !== "rentabilite") return;
+    const loadProfitSettings = async () => {
+      setLoadingProfitSettings(true);
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from("user_profit_settings")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data) {
+          setProfitSettings({
+            shopify_plan_monthly: Number(data.shopify_plan_monthly) || 32,
+            shopify_transaction_fee_pct: Number(data.shopify_transaction_fee_pct) || 0.5,
+            payment_processing_fee_pct: Number(data.payment_processing_fee_pct) || 1.4,
+            payment_processing_fixed: Number(data.payment_processing_fixed) || 0.25,
+            avg_ad_spend_pct: Number(data.avg_ad_spend_pct) || 15,
+            avg_shipping_cost: Number(data.avg_shipping_cost) || 5,
+            avg_return_rate_pct: Number(data.avg_return_rate_pct) || 3,
+            avg_return_cost: Number(data.avg_return_cost) || 8,
+            vat_rate_pct: Number(data.vat_rate_pct) || 20,
+            income_tax_rate_pct: Number(data.income_tax_rate_pct) || 15,
+            ecompilot_monthly: Number(data.ecompilot_monthly) || 29,
+            other_tools_monthly: Number(data.other_tools_monthly) || 0,
+            monthly_fixed_costs: Number(data.monthly_fixed_costs) || 0,
+            avg_orders_per_month: Number(data.avg_orders_per_month) || 100,
+          });
+        }
+      } catch { /* silent */ }
+      finally { setLoadingProfitSettings(false); }
+    };
+    loadProfitSettings();
+  }, [activeTab]);
+
+  const saveProfitSettings = async () => {
+    setSavingProfitSettings(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non authentifié");
+      await supabase.from("user_profit_settings").upsert({
+        user_id: user.id,
+        ...profitSettings,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+      addToast("Paramètres de rentabilité sauvegardés", "success");
+    } catch {
+      addToast("Erreur lors de la sauvegarde", "error");
+    } finally {
+      setSavingProfitSettings(false);
+    }
+  };
 
   const handleThemeChange = (t: "light" | "dark" | "auto") => {
     setTheme(t);
@@ -568,6 +646,212 @@ export default function SettingsPage() {
                   </a>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Rentabilité Tab */}
+          {activeTab === "rentabilite" && (
+            <div className="space-y-6">
+              {loadingProfitSettings ? (
+                <div className="flex items-center justify-center p-12">
+                  <RefreshCw className="w-5 h-5 animate-spin mr-2" style={{ color: "#94a3b8" }} />
+                  <span className="text-sm" style={{ color: "#94a3b8" }}>Chargement…</span>
+                </div>
+              ) : (
+                <>
+                  {/* Plateforme */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                      <Globe className="w-4 h-4" style={{ color: "#2563eb" }} />
+                      Plateforme Shopify
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {[
+                        { key: "shopify_plan_monthly" as const, label: "Abonnement Shopify (€/mois)", placeholder: "32", help: "Basic=32€, Shopify=92€, Advanced=399€" },
+                        { key: "shopify_transaction_fee_pct" as const, label: "Frais de transaction Shopify (%)", placeholder: "0.5", help: "0% si Shopify Payments, sinon 0.5–2%" },
+                        { key: "payment_processing_fee_pct" as const, label: "Frais Stripe/PayPal (%)", placeholder: "1.4", help: "Ex: 1.4% pour Stripe Europe" },
+                        { key: "payment_processing_fixed" as const, label: "Frais fixe paiement (€ par commande)", placeholder: "0.25", help: "Ex: 0.25€ pour Stripe" },
+                      ].map(({ key, label, placeholder, help }) => (
+                        <div key={key}>
+                          <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>{label}</label>
+                          <input
+                            type="number"
+                            value={profitSettings[key]}
+                            onChange={(e) => setProfitSettings((prev) => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                            placeholder={placeholder}
+                            min="0"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            style={{ color: "#0f172a" }}
+                          />
+                          <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>{help}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Publicité */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>📣 Publicité</h2>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>
+                        % du CA dépensé en publicité
+                      </label>
+                      <input
+                        type="number"
+                        value={profitSettings.avg_ad_spend_pct}
+                        onChange={(e) => setProfitSettings((prev) => ({ ...prev, avg_ad_spend_pct: parseFloat(e.target.value) || 0 }))}
+                        placeholder="15"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        className="w-full max-w-xs px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        style={{ color: "#0f172a" }}
+                      />
+                      <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Ex: 15% si vous dépensez 150€ de pub pour 1000€ de CA</p>
+                    </div>
+                  </div>
+
+                  {/* Logistique */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>🚚 Logistique & Retours</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {[
+                        { key: "avg_shipping_cost" as const, label: "Coût moyen expédition (€/commande)", placeholder: "5" },
+                        { key: "avg_return_rate_pct" as const, label: "Taux de retour moyen (%)", placeholder: "3" },
+                        { key: "avg_return_cost" as const, label: "Coût traitement d'un retour (€)", placeholder: "8" },
+                      ].map(({ key, label, placeholder }) => (
+                        <div key={key}>
+                          <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>{label}</label>
+                          <input
+                            type="number"
+                            value={profitSettings[key]}
+                            onChange={(e) => setProfitSettings((prev) => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                            placeholder={placeholder}
+                            min="0"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            style={{ color: "#0f172a" }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Taxes */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>🏛️ Taxes & Légal</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>TVA applicable (%)</label>
+                        <input
+                          type="number"
+                          value={profitSettings.vat_rate_pct}
+                          onChange={(e) => setProfitSettings((prev) => ({ ...prev, vat_rate_pct: parseFloat(e.target.value) || 0 }))}
+                          placeholder="20"
+                          min="0"
+                          max="100"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          style={{ color: "#0f172a" }}
+                        />
+                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>France: 20% (standard), 10% ou 5.5% (réduit)</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Impôt sur les bénéfices (%)</label>
+                        <input
+                          type="number"
+                          value={profitSettings.income_tax_rate_pct}
+                          onChange={(e) => setProfitSettings((prev) => ({ ...prev, income_tax_rate_pct: parseFloat(e.target.value) || 0 }))}
+                          placeholder="15"
+                          min="0"
+                          max="100"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          style={{ color: "#0f172a" }}
+                        />
+                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>IS: 15% (PME jusqu'à 42500€), 25% au-delà</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Outils & Fixes */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>🛠️ Outils & Charges fixes</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Abonnement EcomPilot (€/mois)</label>
+                        <input
+                          type="number"
+                          value={profitSettings.ecompilot_monthly}
+                          onChange={(e) => setProfitSettings((prev) => ({ ...prev, ecompilot_monthly: parseFloat(e.target.value) || 0 }))}
+                          placeholder="29"
+                          min="0"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          style={{ color: "#0f172a" }}
+                        />
+                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Auto-rempli selon votre plan actuel</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Autres outils SaaS (€/mois)</label>
+                        <input
+                          type="number"
+                          value={profitSettings.other_tools_monthly}
+                          onChange={(e) => setProfitSettings((prev) => ({ ...prev, other_tools_monthly: parseFloat(e.target.value) || 0 }))}
+                          placeholder="0"
+                          min="0"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          style={{ color: "#0f172a" }}
+                        />
+                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Email marketing, analytics, etc.</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Charges fixes mensuelles (€)</label>
+                        <input
+                          type="number"
+                          value={profitSettings.monthly_fixed_costs}
+                          onChange={(e) => setProfitSettings((prev) => ({ ...prev, monthly_fixed_costs: parseFloat(e.target.value) || 0 }))}
+                          placeholder="0"
+                          min="0"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          style={{ color: "#0f172a" }}
+                        />
+                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Loyer, comptable, etc. répartis sur vos commandes</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Nb commandes/mois (pour répartir les fixes)</label>
+                        <input
+                          type="number"
+                          value={profitSettings.avg_orders_per_month}
+                          onChange={(e) => setProfitSettings((prev) => ({ ...prev, avg_orders_per_month: parseInt(e.target.value) || 100 }))}
+                          placeholder="100"
+                          min="1"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          style={{ color: "#0f172a" }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={saveProfitSettings}
+                      disabled={savingProfitSettings}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl text-sm font-semibold transition-colors"
+                      style={{ color: "#fff" }}
+                    >
+                      <Save className="w-4 h-4" />
+                      {savingProfitSettings ? "Sauvegarde…" : "Sauvegarder les paramètres"}
+                    </button>
+                    <a
+                      href="/dashboard/rentabilite"
+                      className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+                      style={{ color: "#374151" }}
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      Ouvrir le calculateur
+                    </a>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
