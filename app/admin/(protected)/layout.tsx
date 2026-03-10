@@ -15,7 +15,7 @@ const adminNav = [
   { href: "/admin/stats", label: "📈 Analytics", icon: BarChart3 },
   { href: "/admin/content-monitoring", label: "🔍 Contenu IA", icon: FileSearch },
   { href: "/admin/audit", label: "📋 Journal d'audit", icon: ScrollText },
-  { href: "/admin/legal", label: "⚖️ Conformité RGPD", icon: Scale },
+  { href: "/admin/legal", label: "⚖️ Conformité légale", icon: Scale },
   { href: "/admin/system", label: "⚙️ Système", icon: Settings },
 ];
 
