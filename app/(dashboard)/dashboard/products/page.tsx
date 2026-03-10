@@ -90,6 +90,11 @@ export default function ProductsPage() {
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [bulkPrice, setBulkPrice] = useState("");
+  /* ── Price tools bar ── */
+  const [priceOp, setPriceOp] = useState<'increase' | 'decrease'>('increase');
+  const [priceValue, setPriceValue] = useState<number>(0);
+  const [priceUnit, setPriceUnit] = useState<'%' | '€'>('%');
+  const [priceRounding, setPriceRounding] = useState<'none' | '99' | '95' | 'round'>('none');
   const [bulkPriceMode, setBulkPriceMode] = useState<"fixed" | "percent_up" | "percent_down" | "multiply">("fixed");
   const [bulkTitle, setBulkTitle] = useState("");
   const [bulkDescription, setBulkDescription] = useState("");
@@ -685,6 +690,41 @@ export default function ProductsPage() {
     }
   };
 
+  /* ──────── Bulk price tools ──────── */
+  const applyPriceChange = () => {
+    if (selectedProducts.length === 0) {
+      addToast('Sélectionnez au moins un produit', 'error');
+      return;
+    }
+    if (priceValue <= 0) {
+      addToast('Saisissez une valeur supérieure à 0', 'error');
+      return;
+    }
+    const updated = products.map((product) => {
+      if (!selectedProducts.includes(product.id)) return product;
+      const currentPrice = parseFloat(product.price) || 0;
+      let newPrice: number;
+      if (priceUnit === '%') {
+        newPrice = priceOp === 'increase'
+          ? currentPrice * (1 + priceValue / 100)
+          : currentPrice * (1 - priceValue / 100);
+      } else {
+        newPrice = priceOp === 'increase' ? currentPrice + priceValue : currentPrice - priceValue;
+      }
+      newPrice = Math.max(0.01, newPrice);
+      if (priceRounding === '99') newPrice = Math.floor(newPrice) + 0.99;
+      else if (priceRounding === '95') newPrice = Math.floor(newPrice) + 0.95;
+      else if (priceRounding === 'round') newPrice = Math.round(newPrice);
+      else newPrice = Math.round(newPrice * 100) / 100;
+      return { ...product, price: newPrice.toFixed(2) };
+    });
+    setProducts(updated);
+    addToast(
+      `Prix calculés pour ${selectedProducts.length} produit(s) — cliquez "Sauvegarder" dans la barre pour appliquer sur Shopify`,
+      'success'
+    );
+  };
+
   const handleDuplicate = async (productId: string) => {    setActionLoading(`dup-${productId}`);
     try {
       const res = await fetch("/api/shopify/duplicate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId }) });
@@ -915,6 +955,80 @@ export default function ProductsPage() {
           <span style={{ color: "#94a3b8" }}>—</span>
           <input type="number" placeholder="Max €" value={priceMax} onChange={(e) => { setPriceMax(e.target.value); setCurrentPage(1); }}
             className="w-24 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20" style={{ color: "#0f172a" }} />
+        </div>
+      </div>
+
+      {/* ── Price Tools Bar ── */}
+      <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <DollarSign className="w-4 h-4" style={{ color: "#d97706" }} />
+            <span className="text-sm font-semibold" style={{ color: "#92400e" }}>Outils Prix</span>
+          </div>
+          <div className="w-px h-6 bg-amber-200" />
+          {/* Operation: increase / decrease */}
+          <div className="flex items-center bg-white border border-amber-200 rounded-lg overflow-hidden">
+            {(['increase', 'decrease'] as const).map((op) => (
+              <button key={op} onClick={() => setPriceOp(op)}
+                className={`px-3 py-1.5 text-xs font-medium transition-all ${priceOp === op ? 'bg-amber-500 text-white' : 'hover:bg-amber-50'}`}
+                style={{ color: priceOp === op ? '#fff' : '#92400e' }}>
+                {op === 'increase' ? '▲ Augmenter' : '▼ Baisser'}
+              </button>
+            ))}
+          </div>
+          {/* Value */}
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              min={0}
+              step={priceUnit === '%' ? 1 : 0.5}
+              value={priceValue || ''}
+              onChange={(e) => setPriceValue(parseFloat(e.target.value) || 0)}
+              placeholder="Valeur"
+              className="w-24 px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+              style={{ color: '#0f172a' }}
+            />
+            {/* Unit: % / € */}
+            <div className="flex items-center bg-white border border-amber-200 rounded-lg overflow-hidden">
+              {(['%', '€'] as const).map((u) => (
+                <button key={u} onClick={() => setPriceUnit(u)}
+                  className={`px-3 py-1.5 text-xs font-semibold transition-all ${priceUnit === u ? 'bg-amber-500' : 'hover:bg-amber-50'}`}
+                  style={{ color: priceUnit === u ? '#fff' : '#92400e' }}>
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="w-px h-6 bg-amber-200" />
+          {/* Rounding */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium" style={{ color: '#78350f' }}>Arrondi :</span>
+            <div className="flex items-center bg-white border border-amber-200 rounded-lg overflow-hidden">
+              {([
+                { key: 'none', label: 'Aucun' },
+                { key: '99', label: 'X,99' },
+                { key: '95', label: 'X,95' },
+                { key: 'round', label: '∞' },
+              ] as { key: 'none' | '99' | '95' | 'round'; label: string }[]).map(({ key, label }) => (
+                <button key={key} onClick={() => setPriceRounding(key)}
+                  className={`px-2.5 py-1.5 text-xs font-medium transition-all ${priceRounding === key ? 'bg-amber-500' : 'hover:bg-amber-50'}`}
+                  style={{ color: priceRounding === key ? '#fff' : '#92400e' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="w-px h-6 bg-amber-200" />
+          <button
+            onClick={applyPriceChange}
+            className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 rounded-lg text-xs font-semibold transition-all shadow-sm"
+            style={{ color: '#fff' }}>
+            <TrendingUp className="w-3.5 h-3.5" />
+            Appliquer aux sélectionnés
+          </button>
+          {selectedProducts.length > 0 && (
+            <span className="text-xs" style={{ color: '#92400e' }}>({selectedProducts.length} sélectionné{selectedProducts.length > 1 ? 's' : ''})</span>
+          )}
         </div>
       </div>
 
