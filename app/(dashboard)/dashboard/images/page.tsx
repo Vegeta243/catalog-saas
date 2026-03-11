@@ -194,7 +194,6 @@ export default function ImagesPage() {
   };
 
   const callProcess = async (srcBase64: string, operation: string, extraParams: Record<string, unknown> = {}): Promise<string> => {
-    console.log('SENDING TO API:', { operation, imageIsBase64: srcBase64?.startsWith('data:'), imageLength: srcBase64?.length });
     const res = await fetch("/api/images/process", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

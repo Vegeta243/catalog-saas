@@ -130,7 +130,6 @@ export default function CalendrierPage() {
     }
     setSaving(true);
     const scheduled_at = new Date(`${formDate}T${formTime}:00`).toISOString();
-    console.log("Creating calendar event:", { formTitle, formType, scheduled_at });
     try {
       const res = await fetch("/api/calendar", {
         method: "POST",
@@ -146,12 +145,11 @@ export default function CalendrierPage() {
         }),
       });
       const data = await res.json();
-      console.log("Create event response:", res.status, data);
       if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
       setShowModal(false);
       fetchEvents();
     } catch (e) {
-      console.error("Create event error:", e);
+
       alert(`Échec : ${(e as Error).message}`);
     }
     setSaving(false);

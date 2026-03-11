@@ -3,8 +3,6 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
-const EVENT_TYPES = ["promotion", "restock", "flash_sale", "email_campaign", "social_post", "other"] as const;
-
 const createEventSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),

@@ -27,8 +27,7 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.RESEND_API_KEY) {
-      // Fallback: log to console in dev/demo mode
-      console.log("[Contact Form]", { name, email, subject, message });
+      // Fallback: demo mode (no email service configured)
       return NextResponse.json({ success: true, demo: true });
     }
 
