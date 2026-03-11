@@ -27,99 +27,118 @@ Fonctionnalités disponibles dans EcomPilot :
 
 Sois toujours précis, encourage l'utilisateur à explorer les fonctionnalités et réponds aux questions techniques comme à un expert e-commerce.`;
 
+// Normalize: remove accents, lowercase — so "tâche"="tache", "règle"="regle", etc.
+function normalize(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function has(m: string, ...patterns: RegExp[]): boolean {
+  return patterns.some(p => p.test(m));
+}
+
 function getSmartDemoReply(msg: string, page?: string, plan?: string): string {
-  const m = msg.toLowerCase();
+  const m = normalize(msg);
 
-  // Greetings
-  if (/^(bonjour|salut|hello|hi|hey|coucou|bonsoir)/.test(m) || m.length < 5) {
-    return `Bonjour ! Je suis l'assistant EcomPilot 👋\n\nJe peux vous aider avec :\n• **Optimisation produits** — titres SEO, descriptions, tags\n• **Modification en masse** — prix, statuts, tags sur plusieurs produits\n• **Images** — redimensionner, convertir, améliorer\n• **Automatisations** — règles automatiques stock/prix\n• **Connexion Shopify** — configuration et synchronisation\n\nQue souhaitez-vous faire ?`;
+  // ── Greetings ──────────────────────────────────────────────────────────────
+  if (/^(bonjour|salut|hello|hi|hey|coucou|bonsoir|yo|ola)/.test(m) || m.length < 4) {
+    return `Bonjour ! Je suis l'assistant EcomPilot 👋\n\nJe peux vous aider avec :\n• **Optimisation produits** — titres SEO, descriptions, tags\n• **Modification en masse** — prix, statuts sur plusieurs produits\n• **Images** — redimensionner, convertir, améliorer\n• **Automatisations** — règles automatiques stock/prix\n• **Connexion Shopify** — configuration et sync\n\nQue souhaitez-vous faire ?`;
   }
 
-  // Products / catalogue
-  if (/produit|catalogue|fiche|article|listing/.test(m)) {
-    if (/masse|bulk|plusieurs|multiple|tout/.test(m)) {
-      return `Pour modifier vos produits **en masse** 📦 :\n\n1. Allez sur la page **Produits**\n2. Cochez les produits à modifier\n3. Utilisez la **barre d'actions** qui apparaît en bas\n4. Modifiez prix, tags, statuts ou générez du contenu IA en un clic\n\nVous pouvez aussi utiliser l'onglet **Modification en masse** pour des changements structurés.`;
-    }
-    if (/prix|price/.test(m)) {
-      return `Pour modifier les **prix** de vos produits :\n\n• **Un produit** : cliquez sur le produit → modifiez le prix directement\n• **Plusieurs produits** : cochez-les → barre d'actions → Modifier les prix\n• **Tous les produits** : page Modification en masse → champ Prix → appliquer\n\nVous pouvez augmenter/diminuer en % ou définir un prix fixe.`;
-    }
-    return `Vos produits Shopify sont synchronisés automatiquement dans EcomPilot.\n\n**Actions disponibles :**\n• Modifier titre, description, tags, prix\n• Générer du contenu IA optimisé SEO\n• Modifier en masse plusieurs produits simultanément\n• Voir le score SEO de chaque fiche\n\nOù voulez-vous commencer ?`;
+  // ── Tâches / quota / plan ──────────────────────────────────────────────────
+  // Catches: "combien de taches", "taches restantes", "quota", "credits", "forfait", etc.
+  if (has(m,
+    /tache|credit|quota|action.?restant|restant.?action|il.?me.?reste|combien.*rest|reste.*combien/,
+    /plan|forfait|tarif|abonnement|upgrade|downgrade|gratuit|free\b|pro\b|business\b|prix.*(plan|forfait)/,
+    /renouvell|mensuel|mois|limite.*(tache|action|credit)/
+  )) {
+    const planLabel = plan === "free" ? "gratuit" : plan || "gratuit";
+    const limits: Record<string, string> = { free: "30 tâches/mois", pro: "200 tâches/mois", business: "1 000 tâches/mois" };
+    const currentLimit = limits[planLabel] || "30 tâches/mois";
+    return `Vous êtes sur le **plan ${planLabel}** (${currentLimit}).\n\nPour voir vos tâches restantes → menu gauche → **Mon forfait**.\n\n**Tous les plans :**\n• 🆓 **Gratuit** — 30 tâches/mois\n• ⚡ **Pro** — 200 tâches/mois\n• 🚀 **Business** — 1 000 tâches/mois\n\nLes tâches se renouvellent automatiquement chaque mois. Pour en avoir plus, upgradez sur la page **Mon forfait**.`;
   }
 
-  // SEO / optimization
-  if (/seo|optim|score|description|titre|title|tag|meta/.test(m)) {
-    if (/score/.test(m)) {
-      return `Le **score SEO** (0–100) évalue vos fiches produits sur 4 critères :\n\n• 📝 **Titre** (25 pts) — idéalement 50–70 caractères\n• 📄 **Description** (40 pts) — 100+ mots recommandés\n• 🏷️ **Tags** (20 pts) — 5+ tags recommandés\n• 🖼️ **Images** (15 pts) — 3+ images = score max\n\nUn score > 70 est excellent. Utilisez l'IA pour améliorer automatiquement les fiches faibles.`;
-    }
-    if (/meta/.test(m)) {
-      return `Pour générer vos **méta-titres et méta-descriptions** :\n\n1. Allez sur **Optimisation IA**\n2. Sélectionnez vos produits\n3. Cliquez **Générer** → l'IA crée des méta-données optimisées\n4. Vérifiez et appliquez en un clic\n\nLes méta-données sont directement envoyées à Shopify.`;
-    }
-    return `**Optimisation IA** disponible sur la page dédiée :\n\n1. Sélectionnez les produits à optimiser\n2. Choisissez le mode : titre, description, ou **tout optimiser**\n3. L'IA génère du contenu SEO personnalisé\n4. Prévisualisez et appliquez\n\nChaque optimisation utilise 1 tâche de votre quota ${plan === "free" ? "(30 tâches/mois sur le plan gratuit)" : ""}.`;
+  // ── Produits en masse ──────────────────────────────────────────────────────
+  if (has(m, /modifier.*(masse|bulk|tous|plusieurs|multiple)/, /masse|bulk-edit|modification.*(masse|groupe)/)) {
+    return `Pour modifier vos produits **en masse** 📦 :\n\n1. Allez sur la page **Produits**\n2. Cochez les produits à modifier\n3. La **barre d'actions** apparaît en bas\n4. Modifiez prix, tags, statuts ou générez du contenu IA\n\nOu utilisez directement la page **Modifier en masse** dans le menu pour des changements structurés sur tout votre catalogue.`;
   }
 
-  // Images
-  if (/image|photo|visuel|webp|jpeg|png|redimensi|convert|recadr/.test(m)) {
-    return `**Éditeur d'images** EcomPilot :\n\n• Formats acceptés : JPEG, PNG, WebP\n• Redimensionnement aux formats standards (Shopify, Instagram, Facebook…)\n• Conversion WebP (recommandé pour la performance web)\n• Compression sans perte de qualité\n\nAccédez-y via **Éditeur d'images** dans le menu. Glissez-déposez vos images pour commencer.`;
+  // ── Prix ───────────────────────────────────────────────────────────────────
+  if (has(m, /modifier.*prix|changer.*prix|prix.*(produit|article)|mettre.*(prix|tarif)/)) {
+    return `Pour modifier les **prix** :\n\n• **Un seul produit** : cliquez sur le produit → modifiez le prix\n• **Plusieurs produits** : cochez-les → barre d'actions → Modifier les prix\n• **En masse** : page **Modifier en masse** → champ Prix\n\nVous pouvez augmenter/diminuer en % ou définir un prix fixe pour tous les produits sélectionnés.`;
   }
 
-  // Automation
-  if (/automat|règle|rule|stock|alerte|archive|planif|scheduler/.test(m)) {
-    return `**Automatisations** EcomPilot :\n\nCréez des règles qui s'exécutent automatiquement :\n\n• 📉 Stock bas → ajouter un tag "rupture"\n• 💰 Prix sous un seuil → envoyer une alerte\n• 📦 Produit non vendu → archiver après X jours\n• 🗓️ Planification → modifier prix pour une période\n\nPage **Automatisations** → **Nouvelle règle** → définir la condition et l'action.`;
+  // ── Produits (général) ────────────────────────────────────────────────────
+  if (has(m, /produit|catalogue|fiche|article|listing|synchronis|shopify.*(produit|sync)|importer/)) {
+    return `Vos produits Shopify sont synchronisés automatiquement dans EcomPilot.\n\n**Ce que vous pouvez faire :**\n• Modifier titre, description, tags, prix\n• Générer du contenu IA optimisé SEO\n• Modifier en masse plusieurs produits à la fois\n• Voir et améliorer le score SEO de chaque fiche\n\nPage **Produits** dans le menu → sélectionnez un produit pour commencer.`;
   }
 
-  // Shopify connection
-  if (/shopify|connect|boutique|shop|oauth|install/.test(m)) {
-    return `**Connexion Shopify** :\n\n1. Menu gauche → **Mes boutiques** → **Ajouter une boutique**\n2. Entrez votre domaine (ex : ma-boutique ou ma-boutique.myshopify.com)\n3. Cliquez **Ajouter** puis **Connecter** (bouton orange)\n4. Autorisez l'accès dans Shopify\n\nVos produits se synchronisent automatiquement après la connexion. En cas de problème, vérifiez que votre boutique est active sur Shopify.`;
+  // ── Score SEO ──────────────────────────────────────────────────────────────
+  if (has(m, /score.?seo|seo.?score|score.*produit|note.*seo/)) {
+    return `Le **score SEO** (0–100) évalue chaque fiche sur 4 critères :\n\n• 📝 **Titre** (25 pts) — idéalement 50–70 caractères\n• 📄 **Description** (40 pts) — 100+ mots recommandés\n• 🏷️ **Tags** (20 pts) — 5+ tags recommandés\n• 🖼️ **Images** (15 pts) — 3+ images = score max\n\nScore > 70 = excellent ✅. Utilisez l'**Optimisation IA** pour améliorer automatiquement les fiches faibles.`;
   }
 
-  // Billing / plan / credits
-  if (/plan|tarif|prix|forfait|abonn|crédit|tâche|limit|quota|upgrade|gratuit|free|pro/.test(m)) {
-    const planInfo = plan === "free"
-      ? "Vous êtes sur le **plan gratuit** (30 tâches/mois)."
-      : plan ? `Vous êtes sur le **plan ${plan}**.` : "";
-    return `${planInfo}\n\n**Plans disponibles :**\n• 🆓 **Gratuit** — 30 tâches/mois\n• ⚡ **Pro** — 200 tâches/mois\n• 🚀 **Business** — 1 000 tâches/mois\n\nPour changer de plan → **Mon forfait** dans le menu. Vos tâches se renouvellent chaque mois.`.trim();
+  // ── Méta / SEO optimisation ────────────────────────────────────────────────
+  if (has(m, /meta.?title|meta.?desc|meta.?donnee|metadonnee|balise/)) {
+    return `Pour générer vos **méta-titres et méta-descriptions** :\n\n1. Page **Optimisation IA** dans le menu\n2. Sélectionnez vos produits\n3. Cliquez **Générer** → l'IA crée des méta-données optimisées\n4. Vérifiez et appliquez en un clic\n\nLes méta-données sont envoyées directement à Shopify.`;
   }
 
-  // Calendar
-  if (/calendrier|calendar|planif|schedule|agenda/.test(m)) {
-    return `**Calendrier marketing** :\n\nPlanifiez vos actions à l'avance :\n• Modifications de prix pour les soldes\n• Changements de statut / archivage\n• Campagnes produits\n\nPage **Calendrier** → **Nouvelle action** → choisissez la date et l'action à exécuter.`;
+  // ── IA / Optimisation ─────────────────────────────────────────────────────
+  if (has(m, /ia|intelligence.?artific|gpt|optimi|generer|genere|titres?.?seo|description.?(ia|genere|auto)/)) {
+    return `**Optimisation IA** — page dédiée dans le menu :\n\n1. Filtrez vos produits par score SEO bas\n2. Cochez ceux à optimiser\n3. Choisissez : titre, description, tags ou **tout optimiser**\n4. L'IA génère du contenu SEO personnalisé\n5. Prévisualisez et appliquez en un clic\n\nChaque optimisation consomme 1 tâche de votre quota mensuel.`;
   }
 
-  // Profitability / margins
-  if (/rentab|marge|profit|coût|cost|bénéfice|benefit/.test(m)) {
+  // ── Images ────────────────────────────────────────────────────────────────
+  if (has(m, /image|photo|visuel|webp|jpeg|jpg|png|redimensi|convertir|recadrer|compresse/)) {
+    return `**Éditeur d'images** EcomPilot :\n\n• Formats acceptés : JPEG, PNG, WebP\n• Redimensionnement aux formats standards (Shopify, Instagram, Facebook…)\n• Conversion WebP (recommandé pour la performance web)\n• Compression sans perte de qualité visible\n\nAccédez-y via **Éditeur d'images** dans le menu. Glissez-déposez vos images pour commencer.`;
+  }
+
+  // ── Automatisations ───────────────────────────────────────────────────────
+  if (has(m, /automat|regle|rule|declencheur|trigger|condition|action.?(auto|planif)|stock.?(bas|alerte|faible)/)) {
+    return `**Automatisations** EcomPilot :\n\nCréez des règles qui s'exécutent automatiquement :\n\n• 📉 Stock bas → ajouter un tag "rupture"\n• 💰 Prix sous un seuil → envoyer une alerte\n• 📦 Produit non vendu → archiver après X jours\n• 🗓️ Planification → modifier prix pour une période donnée\n\nPage **Automatisations** → **Nouvelle règle** → définissez la condition et l'action.`;
+  }
+
+  // ── Shopify / Connexion ───────────────────────────────────────────────────
+  if (has(m, /shopify|connecter.*boutique|ajouter.*boutique|boutique.*(connect|ajouter|install)|oauth|myshopify/)) {
+    return `**Connexion Shopify** :\n\n1. Menu gauche → **Mes boutiques** → **Ajouter une boutique**\n2. Entrez votre domaine (ex : ma-boutique ou ma-boutique.myshopify.com)\n3. Cliquez **Ajouter** puis **Connecter** (bouton orange)\n4. Autorisez l'accès dans Shopify\n\nVos produits se synchronisent automatiquement après connexion. Si problème, vérifiez que votre boutique Shopify est active.`;
+  }
+
+  // ── Calendrier ────────────────────────────────────────────────────────────
+  if (has(m, /calendrier|planifier|schedule|agenda|programmer.*action/)) {
+    return `**Calendrier marketing** :\n\nPlanifiez vos actions à l'avance :\n• Modifications de prix pour les soldes\n• Changements de statut / archivage programmés\n• Campagnes produits à date fixe\n\nPage **Calendrier** → **Nouvelle action** → choisissez la date et l'action.`;
+  }
+
+  // ── Rentabilité / Marges ──────────────────────────────────────────────────
+  if (has(m, /rentab|marge|profit|cout|benefice|revient|commission/)) {
     return `**Rentabilité** EcomPilot :\n\nCalculez vos marges en intégrant :\n• Prix de vente Shopify\n• Coût de revient (que vous saisissez)\n• Frais Shopify et marketing\n\nPage **Rentabilité** → entrez vos coûts → visualisez marges et profits par produit.`;
   }
 
-  // Competitors
-  if (/concurren|competitor|veille|spy/.test(m)) {
-    return `**Suivi concurrents** :\n\nSurveillance des prix et offres concurrentes :\n• Ajoutez des URL concurrents\n• Recevez des alertes de changement de prix\n• Comparez avec vos propres prix\n\nPage **Concurrence** → **Ajouter un concurrent**.`;
+  // ── Concurrence ───────────────────────────────────────────────────────────
+  if (has(m, /concurrent|concurrence|competitor|veille|surveiller|espionn/)) {
+    return `**Suivi concurrents** :\n\n• Ajoutez des URL de concurrents à surveiller\n• Recevez des alertes dès qu'un prix change\n• Comparez avec vos propres prix\n\nPage **Concurrence** dans le menu → **Ajouter un concurrent**.`;
   }
 
-  // Help / support
-  if (/aide|help|support|problème|problem|bug|erreur|error/.test(m)) {
-    return `Pour obtenir de **l'aide** :\n\n• 📖 **FAQ** — page Aide → FAQ (réponses aux questions fréquentes)\n• 🎫 **Support** — page Aide → Nouvelle demande (ticket répondu sous 24h)\n• 💬 **Ici** — posez votre question dans ce chat\n\nDécrivez votre problème et je ferai de mon mieux pour vous aider !`;
+  // ── Support / Aide / Bug ──────────────────────────────────────────────────
+  if (has(m, /probleme|bug|erreur|marche.?pas|ne.?fonctionne|ticket|support|contacter|aide/)) {
+    return `Pour signaler un **problème** ou obtenir de l'aide :\n\n• 📖 **FAQ** — page Aide → FAQ (réponses aux questions fréquentes)\n• 🎫 **Ticket support** — page Aide → Nouvelle demande (réponse sous 24h)\n\nDécrivez votre problème en détail dans le ticket et notre équipe vous répond rapidement.`;
   }
 
-  // Account / profile
-  if (/compte|profil|profile|mot de passe|password|email|avatar/.test(m)) {
-    return `Pour gérer votre **compte** :\n\n• **Profil** → modifier nom, prénom, avatar\n• **Email** → contactez le support pour changer votre email\n• **Mot de passe** → page Profil → Sécurité → Changer le mot de passe\n• **Supprimer le compte** → page Profil → zone danger\n\nAccédez à votre profil via l'icône en bas du menu.`;
+  // ── Compte / Profil ───────────────────────────────────────────────────────
+  if (has(m, /compte|profil|avatar|mot.?de.?passe|password|changer.?email|supprimer.?compte|securite/)) {
+    return `Pour gérer votre **compte** :\n\n• **Profil** → modifier nom, prénom, avatar\n• **Mot de passe** → page Profil → Sécurité\n• **Email** → contactez le support pour changer votre email\n• **Supprimer le compte** → page Profil → zone danger\n\nAccédez à votre profil via **Mon compte** dans le menu.`;
   }
 
-  // Context-based page hints
-  if (page) {
-    if (page.includes("products")) {
-      return `Vous êtes sur la page **Produits**. Astuces :\n\n• Cochez plusieurs produits → barre d'actions pour les modifier en masse\n• Cliquez sur un produit pour voir le détail et optimiser\n• Filtrez par score SEO pour identifier les fiches à améliorer\n\nQue voulez-vous faire avec vos produits ?`;
-    }
-    if (page.includes("ai")) {
-      return `Vous êtes sur **Optimisation IA**. Pour commencer :\n\n1. Filtrez les produits par score SEO bas\n2. Sélectionnez-les\n3. Cliquez **Générer** pour créer du contenu SEO optimal\n4. Prévisualisez et appliquez\n\nL'IA génère titres, descriptions et tags optimisés pour Shopify.`;
-    }
-    if (page.includes("help")) {
-      return `Vous êtes dans le **Centre d'aide**. Je suis là pour vous aider !\n\nPosez votre question et je vous guide. Vous pouvez aussi :\n• Consulter la **FAQ** pour les questions fréquentes\n• Créer un **ticket support** si vous avez un problème technique\n\nQue puis-je faire pour vous ?`;
-    }
+  // ── Fallback contextuel selon la page courante ─────────────────────────────
+  // (seulement si aucun mot-clé n'a matché — fournit un contexte utile)
+  const pageCtx = page?.toLowerCase() || "";
+  if (pageCtx.includes("products")) {
+    return `Je ne suis pas sûr d'avoir compris votre question. Sur la page **Produits**, vous pouvez :\n• Modifier un produit en cliquant dessus\n• Sélectionner plusieurs produits et les modifier en masse\n• Générer du contenu IA pour améliorer le SEO\n\nPouvez-vous reformuler votre question ?`;
+  }
+  if (pageCtx.includes("ai")) {
+    return `Je ne suis pas sûr d'avoir compris. Sur **Optimisation IA**, sélectionnez des produits et cliquez **Générer** pour créer du contenu SEO optimisé.\n\nPouvez-vous me dire ce que vous souhaitez faire exactement ?`;
   }
 
-  // Default fallback
-  return `Je suis l'assistant EcomPilot. Je peux vous aider avec :\n\n• 📦 Gestion et optimisation de vos **produits Shopify**\n• 🤖 **Optimisation IA** — titres SEO, descriptions, tags\n• 🖼️ **Éditeur d'images** — redimensionner, convertir\n• ⚙️ **Automatisations** — règles automatiques\n• 💰 **Facturation** — plans et quotas\n• 🔗 **Connexion Shopify**\n\nPosez votre question !`;
+  // ── Fallback général ───────────────────────────────────────────────────────
+  return `Je n'ai pas bien compris votre question 🤔\n\nJe peux vous aider avec :\n• **Tâches restantes / quota** — dites "combien de tâches il me reste"\n• **Optimisation produits** — SEO, descriptions, tags IA\n• **Modification en masse** — prix, statuts, tags\n• **Images** — redimensionner, convertir\n• **Automatisations** — règles automatiques\n• **Connexion Shopify** — ajouter une boutique\n• **Mon forfait** — plans et tarifs\n\nPosez votre question différemment et je ferai de mon mieux !`;
 }
 
 export async function POST(req: NextRequest) {
