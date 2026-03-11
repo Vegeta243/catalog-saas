@@ -14,6 +14,17 @@ interface Props {
   currentPage?: string;
 }
 
+function renderMsg(text: string): React.ReactNode {
+  return text.split("\n").map((line, i) => {
+    const parts = line.split(/(\*\*[^*]+\*\*)/g).map((part, j) =>
+      part.startsWith("**") && part.endsWith("**")
+        ? <strong key={j}>{part.slice(2, -2)}</strong>
+        : part
+    );
+    return <span key={i} className="block">{parts}</span>;
+  });
+}
+
 export default function AIChatWidget({ plan, currentPage }: Props) {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -123,7 +134,7 @@ export default function AIChatWidget({ plan, currentPage }: Props) {
                     ? "bg-blue-600 text-white rounded-tr-sm"
                     : "bg-gray-100 text-gray-800 rounded-tl-sm"
                 }`}>
-                  {msg.content}
+                  {msg.role === "assistant" ? renderMsg(msg.content) : msg.content}
                 </div>
               </div>
             ))}
