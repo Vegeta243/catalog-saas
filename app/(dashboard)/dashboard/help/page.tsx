@@ -6,7 +6,6 @@ import {
   BookOpen, Zap, Image, Settings, CreditCard, ShoppingBag, RefreshCw,
   CheckCircle, Clock, AlertCircle, Plus, Tag,
 } from "lucide-react";
-import { useToast } from "@/lib/toast";
 
 interface FAQItem {
   id: string;
@@ -114,7 +113,6 @@ const TICKET_CATEGORIES = [
 type MainTab = "faq" | "contact" | "tickets";
 
 export default function HelpPage() {
-  const { addToast } = useToast();
   const [mainTab, setMainTab] = useState<MainTab>("faq");
 
   // FAQ
@@ -132,6 +130,7 @@ export default function HelpPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [sent, setSent] = useState(false);
 
   const loadTickets = async () => {
     setTicketsLoading(true);
@@ -148,30 +147,35 @@ export default function HelpPage() {
   }, [mainTab]);
 
   const handleSubmitTicket = async () => {
-    if (!subject.trim() || !message.trim()) {
-      addToast("Veuillez remplir le sujet et le message.", "error");
-      return;
-    }
-    setSubmitting(true);
+    if (!subject.trim() || !message.trim()) return
+    setSubmitting(true)
     try {
-      const res = await fetch("/api/support", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject: subject.trim(), message: message.trim(), category: ticketCategory }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erreur lors de l envoi");
-      addToast("Demande envoyee ! Nous vous repondrons sous 24-48h.", "success");
-      setSubject("");
-      setMessage("");
-      setTicketCategory("general");
-      setMainTab("tickets");
-      loadTickets();
-    } catch (err) {
-      addToast((err as Error).message, "error");
+      const res = await fetch('/api/support', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: subject.trim(), message: message.trim(), category: ticketCategory })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+
+      // Reset form
+      setSubject('')
+      setMessage('')
+      setTicketCategory('general')
+
+      // Show success
+      setSent(true)
+      setTimeout(() => setSent(false), 6000)
+
+      // Refresh tickets list
+      fetch('/api/support').then(r => r.json()).then(d => setTickets(d.tickets || []))
+
+    } catch (e: any) {
+      alert('Erreur lors de l\'envoi : ' + e.message)
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false);
-  };
+  }
 
   const filteredFAQ = FAQ_DATA.filter((item) => {
     const matchesCategory = category === "all" || item.category === category;
@@ -259,6 +263,16 @@ export default function HelpPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-2xl">
           <h2 className="text-base font-semibold mb-1 text-gray-900">Nouvelle demande de support</h2>
           <p className="text-xs text-gray-400 mb-5">Notre equipe vous repondra sous 24-48h ouvrables.</p>
+
+          {sent && (
+            <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center gap-3 mb-4">
+              <span className="text-2xl">✅</span>
+              <div>
+                <p className="font-semibold text-green-800 dark:text-green-200">Message envoyé !</p>
+                <p className="text-sm text-green-600 dark:text-green-400">Vous recevrez une confirmation par email sous peu.</p>
+              </div>
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1.5">Categorie</label>

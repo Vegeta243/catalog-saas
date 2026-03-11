@@ -36,9 +36,12 @@
     "@types/node": "^20.19.35",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "better-sqlite3": "^12.6.2",
     "eslint": "^9.39.3",
     "eslint-config-next": "16.1.6",
+    "playwright": "1.50.0",
     "postgres": "^3.4.8",
+    "sql.js": "^1.14.1",
     "supabase": "^2.76.17",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"

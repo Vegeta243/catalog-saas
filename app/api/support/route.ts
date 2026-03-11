@@ -54,32 +54,59 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Send email notification (non-blocking)
+  console.log('[Support] Ticket created:', ticket.id, '— sending emails...')
+  console.log('[Support] RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY)
+  console.log('[Support] ADMIN_EMAIL:', process.env.ADMIN_EMAIL)
+
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey) {
     const resend = new Resend(apiKey);
-    resend.emails.send({
-      from: FROM_EMAIL,
-      to: SUPPORT_EMAIL,
-      subject: `[Support #${ticket.id.slice(0, 8)}] ${subject}`,
-      html: `<p><strong>Utilisateur :</strong> ${user.email}</p>
-<p><strong>Catégorie :</strong> ${category}</p>
-<p><strong>Message :</strong></p>
-<p>${message.replace(/\n/g, "<br>")}</p>`,
-    }).catch(() => { /* non-fatal */ });
 
-    resend.emails.send({
-      from: FROM_EMAIL,
-      to: user.email!,
-      subject: `Votre demande a été reçue (#${ticket.id.slice(0, 8)})`,
-      html: `<p>Bonjour,</p>
-<p>Nous avons bien reçu votre demande concernant : <strong>${subject}</strong>.</p>
-<p>Notre équipe vous répondra dans les 24-48h ouvrables.</p>
-<p>— L'équipe EcomPilot</p>`,
-    }).catch(() => { /* non-fatal */ });
+    // Email to admin
+    try {
+      const result = await resend.emails.send({
+        from: 'no-reply@ecompilotelite.com',
+        to: process.env.ADMIN_EMAIL || 'elliottshilenge5@gmail.com',
+        subject: `[Support #${ticket.id.slice(0, 8)}] ${subject}`,
+        html: `
+          <h2>Nouveau ticket support — EcomPilot Elite</h2>
+          <p><strong>De :</strong> ${user.email}</p>
+          <p><strong>Catégorie :</strong> ${category}</p>
+          <p><strong>Sujet :</strong> ${subject}</p>
+          <hr/>
+          <p>${message.replace(/\n/g, '<br/>')}</p>
+          <hr/>
+          <p><a href="https://ecompilotelite.com/admin/support">Gérer dans l'admin →</a></p>
+        `
+      })
+      console.log('[Support] Admin email result:', JSON.stringify(result))
+    } catch (e) {
+      console.error('[Support] Admin email FAILED:', e)
+    }
+
+    // Confirmation email to user
+    try {
+      const result2 = await resend.emails.send({
+        from: 'no-reply@ecompilotelite.com',
+        to: user.email!,
+        subject: `Votre demande a bien été reçue — EcomPilot Elite`,
+        html: `
+          <h2>Nous avons bien reçu votre message ✅</h2>
+          <p>Bonjour,</p>
+          <p>Votre demande "<strong>${subject}</strong>" a été transmise à notre équipe.</p>
+          <p>Nous vous répondrons dans les plus brefs délais (généralement sous 24h).</p>
+          <p>Référence : <code>${ticket.id.slice(0, 8)}</code></p>
+          <br/>
+          <p>L'équipe EcomPilot Elite</p>
+        `
+      })
+      console.log('[Support] User confirmation result:', JSON.stringify(result2))
+    } catch (e) {
+      console.error('[Support] User email FAILED:', e)
+    }
   }
 
-  return NextResponse.json({ ticket }, { status: 201 });
+  return NextResponse.json({ success: true, ticketId: ticket.id })
 }
 
 export async function GET() {
