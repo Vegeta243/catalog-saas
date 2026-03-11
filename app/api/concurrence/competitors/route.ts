@@ -1,5 +1,12 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+
+const createCompetitorSchema = z.object({
+  name: z.string().min(1).max(100),
+  url: z.string().url(),
+});
 
 export async function GET() {
   const supabase = await createClient();
@@ -39,11 +46,19 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const { name, url } = body;
-  if (!name || !url) return NextResponse.json({ error: "Nom et URL requis." }, { status: 400 });
+  const rl = checkRateLimit(user.id, "default");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Trop de requêtes. Réessayez dans un moment." },
+      { status: 429, headers: getRateLimitHeaders(rl) }
+    );
+  }
 
-  try { new URL(url); } catch { return NextResponse.json({ error: "URL invalide." }, { status: 400 }); }
+  const parsed = createCompetitorSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+  }
+  const { name, url } = parsed.data;
 
   const platform = url.includes("myshopify") ? "shopify"
     : url.includes("woocommerce") || url.includes("wp-content") ? "woocommerce"

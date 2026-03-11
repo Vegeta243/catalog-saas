@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { logAction } from "@/lib/log-action";
@@ -45,8 +46,8 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-    const { confirm } = await request.json();
-    if (confirm !== "DELETE_NOW") {
+    const parsed = z.object({ confirm: z.literal("DELETE_NOW") }).safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json({ error: "Confirmation requise." }, { status: 400 });
     }
 

@@ -1,19 +1,49 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { logAction } from "@/lib/log-action";
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+
+const metaUpdateSchema = z.object({
+  productIds: z.array(z.string()).min(1).max(250),
+  updates: z.object({
+    metaTitle: z.string().max(70).optional(),
+    metaDescription: z.string().max(320).optional(),
+  }),
+});
+
+const priceUpdateSchema = z.object({
+  productIds: z.array(z.string()).min(1).max(250),
+  newPrice: z.string(),
+  mode: z.enum(["fixed", "percent", "multiply"]).default("fixed"),
+});
 
 export async function PUT(req: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    }
+
+    const rl = checkRateLimit(user.id, "shopify.bulk");
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Trop de requêtes. Réessayez dans un moment." },
+        { status: 429, headers: getRateLimitHeaders(rl) }
+      );
+    }
+
     const body = await req.json();
-    const { productIds, newPrice, mode, updates } = body;
 
     // Handle meta field updates separately
-    if (updates && (updates.metaTitle !== undefined || updates.metaDescription !== undefined)) {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    if (body.updates && (body.updates.metaTitle !== undefined || body.updates.metaDescription !== undefined)) {
+      const parsed = metaUpdateSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
       }
+      const { productIds, updates } = parsed.data;
+
       const { data: shop, error: shopError } = await supabase
         .from("shops")
         .select("shop_domain, access_token")
@@ -27,7 +57,7 @@ export async function PUT(req: Request) {
       const { shop_domain, access_token } = shop;
 
       const metaResults = await Promise.all(
-        (productIds || []).map(async (productId: string) => {
+        productIds.map(async (productId: string) => {
           const metafields = [
             updates.metaTitle && {
               namespace: "global",
@@ -61,16 +91,11 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: true, results: metaResults, updated: metaResults.filter((r) => r.success).length });
     }
 
-    if (!productIds || !newPrice) {
-      return NextResponse.json({ error: "Données manquantes." }, { status: 400 });
+    const parsed = priceUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
-
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-    }
+    const { productIds, newPrice, mode } = parsed.data;
 
     const { data: shop, error: shopError } = await supabase
       .from("shops")

@@ -1,5 +1,17 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+
+const schema = z.object({
+  products: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      description: z.string().optional(),
+    })
+  ).min(1).max(50),
+});
 
 export async function POST(req: Request) {
   try {
@@ -9,10 +21,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
-    const { products } = await req.json();
-    if (!products || !Array.isArray(products) || products.length === 0) {
-      return NextResponse.json({ error: "Liste de produits manquante." }, { status: 400 });
+    const rl = checkRateLimit(user.id, "ai.generate");
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Trop de requêtes. Réessayez dans un moment." },
+        { status: 429, headers: getRateLimitHeaders(rl) }
+      );
     }
+
+    const parsed = schema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const { products } = parsed.data;
 
     const apiKey = process.env.OPENAI_API_KEY;
 

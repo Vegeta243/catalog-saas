@@ -1,7 +1,28 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
 import { logAction } from "@/lib/log-action";
+
+const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+const ALLOWED_MAGIC: Array<{ bytes: number[]; offset: number }> = [
+  { bytes: [0xff, 0xd8, 0xff], offset: 0 },              // JPEG
+  { bytes: [0x89, 0x50, 0x4e, 0x47], offset: 0 },        // PNG
+  { bytes: [0x52, 0x49, 0x46, 0x46], offset: 0 },        // WebP (RIFF)
+];
+
+function isAllowedImageType(buf: Buffer): boolean {
+  return ALLOWED_MAGIC.some(({ bytes, offset }) =>
+    bytes.every((b, i) => buf[offset + i] === b)
+  );
+}
+
+const processSchema = z.object({
+  imageBase64: z.string().min(1),
+  operation: z.enum(["improve", "grayscale", "adjustments", "filter", "resize"]),
+  params: z.record(z.string(), z.unknown()).optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,19 +30,22 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-    const body = await request.json();
-    const { imageBase64, operation, params = {} } = body as {
-      imageBase64: string;
-      operation: string;
-      params: Record<string, unknown>;
-    };
-
-    if (!imageBase64) {
-      return NextResponse.json({ error: "No image provided" }, { status: 400 });
+    const parsed = processSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
+    const { imageBase64, operation, params = {} } = parsed.data;
 
     const base64Data = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
     const inputBuffer = Buffer.from(base64Data, "base64");
+
+    if (inputBuffer.length > MAX_SIZE_BYTES) {
+      return NextResponse.json({ error: "Image trop grande (max 10 Mo)." }, { status: 413 });
+    }
+
+    if (!isAllowedImageType(inputBuffer)) {
+      return NextResponse.json({ error: "Format d'image non supporté. Utilisez JPEG, PNG ou WebP." }, { status: 415 });
+    }
 
     let pipeline = sharp(inputBuffer);
 

@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+
+const EVENT_TYPES = ["promotion", "restock", "flash_sale", "email_campaign", "social_post", "other"] as const;
+
+const createEventSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+  event_type: z.string().min(1).max(50),
+  scheduled_at: z.string().datetime(),
+  product_ids: z.array(z.string()).optional(),
+  action_params: z.record(z.string(), z.unknown()).optional(),
+  repeat: z.enum(["never", "daily", "weekly", "monthly"]).optional(),
+});
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -32,12 +46,19 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const body = await request.json();
-  const { title, description, event_type, scheduled_at, product_ids, action_params, repeat } = body;
-
-  if (!title || !event_type || !scheduled_at) {
-    return NextResponse.json({ error: "Titre, type et date requis." }, { status: 400 });
+  const rl = checkRateLimit(user.id, "default");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Trop de requêtes. Réessayez dans un moment." },
+      { status: 429, headers: getRateLimitHeaders(rl) }
+    );
   }
+
+  const parsed = createEventSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+  }
+  const { title, description, event_type, scheduled_at, product_ids, action_params, repeat } = parsed.data;
 
   const { data, error } = await supabase.from("calendar_events").insert({
     user_id: user.id,
