@@ -1,13 +1,12 @@
-"use client";
+﻿"use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   HelpCircle, MessageSquare, Send, ChevronDown, ChevronUp, Search,
-  BookOpen, Zap, Image, Settings, CreditCard, ShoppingBag, Bot,
-  User, RefreshCw, ExternalLink, ThumbsUp, ThumbsDown, X,
+  BookOpen, Zap, Image, Settings, CreditCard, ShoppingBag, RefreshCw,
+  CheckCircle, Clock, AlertCircle, Plus, Tag,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
-import { createClient } from "@/lib/supabase/client";
 
 interface FAQItem {
   id: string;
@@ -16,11 +15,21 @@ interface FAQItem {
   category: string;
 }
 
-interface ChatMessage {
+interface Reply {
   id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
+  author_role: "user" | "admin";
+  message: string;
+  created_at: string;
+}
+
+interface Ticket {
+  id: string;
+  subject: string;
+  message: string;
+  category: string;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  created_at: string;
+  support_ticket_replies: Reply[];
 }
 
 const FAQ_DATA: FAQItem[] = [
@@ -42,7 +51,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     id: "4", category: "images",
     question: "Quels formats d'image sont supportés ?",
-    answer: "EcomPilot supporte JPG, PNG, WebP et GIF en entrée. Vous pouvez exporter en WebP (recommandé pour le web), PNG (sans perte) ou JPEG. Les images peuvent être redimensionnées aux tailles standards Shopify, Instagram, Facebook, etc.",
+    answer: "EcomPilot supporte JPG, PNG et WebP en entrée. Vous pouvez exporter en WebP (recommandé pour le web), PNG (sans perte) ou JPEG. Les images peuvent être redimensionnées aux tailles standards Shopify, Instagram, Facebook, etc.",
   },
   {
     id: "5", category: "automation",
@@ -66,7 +75,6 @@ const FAQ_DATA: FAQItem[] = [
   },
 ];
 
-// Renders **bold** and *italic* markdown in FAQ answers safely
 function renderMarkdown(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
@@ -87,68 +95,82 @@ const CATEGORIES = [
   { id: "billing", label: "Facturation", icon: <CreditCard className="w-3.5 h-3.5" /> },
 ];
 
+const STATUS_META: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  open:        { label: "Ouvert",    color: "bg-red-100 text-red-700",      icon: <AlertCircle className="w-3 h-3" /> },
+  in_progress: { label: "En cours", color: "bg-yellow-100 text-yellow-700", icon: <Clock className="w-3 h-3" /> },
+  resolved:    { label: "Résolu",   color: "bg-green-100 text-green-700",   icon: <CheckCircle className="w-3 h-3" /> },
+  closed:      { label: "Fermé",    color: "bg-gray-100 text-gray-500",     icon: <CheckCircle className="w-3 h-3" /> },
+};
+
+const TICKET_CATEGORIES = [
+  { value: "general", label: "Général" },
+  { value: "technical", label: "Problème technique" },
+  { value: "billing", label: "Facturation" },
+  { value: "shopify", label: "Connexion Shopify" },
+  { value: "ai", label: "Fonctionnalités IA" },
+  { value: "other", label: "Autre" },
+];
+
+type MainTab = "faq" | "contact" | "tickets";
+
 export default function HelpPage() {
   const { addToast } = useToast();
+  const [mainTab, setMainTab] = useState<MainTab>("faq");
+
+  // FAQ
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
-  const [showChat, setShowChat] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Bonjour ! Je suis l'assistant EcomPilot. Comment puis-je vous aider ? Vous pouvez me poser des questions sur les fonctionnalités, l'optimisation SEO, les automatisations, etc.",
-      timestamp: new Date(),
-    },
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Contact form state
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [contactSubject, setContactSubject] = useState("");
-  const [contactMessage, setContactMessage] = useState("");
-  const [contactSending, setContactSending] = useState(false);
-  const [contactSuccess, setContactSuccess] = useState(false);
-  const [contactError, setContactError] = useState("");
+  // Ticket form
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [ticketCategory, setTicketCategory] = useState("general");
+  const [submitting, setSubmitting] = useState(false);
+
+  // My tickets
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+
+  const loadTickets = async () => {
+    setTicketsLoading(true);
+    try {
+      const res = await fetch("/api/support");
+      const data = await res.json();
+      if (data.tickets) setTickets(data.tickets);
+    } catch { /* silent */ }
+    setTicketsLoading(false);
+  };
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+    if (mainTab === "tickets") loadTickets();
+  }, [mainTab]);
 
-  const handleSendContact = async () => {
-    if (!contactSubject.trim() || !contactMessage.trim()) {
-      setContactError("Veuillez remplir le sujet et le message.");
+  const handleSubmitTicket = async () => {
+    if (!subject.trim() || !message.trim()) {
+      addToast("Veuillez remplir le sujet et le message.", "error");
       return;
     }
-    setContactSending(true);
-    setContactError("");
+    setSubmitting(true);
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      const res = await fetch("/api/contact", {
+      const res = await fetch("/api/support", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: user?.user_metadata?.first_name || user?.email?.split("@")[0] || "Utilisateur",
-          email: user?.email || "noreply@ecompilotelite.com",
-          subject: contactSubject.trim(),
-          message: contactMessage.trim(),
-        }),
+        body: JSON.stringify({ subject: subject.trim(), message: message.trim(), category: ticketCategory }),
       });
-      if (res.ok) {
-        setContactSuccess(true);
-        setContactSubject("");
-        setContactMessage("");
-      } else {
-        const d = await res.json();
-        setContactError(d.error || "Erreur lors de l'envoi.");
-      }
-    } catch {
-      setContactError("Erreur réseau. Réessayez.");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur lors de l envoi");
+      addToast("Demande envoyee ! Nous vous repondrons sous 24-48h.", "success");
+      setSubject("");
+      setMessage("");
+      setTicketCategory("general");
+      setMainTab("tickets");
+      loadTickets();
+    } catch (err) {
+      addToast((err as Error).message, "error");
     }
-    setContactSending(false);
+    setSubmitting(false);
   };
 
   const filteredFAQ = FAQ_DATA.filter((item) => {
@@ -158,296 +180,187 @@ export default function HelpPage() {
     return matchesCategory && matchesSearch;
   });
 
-  const sendChatMessage = async () => {
-    if (!chatInput.trim()) return;
-
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: chatInput.trim(),
-      timestamp: new Date(),
-    };
-    setChatMessages((prev) => [...prev, userMsg]);
-    setChatInput("");
-    setChatLoading(true);
-
-    try {
-      const res = await fetch("/api/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "title",
-          product: {
-            title: chatInput.trim(),
-            description: `Tu es l'assistant IA d'EcomPilot, un SaaS pour gérer des catalogues Shopify. Réponds de manière concise et utile. La question de l'utilisateur est: "${chatInput.trim()}". Réponds en français en te basant sur les fonctionnalités: optimisation SEO IA, édition en masse, traitement d'images, automatisations, gestion de produits Shopify.`,
-          },
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setChatMessages((prev) => [...prev, {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data.title || data.description || "Je suis désolé, je n'ai pas pu générer de réponse. Consultez la FAQ ci-dessous ou contactez le support.",
-          timestamp: new Date(),
-        }]);
-      } else {
-        // Fallback response
-        const faqMatch = FAQ_DATA.find((f) =>
-          chatInput.toLowerCase().includes(f.question.toLowerCase().split(" ").slice(0, 3).join(" "))
-          || f.question.toLowerCase().includes(chatInput.toLowerCase().split(" ").slice(0, 3).join(" "))
-        );
-
-        setChatMessages((prev) => [...prev, {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: faqMatch
-            ? faqMatch.answer
-            : "Je ne suis pas en mesure de répondre en ce moment. Consultez la FAQ ci-dessous pour trouver votre réponse, ou contactez le support à support@ecompilot.com.",
-          timestamp: new Date(),
-        }]);
-      }
-    } catch {
-      setChatMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Une erreur est survenue. Veuillez réessayer ou consulter la FAQ ci-dessous.",
-        timestamp: new Date(),
-      }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
-
   return (
-    <div className="max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Centre d&apos;aide</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Trouvez des réponses ou discutez avec notre assistant IA</p>
-        </div>
-        <button onClick={() => setShowChat(!showChat)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">
-          <MessageSquare className="w-4 h-4" style={{ color: "#fff" }} />
-          <span style={{ color: "#fff" }}>{showChat ? "Fermer le chat" : "Chat IA"}</span>
-        </button>
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Centre d&apos;aide</h1>
+        <p className="text-sm mt-1" style={{ color: "#64748b" }}>FAQ, support et suivi de vos demandes</p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-        {/* Main content */}
-        <div className={`${showChat ? "flex-1" : "w-full"}`}>
-          {/* Search */}
-          <div className="relative mb-6">
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 w-fit">
+        {([
+          ["faq", "FAQ", <HelpCircle key="faq" className="w-4 h-4" />],
+          ["contact", "Nouvelle demande", <Plus key="contact" className="w-4 h-4" />],
+          ["tickets", "Mes demandes", <MessageSquare key="tickets" className="w-4 h-4" />],
+        ] as [MainTab, string, React.ReactNode][]).map(([id, label, icon]) => (
+          <button key={id} onClick={() => setMainTab(id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mainTab === id ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+            {icon}{label}
+          </button>
+        ))}
+      </div>
+
+      {mainTab === "faq" && (
+        <div>
+          <div className="relative mb-5">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher dans l'aide..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none bg-white"
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-400 outline-none bg-white"
               style={{ color: "#0f172a" }} />
           </div>
-
-          {/* Category tabs */}
-          <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
             {CATEGORIES.map((cat) => (
               <button key={cat.id} onClick={() => setCategory(cat.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${category === cat.id ? "bg-blue-600" : "bg-gray-100 hover:bg-gray-200"}`}
-                style={{ color: category === cat.id ? "#fff" : "#374151" }}>
-                {cat.icon}
-                {cat.label}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${category === cat.id ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                {cat.icon}{cat.label}
               </button>
             ))}
           </div>
-
-          {/* Quick help cards */}
-          {!search && category === "all" && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              {[
-                { icon: <Zap className="w-5 h-5" style={{ color: "#f59e0b" }} />, title: "Démarrage rapide", desc: "Connectez votre boutique en 2 minutes", bg: "bg-amber-50" },
-                { icon: <BookOpen className="w-5 h-5" style={{ color: "#2563eb" }} />, title: "Documentation", desc: "Guides détaillés de chaque fonctionnalité", bg: "bg-blue-50" },
-                { icon: <MessageSquare className="w-5 h-5" style={{ color: "#059669" }} />, title: "Support", desc: "Contactez-nous à support@ecompilot.com", bg: "bg-emerald-50" },
-              ].map((card) => (
-                <div key={card.title} className={`${card.bg} rounded-xl p-4 cursor-pointer hover:shadow-sm transition-shadow`}>
-                  <div className="mb-2">{card.icon}</div>
-                  <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>{card.title}</p>
-                  <p className="text-xs mt-1" style={{ color: "#64748b" }}>{card.desc}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* FAQ accordion */}
           <div className="space-y-3">
             {filteredFAQ.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-                <HelpCircle className="w-10 h-10 mx-auto mb-3" style={{ color: "#cbd5e1" }} />
-                <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Aucun résultat trouvé</p>
-                <p className="text-xs mt-1" style={{ color: "#64748b" }}>Essayez un autre terme ou utilisez le chat IA</p>
-              </div>
-            ) : (
-              filteredFAQ.map((item) => (
-                <div key={item.id}
-                  className={`bg-white rounded-xl border transition-all ${expandedFAQ === item.id ? "border-blue-200 shadow-sm" : "border-gray-200"}`}>
-                  <button onClick={() => setExpandedFAQ(expandedFAQ === item.id ? null : item.id)}
-                    className="w-full flex items-center justify-between p-4 text-left">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                        <HelpCircle className="w-3.5 h-3.5" style={{ color: "#2563eb" }} />
-                      </div>
-                      <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{item.question}</span>
-                    </div>
-                    {expandedFAQ === item.id
-                      ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "#64748b" }} />
-                      : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: "#64748b" }} />}
-                  </button>
-                  {expandedFAQ === item.id && (
-                    <div className="px-4 pb-4 pt-0">
-                      <div className="pl-9">
-                        <p className="text-sm leading-relaxed" style={{ color: "#4b5563" }}>{renderMarkdown(item.answer)}</p>
-                        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
-                          <span className="text-xs" style={{ color: "#94a3b8" }}>Cette réponse vous a aidé ?</span>
-                          <button onClick={() => addToast("Merci pour votre retour !", "success")}
-                            className="p-1 hover:bg-emerald-50 rounded">
-                            <ThumbsUp className="w-3.5 h-3.5" style={{ color: "#059669" }} />
-                          </button>
-                          <button onClick={() => addToast("Nous améliorerons cette réponse", "success")}
-                            className="p-1 hover:bg-red-50 rounded">
-                            <ThumbsDown className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Contact section */}
-          <div className="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6">
-            {!showContactForm ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: "#fff" }}>Besoin d&apos;aide supplémentaire ?</p>
-                  <p className="text-xs mt-1 opacity-80" style={{ color: "#fff" }}>
-                    Notre équipe support répond sous 24h en semaine
-                  </p>
-                </div>
-                <button onClick={() => setShowContactForm(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
-                  style={{ color: "#fff" }}>
-                  <ExternalLink className="w-4 h-4" /> Contacter le support
+                <HelpCircle className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+                <p className="text-sm font-medium text-gray-700">Aucun resultat</p>
+                <button onClick={() => setMainTab("contact")}
+                  className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white">
+                  Contacter le support
                 </button>
               </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm font-semibold" style={{ color: "#fff" }}>Envoyer un message</p>
-                  <button onClick={() => { setShowContactForm(false); setContactSuccess(false); setContactError(""); }}
-                    className="text-white/70 hover:text-white">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                {contactSuccess ? (
-                  <div className="flex items-center gap-3 bg-white/20 rounded-lg p-4">
-                    <ThumbsUp className="w-5 h-5 text-white" />
-                    <p className="text-sm text-white">Message envoyé ! Nous vous répondrons sous 24h.</p>
+            ) : filteredFAQ.map((item) => (
+              <div key={item.id}
+                className={`bg-white rounded-xl border transition-all ${expandedFAQ === item.id ? "border-blue-200 shadow-sm" : "border-gray-200"}`}>
+                <button onClick={() => setExpandedFAQ(expandedFAQ === item.id ? null : item.id)}
+                  className="w-full flex items-center justify-between p-4 text-left gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                      <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{item.question}</span>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {contactError && <p className="text-xs text-red-200">{contactError}</p>}
-                    <input value={contactSubject} onChange={(e) => setContactSubject(e.target.value)}
-                      placeholder="Sujet" className="w-full px-3 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 text-sm border border-white/20 focus:outline-none focus:border-white/50" />
-                    <textarea value={contactMessage} onChange={(e) => setContactMessage(e.target.value)}
-                      placeholder="Votre message..." rows={3}
-                      className="w-full px-3 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 text-sm border border-white/20 focus:outline-none focus:border-white/50 resize-none" />
-                    <button onClick={handleSendContact} disabled={contactSending}
-                      className="w-full py-2 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-                      {contactSending ? <><RefreshCw className="w-4 h-4 animate-spin" /> Envoi...</> : "Envoyer"}
-                    </button>
+                  {expandedFAQ === item.id
+                    ? <ChevronUp className="w-4 h-4 shrink-0 text-gray-400" />
+                    : <ChevronDown className="w-4 h-4 shrink-0 text-gray-400" />}
+                </button>
+                {expandedFAQ === item.id && (
+                  <div className="px-4 pb-4">
+                    <div className="ml-9 text-sm leading-relaxed text-gray-600">
+                      {renderMarkdown(item.answer)}
+                    </div>
                   </div>
                 )}
               </div>
-            )}
+            ))}
           </div>
         </div>
+      )}
 
-        {/* Chat panel */}
-        {showChat && (
-          <div className="w-full md:w-96 md:shrink-0">
-            <div className="bg-white rounded-xl border border-gray-200 flex flex-col h-[calc(100vh-12rem)] sticky top-4">
-              {/* Chat header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Bot className="w-4 h-4" style={{ color: "#2563eb" }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>Assistant IA</p>
-                    <p className="text-[10px]" style={{ color: "#059669" }}>En ligne</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowChat(false)} className="p-1 hover:bg-gray-100 rounded">
-                  <X className="w-4 h-4" style={{ color: "#64748b" }} />
-                </button>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {chatMessages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`flex items-start gap-2 max-w-[85%] ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-blue-600" : "bg-blue-100"}`}>
-                        {msg.role === "user"
-                          ? <User className="w-3 h-3" style={{ color: "#fff" }} />
-                          : <Bot className="w-3 h-3" style={{ color: "#2563eb" }} />}
-                      </div>
-                      <div className={`rounded-xl px-3 py-2 text-xs leading-relaxed ${msg.role === "user"
-                        ? "bg-blue-600"
-                        : "bg-gray-100"}`}
-                        style={{ color: msg.role === "user" ? "#fff" : "#374151" }}>
-                        {msg.content}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {chatLoading && (
-                  <div className="flex justify-start">
-                    <div className="flex items-start gap-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Bot className="w-3 h-3" style={{ color: "#2563eb" }} />
-                      </div>
-                      <div className="bg-gray-100 rounded-xl px-4 py-3">
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ color: "#2563eb" }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div ref={chatEndRef} />
-              </div>
-
-              {/* Input */}
-              <div className="p-3 border-t border-gray-100">
-                <div className="flex items-center gap-2">
-                  <input type="text" value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendChatMessage()}
-                    placeholder="Posez votre question..."
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs focus:border-blue-400 outline-none"
-                    style={{ color: "#0f172a" }} />
-                  <button onClick={sendChatMessage} disabled={!chatInput.trim() || chatLoading}
-                    className="p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors">
-                    <Send className="w-3.5 h-3.5" style={{ color: "#fff" }} />
-                  </button>
-                </div>
-                <p className="text-[10px] text-center mt-2" style={{ color: "#94a3b8" }}>
-                  Propulsé par GPT-4o-mini • 1 tâche par message
-                </p>
-              </div>
+      {mainTab === "contact" && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-2xl">
+          <h2 className="text-base font-semibold mb-1 text-gray-900">Nouvelle demande de support</h2>
+          <p className="text-xs text-gray-400 mb-5">Notre equipe vous repondra sous 24-48h ouvrables.</p>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Categorie</label>
+              <select value={ticketCategory} onChange={e => setTicketCategory(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:border-blue-400 outline-none text-gray-800">
+                {TICKET_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
             </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Sujet</label>
+              <input type="text" value={subject} onChange={e => setSubject(e.target.value)}
+                placeholder="Ex : Impossible de connecter ma boutique"
+                maxLength={200}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-blue-400 outline-none text-gray-800" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Message</label>
+              <textarea value={message} onChange={e => setMessage(e.target.value)}
+                rows={6} maxLength={5000}
+                placeholder="Decrivez votre probleme en detail..."
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm resize-none focus:border-blue-400 outline-none text-gray-800" />
+              <p className="text-xs text-gray-400 text-right mt-1">{message.length}/5000</p>
+            </div>
+            <button onClick={handleSubmitTicket} disabled={submitting || !subject.trim() || !message.trim()}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium text-white transition-colors">
+              {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Envoyer la demande
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {mainTab === "tickets" && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Mes demandes</h2>
+            <button onClick={loadTickets} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-xs hover:bg-gray-50">
+              <RefreshCw className="w-3.5 h-3.5" /> Actualiser
+            </button>
+          </div>
+          {ticketsLoading ? (
+            <div className="text-center py-12 text-gray-400 text-sm">Chargement...</div>
+          ) : tickets.length === 0 ? (
+            <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
+              <MessageSquare className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+              <p className="text-sm font-medium text-gray-600">Aucune demande pour le moment</p>
+              <button onClick={() => setMainTab("contact")}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors">
+                <Plus className="w-4 h-4" /> Nouvelle demande
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                {tickets.map(ticket => {
+                  const sm = STATUS_META[ticket.status] || STATUS_META.open;
+                  return (
+                    <button key={ticket.id}
+                      onClick={() => setSelectedTicket(selectedTicket?.id === ticket.id ? null : ticket)}
+                      className={`w-full text-left p-4 rounded-xl border transition-all ${selectedTicket?.id === ticket.id ? "border-blue-400 bg-blue-50" : "bg-white border-gray-200 hover:border-gray-300"}`}>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="text-sm font-medium text-gray-900 line-clamp-1">{ticket.subject}</span>
+                        <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${sm.color}`}>
+                          {sm.icon}{sm.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-400">
+                        <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{ticket.category}</span>
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(ticket.created_at).toLocaleDateString("fr-FR")}</span>
+                        <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{ticket.support_ticket_replies?.length || 0}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedTicket && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <h3 className="font-semibold text-gray-900 text-sm mb-3">{selectedTicket.subject}</h3>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
+                      <span className="text-xs text-gray-400 block mb-1">Votre message initial</span>
+                      {selectedTicket.message}
+                    </div>
+                    {(selectedTicket.support_ticket_replies || []).map(reply => (
+                      <div key={reply.id}
+                        className={`rounded-lg p-3 text-sm ${reply.author_role === "admin" ? "bg-blue-50 text-blue-900" : "bg-gray-50 text-gray-700"}`}>
+                        <span className="text-xs block mb-1" style={{ color: reply.author_role === "admin" ? "#1d4ed8" : "#6b7280" }}>
+                          {reply.author_role === "admin" ? "Support EcomPilot" : "Vous"} · {new Date(reply.created_at).toLocaleDateString("fr-FR")}
+                        </span>
+                        {reply.message}
+                      </div>
+                    ))}
+                    {(selectedTicket.support_ticket_replies?.length || 0) === 0 && (
+                      <p className="text-xs text-gray-400 text-center py-4">En attente de reponse...</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

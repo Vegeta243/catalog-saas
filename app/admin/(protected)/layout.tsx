@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import {
   LayoutDashboard, Users, CreditCard, BarChart3,
-  Shield, Zap, Settings, DollarSign, FileSearch, ScrollText, Scale
+  Shield, Zap, Settings, DollarSign, FileSearch, ScrollText, Scale, LifeBuoy
 } from "lucide-react";
 import { verifyAdminSession } from "@/lib/admin-security";
 
@@ -15,6 +15,7 @@ const adminNav = [
   { href: "/admin/stats", label: "📈 Analytics", icon: BarChart3 },
   { href: "/admin/content-monitoring", label: "🔍 Contenu IA", icon: FileSearch },
   { href: "/admin/audit", label: "📋 Journal d'audit", icon: ScrollText },
+  { href: "/admin/support", label: "🎫 Support tickets", icon: LifeBuoy },
   { href: "/admin/legal", label: "⚖️ Conformité légale", icon: Scale },
   { href: "/admin/system", label: "⚙️ Système", icon: Settings },
 ];
