@@ -83,11 +83,6 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemai
     return `Pour modifier les **prix** :\n\n• **Un seul produit** : cliquez sur le produit → modifiez le prix\n• **Plusieurs produits** : cochez-les → barre d'actions → Modifier les prix\n• **En masse** : page **Modifier en masse** → champ Prix\n\nVous pouvez augmenter/diminuer en % ou définir un prix fixe pour tous les produits sélectionnés.`;
   }
 
-  // ── Produits (général) ────────────────────────────────────────────────────
-  if (has(m, /produit|catalogue|fiche|article|listing|synchronis|shopify.*(produit|sync)|importer/)) {
-    return `Vos produits Shopify sont synchronisés automatiquement dans EcomPilot.\n\n**Ce que vous pouvez faire :**\n• Modifier titre, description, tags, prix\n• Générer du contenu IA optimisé SEO\n• Modifier en masse plusieurs produits à la fois\n• Voir et améliorer le score SEO de chaque fiche\n\nPage **Produits** dans le menu → sélectionnez un produit pour commencer.`;
-  }
-
   // ── Score SEO ──────────────────────────────────────────────────────────────
   if (has(m, /score.?seo|seo.?score|score.*produit|note.*seo/)) {
     return `Le **score SEO** (0–100) évalue chaque fiche sur 4 critères :\n\n• 📝 **Titre** (25 pts) — idéalement 50–70 caractères\n• 📄 **Description** (40 pts) — 100+ mots recommandés\n• 🏷️ **Tags** (20 pts) — 5+ tags recommandés\n• 🖼️ **Images** (15 pts) — 3+ images = score max\n\nScore > 70 = excellent ✅. Utilisez l'**Optimisation IA** pour améliorer automatiquement les fiches faibles.`;
@@ -98,34 +93,19 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemai
     return `Pour générer vos **méta-titres et méta-descriptions** :\n\n1. Page **Optimisation IA** dans le menu\n2. Sélectionnez vos produits\n3. Cliquez **Générer** → l'IA crée des méta-données optimisées\n4. Vérifiez et appliquez en un clic\n\nLes méta-données sont envoyées directement à Shopify.`;
   }
 
-  // ── IA / Optimisation ─────────────────────────────────────────────────────
-  if (has(m, /ia|intelligence.?artific|gpt|optimi|generer|genere|titres?.?seo|description.?(ia|genere|auto)/)) {
+  // ── IA / Optimisation — BEFORE generic "produit" to catch "optimiser fiches" ─
+  if (has(m, /\bia\b|intelligence.?artific|gpt|optimi|generer|genere|titre.?seo|description.?(ia|genere|auto)|ameliorer.*(fiche|produit)/)) {
     return `**Optimisation IA** — page dédiée dans le menu :\n\n1. Filtrez vos produits par score SEO bas\n2. Cochez ceux à optimiser\n3. Choisissez : titre, description, tags ou **tout optimiser**\n4. L'IA génère du contenu SEO personnalisé\n5. Prévisualisez et appliquez en un clic\n\nChaque optimisation consomme 1 tâche de votre quota mensuel.`;
   }
 
-  // ── Images ────────────────────────────────────────────────────────────────
-  if (has(m, /image|photo|visuel|webp|jpeg|jpg|png|redimensi|convertir|recadrer|compresse/)) {
-    return `**Éditeur d'images** EcomPilot :\n\n• Formats acceptés : JPEG, PNG, WebP\n• Redimensionnement aux formats standards (Shopify, Instagram, Facebook…)\n• Conversion WebP (recommandé pour la performance web)\n• Compression sans perte de qualité visible\n\nAccédez-y via **Éditeur d'images** dans le menu. Glissez-déposez vos images pour commencer.`;
-  }
-
-  // ── Automatisations ───────────────────────────────────────────────────────
-  if (has(m, /automat|regle|rule|declencheur|trigger|condition|action.?(auto|planif)|stock.?(bas|alerte|faible)/)) {
-    return `**Automatisations** EcomPilot :\n\nCréez des règles qui s'exécutent automatiquement :\n\n• 📉 Stock bas → ajouter un tag "rupture"\n• 💰 Prix sous un seuil → envoyer une alerte\n• 📦 Produit non vendu → archiver après X jours\n• 🗓️ Planification → modifier prix pour une période donnée\n\nPage **Automatisations** → **Nouvelle règle** → définissez la condition et l'action.`;
-  }
-
-  // ── Shopify / Connexion ───────────────────────────────────────────────────
-  if (has(m, /shopify|connecter.*boutique|ajouter.*boutique|boutique.*(connect|ajouter|install)|oauth|myshopify/)) {
-    return `**Connexion Shopify** :\n\n1. Menu gauche → **Mes boutiques** → **Ajouter une boutique**\n2. Entrez votre domaine (ex : ma-boutique ou ma-boutique.myshopify.com)\n3. Cliquez **Ajouter** puis **Connecter** (bouton orange)\n4. Autorisez l'accès dans Shopify\n\nVos produits se synchronisent automatiquement après connexion. Si problème, vérifiez que votre boutique Shopify est active.`;
-  }
-
-  // ── Calendrier ────────────────────────────────────────────────────────────
-  if (has(m, /calendrier|planifier|schedule|agenda|programmer.*action/)) {
-    return `**Calendrier marketing** :\n\nPlanifiez vos actions à l'avance :\n• Modifications de prix pour les soldes\n• Changements de statut / archivage programmés\n• Campagnes produits à date fixe\n\nPage **Calendrier** → **Nouvelle action** → choisissez la date et l'action.`;
-  }
-
-  // ── Rentabilité / Marges ──────────────────────────────────────────────────
+  // ── Rentabilité — BEFORE generic "produit" to catch "coût de revient produit" ─
   if (has(m, /rentab|marge|profit|cout|benefice|revient|commission/)) {
     return `**Rentabilité** EcomPilot :\n\nCalculez vos marges en intégrant :\n• Prix de vente Shopify\n• Coût de revient (que vous saisissez)\n• Frais Shopify et marketing\n\nPage **Rentabilité** → entrez vos coûts → visualisez marges et profits par produit.`;
+  }
+
+  // ── Produits (général) ────────────────────────────────────────────────────
+  if (has(m, /produit|catalogue|fiche|article|listing|synchronis|shopify.*(produit|sync)|importer/)) {
+    return `Vos produits Shopify sont synchronisés automatiquement dans EcomPilot.\n\n**Ce que vous pouvez faire :**\n• Modifier titre, description, tags, prix\n• Générer du contenu IA optimisé SEO\n• Modifier en masse plusieurs produits à la fois\n• Voir et améliorer le score SEO de chaque fiche\n\nPage **Produits** dans le menu → sélectionnez un produit pour commencer.`;
   }
 
   // ── Concurrence ───────────────────────────────────────────────────────────
