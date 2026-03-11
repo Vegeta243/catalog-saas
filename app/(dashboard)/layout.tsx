@@ -31,6 +31,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
+import AIChatWidget from '@/components/ai-chat-widget';
 
 const NAV_SECTIONS = [
   {
@@ -446,6 +447,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <p className="text-xs" style={{ color: '#94a3b8' }}>v6.0.0</p>
         </footer>
       </div>
+
+      <AIChatWidget plan={plan} currentPage={pathname} />
     </div>
   );
 }
