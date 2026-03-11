@@ -12,6 +12,8 @@ const chatSchema = z.object({
   ).min(1).max(20),
   currentPage: z.string().max(200).optional(),
   plan: z.string().max(50).optional(),
+  tasksRemaining: z.number().int().min(0).optional(),
+  tasksTotal: z.number().int().min(0).optional(),
 });
 
 const SYSTEM_PROMPT = `Tu es l'assistant IA d'EcomPilot, un SaaS e-commerce qui aide les marchands Shopify à optimiser leur catalogue produits. Tu répondras en français, de façon concise, clear et utile.
@@ -36,7 +38,7 @@ function has(m: string, ...patterns: RegExp[]): boolean {
   return patterns.some(p => p.test(m));
 }
 
-function getSmartDemoReply(msg: string, page?: string, plan?: string): string {
+function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemaining?: number, tasksTotal?: number): string {
   const m = normalize(msg);
 
   // ── Greetings ──────────────────────────────────────────────────────────────
@@ -45,16 +47,30 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string): string {
   }
 
   // ── Tâches / quota / plan ──────────────────────────────────────────────────
-  // Catches: "combien de taches", "taches restantes", "quota", "credits", "forfait", etc.
   if (has(m,
     /tache|credit|quota|action.?restant|restant.?action|il.?me.?reste|combien.*rest|reste.*combien/,
     /plan|forfait|tarif|abonnement|upgrade|downgrade|gratuit|free\b|pro\b|business\b|prix.*(plan|forfait)/,
     /renouvell|mensuel|mois|limite.*(tache|action|credit)/
   )) {
-    const planLabel = plan === "free" ? "gratuit" : plan || "gratuit";
-    const limits: Record<string, string> = { free: "30 tâches/mois", pro: "200 tâches/mois", business: "1 000 tâches/mois" };
-    const currentLimit = limits[planLabel] || "30 tâches/mois";
-    return `Vous êtes sur le **plan ${planLabel}** (${currentLimit}).\n\nPour voir vos tâches restantes → menu gauche → **Mon forfait**.\n\n**Tous les plans :**\n• 🆓 **Gratuit** — 30 tâches/mois\n• ⚡ **Pro** — 200 tâches/mois\n• 🚀 **Business** — 1 000 tâches/mois\n\nLes tâches se renouvellent automatiquement chaque mois. Pour en avoir plus, upgradez sur la page **Mon forfait**.`;
+    // Derive display plan from tasksTotal if plan field is stale
+    const derivedPlan = (() => {
+      if (plan && plan !== "free") return plan;
+      if (tasksTotal !== undefined) {
+        if (tasksTotal >= 100000) return "scale";
+        if (tasksTotal >= 20000) return "pro";
+        if (tasksTotal >= 1000) return "starter";
+      }
+      return plan || "free";
+    })();
+    const displayPlan = derivedPlan.charAt(0).toUpperCase() + derivedPlan.slice(1);
+    const remainingStr = tasksRemaining !== undefined ? tasksRemaining.toLocaleString("fr-FR") : "—";
+    const totalStr = tasksTotal !== undefined ? tasksTotal.toLocaleString("fr-FR") : "—";
+    const limits: Record<string, string> = {
+      free: "30 tâches/mois", starter: "1 000 tâches/mois",
+      pro: "20 000 tâches/mois", scale: "100 000 tâches/mois",
+    };
+    const planLimit = limits[derivedPlan] || `${totalStr} tâches/mois`;
+    return `Vous êtes sur le **plan ${displayPlan}** (${planLimit}).\n\nVos tâches restantes ce mois : **${remainingStr} tâches** sur ${totalStr}.\nRenouvellement automatique le 1er du mois.\n\nPour voir le détail → menu gauche → **Mon forfait**.`;
   }
 
   // ── Produits en masse ──────────────────────────────────────────────────────
@@ -158,17 +174,17 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
-  const { messages, currentPage, plan } = parsed.data;
+  const { messages, currentPage, plan, tasksRemaining, tasksTotal } = parsed.data;
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.startsWith("sk-DEMO") || apiKey.startsWith("sk-test")) {
     const lastUserMsg = messages[messages.length - 1]?.content?.toLowerCase() || "";
-    const demoReply = getSmartDemoReply(lastUserMsg, currentPage, plan);
+    const demoReply = getSmartDemoReply(lastUserMsg, currentPage, plan, tasksRemaining, tasksTotal);
     return NextResponse.json({ message: demoReply, demo: true });
   }
 
   const contextNote = currentPage
-    ? `\n\nContexte : L'utilisateur se trouve sur la page "${currentPage}". Son plan actuel est "${plan || "free"}".`
+    ? `\n\nContexte : L'utilisateur se trouve sur la page "${currentPage}". Son plan actuel est "${plan || "free"}" avec ${tasksRemaining ?? "?"} tâches restantes sur ${tasksTotal ?? "?"} ce mois.`
     : "";
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {

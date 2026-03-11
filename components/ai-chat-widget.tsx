@@ -12,6 +12,8 @@ interface Message {
 interface Props {
   plan?: string;
   currentPage?: string;
+  tasksRemaining?: number;
+  tasksTotal?: number;
 }
 
 const QUICK_SUGGESTIONS = [
@@ -61,7 +63,7 @@ function TypingDots() {
   );
 }
 
-export default function AIChatWidget({ plan, currentPage }: Props) {
+export default function AIChatWidget({ plan, currentPage, tasksRemaining, tasksTotal }: Props) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -102,6 +104,8 @@ export default function AIChatWidget({ plan, currentPage }: Props) {
           messages: newMessages.slice(-10).map(m => ({ role: m.role, content: m.content })),
           currentPage,
           plan,
+          tasksRemaining,
+          tasksTotal,
         }),
       });
       const data = await res.json();

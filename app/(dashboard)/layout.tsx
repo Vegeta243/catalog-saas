@@ -99,6 +99,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const tasksTotal = tasksTotalOverride ?? (PLAN_TASKS[plan] || PLAN_TASKS.free || 30);
   const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
 
+  // Derive the real plan tier from actions_limit if it exceeds what the plan field says
+  const effectivePlan = (() => {
+    const effectiveTotal = tasksTotalOverride ?? PLAN_TASKS[plan] ?? 30;
+    if (effectiveTotal >= 100000) return "scale";
+    if (effectiveTotal >= 20000) return "pro";
+    if (effectiveTotal >= 1000) return "starter";
+    return plan;
+  })();
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -306,7 +315,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Upsell banner */}
-            {plan === 'free' && (
+            {effectivePlan === 'free' && (
               <div className="mx-3 mb-3 rounded-2xl p-4 relative overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 50%, #2563eb 100%)' }}>
                 <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-20" style={{ background: 'white' }} />
@@ -328,7 +337,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             )}
 
-            {plan === 'starter' && (
+            {effectivePlan === 'starter' && (
               <div className="mx-3 mb-3 rounded-2xl p-4 relative overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)' }}>
                 <div className="relative">
@@ -358,7 +367,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white truncate">{userEmail || 'Chargement…'}</p>
-                <p className="text-xs font-medium capitalize" style={{ color: '#60a5fa' }}>{plan}</p>
+                <p className="text-xs font-medium capitalize" style={{ color: '#60a5fa' }}>{effectivePlan}</p>
               </div>
             )}
             <button
@@ -448,7 +457,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </footer>
       </div>
 
-      <AIChatWidget plan={plan} currentPage={pathname} />
+      <AIChatWidget plan={effectivePlan} currentPage={pathname} tasksRemaining={tasksRemaining} tasksTotal={tasksTotal} />
     </div>
   );
 }
