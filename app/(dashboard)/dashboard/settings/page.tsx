@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Settings, User, Store, Bell, CreditCard, Key, Shield, Save,
   Globe, Moon, Sun, Palette, Upload, Eye, EyeOff, Check, Copy,
@@ -32,6 +32,9 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [timezone, setTimezone] = useState("Europe/Paris");
   const [initials, setInitials] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -42,7 +45,7 @@ export default function SettingsPage() {
         setEmail(user.email || "");
         const { data } = await supabase
           .from("users")
-          .select("first_name, last_name, phone, timezone, plan, actions_used, actions_limit")
+          .select("first_name, last_name, phone, timezone, plan, actions_used, actions_limit, avatar_url")
           .eq("id", user.id)
           .single();
         const firstName = data?.first_name || user.user_metadata?.first_name || "";
@@ -51,6 +54,7 @@ export default function SettingsPage() {
         setFullName(name);
         setPhone(data?.phone || "");
         if (data?.timezone) setTimezone(data.timezone);
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
         const i = [firstName[0], lastName[0]].filter(Boolean).join("").toUpperCase() || name[0]?.toUpperCase() || "?";
         setInitials(i);
         if (data) {
@@ -225,6 +229,30 @@ export default function SettingsPage() {
     if (val) console.log("[DevMode] Mode développeur activé — logs console activés");
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      addToast("Fichier trop grand (max 2 Mo)", "error");
+      return;
+    }
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("avatar", file);
+      const res = await fetch("/api/user/avatar", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur upload");
+      setAvatarUrl(data.avatarUrl);
+      addToast("Photo mise à jour", "success");
+    } catch (err) {
+      addToast((err as Error).message, "error");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -320,14 +348,42 @@ export default function SettingsPage() {
 
               {/* Avatar */}
               <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-xl font-bold" style={{ color: "#2563eb" }}>{initials || "?"}</span>
+                <div
+                  className="relative w-16 h-16 rounded-full overflow-hidden cursor-pointer group"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-xl font-bold" style={{ color: "#2563eb" }}>{initials || "?"}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                    {uploading ? (
+                      <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5 text-white" />
+                    )}
+                  </div>
                 </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
                 <div>
                   <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{fullName}</p>
                   <p className="text-xs" style={{ color: "#64748b" }}>{email}</p>
-                  <button className="flex items-center gap-1 mt-1 text-xs font-medium" style={{ color: "#2563eb" }}>
-                    <Upload className="w-3 h-3" /> Changer la photo
+                  <button
+                    className="flex items-center gap-1 mt-1 text-xs font-medium"
+                    style={{ color: "#2563eb" }}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    <Upload className="w-3 h-3" /> {uploading ? "Upload en cours…" : "Changer la photo"}
                   </button>
                 </div>
               </div>
