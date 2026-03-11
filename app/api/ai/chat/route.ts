@@ -49,7 +49,7 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemai
   // ── Tâches / quota / plan ──────────────────────────────────────────────────
   if (has(m,
     /tache|credit|quota|action.?restant|restant.?action|il.?me.?reste|combien.*rest|reste.*combien/,
-    /plan|forfait|tarif|abonnement|upgrade|downgrade|gratuit|free\b|pro\b|business\b|prix.*(plan|forfait)/,
+    /\bplan\b|forfait|tarif|abonnement|upgrade|downgrade|gratuit|free\b|pro\b|business\b|prix.*(\bplan\b|forfait)/,
     /renouvell|mensuel|mois|limite.*(tache|action|credit)/
   )) {
     // Derive display plan from tasksTotal if plan field is stale
@@ -74,7 +74,7 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemai
   }
 
   // ── Produits en masse ──────────────────────────────────────────────────────
-  if (has(m, /modifier.*(masse|bulk|tous|plusieurs|multiple)/, /masse|bulk-edit|modification.*(masse|groupe)/)) {
+  if (has(m, /modifier.*(masse|bulk|tous|plusieurs|multiple)/, /masse|bulk.?edit|modification.*(masse|groupe)/)) {
     return `Pour modifier vos produits **en masse** 📦 :\n\n1. Allez sur la page **Produits**\n2. Cochez les produits à modifier\n3. La **barre d'actions** apparaît en bas\n4. Modifiez prix, tags, statuts ou générez du contenu IA\n\nOu utilisez directement la page **Modifier en masse** dans le menu pour des changements structurés sur tout votre catalogue.`;
   }
 
@@ -106,6 +106,26 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemai
   // ── Produits (général) ────────────────────────────────────────────────────
   if (has(m, /produit|catalogue|fiche|article|listing|synchronis|shopify.*(produit|sync)|importer/)) {
     return `Vos produits Shopify sont synchronisés automatiquement dans EcomPilot.\n\n**Ce que vous pouvez faire :**\n• Modifier titre, description, tags, prix\n• Générer du contenu IA optimisé SEO\n• Modifier en masse plusieurs produits à la fois\n• Voir et améliorer le score SEO de chaque fiche\n\nPage **Produits** dans le menu → sélectionnez un produit pour commencer.`;
+  }
+
+  // ── Images ────────────────────────────────────────────────────────────────
+  if (has(m, /image|photo|visuel|redimensionn|convertir|webp|jpeg|png|recadr|format.*(image|photo)|editeur.*(image|photo)/)) {
+    return `**Éditeur d'images** EcomPilot :\n\n• **Redimensionner** vos images produits en un clic\n• **Convertir** au format WebP, JPEG ou PNG\n• **Recadrer** pour respecter les ratios Shopify\n• **Améliorer** la qualité et la luminosité\n\nPage **Éditeur d'images** dans le menu → importez vos images ou appliquez les modifications directement depuis la fiche produit.\n\nChaque modification consomme 1 tâche.`;
+  }
+
+  // ── Automatisations ───────────────────────────────────────────────────────
+  if (has(m, /automat|workflow|declench|trigger|regle(?!.*seo)|alerte|programmer.*(action|règle)|action.*(auto|condition)/)) {
+    return `**Automatisations** EcomPilot :\n\nCréez des règles qui s'exécutent automatiquement :\n• 📉 **Alerte stock bas** → notification quand un produit est presque épuisé\n• 💰 **Baisse de prix auto** → réduire les prix après X jours sans vente\n• 📦 **Archivage auto** → archiver les produits hors stock depuis longtemps\n\nPage **Automatisations** dans le menu → **Nouvelle règle** → configurez conditions et actions.\n\n*Disponible à partir du plan Starter.*`;
+  }
+
+  // ── Shopify (connexion / boutique) ────────────────────────────────────────
+  if (has(m, /connecter|reconnect|ajouter.*(boutique|shop|magasin)|integr.*(shopify|boutique)|boutique.*(ajout|connect|config)|shopify.*(connect|ajout|integr|config)/)) {
+    return `**Connecter votre boutique Shopify** :\n\n1. Menu → **Mes boutiques** → **Ajouter une boutique**\n2. Entrez votre URL Shopify (ex: ma-boutique.myshopify.com)\n3. Autorisez EcomPilot dans votre espace Shopify\n4. La synchronisation démarre automatiquement\n\nVos produits, prix et stocks sont ensuite synchronisés en temps réel.\n\n*Si votre boutique est déjà connectée et dysfonctionne, utilisez le bouton **Reconnecter** sur la page Mes boutiques.*`;
+  }
+
+  // ── Calendrier ────────────────────────────────────────────────────────────
+  if (has(m, /calendrier|planifi|programmer.*(action|vente|promo)|schedule|prevu|prévu|campagne/)) {
+    return `**Calendrier** EcomPilot :\n\nPlanifiez vos actions marketing à l'avance :\n• 📅 Programmez des changements de prix (soldes, promos)\n• 🔔 Planifiez des optimisations IA en masse\n• 📊 Visualisez toutes vos actions sur le calendrier mensuel\n\nPage **Calendrier** dans le menu → cliquez sur une date → ajoutez une action planifiée.`;
   }
 
   // ── Concurrence ───────────────────────────────────────────────────────────
