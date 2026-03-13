@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
   // ── HMAC verification ──
   // Wrapped in try-catch to prevent a crash when SHOPIFY_API_SECRET is not set
-  const apiSecret = process.env.SHOPIFY_API_SECRET;
+  const apiSecret = process.env.SHOPIFY_API_SECRET?.trim();
   if (hmac && apiSecret) {
     try {
       const params = Object.fromEntries(searchParams);
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Exchange code for access token ──
-  const apiKey = process.env.SHOPIFY_API_KEY;
+  const apiKey = process.env.SHOPIFY_API_KEY?.trim();
   if (!apiKey || !apiSecret) {
     console.error('[Shopify OAuth callback] Missing SHOPIFY_API_KEY or SHOPIFY_API_SECRET');
     return errorRedirect('config_missing');

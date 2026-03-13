@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
   if (!state || !storedState || state !== storedState) return fail('google_csrf');
   if (!code) return fail('google_no_code');
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) return fail('google_config');
 
   const redirectAfter = request.cookies.get('google_oauth_redirect')?.value || '/dashboard';

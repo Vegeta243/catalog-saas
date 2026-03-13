@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const redirectUri = `${siteUrl}/api/auth/shopify/callback`;
 
-  const apiKey = process.env.SHOPIFY_API_KEY;
+  const apiKey = process.env.SHOPIFY_API_KEY?.trim();
   if (!apiKey) {
     console.error('[Shopify OAuth] SHOPIFY_API_KEY is not configured!');
     return NextResponse.json({ error: 'Configuration serveur manquante (SHOPIFY_API_KEY). Contactez le support.' }, { status: 500 });

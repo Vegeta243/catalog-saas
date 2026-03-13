@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
   if (!clientId) {
     const origin = process.env.NEXT_PUBLIC_SITE_URL || `${new URL(request.url).protocol}//${new URL(request.url).host}`;
     return NextResponse.redirect(`${origin}/login?error=google_config`);
