@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   Search, RefreshCw, Download, Upload, ChevronLeft, ChevronRight, Package,
   CheckSquare, Square, ImageOff, ArrowUpDown, DollarSign,
@@ -81,8 +81,8 @@ function calcNewPrice(
   else if (unit === '%') p = action === 'increase' ? currentPrice * (1 + value / 100) : currentPrice * (1 - value / 100);
   else p = action === 'increase' ? currentPrice + value : currentPrice - value;
   p = Math.max(0.01, p);
-  if (rounding === '99') p = Math.floor(p) + 0.99;
-  else if (rounding === '95') p = Math.floor(p) + 0.95;
+  if (rounding === '99') p = Math.ceil(p) - 0.01;
+  else if (rounding === '95') p = Math.ceil(p) - 0.05;
   else if (rounding === 'round') p = Math.round(p);
   else p = Math.round(p * 100) / 100;
   return p;
@@ -157,6 +157,7 @@ export default function ProductsPage() {
   const [descCommonText, setDescCommonText] = useState("");
   const [descCommonMode, setDescCommonMode] = useState<"prepend" | "append" | "remove">("append");
   const itemsPerPage = compactMode ? 50 : 25;
+  const inlineSaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   /* ──────── Fetch ──────── */
   const fetchProducts = useCallback(async (showRefresh = false) => {
@@ -647,6 +648,26 @@ export default function ProductsPage() {
     setProducts((prev) => prev.map((p) => p.id === productId ? { ...p, [field]: value } : p));
   };
 
+  const debouncedSaveInline = useCallback((productId: string, field: string, value: string) => {
+    const key = `${productId}:${field}`;
+    if (inlineSaveTimers.current[key]) clearTimeout(inlineSaveTimers.current[key]);
+    inlineSaveTimers.current[key] = setTimeout(async () => {
+      try {
+        if (field === 'title') {
+          await fetch("/api/shopify/bulk-edit", {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [productId], field: "title", value }),
+          });
+        } else {
+          await fetch("/api/shopify/bulk-update", {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productIds: [productId], updates: { [field]: value } }),
+          });
+        }
+      } catch { /* silent — user can retry via Save button */ }
+    }, 1500);
+  }, []);
+
   const saveMetaField = async (product: Product) => {
     const updates: Record<string, string> = {};
     if (product.metaTitle !== undefined) updates.metaTitle = product.metaTitle;
@@ -1069,23 +1090,27 @@ export default function ProductsPage() {
           {/* Rounding */}
           <div className="flex flex-col gap-1">
             <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: '#78350f' }}>Arrondi</span>
-            <div className="flex items-center gap-3 py-1.5">
+            <div className="flex items-center gap-2 py-1.5 flex-wrap">
               {([
-                { key: 'none', label: 'Aucun' },
-                { key: '99', label: 'X,99' },
-                { key: '95', label: 'X,95' },
-                { key: 'round', label: 'X,00' },
-              ] as { key: 'none' | '99' | '95' | 'round'; label: string }[]).map(({ key, label }) => (
-                <label key={key} className="flex items-center gap-1.5 cursor-pointer text-xs select-none" style={{ color: '#78350f' }}>
-                  <input
-                    type="radio"
-                    name="priceRounding"
-                    value={key}
-                    checked={priceRounding === key}
-                    onChange={() => setPriceRounding(key)}
-                    className="accent-amber-500"
-                  />
-                  {label}
+                { key: 'none', label: 'Aucun', desc: 'Prix exact' },
+                { key: '99', label: ',99', desc: '22,30 → 21,99' },
+                { key: '95', label: ',95', desc: '22,30 → 21,95' },
+                { key: 'round', label: ',00', desc: '22,30 → 22,00' },
+              ] as { key: 'none' | '99' | '95' | 'round'; label: string; desc: string }[]).map(({ key, label, desc }) => (
+                <label key={key}
+                  className={`flex flex-col items-center gap-0.5 cursor-pointer select-none rounded-lg border px-2.5 py-1.5 transition-all ${priceRounding === key ? 'border-amber-400 bg-amber-100' : 'border-amber-200 bg-white hover:border-amber-300'}`}>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="priceRounding"
+                      value={key}
+                      checked={priceRounding === key}
+                      onChange={() => setPriceRounding(key)}
+                      className="accent-amber-500"
+                    />
+                    <span className="text-xs font-semibold" style={{ color: '#78350f' }}>{label}</span>
+                  </div>
+                  <span className="text-[10px] whitespace-nowrap" style={{ color: '#a16207' }}>{desc}</span>
                 </label>
               ))}
             </div>
@@ -1412,8 +1437,8 @@ export default function ProductsPage() {
                   <th className="px-3 md:px-4 py-3 text-left hidden sm:table-cell"><button onClick={() => handleSort("status")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Statut <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-3 md:px-4 py-3 text-left hidden md:table-cell"><button onClick={() => handleSort("seo")} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>SEO <ArrowUpDown className="w-3 h-3" style={{ color: "#94a3b8" }} /></button></th>
                   <th className="px-3 md:px-4 py-3 text-left hidden lg:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>IA</th>
-                  <th className="px-3 md:px-4 py-3 text-left hidden xl:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Meta Titre <span className="normal-case font-normal text-gray-400">(60)</span></th>
-                  <th className="px-3 md:px-4 py-3 text-left hidden xl:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Meta Desc <span className="normal-case font-normal text-gray-400">(160)</span></th>
+                  <th className="px-3 md:px-4 py-3 text-left hidden md:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Meta Titre <span className="normal-case font-normal text-gray-400">(60)</span></th>
+                  <th className="px-3 md:px-4 py-3 text-left hidden md:table-cell text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Meta Desc <span className="normal-case font-normal text-gray-400">(160)</span></th>
                   <th className="px-3 md:px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#64748b" }}>Actions</th>
                 </tr>
               </thead>
@@ -1432,8 +1457,20 @@ export default function ProductsPage() {
                         {imageUrl ? <img src={getProxiedImageUrl(imageUrl)} alt={product.title} className="w-11 h-11 rounded-lg object-cover border border-gray-100" />
                           : <div className="w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
                       </td>
-                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} cursor-pointer`} onClick={() => setPreviewProduct(product)}>
-                        <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] md:max-w-none hover:text-blue-600 transition-colors" style={{ color: "#0f172a" }}>{product.title}</p>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"}`}>
+                        <div className="relative">
+                          <input
+                            value={product.title}
+                            onChange={(e) => { updateProductField(product.id, "title", e.target.value); debouncedSaveInline(product.id, "title", e.target.value); }}
+                            maxLength={255}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                            placeholder="Titre produit…"
+                            style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "160px" }}
+                          />
+                          <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${(product.title?.length || 0) > 230 ? "text-orange-500" : "text-gray-400"}`}>
+                            {product.title?.length || 0}/255
+                          </span>
+                        </div>
                         {product.vendor && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{product.vendor}</p>}
                         {hasLowStock && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 bg-red-50 rounded mt-1" style={{ color: "#dc2626" }}><AlertTriangle className="w-2.5 h-2.5" /> Stock bas</span>}
                         {suggestion?.title && (
@@ -1480,12 +1517,11 @@ export default function ProductsPage() {
                         )}
                       </td>
                       {/* Meta title inline cell */}
-                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden xl:table-cell`}>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden md:table-cell`}>
                         <div className="relative">
                           <input
                             value={product.metaTitle || ""}
-                            onChange={(e) => updateProductField(product.id, "metaTitle", e.target.value)}
-                            onBlur={() => product.metaTitle !== undefined && saveMetaField(product)}
+                            onChange={(e) => { updateProductField(product.id, "metaTitle", e.target.value); debouncedSaveInline(product.id, "metaTitle", e.target.value); }}
                             maxLength={70}
                             className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
                             placeholder="Meta titre SEO…"
@@ -1500,12 +1536,11 @@ export default function ProductsPage() {
                         </div>
                       </td>
                       {/* Meta description inline cell */}
-                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden xl:table-cell`}>
+                      <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden md:table-cell`}>
                         <div className="relative">
                           <textarea
                             value={product.metaDescription || ""}
-                            onChange={(e) => updateProductField(product.id, "metaDescription", e.target.value)}
-                            onBlur={() => product.metaDescription !== undefined && saveMetaField(product)}
+                            onChange={(e) => { updateProductField(product.id, "metaDescription", e.target.value); debouncedSaveInline(product.id, "metaDescription", e.target.value); }}
                             maxLength={170}
                             rows={2}
                             className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
