@@ -38,7 +38,6 @@ function ShopsContent() {
   const [newShopUrl, setNewShopUrl] = useState("");
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState("");
-  const [connectSuccess, setConnectSuccess] = useState("");
 
   useEffect(() => {
     fetchShops();
@@ -98,9 +97,8 @@ function ShopsContent() {
     setShowSwitcher(false);
   };
 
-  const handleConnect = async () => {
+  const handleConnect = () => {
     setConnectError("");
-    setConnectSuccess("");
     const raw = newShopUrl.trim();
     if (!raw) { setConnectError("Entrez votre domaine Shopify."); return; }
 
@@ -123,41 +121,9 @@ function ShopsContent() {
     }
 
     const domain = `${shopSlug}.myshopify.com`;
+    // Redirect directly to OAuth — the callback will create/update the shop record
     setConnectLoading(true);
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setConnectError("Vous devez être connecté."); setConnectLoading(false); return; }
-
-      // Upsert: insert or reactivate if already exists
-      const { data: upserted, error } = await supabase
-        .from("shops")
-        .upsert(
-          {
-            user_id: user.id,
-            shop_domain: domain,
-            shop_name: shopSlug,
-            is_active: true,
-            scopes: "",
-            access_token: "",
-          },
-          { onConflict: "user_id,shop_domain" }
-        )
-        .select()
-        .single();
-
-      if (error) {
-        setConnectError("Erreur lors de l'ajout. Réessayez.");
-      } else {
-        setConnectSuccess(`✅ Boutique "${upserted.shop_name}" ajoutée !`);
-        setNewShopUrl("");
-        await fetchShops();
-        setTimeout(() => { setShowAddModal(false); setConnectSuccess(""); }, 1500);
-      }
-    } catch {
-      setConnectError("Erreur réseau. Vérifiez votre connexion.");
-    }
-    setConnectLoading(false);
+    window.location.href = `/api/auth/shopify?shop=${encodeURIComponent(domain)}`;
   };
 
   const handleDisconnect = async (shopId: string) => {
@@ -366,10 +332,10 @@ function ShopsContent() {
 
       {/* Add shop modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); setNewShopUrl(""); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => { setShowAddModal(false); setConnectError(""); setNewShopUrl(""); }}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Ajouter une boutique</h2>
-            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Entrez votre domaine Shopify pour l&apos;ajouter à votre compte.</p>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Connecter une boutique</h2>
+            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Entrez votre domaine Shopify — vous serez redirigé vers Shopify pour autoriser la connexion.</p>
 
             <div className="space-y-4">
               <div>
@@ -392,13 +358,9 @@ function ShopsContent() {
               {connectError && (
                 <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#dc2626", backgroundColor: "#fef2f2" }}>{connectError}</p>
               )}
-              {connectSuccess && (
-                <p className="text-xs px-3 py-2 rounded-lg" style={{ color: "#059669", backgroundColor: "#f0fdf4" }}>{connectSuccess}</p>
-              )}
-
               <div className="flex gap-3">
                 <button
-                  onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); setNewShopUrl(""); }}
+                  onClick={() => { setShowAddModal(false); setConnectError(""); setNewShopUrl(""); }}
                   className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50"
                   style={{ color: "#374151" }}>
                   Annuler
@@ -409,8 +371,8 @@ function ShopsContent() {
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                   style={{ backgroundColor: "#2563eb", color: "#fff" }}>
                   {connectLoading
-                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Ajout…</>
-                    : <>Ajouter <ArrowRight className="w-4 h-4" /></>}
+                    ? <><RefreshCw className="w-4 h-4 animate-spin" /> Redirection…</>
+                    : <>Connecter via Shopify <ArrowRight className="w-4 h-4" /></>}
                 </button>
               </div>
             </div>
