@@ -77,7 +77,11 @@ function AuthContent() {
   const [showLoginPwd, setShowLoginPwd] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(
     errorParam === "auth" ? "Echec de l'authentification. Veuillez reessayer." :
-    errorParam === "config" ? "Erreur de configuration. Contactez le support." : null
+    errorParam === "config" ? "Erreur de configuration. Contactez le support." :
+    errorParam === "google_denied" ? "Connexion Google annulée." :
+    errorParam === "google_csrf" ? "Erreur de sécurité. Réessayez." :
+    errorParam === "google_config" ? "Configuration Google manquante. Contactez le support." :
+    errorParam?.startsWith("google_") ? "La connexion Google a échoué. Réessayez." : null
   );
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -193,17 +197,9 @@ function AuthContent() {
     setResending(false);
   }, [verifyEmail]);
 
-  const handleGoogle = async () => {
+  const handleGoogle = () => {
     setGoogleLoading(true);
-    try {
-      const supabase = createClient();
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
-      });
-    } catch {
-      setGoogleLoading(false);
-    }
+    window.location.href = `/api/auth/google?redirectTo=${encodeURIComponent(redirectTo)}`;
   };
 
 
