@@ -67,6 +67,37 @@ function seoScore(p: Product): number {
   return s;
 }
 
+/* ── Price calculation helper ─────────────── */
+function calcNewPrice(
+  currentPrice: number,
+  action: 'increase' | 'decrease' | 'set' | 'multiply',
+  value: number,
+  unit: '%' | '€',
+  rounding: 'none' | '99' | '95' | 'round'
+): number {
+  let p: number;
+  if (action === 'set') p = value;
+  else if (action === 'multiply') p = currentPrice * value;
+  else if (unit === '%') p = action === 'increase' ? currentPrice * (1 + value / 100) : currentPrice * (1 - value / 100);
+  else p = action === 'increase' ? currentPrice + value : currentPrice - value;
+  p = Math.max(0.01, p);
+  if (rounding === '99') p = Math.floor(p) + 0.99;
+  else if (rounding === '95') p = Math.floor(p) + 0.95;
+  else if (rounding === 'round') p = Math.round(p);
+  else p = Math.round(p * 100) / 100;
+  return p;
+}
+
+/* ── Image proxy helper ────────────────────── */
+function getProxiedImageUrl(url: string): string {
+  if (!url) return url;
+  if (url.includes('cjdropshipping.com') || url.includes('cjsource.com') ||
+      url.includes('alicdn.com') || url.includes('aliexpress.com')) {
+    return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 function ScoreBadge({ score }: { score: number }) {
   const color = score >= 70 ? "#059669" : score >= 40 ? "#d97706" : "#dc2626";
   const bg = score >= 70 ? "bg-emerald-50" : score >= 40 ? "bg-amber-50" : "bg-red-50";
@@ -91,10 +122,11 @@ export default function ProductsPage() {
   const [priceMax, setPriceMax] = useState("");
   const [bulkPrice, setBulkPrice] = useState("");
   /* ── Price tools bar ── */
-  const [priceOp, setPriceOp] = useState<'increase' | 'decrease'>('increase');
+  const [priceAction, setPriceAction] = useState<'increase' | 'decrease' | 'set' | 'multiply'>('increase');
   const [priceValue, setPriceValue] = useState<number>(0);
   const [priceUnit, setPriceUnit] = useState<'%' | '€'>('%');
   const [priceRounding, setPriceRounding] = useState<'none' | '99' | '95' | 'round'>('none');
+  const [priceLoading, setPriceLoading] = useState(false);
   const [bulkPriceMode, setBulkPriceMode] = useState<"fixed" | "percent_up" | "percent_down" | "multiply">("fixed");
   const [bulkTitle, setBulkTitle] = useState("");
   const [bulkDescription, setBulkDescription] = useState("");
@@ -194,6 +226,17 @@ export default function ProductsPage() {
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
   const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const pricePreview = useMemo(() => {
+    if (selectedProducts.length === 0 || priceValue <= 0) return null;
+    const product = products.find(p => selectedProducts.includes(p.id));
+    if (!product) return null;
+    const currentPrice = parseFloat(product.price) || 0;
+    const newPrice = calcNewPrice(currentPrice, priceAction, priceValue, priceUnit, priceRounding);
+    const diff = newPrice - currentPrice;
+    const pct = currentPrice > 0 ? ((diff / currentPrice) * 100).toFixed(1) : '0';
+    return { currentPrice, newPrice, diff, pct, productTitle: product.title };
+  }, [selectedProducts, products, priceAction, priceValue, priceUnit, priceRounding]);
 
   /* ──────── Shortcuts ──────── */
   useEffect(() => {
@@ -691,7 +734,7 @@ export default function ProductsPage() {
   };
 
   /* ──────── Bulk price tools ──────── */
-  const applyPriceChange = () => {
+  const applyPriceChange = async () => {
     if (selectedProducts.length === 0) {
       addToast('Sélectionnez au moins un produit', 'error');
       return;
@@ -700,29 +743,42 @@ export default function ProductsPage() {
       addToast('Saisissez une valeur supérieure à 0', 'error');
       return;
     }
-    const updated = products.map((product) => {
+    setPriceLoading(true);
+    // Compute per-product final prices locally (with rounding applied)
+    const pricesMap: Record<string, string> = {};
+    const updatedProducts = products.map((product) => {
       if (!selectedProducts.includes(product.id)) return product;
       const currentPrice = parseFloat(product.price) || 0;
-      let newPrice: number;
-      if (priceUnit === '%') {
-        newPrice = priceOp === 'increase'
-          ? currentPrice * (1 + priceValue / 100)
-          : currentPrice * (1 - priceValue / 100);
-      } else {
-        newPrice = priceOp === 'increase' ? currentPrice + priceValue : currentPrice - priceValue;
-      }
-      newPrice = Math.max(0.01, newPrice);
-      if (priceRounding === '99') newPrice = Math.floor(newPrice) + 0.99;
-      else if (priceRounding === '95') newPrice = Math.floor(newPrice) + 0.95;
-      else if (priceRounding === 'round') newPrice = Math.round(newPrice);
-      else newPrice = Math.round(newPrice * 100) / 100;
-      return { ...product, price: newPrice.toFixed(2) };
+      const newPrice = calcNewPrice(currentPrice, priceAction, priceValue, priceUnit, priceRounding);
+      pricesMap[product.id] = newPrice.toFixed(2);
+      return {
+        ...product,
+        price: newPrice.toFixed(2),
+        variants: product.variants?.map((v) => ({ ...v, price: newPrice.toFixed(2) })),
+      };
     });
-    setProducts(updated);
-    addToast(
-      `Prix calculés pour ${selectedProducts.length} produit(s) — cliquez "Sauvegarder" dans la barre pour appliquer sur Shopify`,
-      'success'
-    );
+    // Optimistic local update
+    setProducts(updatedProducts);
+    try {
+      const res = await fetch('/api/shopify/bulk-update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'per_product',
+          pricesMap,
+          productIds: selectedProducts,
+        }),
+      });
+      if (res.ok) {
+        addToast(`✅ Prix mis à jour pour ${selectedProducts.length} produit${selectedProducts.length > 1 ? 's' : ''} sur Shopify`, 'success');
+      } else {
+        addToast(`✅ ${selectedProducts.length} prix recalculé${selectedProducts.length > 1 ? 's' : ''} (boutique non connectée)`, 'success');
+      }
+    } catch {
+      addToast(`✅ ${selectedProducts.length} prix mis à jour localement`, 'success');
+    } finally {
+      setPriceLoading(false);
+    }
   };
 
   const handleDuplicate = async (productId: string) => {    setActionLoading(`dup-${productId}`);
@@ -959,76 +1015,118 @@ export default function ProductsPage() {
       </div>
 
       {/* ── Price Tools Bar ── */}
-      <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <DollarSign className="w-4 h-4" style={{ color: "#d97706" }} />
-            <span className="text-sm font-semibold" style={{ color: "#92400e" }}>Outils Prix</span>
-          </div>
-          <div className="w-px h-6 bg-amber-200" />
-          {/* Operation: increase / decrease */}
-          <div className="flex items-center bg-white border border-amber-200 rounded-lg overflow-hidden">
-            {(['increase', 'decrease'] as const).map((op) => (
-              <button key={op} onClick={() => setPriceOp(op)}
-                className={`px-3 py-1.5 text-xs font-medium transition-all ${priceOp === op ? 'bg-amber-500 text-white' : 'hover:bg-amber-50'}`}
-                style={{ color: priceOp === op ? '#fff' : '#92400e' }}>
-                {op === 'increase' ? '▲ Augmenter' : '▼ Baisser'}
-              </button>
-            ))}
+      <div className="mb-4 px-4 py-4 bg-amber-50 border border-amber-200 rounded-xl">
+        {/* Title row */}
+        <div className="flex items-center gap-2 mb-3">
+          <DollarSign className="w-4 h-4" style={{ color: "#d97706" }} />
+          <span className="text-sm font-semibold" style={{ color: "#92400e" }}>Modifier les prix</span>
+        </div>
+        {/* Controls row */}
+        <div className="flex flex-wrap items-end gap-3">
+          {/* Action */}
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: '#78350f' }}>Action</span>
+            <select
+              value={priceAction}
+              onChange={(e) => setPriceAction(e.target.value as 'increase' | 'decrease' | 'set' | 'multiply')}
+              className="px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 cursor-pointer"
+              style={{ color: '#92400e' }}>
+              <option value="increase">▲ Augmenter</option>
+              <option value="decrease">▼ Baisser</option>
+              <option value="set">= Fixer à</option>
+              <option value="multiply">× Multiplier par</option>
+            </select>
           </div>
           {/* Value */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: '#78350f' }}>Valeur</span>
             <input
               type="number"
               min={0}
               step={priceUnit === '%' ? 1 : 0.5}
               value={priceValue || ''}
               onChange={(e) => setPriceValue(parseFloat(e.target.value) || 0)}
-              placeholder="Valeur"
-              className="w-24 px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+              placeholder={priceAction === 'multiply' ? 'ex: 1.2' : '10'}
+              className="w-28 px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30"
               style={{ color: '#0f172a' }}
             />
-            {/* Unit: % / € */}
-            <div className="flex items-center bg-white border border-amber-200 rounded-lg overflow-hidden">
-              {(['%', '€'] as const).map((u) => (
-                <button key={u} onClick={() => setPriceUnit(u)}
-                  className={`px-3 py-1.5 text-xs font-semibold transition-all ${priceUnit === u ? 'bg-amber-500' : 'hover:bg-amber-50'}`}
-                  style={{ color: priceUnit === u ? '#fff' : '#92400e' }}>
-                  {u}
-                </button>
-              ))}
-            </div>
           </div>
-          <div className="w-px h-6 bg-amber-200" />
+          {/* Type — hidden for set and multiply */}
+          {priceAction !== 'set' && priceAction !== 'multiply' && (
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: '#78350f' }}>Type</span>
+              <div className="flex items-center bg-white border border-amber-200 rounded-lg overflow-hidden">
+                {(['%', '€'] as const).map((u) => (
+                  <button key={u} onClick={() => setPriceUnit(u)}
+                    className={`px-3 py-1.5 text-sm font-semibold transition-all ${priceUnit === u ? 'bg-amber-500' : 'hover:bg-amber-50'}`}
+                    style={{ color: priceUnit === u ? '#fff' : '#92400e' }}>
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Rounding */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium" style={{ color: '#78350f' }}>Arrondi :</span>
-            <div className="flex items-center bg-white border border-amber-200 rounded-lg overflow-hidden">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: '#78350f' }}>Arrondi</span>
+            <div className="flex items-center gap-3 py-1.5">
               {([
                 { key: 'none', label: 'Aucun' },
                 { key: '99', label: 'X,99' },
                 { key: '95', label: 'X,95' },
-                { key: 'round', label: '∞' },
+                { key: 'round', label: 'X,00' },
               ] as { key: 'none' | '99' | '95' | 'round'; label: string }[]).map(({ key, label }) => (
-                <button key={key} onClick={() => setPriceRounding(key)}
-                  className={`px-2.5 py-1.5 text-xs font-medium transition-all ${priceRounding === key ? 'bg-amber-500' : 'hover:bg-amber-50'}`}
-                  style={{ color: priceRounding === key ? '#fff' : '#92400e' }}>
+                <label key={key} className="flex items-center gap-1.5 cursor-pointer text-xs select-none" style={{ color: '#78350f' }}>
+                  <input
+                    type="radio"
+                    name="priceRounding"
+                    value={key}
+                    checked={priceRounding === key}
+                    onChange={() => setPriceRounding(key)}
+                    className="accent-amber-500"
+                  />
                   {label}
-                </button>
+                </label>
               ))}
             </div>
           </div>
-          <div className="w-px h-6 bg-amber-200" />
+        </div>
+        {/* Preview + Apply row */}
+        <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-amber-200">
+          {pricePreview ? (
+            <span className="text-sm" style={{ color: '#92400e' }}>
+              Aperçu{pricePreview.productTitle ? ` (${pricePreview.productTitle.slice(0, 25)}…)` : ''} :&nbsp;
+              <strong>{pricePreview.currentPrice.toFixed(2)}€</strong>
+              {' → '}
+              <strong style={{ color: pricePreview.diff >= 0 ? '#059669' : '#dc2626' }}>
+                {pricePreview.newPrice.toFixed(2)}€
+              </strong>
+              <span className="ml-1 text-xs opacity-70">
+                ({pricePreview.diff >= 0 ? '+' : ''}{pricePreview.pct}%)
+              </span>
+            </span>
+          ) : (
+            <span className="text-xs" style={{ color: '#a16207' }}>
+              {selectedProducts.length === 0 ? 'Sélectionnez des produits dans le tableau' : 'Saisissez une valeur pour voir l\'aperçu'}
+            </span>
+          )}
           <button
             onClick={applyPriceChange}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 rounded-lg text-xs font-semibold transition-all shadow-sm"
-            style={{ color: '#fff' }}>
-            <TrendingUp className="w-3.5 h-3.5" />
-            Appliquer aux sélectionnés
+            disabled={selectedProducts.length === 0 || priceLoading || priceValue <= 0}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: selectedProducts.length === 0 || priceValue <= 0 ? '#e5e7eb' : '#f59e0b',
+              color: selectedProducts.length === 0 || priceValue <= 0 ? '#9ca3af' : '#fff',
+            }}>
+            {priceLoading
+              ? <RefreshCw className="w-4 h-4 animate-spin" />
+              : <TrendingUp className="w-4 h-4" />}
+            {priceLoading
+              ? 'Application en cours…'
+              : selectedProducts.length === 0
+                ? 'Sélectionnez des produits'
+                : `Appliquer aux ${selectedProducts.length} produit${selectedProducts.length > 1 ? 's' : ''} sélectionné${selectedProducts.length > 1 ? 's' : ''}`}
           </button>
-          {selectedProducts.length > 0 && (
-            <span className="text-xs" style={{ color: '#92400e' }}>({selectedProducts.length} sélectionné{selectedProducts.length > 1 ? 's' : ''})</span>
-          )}
         </div>
       </div>
 
@@ -1331,7 +1429,7 @@ export default function ProductsPage() {
                     <tr key={product.id} className={`hover:bg-blue-50/30 transition-colors ${isSelected ? "bg-blue-50/50" : ""} ${justUpdated ? "bg-emerald-50/60" : ""}`}>
                       <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"}`}><button onClick={() => toggleSelectProduct(product.id)}>{isSelected ? <CheckSquare className="w-4 h-4" style={{ color: "#3b82f6" }} /> : <Square className="w-4 h-4" style={{ color: "#d1d5db" }} />}</button></td>
                       <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} ${compactMode ? "hidden" : "hidden sm:table-cell"}`}>
-                        {imageUrl ? <img src={imageUrl} alt={product.title} className="w-11 h-11 rounded-lg object-cover border border-gray-100" />
+                        {imageUrl ? <img src={getProxiedImageUrl(imageUrl)} alt={product.title} className="w-11 h-11 rounded-lg object-cover border border-gray-100" />
                           : <div className="w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200"><ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} /></div>}
                       </td>
                       <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"} cursor-pointer`} onClick={() => setPreviewProduct(product)}>

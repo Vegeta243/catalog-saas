@@ -80,10 +80,14 @@ export async function POST(req: Request) {
     // --- CJ Dropshipping ---
     if (isCjUrl(url)) {
       const result = await scrapePage(url, multiplier);
-      if (result && result.title && result.title !== "Produit importé") {
+      // Check for CAPTCHA / human-verification response
+      const isCaptcha = !result.title ||
+        result.title === "Produit importé" ||
+        /human.?verif|captcha|access.?denied|robot|bot.?detect/i.test(result.title);
+      if (result && result.title && !isCaptcha) {
         return NextResponse.json({ success: true, preview: result });
       }
-      // Demo fallback  CJ pages are JS-rendered so often scraping fails
+      // Demo fallback — CJ pages are JS-rendered or return CAPTCHA
       const demo = CJ_DEMO_PRODUCTS[Math.floor(Math.random() * CJ_DEMO_PRODUCTS.length)];
       return NextResponse.json({
         success: true,

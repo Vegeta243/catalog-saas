@@ -14,8 +14,9 @@ const metaUpdateSchema = z.object({
 
 const priceUpdateSchema = z.object({
   productIds: z.array(z.string()).min(1).max(250),
-  newPrice: z.string(),
-  mode: z.enum(["fixed", "percent", "multiply"]).default("fixed"),
+  newPrice: z.string().optional(),
+  mode: z.enum(["fixed", "percent", "multiply", "per_product"]).default("fixed"),
+  pricesMap: z.record(z.string(), z.string()).optional(),
 });
 
 export async function PUT(req: Request) {
@@ -95,7 +96,7 @@ export async function PUT(req: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
-    const { productIds, newPrice, mode } = parsed.data;
+    const { productIds, newPrice, mode, pricesMap } = parsed.data;
 
     const { data: shop, error: shopError } = await supabase
       .from("shops")
@@ -114,7 +115,28 @@ export async function PUT(req: Request) {
     // For percent mode, we need to first get current prices
     let priceUpdates: { id: string; price: string }[] = [];
 
-    if (mode === "percent") {
+    if (mode === "per_product" && pricesMap) {
+      // Per-product mode: client has already computed final prices with rounding
+      const productsRes = await fetch(
+        `https://${shop_domain}/admin/api/2026-01/products.json?ids=${productIds.join(",")}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": access_token,
+          },
+        }
+      );
+      if (productsRes.ok) {
+        const data = await productsRes.json();
+        for (const product of data.products || []) {
+          const targetPrice = pricesMap[String(product.id)];
+          if (!targetPrice) continue;
+          for (const variant of product.variants || []) {
+            priceUpdates.push({ id: String(variant.id), price: targetPrice });
+          }
+        }
+      }
+    } else if (mode === "percent") {
       // Get current products to calculate new prices
       const productsRes = await fetch(
         `https://${shop_domain}/admin/api/2026-01/products.json?ids=${productIds.join(",")}`,
@@ -130,7 +152,7 @@ export async function PUT(req: Request) {
         for (const product of data.products || []) {
           for (const variant of product.variants || []) {
             const currentPrice = parseFloat(variant.price);
-            const percent = parseFloat(newPrice);
+            const percent = parseFloat(newPrice ?? "0");
             const updatedPrice = (currentPrice * (1 + percent / 100)).toFixed(2);
             priceUpdates.push({ id: variant.id, price: updatedPrice });
           }
@@ -151,7 +173,7 @@ export async function PUT(req: Request) {
         for (const product of data.products || []) {
           for (const variant of product.variants || []) {
             const currentPrice = parseFloat(variant.price);
-            const multiplier = parseFloat(newPrice);
+            const multiplier = parseFloat(newPrice ?? "1");
             const updatedPrice = (currentPrice * multiplier).toFixed(2);
             priceUpdates.push({ id: variant.id, price: updatedPrice });
           }
@@ -172,7 +194,7 @@ export async function PUT(req: Request) {
         const data = await productsRes.json();
         for (const product of data.products || []) {
           for (const variant of product.variants || []) {
-            priceUpdates.push({ id: variant.id, price: parseFloat(newPrice).toFixed(2) });
+            priceUpdates.push({ id: variant.id, price: parseFloat(newPrice ?? "0").toFixed(2) });
           }
         }
       }

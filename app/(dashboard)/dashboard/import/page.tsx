@@ -268,7 +268,12 @@ export default function ImportPage() {
                   <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
                     {r.preview?.imageUrl ? (
                       <img
-                        src={r.preview.imageUrl}
+                        src={(() => {
+                          const u = r.preview.imageUrl;
+                          if (u.includes('cjdropshipping.com') || u.includes('cjsource.com') || u.includes('alicdn.com'))
+                            return `/api/image-proxy?url=${encodeURIComponent(u)}`;
+                          return u;
+                        })()}
                         alt=""
                         className="w-full h-full object-cover"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
