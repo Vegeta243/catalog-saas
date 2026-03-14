@@ -37,6 +37,7 @@ export default function ImportPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [hasShop, setHasShop] = useState<boolean | null>(null);
   const [cjError, setCjError] = useState(false);
+  const [aliExpressApiError, setAliExpressApiError] = useState(false);
 
   // Check if user has a connected shop
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function ImportPage() {
 
     setResults(urlList.map((url) => ({ url, status: "pending" })));
     setCjError(false);
+    setAliExpressApiError(false);
     setImporting(true);
 
     await Promise.all(urlList.map(async (url, i) => {
@@ -82,6 +84,12 @@ export default function ImportPage() {
         if (data.error === "CJ_API_REQUIRED") {
           setCjError(true);
           setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: "Clé API CJ Dropshipping requise" } : r));
+          return;
+        }
+
+        if (data.error === "ALIEXPRESS_API_REQUIRED") {
+          setAliExpressApiError(true);
+          setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: "Configuration API AliExpress requise" } : r));
           return;
         }
 
@@ -217,6 +225,42 @@ export default function ImportPage() {
           <Link href="/dashboard/settings?tab=api" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#ea580c", color: "#fff" }}>
             Configurer clé CJ →
           </Link>
+        </div>
+      )}
+
+      {aliExpressApiError && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-orange-300 mb-4" style={{ backgroundColor: "#fff7ed" }}>
+          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#ea580c" }} />
+          <div className="flex-1">
+            <p className="text-sm font-semibold" style={{ color: "#9a3412" }}>⚙️ Configuration requise — Import AliExpress</p>
+            <p className="text-xs mt-1" style={{ color: "#c2410c" }}>
+              AliExpress bloque les serveurs cloud. Une clé API RapidAPI est nécessaire pour contourner ce blocage.
+            </p>
+            <ol className="mt-2 space-y-0.5 text-xs list-none" style={{ color: "#c2410c" }}>
+              <li>1. Créer un compte gratuit sur <strong>rapidapi.com</strong></li>
+              <li>2. S&apos;abonner à <strong>&quot;AliExpress Datahub&quot;</strong> (offre gratuite disponible)</li>
+              <li>3. Copier la clé API affichée</li>
+              <li>4. L&apos;ajouter dans <strong>Vercel → Settings → Environment Variables</strong> sous le nom <strong>RAPIDAPI_KEY</strong></li>
+            </ol>
+          </div>
+        </div>
+      )}
+
+      {aliExpressApiError && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-orange-300 mb-4" style={{ backgroundColor: "#fff7ed" }}>
+          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#ea580c" }} />
+          <div className="flex-1">
+            <p className="text-sm font-semibold" style={{ color: "#9a3412" }}>⚙️ Configuration requise — Import AliExpress</p>
+            <p className="text-xs mt-1" style={{ color: "#c2410c" }}>
+              AliExpress bloque les serveurs cloud. Une clé API RapidAPI est nécessaire pour contourner ce blocage.
+            </p>
+            <ol className="mt-2 space-y-0.5 text-xs list-none" style={{ color: "#c2410c" }}>
+              <li>1. Créer un compte gratuit sur <strong>rapidapi.com</strong></li>
+              <li>2. S&apos;abonner à <strong>&quot;AliExpress Datahub&quot;</strong> (offre gratuite disponible)</li>
+              <li>3. Copier la clé API affichée</li>
+              <li>4. L&apos;ajouter dans <strong>Vercel → Settings → Environment Variables</strong> sous le nom <strong>RAPIDAPI_KEY</strong></li>
+            </ol>
+          </div>
         </div>
       )}
 

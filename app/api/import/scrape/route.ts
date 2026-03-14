@@ -357,16 +357,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "URL manquante." }, { status: 400 });
     }
 
-    // --- AliExpress — dedicated window.runParams scraper ---
+    // --- AliExpress — RapidAPI / ScrapingBee / direct HTML fetch ---
     if (isAliexpressUrl(url)) {
       try {
         const preview = await scrapeAliExpress(url, multiplier);
         return NextResponse.json({ success: true, preview });
       } catch (err) {
+        const msg = (err as Error).message;
+        if (msg === "ALIEXPRESS_API_REQUIRED") {
+          return NextResponse.json({ success: false, error: "ALIEXPRESS_API_REQUIRED" });
+        }
         console.error("[AliExpress scraper] Failed:", err);
         return NextResponse.json({
           success: false,
-          error: `Impossible d'importer ce produit AliExpress : ${(err as Error).message}`,
+          error: `Impossible d'importer ce produit AliExpress : ${msg}`,
         });
       }
     }
