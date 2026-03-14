@@ -102,10 +102,21 @@ export async function GET(request: NextRequest) {
 
   if (!createErr && createData.user) {
     userId = createData.user.id;
-    // Ensure public.users record exists for the new user
+    // Ensure public.users record exists for the new user.
+    // ignoreDuplicates:true → ON CONFLICT DO NOTHING, preserving any existing plan/actions data.
     await admin.from('users').upsert(
-      { id: userId, plan: 'free', actions_used: 0 },
-      { onConflict: 'id' },
+      {
+        id: userId,
+        email: googleEmail,
+        first_name: googleFirstName || null,
+        last_name: googleLastName || null,
+        avatar_url: googleAvatar || null,
+        plan: 'free',
+        actions_used: 0,
+        actions_limit: 30,
+        subscription_status: 'inactive',
+      },
+      { onConflict: 'id', ignoreDuplicates: true },
     );
   } else {
     // User already exists — find by email
@@ -165,10 +176,14 @@ export async function GET(request: NextRequest) {
   response.cookies.delete('google_oauth_state');
   response.cookies.delete('google_oauth_redirect');
 
-  // Write the session into SSR cookies so middleware + server components work
+  // Write the session into SSR cookies so middleware + server components work.
+  // CRITICAL: pass request.cookies to getAll() so the SSR library can detect and
+  // DELETE any stale session chunk cookies (sb-*-auth-token.0, .1, …) left over
+  // from a previous user's session. Without this, stale chunks persist and
+  // Supabase reassembles the OLD user's session instead of the new one.
   const ssrClient = createServerClient(supabaseUrl, anonKey, {
     cookies: {
-      getAll() { return []; },
+      getAll() { return request.cookies.getAll(); },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options));

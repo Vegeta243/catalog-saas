@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Package, TrendingUp, Clock, CheckCircle2, Circle,
@@ -40,6 +41,7 @@ function seoScore(p: Product): number {
 
 export default function DashboardPage() {
   const { addToast } = useToast();
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("");
@@ -120,6 +122,11 @@ export default function DashboardPage() {
           .eq("user_id", user.id)
           .eq("is_active", true);
         setShopCount(shopsData?.length || 0);
+        // New users with no connected shop go to onboarding
+        if (!shopsData || shopsData.length === 0) {
+          router.push('/onboarding');
+          return;
+        }
         // Also check for pending checkout plan in localStorage
         const pendingPlan = localStorage.getItem("ecompilot_pending_plan");
         const pendingBilling = localStorage.getItem("ecompilot_pending_billing");
