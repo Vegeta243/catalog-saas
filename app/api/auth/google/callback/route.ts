@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 
 export async function GET(request: NextRequest) {
   const reqUrl = new URL(request.url);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `${reqUrl.protocol}//${reqUrl.host}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || `${reqUrl.protocol}//${reqUrl.host}`).replace(/\/$/, '');
 
   const { searchParams } = reqUrl;
   const code = searchParams.get('code');
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
   const callbackUri = `${siteUrl}/api/auth/google/callback`;
 
   // ── Exchange code for Google tokens ──────────────────────────────────────
-  let accessToken: string;
+  let googleAccessToken: string;
   try {
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -50,8 +51,8 @@ export async function GET(request: NextRequest) {
       return fail('google_token');
     }
     const tokenData = await tokenRes.json();
-    accessToken = tokenData.access_token;
-    if (!accessToken) return fail('google_token');
+    googleAccessToken = tokenData.access_token;
+    if (!googleAccessToken) return fail('google_token');
   } catch (e) {
     console.error('[Google OAuth] Token exchange network error:', e);
     return fail('google_token');
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
   let googleAvatar: string;
   try {
     const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${googleAccessToken}` },
     });
     if (!userRes.ok) return fail('google_userinfo');
     const g = await userRes.json();
@@ -80,7 +81,8 @@ export async function GET(request: NextRequest) {
   // ── Supabase admin client ─────────────────────────────────────────────────
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  if (!supabaseUrl || !serviceKey) return fail('google_config');
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  if (!supabaseUrl || !serviceKey || !anonKey) return fail('google_config');
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -127,24 +129,62 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // ── Generate a magic-link to create a session (PKCE-safe) ────────────────
-  // Supabase SSR uses PKCE by default → the magic link verify endpoint
-  // will redirect to redirectTo with a `code` param → /auth/callback handles it.
+  // ── Generate OTP then verify server-side (avoids PKCE requirement) ────────
+  // The old approach was: generateLink → redirect user to magic link →
+  // Supabase redirects to /auth/callback → exchangeCodeForSession (FAILS: no PKCE verifier).
+  // New approach: verify the OTP directly on the server with flowType:'implicit',
+  // get the session tokens, set SSR cookies, redirect straight to dashboard.
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email: googleEmail,
-    options: {
-      redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectAfter)}`,
-    },
   });
 
-  if (linkErr || !linkData?.properties?.action_link) {
+  if (linkErr || !linkData?.properties?.email_otp) {
     console.error('[Google OAuth] generateLink failed:', linkErr);
     return fail('google_session');
   }
 
-  const response = NextResponse.redirect(linkData.properties.action_link);
+  // Verify OTP server-side using implicit flow (no PKCE challenge/verifier needed)
+  const implicitClient = createClient(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false, flowType: 'implicit' },
+  });
+  const { data: otpData, error: otpErr } = await implicitClient.auth.verifyOtp({
+    email: googleEmail,
+    token: linkData.properties.email_otp,
+    type: 'email',
+  });
+
+  if (otpErr || !otpData?.session) {
+    console.error('[Google OAuth] verifyOtp failed:', otpErr);
+    return fail('google_session');
+  }
+
+  // ── Set Supabase SSR cookies and redirect to dashboard ───────────────────
+  const destination = `${siteUrl}${redirectAfter.startsWith('/') ? redirectAfter : '/' + redirectAfter}`;
+  const response = NextResponse.redirect(destination);
   response.cookies.delete('google_oauth_state');
   response.cookies.delete('google_oauth_redirect');
+
+  // Write the session into SSR cookies so middleware + server components work
+  const ssrClient = createServerClient(supabaseUrl, anonKey, {
+    cookies: {
+      getAll() { return []; },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options));
+      },
+    },
+  });
+
+  const { error: setErr } = await ssrClient.auth.setSession({
+    access_token: otpData.session.access_token,
+    refresh_token: otpData.session.refresh_token,
+  });
+
+  if (setErr) {
+    console.error('[Google OAuth] setSession failed:', setErr);
+    return fail('google_session');
+  }
+
   return response;
 }
