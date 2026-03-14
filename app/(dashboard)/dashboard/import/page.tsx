@@ -246,24 +246,6 @@ export default function ImportPage() {
         </div>
       )}
 
-      {aliExpressApiError && (
-        <div className="flex items-start gap-3 p-4 rounded-xl border border-orange-300 mb-4" style={{ backgroundColor: "#fff7ed" }}>
-          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#ea580c" }} />
-          <div className="flex-1">
-            <p className="text-sm font-semibold" style={{ color: "#9a3412" }}>⚙️ Configuration requise — Import AliExpress</p>
-            <p className="text-xs mt-1" style={{ color: "#c2410c" }}>
-              AliExpress bloque les serveurs cloud. Une clé API RapidAPI est nécessaire pour contourner ce blocage.
-            </p>
-            <ol className="mt-2 space-y-0.5 text-xs list-none" style={{ color: "#c2410c" }}>
-              <li>1. Créer un compte gratuit sur <strong>rapidapi.com</strong></li>
-              <li>2. S&apos;abonner à <strong>&quot;AliExpress Datahub&quot;</strong> (offre gratuite disponible)</li>
-              <li>3. Copier la clé API affichée</li>
-              <li>4. L&apos;ajouter dans <strong>Vercel → Settings → Environment Variables</strong> sous le nom <strong>RAPIDAPI_KEY</strong></li>
-            </ol>
-          </div>
-        </div>
-      )}
-
       <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-slate-800 rounded-lg p-1 w-fit">
         <button onClick={() => setActiveTab("url")} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "url" ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white" : "hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300"}`}>
           <Link2 className="w-4 h-4" /> Depuis une URL
@@ -340,10 +322,32 @@ export default function ImportPage() {
                           </span>
                         )}
                         {r.preview && (
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs" style={{ color: "#94a3b8" }}>Fournisseur: {r.preview.supplierPrice.toFixed(2)}€</span>
-                            <span className="text-xs font-semibold" style={{ color: "#059669" }}>Vente: {r.preview.sellingPrice}€</span>
-                            <span className="text-xs" style={{ color: "#64748b" }}>×{r.preview.margin}</span>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            {r.preview.supplierPrice === 0 ? (
+                              <>
+                                <span className="text-xs" style={{ color: "#d97706" }}>Prix fournisseur:</span>
+                                <input
+                                  type="number" step="0.01" min="0" placeholder="0.00"
+                                  className="w-20 px-2 py-0.5 border border-amber-300 rounded text-xs text-center"
+                                  style={{ color: "#0f172a", backgroundColor: "#fffbeb" }}
+                                  onChange={(e) => {
+                                    const price = parseFloat(e.target.value) || 0;
+                                    const m = r.preview!.margin;
+                                    setResults(prev => prev.map((item, i) => i === idx ? {
+                                      ...item,
+                                      preview: { ...item.preview!, supplierPrice: price, sellingPrice: (price * m).toFixed(2) }
+                                    } : item));
+                                  }}
+                                />
+                                <span className="text-xs" style={{ color: "#d97706" }}>€ → Vente: {r.preview.sellingPrice}€</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-xs" style={{ color: "#94a3b8" }}>Fournisseur: {r.preview.supplierPrice.toFixed(2)}€</span>
+                                <span className="text-xs font-semibold" style={{ color: "#059669" }}>Vente: {r.preview.sellingPrice}€</span>
+                                <span className="text-xs" style={{ color: "#64748b" }}>×{r.preview.margin}</span>
+                              </>
+                            )}
                           </div>
                         )}
                         {r.error && <p className="text-xs mt-1" style={{ color: "#dc2626" }}>{r.error}</p>}

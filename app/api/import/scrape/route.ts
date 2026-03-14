@@ -93,8 +93,8 @@ async function scrapeAliExpress(url: string, multiplier: number) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
 
-  // Detect hard blocks early
-  if (/captcha|robot|verify.*human|access.*denied|unusual.*traffic|please.*enable.*javascript/i.test(html.slice(0, 8000))) {
+  // Detect hard blocks early — 'robot' excluded to avoid false-positive on <meta name="robots">
+  if (/captcha|verify[\s_-]?human|access.*denied|unusual.*traffic|security.*check|human.*verification|cloudflare.*ray/i.test(html.slice(0, 8000))) {
     throw new Error("AliExpress a bloqué la requête (CAPTCHA / vérification). Essayez dans quelques instants.");
   }
 
