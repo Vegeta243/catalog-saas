@@ -40,6 +40,12 @@ yarn-error.log*
 
 # vercel
 .vercel
+.env.vercel.tmp
+
+# scripts with hardcoded credentials
+scripts/add-google-redirect-uri*.mjs
+scripts/check-google-session.mjs
+scripts/extract_chrome_cookies*.py
 
 # typescript
 *.tsbuildinfo

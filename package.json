@@ -44,6 +44,7 @@
     "sql.js": "^1.14.1",
     "supabase": "^2.76.17",
     "tailwindcss": "^4.2.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "type": "module"
