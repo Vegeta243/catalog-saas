@@ -30,11 +30,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Choose the correct Referer based on image origin
+    let referer = "https://www.cjdropshipping.com";
+    try {
+      const { hostname } = new URL(imageUrl);
+      if (hostname.includes("alicdn.com") || hostname.includes("aliexpress.com")) {
+        referer = "https://fr.aliexpress.com";
+      }
+    } catch { /* use default referer */ }
+
     const response = await fetch(imageUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        Referer: "https://www.cjdropshipping.com",
+        Referer: referer,
         Accept: "image/webp,image/apng,image/*,*/*;q=0.8",
         "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8",
       },

@@ -85,6 +85,12 @@ export default function ImportPage() {
           return;
         }
 
+        // Handle explicit errors from the API (e.g. AliExpress blocked)
+        if (data.error || data.success === false) {
+          setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: data.error || "Impossible d'importer ce produit" } : r));
+          return;
+        }
+
         setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "preview", preview: data.preview, isDemo: data.demo === true } : r));
       } catch {
         setResults((prev) => prev.map((r, idx) => idx === i ? { ...r, status: "error", error: "Impossible de charger cette URL" } : r));
