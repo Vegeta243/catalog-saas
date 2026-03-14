@@ -63,10 +63,15 @@ function isAliexpressUrl(url: string): boolean {
 }
 
 /**
- * Dedicated AliExpress scraper.
- * AliExpress renders products via JS. The full product data is embedded in the
- * HTML as `window.runParams = {...}` — we extract it with a balanced-brace parser
- * and fall back to direct regex patterns for individual fields.
+ * Dedicated AliExpress scraper — handles both the modern Next.js frontend
+ * (fr.aliexpress.com uses __NEXT_DATA__) and the legacy window.runParams format.
+ *
+ * Extraction order:
+ *  1. __NEXT_DATA__ script tag  (modern AliExpress, ~2024+)
+ *  2. window.runParams balanced-JSON  (legacy layout)
+ *  3. window._dParams balanced-JSON
+ *  4. Direct regex on key JSON fields scattered in page scripts
+ *  5. Cheerio meta/og tags as last resort
  */
 async function scrapeAliExpress(url: string, multiplier: number) {
   const res = await fetch(url, {
@@ -76,10 +81,11 @@ async function scrapeAliExpress(url: string, multiplier: number) {
       "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
       "Accept-Encoding": "gzip, deflate, br",
       "Referer": "https://fr.aliexpress.com/",
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "same-origin",
       "Cache-Control": "no-cache",
-      "Sec-Fetch-Dest": "document",
-      "Sec-Fetch-Mode": "navigate",
-      "Sec-Fetch-Site": "none",
+      "Pragma": "no-cache",
       "Upgrade-Insecure-Requests": "1",
     },
     redirect: "follow",
@@ -87,97 +93,212 @@ async function scrapeAliExpress(url: string, multiplier: number) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const html = await res.text();
 
+  // Detect hard blocks early
+  if (/captcha|robot|verify.*human|access.*denied|unusual.*traffic|please.*enable.*javascript/i.test(html.slice(0, 8000))) {
+    throw new Error("AliExpress a bloqué la requête (CAPTCHA / vérification). Essayez dans quelques instants.");
+  }
+
   let title = "";
   let supplierPrice = 0;
   let imageUrl = "";
   let imageList: string[] = [];
 
-  function toAbsolute(p: string) {
+  function toAbsolute(p: string): string {
+    if (!p || typeof p !== "string") return "";
+    p = p.trim();
     if (p.startsWith("//")) return "https:" + p;
     if (p.startsWith("http")) return p;
-    return "https://" + p;
+    if (p.length > 10) return "https://" + p;
+    return "";
   }
 
-  // ── Strategy 1: window.runParams ─────────────────────────────────
-  const runParams = extractBalancedJson(html, "window.runParams");
-  if (runParams) {
-    type Obj = Record<string, unknown>;
-    const d = (runParams as Obj)?.data as Obj | undefined;
-    if (d) {
-      title = ((d.titleModule as Obj)?.subject as string) || "";
-      const pm = d.priceModule as Obj | undefined;
-      if (pm) {
-        supplierPrice =
-          ((pm.minAmount as Obj)?.value as number) ||
-          ((pm.currentPrice as Obj)?.value as number) ||
-          ((pm.maxAmount as Obj)?.value as number) ||
-          parseFloat(((pm.formatedAmount as string) || "").replace(/[^\d.]/g, "")) ||
-          0;
+  // Navigate a deeply nested object safely
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function dig(obj: any, ...keys: string[]): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return keys.reduce((o: any, k) => (o && typeof o === "object" ? o[k] : undefined), obj);
+  }
+
+  // Try to extract title/price/images from any data object using many known paths
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function extractFromObj(obj: any): { title: string; price: number; images: string[] } {
+    const t =
+      dig(obj, "titleModule", "subject") ||
+      dig(obj, "productInfo", "subject") ||
+      dig(obj, "product", "title") ||
+      dig(obj, "title") ||
+      dig(obj, "name") ||
+      dig(obj, "ae_item_base_info_dto", "subject") ||
+      "";
+
+    const priceModule = dig(obj, "priceModule") || dig(obj, "price") || {};
+    const price =
+      dig(priceModule, "minAmount", "value") ||
+      dig(priceModule, "minActivityAmount", "value") ||
+      dig(priceModule, "currentPrice", "value") ||
+      dig(priceModule, "maxAmount", "value") ||
+      parseFloat((String(priceModule?.formatedAmount || "")).replace(/[^\d.]/g, "")) ||
+      parseFloat((String(dig(obj, "salePrice") || "")).replace(/[^\d.]/g, "")) ||
+      parseFloat((String(dig(obj, "originalPrice") || "")).replace(/[^\d.]/g, "")) ||
+      0;
+
+    const rawImages: string[] =
+      dig(obj, "imageModule", "imagePathList") ||
+      dig(obj, "imagePathList") ||
+      dig(obj, "product", "images") ||
+      dig(obj, "images") ||
+      [];
+
+    return {
+      title: typeof t === "string" ? t : "",
+      price: typeof price === "number" ? price : 0,
+      images: Array.isArray(rawImages) ? rawImages.map(toAbsolute).filter(Boolean) : [],
+    };
+  }
+
+  // ── Strategy 1: __NEXT_DATA__ (modern fr.aliexpress.com / Next.js frontend) ──
+  const nextDataMatch = html.match(/<script[^>]+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (nextDataMatch) {
+    try {
+      const nd = JSON.parse(nextDataMatch[1]);
+      // Multiple known paths in AliExpress Next.js pages
+      const candidates = [
+        dig(nd, "props", "pageProps", "ssrProductData"),
+        dig(nd, "props", "pageProps", "productInfo"),
+        dig(nd, "props", "pageProps", "data"),
+        dig(nd, "props", "pageProps", "initialData"),
+        dig(nd, "props", "pageProps"),
+        dig(nd, "props", "initialState", "productDetail"),
+        dig(nd, "props", "initialState"),
+        nd?.props,
+      ];
+      for (const c of candidates) {
+        if (!c || typeof c !== "object") continue;
+        const ext = extractFromObj(c);
+        // Also recurse one level deeper if this looks like a wrapper
+        const nested = extractFromObj(c?.data || c?.product || c?.detail || {});
+        const best = (ext.title || nested.title) ? (ext.title ? ext : nested) : ext;
+        if (best.title || best.price || best.images.length > 0) {
+          title = title || best.title;
+          supplierPrice = supplierPrice || best.price;
+          if (imageList.length === 0 && best.images.length > 0) {
+            imageList = best.images;
+            imageUrl = imageList[0];
+          }
+          break;
+        }
       }
-      const imgs = ((d.imageModule as Obj)?.imagePathList as string[]) || [];
-      imageList = imgs.map(toAbsolute);
-      imageUrl = imageList[0] || "";
+    } catch { /* __NEXT_DATA__ parse failed — continue */ }
+  }
+
+  // ── Strategy 2: window.runParams balanced-JSON (legacy AliExpress) ───────
+  if (!title && !supplierPrice) {
+    const rp = extractBalancedJson(html, "window.runParams");
+    if (rp) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = (rp as any)?.data || rp;
+      const ext = extractFromObj(d);
+      title = title || ext.title;
+      supplierPrice = supplierPrice || ext.price;
+      if (imageList.length === 0 && ext.images.length > 0) {
+        imageList = ext.images;
+        imageUrl = imageList[0];
+      }
     }
   }
 
-  // ── Strategy 2: _dParams ─────────────────────────────────────────
+  // ── Strategy 3: window._dParams ──────────────────────────────────────────
   if (!title) {
-    const dp = extractBalancedJson(html, "_dParams");
+    const dp = extractBalancedJson(html, "window._dParams") || extractBalancedJson(html, "_dParams");
     if (dp) {
-      type Obj = Record<string, unknown>;
-      title = (((dp as Obj)?.titleModule as Obj)?.subject as string) || "";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = (dp as any)?.data || dp;
+      const ext = extractFromObj(d);
+      title = title || ext.title;
+      supplierPrice = supplierPrice || ext.price;
     }
   }
 
-  // ── Strategy 3: direct regex on known JSON fields ─────────────────
+  // ── Strategy 4: regex on raw HTML script content ──────────────────────────
   if (!title) {
-    const m = html.match(/"subject"\s*:\s*"((?:[^"\\]|\\.)*?)"/);
+    // "subject":"Product name here"
+    const m = html.match(/"subject"\s*:\s*"((?:[^"\\]|\\.){3,200})"/);
     if (m) {
       title = m[1]
         .replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
-        .replace(/\\n/g, " ").replace(/\\r/g, "").replace(/\\t/g, " ").replace(/\\"/g, '"');
+        .replace(/\\n/g, " ").replace(/\\r/g, "").replace(/\\t/g, " ").replace(/\\"/g, '"').trim();
     }
   }
   if (imageList.length === 0) {
+    // imagePathList JSON array
     const m = html.match(/"imagePathList"\s*:\s*\[([^\]]+)\]/);
     if (m) {
-      imageList = m[1].replace(/["\s]/g, "").split(",").filter(Boolean).map(toAbsolute);
+      imageList = m[1].replace(/["\s]/g, "").split(",").filter(Boolean).map(toAbsolute).filter(Boolean);
       imageUrl = imageList[0] || "";
+    }
+    // Fallback — scan for ae*.alicdn.com CDN URLs directly in page scripts
+    if (imageList.length === 0) {
+      const hits = [...html.matchAll(/https?:\/\/ae\d+\.alicdn\.com\/kf\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%\-]+?(?=["'\\])/g)]
+        .map(m => m[0].split("_")[0] + ".jpg"); // strip size suffix
+      if (hits.length > 0) {
+        imageList = [...new Set(hits)].slice(0, 10);
+        imageUrl = imageList[0];
+      }
     }
   }
   if (supplierPrice === 0) {
-    const m1 = html.match(/"minAmount"\s*:\s*\{[^}]*?"value"\s*:\s*([\d.]+)/);
-    if (m1) supplierPrice = parseFloat(m1[1]) || 0;
-  }
-  if (supplierPrice === 0) {
-    const m2 = html.match(/"currentPrice"\s*:\s*\{[^}]*?"value"\s*:\s*([\d.]+)/);
-    if (m2) supplierPrice = parseFloat(m2[1]) || 0;
+    const patterns = [
+      /"minAmount"\s*:\s*\{[^}]*?"value"\s*:\s*([\d.]+)/,
+      /"minActivityAmount"\s*:\s*\{[^}]*?"value"\s*:\s*([\d.]+)/,
+      /"currentPrice"\s*:\s*\{[^}]*?"value"\s*:\s*([\d.]+)/,
+      /"salePrice"\s*:\s*"([\d.]+)"/,
+      /"originalPrice"\s*:\s*"([\d.]+)"/,
+      /"prices"\s*:\s*\{"min"\s*:\s*"([\d.]+)"/,
+    ];
+    for (const pat of patterns) {
+      const m = html.match(pat);
+      if (m) { supplierPrice = parseFloat(m[1]) || 0; if (supplierPrice) break; }
+    }
   }
 
-  // ── Strategy 4: HTML meta tags via cheerio ────────────────────────
-  if (!title || !imageUrl) {
+  // ── Strategy 5: cheerio meta / og tags ───────────────────────────────────
+  if (!title || !imageUrl || supplierPrice === 0) {
     const $ = cheerio.load(html);
     if (!title) {
       title =
-        $("meta[property=\"og:title\"]").attr("content") ||
-        $("h1[data-pl=\"product-title\"]").text().trim() ||
+        $("meta[property='og:title']").attr("content") ||
+        $("meta[name='title']").attr("content") ||
+        $("h1[data-pl='product-title']").text().trim() ||
+        $("[class*='title--']").first().text().trim() ||
         $("h1").first().text().trim() ||
         "";
     }
-    if (!imageUrl) imageUrl = $("meta[property=\"og:image\"]").attr("content") || "";
+    if (!imageUrl) {
+      imageUrl =
+        $("meta[property='og:image']").attr("content") ||
+        $("meta[property='og:image:secure_url']").attr("content") ||
+        "";
+    }
     if (supplierPrice === 0) {
-      const mp = $("meta[property=\"product:price:amount\"]").attr("content");
+      const mp =
+        $("meta[property='product:price:amount']").attr("content") ||
+        $("[itemprop='price']").attr("content");
       if (mp) supplierPrice = parseFloat(mp) || 0;
     }
   }
 
-  // Clean up title
+  // Clean title
   title = title
-    .replace(/\\n|\\r/g, " ").replace(/\s+/g, " ")
+    .replace(/\\[nrt]/g, " ").replace(/\s+/g, " ")
     .replace(/\s*[-|]?\s*AliExpress.*$/i, "").trim();
 
   if (!title && supplierPrice === 0 && !imageUrl) {
-    throw new Error("Données introuvables — AliExpress bloque peut-être la requête depuis notre serveur. Essayez une autre URL ou réessayez dans quelques instants.");
+    // Log a snippet for debugging (server-side only)
+    console.error("[AliExpress scraper] No data found. HTML snippet:", html.slice(0, 500));
+    throw new Error(
+      "Données introuvables — AliExpress bloque la requête depuis notre serveur. " +
+      "Réessayez dans quelques instants ou utilisez une autre URL."
+    );
   }
 
   return {
