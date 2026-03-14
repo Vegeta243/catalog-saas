@@ -5,7 +5,7 @@ import {
   Search, RefreshCw, Download, Upload, ChevronLeft, ChevronRight, Package,
   CheckSquare, Square, ImageOff, ArrowUpDown, DollarSign,
   X, Copy, Archive, CheckCircle2, Tag, Type, FileText, Sparkles,
-  AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3, LayoutList, Save, Trash2,
+  AlertTriangle, Wand2, TrendingUp, Loader2, Eye, BarChart3, LayoutList, Save,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import Link from "next/link";
@@ -158,9 +158,6 @@ export default function ProductsPage() {
   const [descCommonMode, setDescCommonMode] = useState<"prepend" | "append" | "remove">("append");
   const itemsPerPage = compactMode ? 50 : 25;
   const inlineSaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  /* Per-product AI meta field generation */
-  const [aiMetaLoading, setAiMetaLoading] = useState<Record<string, boolean>>({});
-  const [aiMetaFeedback, setAiMetaFeedback] = useState<Record<string, string>>({});
 
   /* ──────── Fetch ──────── */
   const fetchProducts = useCallback(async (showRefresh = false) => {
@@ -709,22 +706,10 @@ export default function ProductsPage() {
           const found = data.metaTitles.find((m: { id: string; metaTitle: string }) => m.id === p.id);
           return found ? { ...p, metaTitle: found.metaTitle } : p;
         }));
-        // Auto-save all generated meta titles to Shopify
-        if (!data.demo) {
-          await Promise.all(
-            data.metaTitles.map((m: { id: string; metaTitle: string }) =>
-              fetch("/api/shopify/bulk-update", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productIds: [m.id], updates: { metaTitle: m.metaTitle } }),
-              }).catch(() => { /* non-blocking */ })
-            )
-          );
-        }
         addToast(
           data.demo
             ? `[DEMO] ${data.metaTitles.length} meta titres simulés`
-            : `${data.metaTitles.length} meta titres générés et sauvegardés ✅`,
+            : `${data.metaTitles.length} meta titres générés — sauvegardez sur Shopify avec le bouton "SEO"`,
           "success"
         );
       }
@@ -755,22 +740,10 @@ export default function ProductsPage() {
           const found = data.metaDescriptions.find((m: { id: string; metaDescription: string }) => m.id === p.id);
           return found ? { ...p, metaDescription: found.metaDescription } : p;
         }));
-        // Auto-save all generated meta descriptions to Shopify
-        if (!data.demo) {
-          await Promise.all(
-            data.metaDescriptions.map((m: { id: string; metaDescription: string }) =>
-              fetch("/api/shopify/bulk-update", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productIds: [m.id], updates: { metaDescription: m.metaDescription } }),
-              }).catch(() => { /* non-blocking */ })
-            )
-          );
-        }
         addToast(
           data.demo
             ? `[DEMO] ${data.metaDescriptions.length} meta descriptions simulées`
-            : `${data.metaDescriptions.length} meta descriptions générées et sauvegardées ✅`,
+            : `${data.metaDescriptions.length} meta descriptions générées`,
           "success"
         );
       }
@@ -850,97 +823,6 @@ export default function ProductsPage() {
       addToast("Suggestion IA générée", "success");
     } catch { addToast("Erreur IA — réessayez", "error"); }
     finally { setActionLoading(null); }
-  };
-
-  const handleAiMetaField = async (product: Product, type: 'title' | 'desc') => {
-    const key = `${product.id}:${type}`;
-    setAiMetaLoading((prev) => ({ ...prev, [key]: true }));
-    try {
-      const res = await fetch(`/api/products/${product.id}/generate-seo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          title: product.title,
-          description: product.body_html,
-          price: product.price,
-          product_type: product.product_type,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      const { generated, demo } = await res.json();
-      const field = type === "title" ? "metaTitle" : "metaDescription";
-      updateProductField(product.id, field as keyof Product, generated);
-      const max = type === "title" ? 60 : 160;
-      setAiMetaFeedback((prev) => ({ ...prev, [key]: demo ? `[DEMO] ${generated.length}/${max}` : `✨ ${generated.length}/${max} ✅` }));
-      setTimeout(() => setAiMetaFeedback((prev) => { const n = { ...prev }; delete n[key]; return n; }), 4000);
-    } catch {
-      addToast("Erreur génération IA meta — réessayez", "error");
-    } finally {
-      setAiMetaLoading((prev) => { const n = { ...prev }; delete n[key]; return n; });
-    }
-  };
-
-  const handleDeleteProduct = (product: Product) => {
-    setConfirmModal({
-      open: true,
-      title: "Supprimer ce produit",
-      message: `Supprimer "${product.title.slice(0, 50)}${product.title.length > 50 ? "…" : ""}" ?\n\nCette action supprimera le produit d'EcomPilot ET de votre boutique Shopify.\n⚠️ Cette action est irréversible.`,
-      action: async () => {
-        setActionLoading(`del-${product.id}`);
-        try {
-          const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
-          if (!res.ok) throw new Error();
-          setProducts((prev) => prev.filter((p) => p.id !== product.id));
-          setSelectedProducts((prev) => prev.filter((id) => id !== product.id));
-          addToast(`"${product.title.slice(0, 30)}…" supprimé ✅`, "success");
-        } catch {
-          addToast("Erreur lors de la suppression — réessayez", "error");
-        } finally {
-          setActionLoading(null);
-        }
-      },
-    });
-  };
-
-  const handleBulkDelete = () => {
-    if (selectedProducts.length === 0) return;
-    const names = selectedProducts
-      .slice(0, 5)
-      .map((id) => products.find((p) => p.id === id)?.title.slice(0, 40) || id)
-      .map((t) => `• ${t}${t.length >= 40 ? "…" : ""}`)
-      .join("\n");
-    const extra = selectedProducts.length > 5 ? `\n• … et ${selectedProducts.length - 5} autres` : "";
-    setConfirmModal({
-      open: true,
-      title: `Supprimer ${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""}`,
-      message: `${names}${extra}\n\nCes produits seront supprimés d'EcomPilot ET de votre boutique Shopify.\n⚠️ Irréversible.`,
-      action: async () => {
-        setActionLoading("bulk-delete");
-        const ids = [...selectedProducts];
-        try {
-          const res = await fetch("/api/products/bulk", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ids }),
-          });
-          const data = res.ok ? await res.json() : { deleted: 0, errors: ids.length };
-          setProducts((prev) => prev.filter((p) => !ids.includes(p.id)));
-          setSelectedProducts([]);
-          setActiveAction(null);
-          addToast(
-            data.errors > 0
-              ? `${data.deleted} supprimé${data.deleted > 1 ? "s" : ""}, ${data.errors} erreur${data.errors > 1 ? "s" : ""}`
-              : `${data.deleted} produit${data.deleted > 1 ? "s" : ""} supprimé${data.deleted > 1 ? "s" : ""} ✅`,
-            data.errors > 0 ? "error" : "success"
-          );
-        } catch {
-          addToast("Erreur lors de la suppression — réessayez", "error");
-        } finally {
-          setActionLoading(null);
-        }
-      },
-    });
   };
 
   /* ──────── Export CSV ──────── */
@@ -1329,15 +1211,6 @@ export default function ProductsPage() {
                 <span style={{ color: "#6d28d9" }}>IA Meta Desc</span>
               </button>
               <div className="w-px h-6 bg-blue-200 mx-1" />
-              <button onClick={handleBulkDelete} disabled={actionLoading === "bulk-delete"}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg text-xs font-medium hover:bg-red-100 disabled:opacity-50"
-                title={`Supprimer définitivement ${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} de Shopify`}>
-                {actionLoading === "bulk-delete"
-                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#dc2626" }} />
-                  : <Trash2 className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />}
-                <span style={{ color: "#b91c1c" }}>Supprimer {selectedProducts.length}</span>
-              </button>
-              <div className="w-px h-6 bg-blue-200 mx-1" />
               <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver ${selectedProducts.length} produit${selectedProducts.length > 1 ? "s" : ""} ?`, action: () => handleBulkStatus("archived") })}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100"
                 title="Archive les produits (retirés de la vitrine)">
@@ -1645,70 +1518,42 @@ export default function ProductsPage() {
                       </td>
                       {/* Meta title inline cell */}
                       <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden md:table-cell`}>
-                        <div className="flex items-start gap-1">
-                          <div className="relative flex-1">
-                            <input
-                              value={product.metaTitle || ""}
-                              onChange={(e) => { updateProductField(product.id, "metaTitle", e.target.value); debouncedSaveInline(product.id, "metaTitle", e.target.value); }}
-                              maxLength={70}
-                              className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
-                              placeholder="Meta titre SEO…"
-                              style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "140px" }}
-                            />
-                            <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
-                              (product.metaTitle?.length || 0) > 60 ? "text-red-500" :
-                              (product.metaTitle?.length || 0) > 50 ? "text-orange-500" : "text-gray-400"
-                            }`}>
-                              {product.metaTitle?.length || 0}/60
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleAiMetaField(product, "title")}
-                            disabled={!!aiMetaLoading[`${product.id}:title`]}
-                            className="flex-shrink-0 p-1.5 rounded-lg hover:bg-violet-50 disabled:opacity-50 mt-0.5"
-                            title="Générer le meta titre avec l'IA">
-                            {aiMetaLoading[`${product.id}:title`]
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#8b5cf6" }} />
-                              : <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />}
-                          </button>
+                        <div className="relative">
+                          <input
+                            value={product.metaTitle || ""}
+                            onChange={(e) => { updateProductField(product.id, "metaTitle", e.target.value); debouncedSaveInline(product.id, "metaTitle", e.target.value); }}
+                            maxLength={70}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                            placeholder="Meta titre SEO…"
+                            style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "160px" }}
+                          />
+                          <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
+                            (product.metaTitle?.length || 0) > 60 ? "text-red-500" :
+                            (product.metaTitle?.length || 0) > 50 ? "text-orange-500" : "text-gray-400"
+                          }`}>
+                            {product.metaTitle?.length || 0}/60
+                          </span>
                         </div>
-                        {aiMetaFeedback[`${product.id}:title`] && (
-                          <p className="text-[10px] mt-0.5 font-medium" style={{ color: "#059669" }}>{aiMetaFeedback[`${product.id}:title`]}</p>
-                        )}
                       </td>
                       {/* Meta description inline cell */}
                       <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-2"} hidden md:table-cell`}>
-                        <div className="flex items-start gap-1">
-                          <div className="relative flex-1">
-                            <textarea
-                              value={product.metaDescription || ""}
-                              onChange={(e) => { updateProductField(product.id, "metaDescription", e.target.value); debouncedSaveInline(product.id, "metaDescription", e.target.value); }}
-                              maxLength={170}
-                              rows={2}
-                              className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
-                              placeholder="Meta description SEO…"
-                              style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "180px" }}
-                            />
-                            <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
-                              (product.metaDescription?.length || 0) > 160 ? "text-red-500" :
-                              (product.metaDescription?.length || 0) > 140 ? "text-orange-500" : "text-gray-400"
-                            }`}>
-                              {product.metaDescription?.length || 0}/160
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleAiMetaField(product, "desc")}
-                            disabled={!!aiMetaLoading[`${product.id}:desc`]}
-                            className="flex-shrink-0 p-1.5 rounded-lg hover:bg-violet-50 disabled:opacity-50 mt-0.5"
-                            title="Générer la meta description avec l'IA">
-                            {aiMetaLoading[`${product.id}:desc`]
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#8b5cf6" }} />
-                              : <Sparkles className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />}
-                          </button>
+                        <div className="relative">
+                          <textarea
+                            value={product.metaDescription || ""}
+                            onChange={(e) => { updateProductField(product.id, "metaDescription", e.target.value); debouncedSaveInline(product.id, "metaDescription", e.target.value); }}
+                            maxLength={170}
+                            rows={2}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                            placeholder="Meta description SEO…"
+                            style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "200px" }}
+                          />
+                          <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
+                            (product.metaDescription?.length || 0) > 160 ? "text-red-500" :
+                            (product.metaDescription?.length || 0) > 140 ? "text-orange-500" : "text-gray-400"
+                          }`}>
+                            {product.metaDescription?.length || 0}/160
+                          </span>
                         </div>
-                        {aiMetaFeedback[`${product.id}:desc`] && (
-                          <p className="text-[10px] mt-0.5 font-medium" style={{ color: "#059669" }}>{aiMetaFeedback[`${product.id}:desc`]}</p>
-                        )}
                       </td>
                       <td className={`px-3 md:px-4 ${compactMode ? "py-1" : "py-3"}`}>
                         <div className="flex items-center justify-end gap-1">
@@ -1727,17 +1572,8 @@ export default function ProductsPage() {
                             <Save className="w-4 h-4" style={{ color: "#059669" }} />
                           </button>
                           <button onClick={() => setConfirmModal({ open: true, title: "Archiver", message: `Archiver "${product.title}" ?`, action: () => handleBulkStatus("archived") })}
-                            className="p-1.5 hover:bg-orange-50 rounded-lg" title="Archiver">
-                            <Archive className="w-4 h-4" style={{ color: "#d97706" }} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(product)}
-                            disabled={actionLoading === `del-${product.id}`}
-                            className="p-1.5 hover:bg-red-50 rounded-lg disabled:opacity-50"
-                            title="Supprimer définitivement de Shopify">
-                            {actionLoading === `del-${product.id}`
-                              ? <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#dc2626" }} />
-                              : <Trash2 className="w-4 h-4" style={{ color: "#dc2626" }} />}
+                            className="p-1.5 hover:bg-red-50 rounded-lg" title="Archiver">
+                            <Archive className="w-4 h-4" style={{ color: "#ef4444" }} />
                           </button>
                         </div>
                       </td>
