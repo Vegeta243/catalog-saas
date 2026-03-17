@@ -63,41 +63,14 @@ function isAliexpressUrl(url: string): boolean {
 }
 
 /**
- * Dedicated AliExpress scraper — handles both the modern Next.js frontend
- * (fr.aliexpress.com uses __NEXT_DATA__) and the legacy window.runParams format.
- *
- * Extraction order:
- *  1. __NEXT_DATA__ script tag  (modern AliExpress, ~2024+)
- *  2. window.runParams balanced-JSON  (legacy layout)
- *  3. window._dParams balanced-JSON
- *  4. Direct regex on key JSON fields scattered in page scripts
- *  5. Cheerio meta/og tags as last resort
+ * Parse AliExpress HTML using 5 progressive strategies.
+ * Used by both the ScrapingBee and direct-fetch code paths.
+ * Returns null if no useful data was found.
  */
-async function scrapeAliExpress(url: string, multiplier: number) {
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-      "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-      "Accept-Encoding": "gzip, deflate, br",
-      "Referer": "https://fr.aliexpress.com/",
-      "sec-fetch-dest": "document",
-      "sec-fetch-mode": "navigate",
-      "sec-fetch-site": "same-origin",
-      "Cache-Control": "no-cache",
-      "Pragma": "no-cache",
-      "Upgrade-Insecure-Requests": "1",
-    },
-    redirect: "follow",
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const html = await res.text();
-
-  // Detect hard blocks early — 'robot' excluded to avoid false-positive on <meta name="robots">
-  if (/captcha|verify[\s_-]?human|access.*denied|unusual.*traffic|security.*check|human.*verification|cloudflare.*ray/i.test(html.slice(0, 8000))) {
-    throw new Error("AliExpress a bloqué la requête (CAPTCHA / vérification). Essayez dans quelques instants.");
-  }
-
+function parseAliExpressHtml(html: string, multiplier: number): {
+  title: string; description: string; imageUrl: string;
+  supplierPrice: number; sellingPrice: string; margin: number;
+} | null {
   let title = "";
   let supplierPrice = 0;
   let imageUrl = "";
@@ -112,14 +85,12 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     return "";
   }
 
-  // Navigate a deeply nested object safely
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function dig(obj: any, ...keys: string[]): any {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return keys.reduce((o: any, k) => (o && typeof o === "object" ? o[k] : undefined), obj);
   }
 
-  // Try to extract title/price/images from any data object using many known paths
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function extractFromObj(obj: any): { title: string; price: number; images: string[] } {
     const t =
@@ -130,7 +101,6 @@ async function scrapeAliExpress(url: string, multiplier: number) {
       dig(obj, "name") ||
       dig(obj, "ae_item_base_info_dto", "subject") ||
       "";
-
     const priceModule = dig(obj, "priceModule") || dig(obj, "price") || {};
     const price =
       dig(priceModule, "minAmount", "value") ||
@@ -141,14 +111,12 @@ async function scrapeAliExpress(url: string, multiplier: number) {
       parseFloat((String(dig(obj, "salePrice") || "")).replace(/[^\d.]/g, "")) ||
       parseFloat((String(dig(obj, "originalPrice") || "")).replace(/[^\d.]/g, "")) ||
       0;
-
     const rawImages: string[] =
       dig(obj, "imageModule", "imagePathList") ||
       dig(obj, "imagePathList") ||
       dig(obj, "product", "images") ||
       dig(obj, "images") ||
       [];
-
     return {
       title: typeof t === "string" ? t : "",
       price: typeof price === "number" ? price : 0,
@@ -156,12 +124,11 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     };
   }
 
-  // ── Strategy 1: __NEXT_DATA__ (modern fr.aliexpress.com / Next.js frontend) ──
+  // ── Strategy 1: __NEXT_DATA__ ────────────────────────────────────────────
   const nextDataMatch = html.match(/<script[^>]+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
   if (nextDataMatch) {
     try {
       const nd = JSON.parse(nextDataMatch[1]);
-      // Multiple known paths in AliExpress Next.js pages
       const candidates = [
         dig(nd, "props", "pageProps", "ssrProductData"),
         dig(nd, "props", "pageProps", "productInfo"),
@@ -175,7 +142,6 @@ async function scrapeAliExpress(url: string, multiplier: number) {
       for (const c of candidates) {
         if (!c || typeof c !== "object") continue;
         const ext = extractFromObj(c);
-        // Also recurse one level deeper if this looks like a wrapper
         const nested = extractFromObj(c?.data || c?.product || c?.detail || {});
         const best = (ext.title || nested.title) ? (ext.title ? ext : nested) : ext;
         if (best.title || best.price || best.images.length > 0) {
@@ -188,10 +154,10 @@ async function scrapeAliExpress(url: string, multiplier: number) {
           break;
         }
       }
-    } catch { /* __NEXT_DATA__ parse failed — continue */ }
+    } catch { /* continue */ }
   }
 
-  // ── Strategy 2: window.runParams balanced-JSON (legacy AliExpress) ───────
+  // ── Strategy 2: window.runParams ─────────────────────────────────────────
   if (!title && !supplierPrice) {
     const rp = extractBalancedJson(html, "window.runParams");
     if (rp) {
@@ -219,9 +185,8 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     }
   }
 
-  // ── Strategy 4: regex on raw HTML script content ──────────────────────────
+  // ── Strategy 4: regex on raw HTML scripts ────────────────────────────────
   if (!title) {
-    // "subject":"Product name here"
     const m = html.match(/"subject"\s*:\s*"((?:[^"\\]|\\.){3,200})"/);
     if (m) {
       title = m[1]
@@ -230,16 +195,14 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     }
   }
   if (imageList.length === 0) {
-    // imagePathList JSON array
     const m = html.match(/"imagePathList"\s*:\s*\[([^\]]+)\]/);
     if (m) {
       imageList = m[1].replace(/["\s]/g, "").split(",").filter(Boolean).map(toAbsolute).filter(Boolean);
       imageUrl = imageList[0] || "";
     }
-    // Fallback — scan for ae*.alicdn.com CDN URLs directly in page scripts
     if (imageList.length === 0) {
       const hits = [...html.matchAll(/https?:\/\/ae\d+\.alicdn\.com\/kf\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%\-]+?(?=["'\\])/g)]
-        .map(m => m[0].split("_")[0] + ".jpg"); // strip size suffix
+        .map(m => m[0].split("_")[0] + ".jpg");
       if (hits.length > 0) {
         imageList = [...new Set(hits)].slice(0, 10);
         imageUrl = imageList[0];
@@ -261,7 +224,7 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     }
   }
 
-  // ── Strategy 5: cheerio meta / og tags ───────────────────────────────────
+  // ── Strategy 5: Cheerio og: / meta tags ──────────────────────────────────
   if (!title || !imageUrl || supplierPrice === 0) {
     const $ = cheerio.load(html);
     if (!title) {
@@ -292,14 +255,7 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     .replace(/\\[nrt]/g, " ").replace(/\s+/g, " ")
     .replace(/\s*[-|]?\s*AliExpress.*$/i, "").trim();
 
-  if (!title && supplierPrice === 0 && !imageUrl) {
-    // Log a snippet for debugging (server-side only)
-    console.error("[AliExpress scraper] No data found. HTML snippet:", html.slice(0, 500));
-    throw new Error(
-      "Données introuvables — AliExpress bloque la requête depuis notre serveur. " +
-      "Réessayez dans quelques instants ou utilisez une autre URL."
-    );
-  }
+  if (!title && !imageUrl) return null;
 
   return {
     title: (title || "Produit AliExpress").substring(0, 200),
@@ -309,6 +265,111 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     sellingPrice: (supplierPrice * multiplier).toFixed(2),
     margin: multiplier,
   };
+}
+
+/**
+ * AliExpress scraper — three methods in priority order:
+ *  1. RapidAPI AliExpress Datahub  (full data including price)
+ *  2. ScrapingBee                  (JS-rendered, full data)
+ *  3. Direct fetch + HTML parsing  (title + images; price = 0, entered by user)
+ *
+ * Throws "ALIEXPRESS_API_REQUIRED" only when all three methods yield nothing.
+ */
+async function scrapeAliExpress(url: string, multiplier: number) {
+  const productId = url.match(/\/item\/(\d+)/)?.[1];
+  if (!productId) throw new Error("URL AliExpress invalide — ID produit introuvable.");
+
+  // ── Method 1: RapidAPI AliExpress Datahub ────────────────────────────────
+  const rapidApiKey = process.env.RAPIDAPI_KEY || process.env.ALIEXPRESS_API_KEY;
+  if (rapidApiKey) {
+    try {
+      const res = await fetch(
+        `https://aliexpress-datahub.p.rapidapi.com/item_detail_3?itemId=${productId}&currency=EUR&locale=fr_FR`,
+        {
+          headers: {
+            "X-RapidAPI-Key": rapidApiKey,
+            "X-RapidAPI-Host": "aliexpress-datahub.p.rapidapi.com",
+          },
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const item = data.result?.item;
+        if (item?.title) {
+          const price =
+            parseFloat(item.sku?.def?.promotionPrice || item.sku?.def?.price || "0") || 0;
+          const images: string[] = Array.isArray(item.images)
+            ? item.images.slice(0, 10).map((u: unknown) => String(u))
+            : [];
+          return {
+            title: String(item.title).substring(0, 200),
+            description: String(item.description || ""),
+            imageUrl: images[0] || "",
+            supplierPrice: price,
+            sellingPrice: (price * multiplier).toFixed(2),
+            margin: multiplier,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[AliExpress] RapidAPI failed:", e);
+    }
+  }
+
+  // ── Method 2: ScrapingBee ─────────────────────────────────────────────────
+  if (process.env.SCRAPINGBEE_KEY) {
+    try {
+      const sbRes = await fetch(
+        `https://app.scrapingbee.com/api/v1/?` +
+          `api_key=${encodeURIComponent(process.env.SCRAPINGBEE_KEY)}` +
+          `&url=${encodeURIComponent(url)}` +
+          `&render_js=true` +
+          `&premium_proxy=true`,
+        { signal: AbortSignal.timeout(25000) }
+      );
+      if (sbRes.ok) {
+        const html = await sbRes.text();
+        const result = parseAliExpressHtml(html, multiplier);
+        if (result) return result;
+      }
+    } catch (e) {
+      console.error("[AliExpress] ScrapingBee failed:", e);
+    }
+  }
+
+  // ── Method 3: Direct fetch (reliable for title + images; price may be 0) ─
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://fr.aliexpress.com/",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "same-origin",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Upgrade-Insecure-Requests": "1",
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(20000),
+    });
+    if (res.ok) {
+      const html = await res.text();
+      // Skip if Cloudflare/CAPTCHA wall detected ('robot' excluded — false-positive on <meta name="robots">)
+      if (!/captcha|verify[\s_-]?human|access.*denied|unusual.*traffic|security.*check|human.*verification|cloudflare.*ray/i.test(html.slice(0, 8000))) {
+        const result = parseAliExpressHtml(html, multiplier);
+        if (result) return result;
+      }
+    }
+  } catch (e) {
+    console.error("[AliExpress] Direct fetch failed:", e);
+  }
+
+  // All methods exhausted — instruct the user to configure an API key
+  throw new Error("ALIEXPRESS_API_REQUIRED");
 }
 
 function resolveImageUrl(src: string, baseUrl: string): string {
