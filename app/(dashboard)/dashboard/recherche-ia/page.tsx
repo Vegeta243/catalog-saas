@@ -28,7 +28,22 @@ const PLATFORM_COLORS: Record<string, string> = {
   Amazon: "#ff9900",
 };
 
-const NICHES = ["Mode", "Tech", "Maison", "Sport", "Beauté", "Enfants", "Animaux", "Autre"];
+const NICHES = [
+  // Mode & Vêtements
+  "Mode femme", "Mode homme", "Vêtements enfants", "Accessoires mode", "Lingerie",
+  // Maison & Déco
+  "Décoration intérieure", "Organisation maison", "Jardinage", "Luminaires",
+  // Tech & Gadgets
+  "Gadgets tech", "Accessoires smartphone", "Informatique", "Jeux vidéo",
+  // Beauté & Santé
+  "Cosmétiques", "Soin cheveux", "Fitness & Sport", "Bien-être",
+  // Animaux
+  "Chiens", "Chats", "Animaux exotiques",
+  // Enfants & Bébé
+  "Jouets enfants", "Bébé & Puériculture",
+  // Autres
+  "Cuisine & Gastronomie", "Voyage & Outdoor", "Voiture & Auto", "Autre",
+];
 const PLATFORMS = ["AliExpress", "CJ", "Temu", "Amazon", "Zendrop", "Alibaba"];
 
 export default function RechercheIAPage() {
@@ -253,7 +268,12 @@ export default function RechercheIAPage() {
                 {/* Image */}
                 <div className="relative aspect-square bg-gray-100">
                   {product.image ? (
-                    <img src={product.image} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={product.platform === "AliExpress" ? `/api/image-proxy?url=${encodeURIComponent(product.image)}` : product.image}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <ShoppingBag className="w-10 h-10" style={{ color: "#cbd5e1" }} />

@@ -3,21 +3,28 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import {
   LayoutDashboard, Users, CreditCard, BarChart3,
-  Shield, Zap, Settings, DollarSign, FileSearch, ScrollText, Scale, LifeBuoy
+  Shield, Zap, Settings, DollarSign, FileSearch, ScrollText, Scale, LifeBuoy,
+  ToggleLeft, Lock, Bot, SlidersHorizontal, Mail, LineChart, Eye,
 } from "lucide-react";
 import { verifyAdminSession } from "@/lib/admin-security";
 
 const adminNav = [
-  { href: "/admin", label: "📊 Vue d'ensemble", icon: LayoutDashboard },
-  { href: "/admin/users", label: "👥 Utilisateurs", icon: Users },
-  { href: "/admin/subscriptions", label: "💳 Abonnements", icon: CreditCard },
-  { href: "/admin/revenue", label: "💰 Revenus", icon: DollarSign },
-  { href: "/admin/stats", label: "📈 Analytics", icon: BarChart3 },
-  { href: "/admin/content-monitoring", label: "🔍 Contenu IA", icon: FileSearch },
-  { href: "/admin/audit", label: "📋 Journal d'audit", icon: ScrollText },
-  { href: "/admin/support", label: "🎫 Support tickets", icon: LifeBuoy },
-  { href: "/admin/legal", label: "⚖️ Conformité légale", icon: Scale },
-  { href: "/admin/system", label: "⚙️ Système", icon: Settings },
+  { href: "/admin",                  label: "📊 Vue d'ensemble",    icon: LayoutDashboard },
+  { href: "/admin/users",            label: "👥 Utilisateurs",      icon: Users },
+  { href: "/admin/subscriptions",    label: "💳 Abonnements",       icon: CreditCard },
+  { href: "/admin/revenue",          label: "💰 Revenus",           icon: DollarSign },
+  { href: "/admin/analytics",        label: "📈 Analytics",         icon: LineChart },
+  { href: "/admin/features",         label: "🚩 Feature Flags",     icon: ToggleLeft },
+  { href: "/admin/security",         label: "🔒 Sécurité",          icon: Lock },
+  { href: "/admin/chatbot",          label: "🤖 Chatbot",           icon: Bot },
+  { href: "/admin/config",           label: "⚙️ Configuration",     icon: SlidersHorizontal },
+  { href: "/admin/emails",           label: "✉️ Emails",            icon: Mail },
+  { href: "/admin/preview",          label: "👁️ Preview Mode",      icon: Eye },
+  { href: "/admin/content-monitoring", label: "🔍 Contenu IA",      icon: FileSearch },
+  { href: "/admin/audit",            label: "📋 Journal d'audit",   icon: ScrollText },
+  { href: "/admin/support",          label: "🎫 Support tickets",   icon: LifeBuoy },
+  { href: "/admin/legal",            label: "⚖️ Conformité légale", icon: Scale },
+  { href: "/admin/system",           label: "🛠️ Système",           icon: Settings },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

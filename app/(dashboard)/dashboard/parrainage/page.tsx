@@ -54,14 +54,14 @@ export default function ParrainagePage() {
 
   const shareWhatsApp = () => {
     if (!stats?.referralUrl) return;
-    const text = `🚀 Essaie CatalogSaaS pour ton dropshipping ! Gère tes produits, imports AliExpress et descriptions IA en 1 clic. Utilise mon lien pour avoir un mois offert → ${stats.referralUrl}`;
+    const text = `🚀 Essaie CatalogSaaS pour ton dropshipping ! Gère tes produits, imports AliExpress et descriptions IA en 1 clic. Utilise mon lien de parrainage → ${stats.referralUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const shareEmail = () => {
     if (!stats?.referralUrl) return;
     const subject = "Essaie ce super outil dropshipping";
-    const body = `Salut,\n\nJe voulais te recommander CatalogSaaS, un outil super pratique pour le dropshipping. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage pour avoir 1 mois offert :\n${stats.referralUrl}\n\nBonne chance !`;
+    const body = `Salut,\n\nJe voulais te recommander CatalogSaaS, un outil super pratique pour le dropshipping. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage :\n${stats.referralUrl}\n\nBonne chance !`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -103,7 +103,7 @@ export default function ParrainagePage() {
           Programme de parrainage
         </h1>
         <p className="text-sm mt-1" style={{ color: "#64748b" }}>
-          Parrainez des amis et gagnez <strong>1 mois offert</strong> pour chaque filleul qui souscrit.
+          Parrainez des amis et obtenez <strong>-20% sur votre facture mensuelle</strong> par filleul converti — cumulable jusqu&apos;à 3 parrainages (<strong>-60% max</strong>).
         </p>
       </div>
 
@@ -112,7 +112,7 @@ export default function ParrainagePage() {
         {[
           { step: 1, icon: "🔗", title: "Partagez votre lien", desc: "Envoyez votre lien unique à vos amis" },
           { step: 2, icon: "✅", title: "Ils s'inscrivent", desc: "Votre filleul crée son compte avec votre lien" },
-          { step: 3, icon: "🎁", title: "Vous gagnez 1 mois", desc: "Dès qu'il souscrit à un forfait payant" },
+          { step: 3, icon: "🎁", title: "Vous gagnez -20%", desc: "Dès qu'il souscrit : -20%/mois sur votre abonnement (cumulable x3)" },
         ].map(({ step, icon, title, desc }) => (
           <div key={step} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <div className="text-2xl mb-2">{icon}</div>
@@ -127,7 +127,7 @@ export default function ParrainagePage() {
         {[
           { label: "Filleuls invités", value: stats?.totalReferred ?? 0, color: "#3b82f6" },
           { label: "Convertis", value: stats?.converted ?? 0, color: "#10b981" },
-          { label: "Mois gagnés", value: stats?.monthsEarned ?? 0, color: "#f59e0b" },
+          { label: "Réduction obtenue", value: `${Math.min((stats?.converted ?? 0) * 20, 60)}%`, color: "#f59e0b" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold" style={{ color }}>{value}</p>
