@@ -14,10 +14,8 @@ import {
   Settings,
   HelpCircle,
   Bell,
-  Search,
   Zap,
   User,
-  Download,
   Sparkles,
   Clock,
   Crown,
@@ -30,7 +28,7 @@ import {
   ListChecks,
   TrendingUp,
   Gift,
-  Wand2,
+  Search,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 import AIChatWidget from '@/components/ai-chat-widget';
@@ -68,14 +66,6 @@ const NAV_SECTIONS = [
     items: [
       { href: '/dashboard/rentabilite', label: 'Rentabilité', icon: TrendingUp },
       { href: '/dashboard/concurrence', label: 'Concurrence', icon: Eye, badge: 'BETA' },
-      { href: '/dashboard/recherche-ia', label: 'Recherche IA', icon: Search, badge: 'Pro+' },
-    ],
-  },
-  {
-    label: "IMPORT",
-    items: [
-      { href: '/dashboard/import', label: 'Import produits', icon: Download },
-      { href: '/dashboard/creation-boutique', label: 'Créer boutique IA', icon: Wand2, badge: 'Scale' },
     ],
   },
 ];

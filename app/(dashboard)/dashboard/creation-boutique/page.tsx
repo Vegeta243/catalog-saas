@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Palette, LayoutGrid, Rocket, CheckCircle2, RefreshCw, Store, Crown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Palette, LayoutGrid, Rocket, CheckCircle2, RefreshCw, Store } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { BetaLockedPage, useBetaAccess } from "@/components/beta-locked-page";
 
 type Step = 1 | 2 | 3;
 
@@ -50,8 +50,9 @@ const HOMEPAGE_SECTIONS = [
 
 export default function CreationBoutiquePage() {
   const { addToast } = useToast();
-  const { allowed, loading: betaLoading } = useBetaAccess();
-  const [plan, setPlan] = useState<string | null>(null);
+  const router = useRouter();
+  const [adminChecking, setAdminChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const [loadingShop, setLoadingShop] = useState(true);
   const [step, setStep] = useState<Step>(1);
@@ -65,22 +66,38 @@ export default function CreationBoutiquePage() {
   });
 
   useEffect(() => {
+    // Admin-only gate
+    fetch('/api/admin/check')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.isAdmin) {
+          router.replace('/dashboard');
+        } else {
+          setIsAdmin(true);
+        }
+      })
+      .catch(() => router.replace('/dashboard'))
+      .finally(() => setAdminChecking(false));
+  }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return; // Wait for admin check
     const init = async () => {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const [userRes, shopRes] = await Promise.all([
-          supabase.from("users").select("plan").eq("id", user.id).single(),
-          supabase.from("shops").select("id, shop_name, shop_domain").eq("user_id", user.id).limit(1),
-        ]);
-        setPlan(userRes.data?.plan || "free");
-        setShop((shopRes.data as Shop[] | null)?.[0] ?? null);
-      } catch { setPlan("free"); }
+        const { data } = await supabase
+          .from("shops")
+          .select("id, shop_name, shop_domain")
+          .eq("user_id", user.id)
+          .limit(1);
+        setShop((data as Shop[] | null)?.[0] ?? null);
+      } catch { /* ignore */ }
       finally { setLoadingShop(false); }
     };
     init();
-  }, []);
+  }, [isAdmin]);
 
   const toggleSection = (id: string) => {
     setConfig(c => ({
@@ -126,7 +143,7 @@ export default function CreationBoutiquePage() {
     }
   };
 
-  if (betaLoading || loadingShop) {
+  if (adminChecking || loadingShop) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "#94a3b8" }} />
@@ -134,43 +151,7 @@ export default function CreationBoutiquePage() {
     );
   }
 
-  if (!allowed) {
-    return (
-      <BetaLockedPage
-        featureName="Créer boutique IA"
-        featureDescription="Notre assistant IA pour créer et personnaliser votre boutique est en bêta privée. Inscrivez-vous pour accéder en avant-première."
-      />
-    );
-  }
-
-  if (plan !== null && !["pro", "scale"].includes(plan || "")) {
-    return (
-      <div className="max-w-2xl mx-auto pt-12 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center mx-auto mb-6">
-          <Crown className="w-10 h-10 text-white" />
-        </div>
-        <h1 className="text-2xl font-bold mb-3" style={{ color: "#0f172a" }}>Design IA de boutique</h1>
-        <p className="text-base mb-6" style={{ color: "#64748b" }}>
-          Disponible à partir du forfait <strong>Pro (89€/mois)</strong>.
-        </p>
-        <div className="bg-white rounded-2xl border border-blue-100 p-6 mb-6 text-left space-y-3">
-          {["L'IA génère du contenu sur-mesure pour votre boutique connectée",
-            "Choix d'ambiance visuelle + palette de couleurs",
-            "Sélection des sections de votre page d'accueil",
-            "Application directe dans votre thème Shopify",
-          ].map((f, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-500" />
-              <span className="text-sm" style={{ color: "#374151" }}>{f}</span>
-            </div>
-          ))}
-        </div>
-        <Link href="/dashboard/credits" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-violet-600 rounded-xl text-sm font-bold text-white shadow-lg hover:shadow-xl transition-shadow">
-          <Crown className="w-4 h-4" /> Passer au forfait Pro
-        </Link>
-      </div>
-    );
-  }
+  if (!isAdmin) return null;
 
   if (!loadingShop && !shop) {
     return (

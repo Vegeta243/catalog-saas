@@ -38,6 +38,23 @@ export default function ImportPage() {
   const [hasShop, setHasShop] = useState<boolean | null>(null);
   const [cjError, setCjError] = useState(false);
   const [aliExpressApiError, setAliExpressApiError] = useState(false);
+  const [adminChecking, setAdminChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Admin-only gate
+  useEffect(() => {
+    fetch('/api/admin/check')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.isAdmin) {
+          router.replace('/dashboard');
+        } else {
+          setIsAdmin(true);
+        }
+      })
+      .catch(() => router.replace('/dashboard'))
+      .finally(() => setAdminChecking(false));
+  }, []);
 
   // Check if user has a connected shop
   useEffect(() => {
@@ -191,6 +208,16 @@ export default function ImportPage() {
 
   const readyCount = results.filter((r) => r.status === "preview").length;
   const doneCount = results.filter((r) => r.status === "done").length;
+
+  if (adminChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   return (
     <div className="max-w-4xl mx-auto">

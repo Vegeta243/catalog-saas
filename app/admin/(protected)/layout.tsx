@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Users, CreditCard, BarChart3,
   Shield, Zap, Settings, DollarSign, FileSearch, ScrollText, Scale, LifeBuoy,
   ToggleLeft, Lock, Bot, SlidersHorizontal, Mail, LineChart, Eye,
+  Search, Download, Wand2,
 } from "lucide-react";
 import { verifyAdminSession } from "@/lib/admin-security";
 
@@ -25,6 +26,12 @@ const adminNav = [
   { href: "/admin/support",          label: "🎫 Support tickets",   icon: LifeBuoy },
   { href: "/admin/legal",            label: "⚖️ Conformité légale", icon: Scale },
   { href: "/admin/system",           label: "🛠️ Système",           icon: Settings },
+];
+
+const ADMIN_FEATURE_LINKS = [
+  { href: "/dashboard/recherche-ia",      label: "Recherche produits IA",   icon: Search },
+  { href: "/dashboard/import",            label: "Import produits",          icon: Download },
+  { href: "/dashboard/creation-boutique", label: "Créer boutique IA",        icon: Wand2 },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -59,6 +66,27 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 style={{ color: "#d6d3d1" }}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#a8a29e" }} />
+                {item.label}
+              </Link>
+            );
+          })}
+
+          {/* 🧪 Fonctionnalités avancées — admin only */}
+          <div className="pt-3 pb-1">
+            <p className="text-[10px] font-semibold uppercase tracking-widest px-3" style={{ color: "#7f1d1d" }}>
+              🧪 Fonctionnalités avancées
+            </p>
+          </div>
+          {ADMIN_FEATURE_LINKS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-red-950/40 transition-colors border border-transparent hover:border-red-900/40"
+                style={{ color: "#fca5a5" }}
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#f87171" }} />
                 {item.label}
               </Link>
             );

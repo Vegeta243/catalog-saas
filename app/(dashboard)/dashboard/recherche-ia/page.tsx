@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search, Sparkles, RefreshCw, ShoppingBag, TrendingUp,
-  Filter, Star, AlertTriangle, ArrowRight, Crown, ChevronDown, ExternalLink,
+  Filter, Star, ArrowRight, ChevronDown, ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
-import Link from "next/link";
-import { BetaLockedPage, useBetaAccess } from "@/components/beta-locked-page";
 
 interface ProductResult {
   title: string;
@@ -50,7 +49,9 @@ const PLATFORMS = ["AliExpress", "CJ", "Temu", "Amazon", "Zendrop", "Alibaba"];
 
 export default function RechercheIAPage() {
   const { addToast } = useToast();
-  const { allowed, loading: betaLoading } = useBetaAccess();
+  const router = useRouter();
+  const [adminChecking, setAdminChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [platform, setPlatform] = useState<string>("AliExpress");
   const [niche, setNiche] = useState<string>("Mode");
   const [minPrice, setMinPrice] = useState("");
@@ -61,6 +62,21 @@ export default function RechercheIAPage() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ProductResult[]>([]);
   const [importingIdx, setImportingIdx] = useState<number | null>(null);
+
+  // Admin-only gate: check session cookie via API
+  useEffect(() => {
+    fetch('/api/admin/check')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.isAdmin) {
+          router.replace('/dashboard');
+        } else {
+          setIsAdmin(true);
+        }
+      })
+      .catch(() => router.replace('/dashboard'))
+      .finally(() => setAdminChecking(false));
+  }, []);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -114,17 +130,11 @@ export default function RechercheIAPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* Beta gate — show loader while checking, block if not admin preview */}
-      {betaLoading ? (
+      {adminChecking ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "#94a3b8" }} />
         </div>
-      ) : !allowed ? (
-        <BetaLockedPage
-          featureName="Recherche IA"
-          featureDescription="Notre moteur de recherche IA pour trouver des produits gagnants est en bêta privée. Inscrivez-vous pour être parmi les premiers à y accéder."
-        />
-      ) : (
+      ) : !isAdmin ? null : (
       <>
       <div className="mb-2">
         <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "#0f172a" }}>
