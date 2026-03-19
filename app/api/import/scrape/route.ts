@@ -268,28 +268,49 @@ function parseAliExpressHtml(html: string, multiplier: number): {
 }
 
 /**
- * AliExpress scraper — 5 methods, NO API KEYS REQUIRED.
- * Works on all valid AliExpress product URLs.
+ * Clean an AliExpress URL: extract productId, strip gatewayAdapt, use www domain.
+ */
+function cleanAliExpressUrl(raw: string): { productId: string; cleanUrl: string } {
+  const idMatch = raw.match(/\/item\/(\d+)/);
+  if (!idMatch) throw new Error("URL AliExpress invalide — ID produit introuvable.");
+  const productId = idMatch[1];
+  return { productId, cleanUrl: `https://www.aliexpress.com/item/${productId}.html` };
+}
+
+/** Check if a response was gateway-redirected (glo2fra, glo2deu, etc.) */
+function isGatewayRedirect(res: Response): boolean {
+  return res.url.includes("gatewayAdapt") || res.url.includes("gateway") || res.redirected && /\/\?.*gateway/i.test(res.url);
+}
+
+/**
+ * AliExpress scraper — gateway-aware, prioritizes www.aliexpress.com.
+ * Tries: RapidAPI → JSON API → www HTML → mobile HTML → alt domains (ru/pt/es).
+ * Never returns placeholder data.
  */
 async function scrapeAliExpress(url: string, multiplier: number) {
-  const productId = url.match(/\/item\/(\d+)/)?.[1];
-  if (!productId) throw new Error("URL AliExpress invalide — ID produit introuvable.");
+  const { productId } = cleanAliExpressUrl(url);
 
-  // Shared mobile headers — mobile pages are simpler and return more JSON
-  const mobileHeaders = {
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-    "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
-    "Accept-Language": "fr-FR,fr;q=0.9",
-    "Referer": "https://fr.aliexpress.com/",
-    "Cache-Control": "no-cache",
+  const desktopHeaders: Record<string, string> = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.aliexpress.com/",
+    "Upgrade-Insecure-Requests": "1",
+    "sec-ch-ua": '"Chromium";v="126", "Not A(Brand";v="8"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-user": "?1",
   };
 
-  const desktopHeaders = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Referer": "https://fr.aliexpress.com/",
-    "Upgrade-Insecure-Requests": "1",
+  const mobileHeaders: Record<string, string> = {
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+    "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.aliexpress.com/",
+    "Cache-Control": "no-cache",
   };
 
   function toResult(t: string, p: number, imgs: string[]) {
@@ -309,12 +330,52 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     };
   }
 
+  /** Try to extract product data from AliExpress HTML (embedded JSON or parseAliExpressHtml) */
+  function tryExtractFromHtml(html: string): ReturnType<typeof toResult> | null {
+    // Skip CAPTCHA/bot walls
+    if (/captcha|verify[\s_-]?human|access.*denied|unusual.*traffic|cloudflare.*ray/i.test(html.slice(0, 5000))) return null;
+
+    // Try embedded JSON patterns
+    for (const pattern of [
+      /window\.runParams\s*=\s*(\{[\s\S]*?\});\s*(?:var |window\.|try\s*\{)/,
+      /"data"\s*:\s*(\{[\s\S]*?"titleModule"[\s\S]*?\})\s*,\s*"commonModule"/,
+      /window\._dParams\s*=\s*(\{[\s\S]*?\});\s*(?:var |window\.|<\/)/,
+    ]) {
+      const match = html.match(pattern);
+      if (match) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const obj: any = JSON.parse(match[1]);
+          const d = obj?.data || obj;
+          const t = d?.titleModule?.subject || d?.title || d?.name || "";
+          const p = parseFloat(d?.priceModule?.minAmount?.value || d?.priceModule?.minActivityAmount?.value || d?.priceModule?.currentPrice?.value || "0") || 0;
+          const imgs: string[] = (d?.imageModule?.imagePathList || d?.imagePathList || [])
+            .slice(0, 10).map((s: string) => s.startsWith("http") ? s : `https://${s.replace(/^\/\//, "")}`);
+          if (t) return toResult(String(t), p, imgs);
+        } catch { /* continue */ }
+      }
+    }
+
+    // Full parseAliExpressHtml fallback
+    const result = parseAliExpressHtml(html, multiplier);
+    if (result) return {
+      title: result.title,
+      description: result.description,
+      imageUrl: result.imageUrl,
+      imageList: result.imageUrl ? [result.imageUrl] : [],
+      supplierPrice: result.supplierPrice,
+      sellingPrice: result.sellingPrice,
+      margin: result.margin,
+    };
+    return null;
+  }
+
   // ── Method 1: RapidAPI (if key provided) ─────────────────────────────────
   const rapidApiKey = process.env.RAPIDAPI_KEY || process.env.ALIEXPRESS_API_KEY;
   if (rapidApiKey) {
     try {
       const res = await fetch(
-        `https://aliexpress-datahub.p.rapidapi.com/item_detail_3?itemId=${productId}&currency=EUR&locale=fr_FR`,
+        `https://aliexpress-datahub.p.rapidapi.com/item_detail_3?itemId=${productId}&currency=EUR&locale=en_US`,
         { headers: { "X-RapidAPI-Key": rapidApiKey, "X-RapidAPI-Host": "aliexpress-datahub.p.rapidapi.com" } }
       );
       if (res.ok) {
@@ -329,111 +390,92 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     } catch { /* fallthrough */ }
   }
 
-  // ── Method 2: Internal JSON endpoint (no key needed) ─────────────────────
+  // ── Method 2: JSON API endpoints (www first, no fr) ──────────────────────
   for (const endpoint of [
-    `https://fr.aliexpress.com/item/${productId}.json`,
     `https://www.aliexpress.com/item/${productId}.json`,
+    `https://aliexpress.com/item/${productId}.json`,
   ]) {
     try {
       const res = await fetch(endpoint, {
-        headers: mobileHeaders,
+        headers: { ...mobileHeaders, "Accept": "application/json,text/html,*/*" },
+        redirect: "manual",
         signal: AbortSignal.timeout(10000),
       });
+      if (isGatewayRedirect(res)) continue;
       if (res.ok) {
         const data = await res.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const d: any = data?.data || data?.result || data;
-        const t =
-          d?.titleModule?.subject || d?.title || d?.name ||
-          d?.ae_item_base_info_dto?.subject || "";
-        const p =
-          parseFloat(d?.priceModule?.minAmount?.value || d?.priceModule?.minActivityAmount?.value ||
-                     d?.priceModule?.currentPrice?.value || "0") || 0;
-        const imgs: string[] =
-          (d?.imageModule?.imagePathList || d?.imagePathList || [])
-            .slice(0, 10)
-            .map((s: string) => s.startsWith("http") ? s : `https://${s.replace(/^\/\//, "")}`);
+        const t = d?.titleModule?.subject || d?.title || d?.name || d?.ae_item_base_info_dto?.subject || "";
+        const p = parseFloat(d?.priceModule?.minAmount?.value || d?.priceModule?.minActivityAmount?.value || d?.priceModule?.currentPrice?.value || "0") || 0;
+        const imgs: string[] = (d?.imageModule?.imagePathList || d?.imagePathList || [])
+          .slice(0, 10).map((s: string) => s.startsWith("http") ? s : `https://${s.replace(/^\/\//, "")}`);
         if (t) return toResult(String(t), p, imgs);
       }
     } catch { /* fallthrough */ }
   }
 
-  // ── Method 3: ScrapingBee (if key provided) ───────────────────────────────
+  // ── Method 3: ScrapingBee (if key provided) ──────────────────────────────
   if (process.env.SCRAPINGBEE_KEY) {
     try {
+      const sbUrl = `https://www.aliexpress.com/item/${productId}.html`;
       const sbRes = await fetch(
-        `https://app.scrapingbee.com/api/v1/?api_key=${encodeURIComponent(process.env.SCRAPINGBEE_KEY)}&url=${encodeURIComponent(url)}&render_js=true&premium_proxy=true`,
+        `https://app.scrapingbee.com/api/v1/?api_key=${encodeURIComponent(process.env.SCRAPINGBEE_KEY)}&url=${encodeURIComponent(sbUrl)}&render_js=true&premium_proxy=true`,
         { signal: AbortSignal.timeout(25000) }
       );
       if (sbRes.ok) {
         const html = await sbRes.text();
-        const result = parseAliExpressHtml(html, multiplier);
+        const result = tryExtractFromHtml(html);
         if (result) return result;
       }
     } catch { /* fallthrough */ }
   }
 
-  // ── Method 4: Mobile HTML page ────────────────────────────────────────────
-  for (const htmlUrl of [
-    `https://m.aliexpress.com/item/${productId}.html`,
-    `https://fr.aliexpress.com/item/${productId}.html`,
+  // ── Method 4: Direct HTML fetch — www + mobile, detect gateway redirect ──
+  const htmlUrls = [
     `https://www.aliexpress.com/item/${productId}.html`,
-  ]) {
+    `https://m.aliexpress.com/item/${productId}.html`,
+  ];
+  for (const htmlUrl of htmlUrls) {
+    const headers = htmlUrl.includes("m.aliexpress") ? mobileHeaders : desktopHeaders;
     try {
       const res = await fetch(htmlUrl, {
-        headers: mobileHeaders,
+        headers,
         redirect: "follow",
         signal: AbortSignal.timeout(20000),
       });
       if (!res.ok) continue;
+      // Detect gateway redirect — skip this URL if redirected
+      if (isGatewayRedirect(res)) continue;
       const html = await res.text();
-      // Skip real CAPTCHA/bot-wall (not <meta name="robots">)
-      if (/captcha|verify[\s_-]?human|access.*denied|unusual.*traffic|cloudflare.*ray/i.test(html.slice(0, 5000))) continue;
-
-      // Try the embedded JSON patterns in order
-      for (const pattern of [
-        /window\.runParams\s*=\s*(\{[\s\S]*?\});\s*(?:var |window\.|try\s*\{)/,
-        /"data"\s*:\s*(\{[\s\S]*?"titleModule"[\s\S]*?\})\s*,\s*"commonModule"/,
-        /window\._dParams\s*=\s*(\{[\s\S]*?\});\s*(?:var |window\.|<\/)/,
-      ]) {
-        const match = html.match(pattern);
-        if (match) {
-          try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const obj: any = JSON.parse(match[1]);
-            const d = obj?.data || obj;
-            const t = d?.titleModule?.subject || d?.title || d?.name || "";
-            const p = parseFloat(d?.priceModule?.minAmount?.value || d?.priceModule?.minActivityAmount?.value || "0") || 0;
-            const imgs: string[] = (d?.imageModule?.imagePathList || [])
-              .slice(0, 10).map((s: string) => s.startsWith("http") ? s : `https://${s.replace(/^\/\//, "")}`);
-            if (t) return toResult(String(t), p, imgs);
-          } catch { /* continue */ }
-        }
-      }
-
-      // Full parseAliExpressHtml fallback
-      const result = parseAliExpressHtml(html, multiplier);
+      const result = tryExtractFromHtml(html);
       if (result) return result;
-    } catch { /* fallthrough to next URL */ }
+    } catch { /* fallthrough */ }
   }
 
-  // ── Method 5: Desktop direct fetch ───────────────────────────────────────
-  try {
-    const res = await fetch(`https://fr.aliexpress.com/item/${productId}.html`, {
-      headers: desktopHeaders,
-      redirect: "follow",
-      signal: AbortSignal.timeout(20000),
-    });
-    if (res.ok) {
+  // ── Method 5: Alternative domains (gateway bypass) ───────────────────────
+  const altDomains = [
+    `https://aliexpress.ru/item/${productId}.html`,
+    `https://pt.aliexpress.com/item/${productId}.html`,
+    `https://es.aliexpress.com/item/${productId}.html`,
+    `https://de.aliexpress.com/item/${productId}.html`,
+  ];
+  for (const altUrl of altDomains) {
+    try {
+      const res = await fetch(altUrl, {
+        headers: { ...desktopHeaders, "Accept-Language": "en-US,en;q=0.9", "Referer": altUrl.split("/item/")[0] + "/" },
+        redirect: "follow",
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) continue;
+      if (isGatewayRedirect(res)) continue;
       const html = await res.text();
-      if (!/captcha|verify[\s_-]?human|cloudflare.*ray/i.test(html.slice(0, 5000))) {
-        const result = parseAliExpressHtml(html, multiplier);
-        if (result) return result;
-      }
-    }
-  } catch { /* last resort */ }
+      const result = tryExtractFromHtml(html);
+      if (result) return result;
+    } catch { /* fallthrough */ }
+  }
 
-  // ── All methods exhausted — return a clear error instead of placeholder data ──
+  // ── All methods exhausted ────────────────────────────────────────────────
   throw new Error("Impossible d'extraire les données de ce produit AliExpress. Toutes les méthodes d'extraction ont échoué. Vérifiez l'URL et réessayez.");
 }
 

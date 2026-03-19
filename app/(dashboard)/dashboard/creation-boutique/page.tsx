@@ -11,7 +11,7 @@ type Step = 1 | 2 | 3;
 
 interface Shop {
   id: string;
-  name: string;
+  shop_name: string;
   shop_domain: string;
 }
 
@@ -56,6 +56,7 @@ export default function CreationBoutiquePage() {
   const [loadingShop, setLoadingShop] = useState(true);
   const [step, setStep] = useState<Step>(1);
   const [applying, setApplying] = useState(false);
+  const [applyStep, setApplyStep] = useState(0);
   const [done, setDone] = useState(false);
   const [config, setConfig] = useState<DesignConfig>({
     ambiance: "minimaliste",
@@ -71,7 +72,7 @@ export default function CreationBoutiquePage() {
         if (!user) return;
         const [userRes, shopRes] = await Promise.all([
           supabase.from("users").select("plan").eq("id", user.id).single(),
-          supabase.from("shops").select("id, name, shop_domain").eq("user_id", user.id).limit(1),
+          supabase.from("shops").select("id, shop_name, shop_domain").eq("user_id", user.id).limit(1),
         ]);
         setPlan(userRes.data?.plan || "free");
         setShop((shopRes.data as Shop[] | null)?.[0] ?? null);
@@ -96,14 +97,22 @@ export default function CreationBoutiquePage() {
       return;
     }
     setApplying(true);
+    setApplyStep(1); // Connexion à Shopify
     try {
+      // Small delay so user sees step 1
+      await new Promise(r => setTimeout(r, 800));
+      setApplyStep(2); // Génération du contenu IA
       const res = await fetch("/api/stores/design-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shopId: shop.id, ...config }),
       });
+      setApplyStep(3); // Application du design
       const data = await res.json();
+      await new Promise(r => setTimeout(r, 600));
       if (res.ok) {
+        setApplyStep(4); // Done
+        await new Promise(r => setTimeout(r, 500));
         setDone(true);
         addToast("Design appliqué avec succès !", "success");
       } else {
@@ -113,6 +122,7 @@ export default function CreationBoutiquePage() {
       addToast("Erreur réseau", "error");
     } finally {
       setApplying(false);
+      setApplyStep(0);
     }
   };
 
@@ -185,7 +195,7 @@ export default function CreationBoutiquePage() {
         </div>
         <h2 className="text-2xl font-bold mb-2" style={{ color: "#0f172a" }}>🎉 Design appliqué !</h2>
         <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-          Votre boutique <strong>{shop?.name}</strong> a été mise à jour avec le design <strong>{config.ambiance}</strong>.
+          Votre boutique <strong>{shop?.shop_name}</strong> a été mise à jour avec le design <strong>{config.ambiance}</strong>.
         </p>
         <a href={`https://${shop?.shop_domain}`} target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm font-bold text-white">
@@ -196,12 +206,40 @@ export default function CreationBoutiquePage() {
   }
 
   if (applying) {
+    const APPLY_STEPS = [
+      { label: "Connexion à Shopify…", icon: "🔗" },
+      { label: "Génération du contenu IA…", icon: "🤖" },
+      { label: "Application du design…", icon: "🎨" },
+      { label: "Design appliqué !", icon: "✅" },
+    ];
     return (
       <div className="max-w-xl mx-auto pt-12">
-        <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center">
-          <RefreshCw className="w-12 h-12 mx-auto mb-4 text-blue-600 animate-spin" />
-          <h2 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>Application du design…</h2>
-          <p className="text-sm" style={{ color: "#64748b" }}>L&apos;IA génère et applique le contenu sur votre boutique</p>
+        <div className="bg-white rounded-2xl border border-gray-200 p-10">
+          <div className="text-center mb-8">
+            <RefreshCw className="w-10 h-10 mx-auto mb-3 text-blue-600 animate-spin" />
+            <h2 className="text-xl font-bold" style={{ color: "#0f172a" }}>Application en cours…</h2>
+          </div>
+          <div className="space-y-3">
+            {APPLY_STEPS.map((s, i) => {
+              const stepNum = i + 1;
+              const isActive = applyStep === stepNum;
+              const isDone = applyStep > stepNum;
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    isActive ? "bg-blue-50 border border-blue-200" : isDone ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-100"
+                  }`}
+                >
+                  <span className="text-lg">{isDone ? "✅" : s.icon}</span>
+                  <span className={`text-sm font-medium ${isActive ? "text-blue-700" : isDone ? "text-emerald-700" : "text-gray-400"}`}>
+                    {s.label}
+                  </span>
+                  {isActive && <RefreshCw className="w-3.5 h-3.5 ml-auto text-blue-500 animate-spin" />}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -217,7 +255,7 @@ export default function CreationBoutiquePage() {
         {shop && (
           <p className="text-sm mt-1 flex items-center gap-1.5" style={{ color: "#64748b" }}>
             <Store className="w-3.5 h-3.5 text-emerald-500" />
-            Boutique : <span className="font-medium text-emerald-600">{shop.name}</span>
+            Boutique : <span className="font-medium text-emerald-600">{shop.shop_name}</span>
           </p>
         )}
       </div>
@@ -349,7 +387,7 @@ export default function CreationBoutiquePage() {
             <div className="rounded-xl border border-gray-200 divide-y divide-gray-100">
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-xs text-gray-500">Boutique</span>
-                <span className="text-xs font-semibold" style={{ color: "#0f172a" }}>{shop?.name} ({shop?.shop_domain})</span>
+                <span className="text-xs font-semibold" style={{ color: "#0f172a" }}>{shop?.shop_name} ({shop?.shop_domain})</span>
               </div>
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-xs text-gray-500">Ambiance</span>

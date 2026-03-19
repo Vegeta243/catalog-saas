@@ -20,6 +20,7 @@ interface ProductResult {
   trendingScore: number;
   competition: "Faible" | "Moyen" | "Élevé";
   rating?: number;
+  orders?: number;
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -276,12 +277,12 @@ export default function RechercheIAPage() {
           <p className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>
             {results.length} produit{results.length > 1 ? "s" : ""} trouvé{results.length > 1 ? "s" : ""}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {results.map((product, idx) => (
-              <div key={idx} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                {/* Image */}
-                <div className="relative aspect-square bg-gray-100 flex items-center justify-center">
-                  <ShoppingBag className="w-10 h-10" style={{ color: "#cbd5e1" }} />
+              <div key={idx} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                {/* Image — large 300px */}
+                <div className="relative bg-gray-100 flex items-center justify-center" style={{ height: 300 }}>
+                  <ShoppingBag className="w-14 h-14" style={{ color: "#cbd5e1" }} />
                   {product.image && (
                     <img
                       src={product.platform === "AliExpress" ? `/api/image-proxy?url=${encodeURIComponent(product.image)}` : product.image}
@@ -291,73 +292,85 @@ export default function RechercheIAPage() {
                     />
                   )}
                   <span
-                    className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                    className="absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full text-white"
                     style={{ backgroundColor: PLATFORM_COLORS[product.platform] || "#64748b" }}
                   >
                     {product.platform}
                   </span>
-                  <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-white/90 rounded-full px-1.5 py-0.5">
-                    <TrendingUp className="w-2.5 h-2.5 text-orange-500" />
-                    <span className="text-[10px] font-bold text-orange-500">{product.trendingScore}/10</span>
+                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
+                    <TrendingUp className="w-3 h-3 text-orange-500" />
+                    <span className="text-xs font-bold text-orange-500">{product.trendingScore}/10</span>
                   </div>
                 </div>
 
-                <div className="p-3">
-                  <p className="text-xs font-medium line-clamp-2 mb-2" style={{ color: "#0f172a" }}>
+                <div className="p-4 flex flex-col flex-1">
+                  {/* Title */}
+                  <p className="text-sm font-semibold line-clamp-2 mb-3" style={{ color: "#0f172a" }}>
                     {product.title}
                   </p>
 
-                  <div className="space-y-1 mb-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px]" style={{ color: "#94a3b8" }}>Fournisseur</span>
-                      <span className="text-xs font-medium" style={{ color: "#374151" }}>{product.supplierPrice.toFixed(2)}€</span>
+                  {/* Pricing grid — 3 columns */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="bg-gray-50 rounded-lg p-2.5 text-center">
+                      <span className="block text-[10px] font-medium mb-0.5" style={{ color: "#94a3b8" }}>Fournisseur</span>
+                      <span className="text-sm font-bold" style={{ color: "#374151" }}>{product.supplierPrice.toFixed(2)}€</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px]" style={{ color: "#94a3b8" }}>Vente</span>
-                      <span className="text-xs font-bold" style={{ color: "#059669" }}>{product.salePrice.toFixed(2)}€</span>
+                    <div className="bg-emerald-50 rounded-lg p-2.5 text-center">
+                      <span className="block text-[10px] font-medium mb-0.5" style={{ color: "#94a3b8" }}>Vente</span>
+                      <span className="text-sm font-bold" style={{ color: "#059669" }}>{product.salePrice.toFixed(2)}€</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px]" style={{ color: "#94a3b8" }}>Marge</span>
-                      <span className="text-xs font-bold text-blue-600">×{product.margin}</span>
+                    <div className="bg-blue-50 rounded-lg p-2.5 text-center">
+                      <span className="block text-[10px] font-medium mb-0.5" style={{ color: "#94a3b8" }}>Marge</span>
+                      <span className="text-sm font-bold text-blue-600">×{product.margin}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                  {/* Stats row: rating, orders, competition */}
+                  <div className="flex items-center gap-3 mb-4 text-xs" style={{ color: "#64748b" }}>
+                    {product.rating && (
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span className="font-medium">{product.rating}</span>
+                      </span>
+                    )}
+                    {(product.orders !== undefined && product.orders > 0) && (
+                      <span className="flex items-center gap-1">
+                        <ShoppingBag className="w-3 h-3" />
+                        <span>{product.orders.toLocaleString("fr-FR")} ventes</span>
+                      </span>
+                    )}
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                       product.competition === "Faible" ? "bg-emerald-50 text-emerald-700" :
                       product.competition === "Moyen" ? "bg-amber-50 text-amber-700" :
                       "bg-red-50 text-red-600"
                     }`}>
-                      Concurrence {product.competition}
+                      {product.competition}
                     </span>
-                    {product.rating && (
-                      <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "#f59e0b" }}>
-                        <Star className="w-2.5 h-2.5 fill-current" />
-                        {product.rating}
-                      </span>
-                    )}
                   </div>
 
-                  <button
-                    onClick={() => handleImport(product, idx)}
-                    disabled={importingIdx === idx}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg text-xs font-semibold text-white transition-colors"
-                  >
-                    {importingIdx === idx ? <RefreshCw className="w-3 h-3 animate-spin" /> : <ArrowRight className="w-3 h-3" />}
-                    {importingIdx === idx ? "Import…" : "Importer"}
-                  </button>
-                  {product.url && (
-                    <a
-                      href={product.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-1 mt-1.5 py-1.5 text-[10px] font-medium rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
-                      style={{ color: "#64748b" }}
+                  {/* Buttons — pushed to bottom */}
+                  <div className="mt-auto flex gap-2">
+                    {product.url && (
+                      <a
+                        href={product.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                        style={{ color: "#374151" }}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Voir le produit
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleImport(product, idx)}
+                      disabled={importingIdx === idx}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg text-xs font-semibold text-white transition-colors"
                     >
-                      <ExternalLink className="w-3 h-3" />
-                      Voir sur {product.platform}
-                    </a>
-                  )}
+                      {importingIdx === idx ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                      {importingIdx === idx ? "Import…" : "Importer"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

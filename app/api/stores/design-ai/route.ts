@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     // Fetch the shop
     const { data: shop } = await supabase
       .from("shops")
-      .select("id, name, shop_domain, access_token")
+      .select("id, shop_name, shop_domain, access_token")
       .eq("id", shopId)
       .eq("user_id", user.id)
       .single();
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       };
 
       const prompt = `Tu es un copywriter expert en e-commerce pour boutique Shopify française.
-Boutique : "${shop.name}" — ambiance : ${ambiance} (${ambianceDescriptions[ambiance] || ambiance}).
+Boutique : "${shop.shop_name}" — ambiance : ${ambiance} (${ambianceDescriptions[ambiance] || ambiance}).
 Couleur principale : ${primaryColor}.
 Sections à inclure : ${sectionsList}.
 
@@ -92,35 +92,96 @@ Réponds uniquement avec le JSON valide, rien d'autre.`;
     const shopifyToken = shop.access_token || process.env.SHOPIFY_ADMIN_TOKEN;
     if (shopifyToken && shop.shop_domain) {
       try {
-        const themesRes = await fetch(
-          `https://${shop.shop_domain}/admin/api/2024-01/themes.json?role=main`,
-          { headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" } }
-        );
+        const apiBase = `https://${shop.shop_domain}/admin/api/2024-01`;
+        const shopifyHeaders = { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" };
+
+        const themesRes = await fetch(`${apiBase}/themes.json?role=main`, { headers: shopifyHeaders });
         if (themesRes.ok) {
           const themesData = await themesRes.json();
           const mainTheme = themesData.themes?.[0];
           if (mainTheme?.id) {
-            // Update theme settings (colors) via assets
-            const settingsPayload = {
-              asset: {
-                key: "config/settings_data.json",
-                value: JSON.stringify({
-                  current: {
-                    colors_accent_1: primaryColor,
-                    colors_accent_2: primaryColor,
-                  },
-                  presets: {},
-                }),
-              },
-            };
-            await fetch(
-              `https://${shop.shop_domain}/admin/api/2024-01/themes/${mainTheme.id}/assets.json`,
-              {
-                method: "PUT",
-                headers: { "X-Shopify-Access-Token": shopifyToken, "Content-Type": "application/json" },
-                body: JSON.stringify(settingsPayload),
+            const themeBase = `${apiBase}/themes/${mainTheme.id}/assets.json`;
+
+            // 1. READ existing settings_data.json, MERGE new colors
+            try {
+              const existingRes = await fetch(
+                `${themeBase}?asset[key]=config/settings_data.json`,
+                { headers: shopifyHeaders }
+              );
+              if (existingRes.ok) {
+                const existingData = await existingRes.json();
+                const existingValue = existingData?.asset?.value;
+                let settings: Record<string, unknown> = {};
+                try { settings = JSON.parse(existingValue); } catch { /* start fresh if corrupt */ }
+                // Merge colors into current section
+                const current = (settings.current && typeof settings.current === "object")
+                  ? settings.current as Record<string, unknown>
+                  : {};
+                current.colors_accent_1 = primaryColor;
+                current.colors_accent_2 = primaryColor;
+                settings.current = current;
+
+                await fetch(themeBase, {
+                  method: "PUT",
+                  headers: shopifyHeaders,
+                  body: JSON.stringify({
+                    asset: {
+                      key: "config/settings_data.json",
+                      value: JSON.stringify(settings),
+                    },
+                  }),
+                });
               }
-            );
+            } catch { /* settings update is best-effort */ }
+
+            // 2. Update homepage template with hero content if available
+            if (generatedContent.hero_title && sections.includes("hero")) {
+              try {
+                // Read existing index template
+                const indexRes = await fetch(
+                  `${themeBase}?asset[key]=templates/index.json`,
+                  { headers: shopifyHeaders }
+                );
+                let indexTemplate: Record<string, unknown> = {};
+                if (indexRes.ok) {
+                  const indexData = await indexRes.json();
+                  try { indexTemplate = JSON.parse(indexData?.asset?.value || "{}"); } catch { /* start fresh */ }
+                }
+                // Ensure sections object exists
+                const tmplSections = (indexTemplate.sections && typeof indexTemplate.sections === "object")
+                  ? indexTemplate.sections as Record<string, unknown>
+                  : {};
+                // Add/update hero section
+                tmplSections["hero"] = {
+                  type: "image-banner",
+                  settings: {
+                    heading: generatedContent.hero_title || "",
+                    subheading: generatedContent.hero_subtitle || "",
+                    button_label: generatedContent.hero_cta || "Découvrir",
+                    color_scheme: "accent-1",
+                  },
+                };
+                indexTemplate.sections = tmplSections;
+                // Ensure order includes hero
+                const order = Array.isArray(indexTemplate.order)
+                  ? indexTemplate.order as string[]
+                  : Object.keys(tmplSections);
+                if (!order.includes("hero")) order.unshift("hero");
+                indexTemplate.order = order;
+
+                await fetch(themeBase, {
+                  method: "PUT",
+                  headers: shopifyHeaders,
+                  body: JSON.stringify({
+                    asset: {
+                      key: "templates/index.json",
+                      value: JSON.stringify(indexTemplate),
+                    },
+                  }),
+                });
+              } catch { /* template update is best-effort */ }
+            }
+
             themeApplied = true;
           }
         }
@@ -129,7 +190,7 @@ Réponds uniquement avec le JSON valide, rien d'autre.`;
 
     return NextResponse.json({
       success: true,
-      shop: { name: shop.name, domain: shop.shop_domain },
+      shop: { name: shop.shop_name, domain: shop.shop_domain },
       ambiance,
       primaryColor,
       sections,

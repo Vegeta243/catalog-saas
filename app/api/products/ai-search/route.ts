@@ -62,7 +62,7 @@ function buildDemoProducts(niche: string, platform: string, minMargin: number, m
       ...p,
       image: "",
       platform,
-      url: `https://fr.aliexpress.com/wholesale?SearchText=${encodeURIComponent(p.title.replace(/\s+/g, "+"))}`,
+      url: `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(p.title.replace(/\s+/g, "+"))}`,
       trendingScore: Math.floor(Math.random() * 4) + 6,
       competition: competition[i % 3],
       rating: (3.8 + Math.random() * 1.1).toFixed(1),
@@ -71,19 +71,21 @@ function buildDemoProducts(niche: string, platform: string, minMargin: number, m
 
 /** Try to scrape real AliExpress search results. Returns [] on any error. */
 async function scrapeAliExpressSearch(query: string, maxPrice: number): Promise<object[]> {
-  const searchUrl = `https://fr.aliexpress.com/wholesale?SearchText=${encodeURIComponent(query)}&currency=EUR&shipCountry=FR&sortType=total_tranpro_desc`;
+  const searchUrl = `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(query)}&currency=EUR&sortType=total_tranpro_desc`;
   try {
     const res = await fetch(searchUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
         "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
-        "Accept-Language": "fr-FR,fr;q=0.9",
-        "Referer": "https://fr.aliexpress.com/",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.aliexpress.com/",
       },
       redirect: "follow",
       signal: AbortSignal.timeout(18000),
     });
     if (!res.ok) return [];
+    // Detect gateway redirect
+    if (res.url.includes("gatewayAdapt") || res.url.includes("gateway")) return [];
     const html = await res.text();
     if (/captcha|verify[\s_-]?human|cloudflare.*ray/i.test(html.slice(0, 5000))) return [];
 
@@ -109,7 +111,9 @@ async function scrapeAliExpressSearch(query: string, maxPrice: number): Promise<
               const imgPath = item?.image?.imgUrl || item?.mainImageUrl || "";
               const img = imgPath ? (imgPath.startsWith("http") ? imgPath : `https:${imgPath}`) : "";
               const productId = item?.productId || item?.itemId || "";
-              const url = productId ? `https://fr.aliexpress.com/item/${productId}.html` : searchUrl;
+              const url = productId ? `https://www.aliexpress.com/item/${productId}.html` : searchUrl;
+              const orders = parseInt(String(item?.trade?.tradeDesc || item?.orders || "0").replace(/[^\d]/g, ""), 10) || 0;
+              const ratingVal = parseFloat(String(item?.evaluation?.starRating || item?.starRating || "0")) || 0;
               if (title && price > 0 && price <= maxPrice) {
                 products.push({
                   title: String(title).substring(0, 100),
@@ -121,7 +125,8 @@ async function scrapeAliExpressSearch(query: string, maxPrice: number): Promise<
                   url,
                   trendingScore: Math.floor(Math.random() * 4) + 6,
                   competition: (["Faible", "Moyen", "Élevé"] as const)[Math.floor(Math.random() * 3)],
-                  rating: (3.8 + Math.random() * 1.1).toFixed(1),
+                  rating: ratingVal > 0 ? ratingVal.toFixed(1) : (3.8 + Math.random() * 1.1).toFixed(1),
+                  orders,
                 });
               }
             }
@@ -142,7 +147,7 @@ async function scrapeAliExpressSearch(query: string, maxPrice: number): Promise<
       const imgSrc = $el.find("img").first().attr("src") || $el.find("img").first().attr("data-src") || "";
       const img = imgSrc ? (imgSrc.startsWith("//") ? `https:${imgSrc}` : imgSrc) : "";
       const href = $el.attr("href") || $el.find("a[href*='/item/']").first().attr("href") || "";
-      const url = href.startsWith("http") ? href : `https://fr.aliexpress.com${href}`;
+      const url = href.startsWith("http") ? href : `https://www.aliexpress.com${href}`;
       if (title.length > 5 && price > 0 && price <= maxPrice) {
         products.push({
           title: title.substring(0, 100),
@@ -155,6 +160,7 @@ async function scrapeAliExpressSearch(query: string, maxPrice: number): Promise<
           trendingScore: Math.floor(Math.random() * 4) + 6,
           competition: (["Faible", "Moyen", "Élevé"] as const)[Math.floor(Math.random() * 3)],
           rating: (3.8 + Math.random() * 1.1).toFixed(1),
+          orders: 0,
         });
       }
     });
