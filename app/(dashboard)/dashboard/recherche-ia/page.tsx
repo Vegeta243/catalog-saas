@@ -266,18 +266,15 @@ export default function RechercheIAPage() {
             {results.map((product, idx) => (
               <div key={idx} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                 {/* Image */}
-                <div className="relative aspect-square bg-gray-100">
-                  {product.image ? (
+                <div className="relative aspect-square bg-gray-100 flex items-center justify-center">
+                  <ShoppingBag className="w-10 h-10" style={{ color: "#cbd5e1" }} />
+                  {product.image && (
                     <img
                       src={product.platform === "AliExpress" ? `/api/image-proxy?url=${encodeURIComponent(product.image)}` : product.image}
                       alt={product.title}
-                      className="w-full h-full object-cover"
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ShoppingBag className="w-10 h-10" style={{ color: "#cbd5e1" }} />
-                    </div>
                   )}
                   <span
                     className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white"

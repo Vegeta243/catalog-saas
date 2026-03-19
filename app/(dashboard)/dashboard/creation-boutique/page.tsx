@@ -69,10 +69,10 @@ export default function CreationBoutiquePage() {
         if (!user) return;
         const [userRes, shopRes] = await Promise.all([
           supabase.from("users").select("plan").eq("id", user.id).single(),
-          supabase.from("shops").select("id,name,shop_domain").eq("user_id", user.id).limit(1).single(),
+          supabase.from("shops").select("id, name, shop_domain").eq("user_id", user.id).limit(1),
         ]);
         setPlan(userRes.data?.plan || "free");
-        setShop(shopRes.data || null);
+        setShop((shopRes.data as Shop[] | null)?.[0] ?? null);
       } catch { setPlan("free"); }
       finally { setLoadingShop(false); }
     };

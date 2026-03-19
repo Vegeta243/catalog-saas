@@ -79,7 +79,7 @@ const NAV_SECTIONS = [
 ];
 
 const BOTTOM_ITEMS = [
-  { href: '/dashboard/parrainage', label: 'Parrainer → 1 mois offert', icon: Gift },
+  { href: '/dashboard/parrainage', label: 'Parrainer → -20% par mois', icon: Gift },
   { href: '/dashboard/account', label: 'Mon compte', icon: User },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
   { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle },
@@ -206,7 +206,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {NAV_SECTIONS.map((section) => (
               <div key={section.label}>
                 {!sidebarCollapsed && (
-                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-3" style={{ color: '#475569' }}>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-3" style={{ color: '#94a3b8' }}>
                     {section.label}
                   </p>
                 )}
@@ -254,7 +254,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Bottom nav separator */}
           {!sidebarCollapsed && (
             <div className="px-4 pt-5 pb-1">
-              <p className="text-[10px] font-semibold uppercase tracking-widest px-3" style={{ color: '#475569' }}>COMPTE</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest px-3" style={{ color: '#94a3b8' }}>COMPTE</p>
             </div>
           )}
           <nav className={`${sidebarCollapsed ? 'px-2 pt-2' : 'px-3 pt-1'} space-y-0.5`}>
