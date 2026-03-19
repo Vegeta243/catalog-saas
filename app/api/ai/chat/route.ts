@@ -16,7 +16,7 @@ const chatSchema = z.object({
   tasksTotal: z.number().int().min(0).optional(),
 });
 
-const SYSTEM_PROMPT = `Tu es l'assistant IA d'EcomPilot, un SaaS e-commerce qui aide les marchands Shopify à optimiser leur catalogue produits. Tu répondras en français, de façon concise, clear et utile.
+const SYSTEM_PROMPT = `Tu es l'assistant IA d'EcomPilot, un SaaS e-commerce qui aide les marchands Shopify à optimiser leur catalogue produits. Tu répondras en français, de façon concise, claire et utile.
 
 Fonctionnalités disponibles dans EcomPilot :
 - **Modifier en masse** : modifier prix, tags, statuts, titres de plusieurs produits en une fois
@@ -25,9 +25,17 @@ Fonctionnalités disponibles dans EcomPilot :
 - **Automatisations** : créer des règles automatiques (baisse de prix, alerte stock, archivage)
 - **Calendrier** : planifier des actions marketing
 - **Rentabilité** : calculer marges et profits
-- **Concurrence** : suivre les concurrents
+- **Concurrence (BETA)** : suivre les concurrents et leurs prix
+- **Recherche IA (Pro+)** : trouver des produits gagnants avec l'IA sur AliExpress, CJ, Temu, Amazon
+- **Création boutique IA (Scale)** : créer une boutique Shopify complète automatiquement
+- **Parrainage** : inviter des amis et gagner 1 mois offert par filleul converti
 
-Sois toujours précis, encourage l'utilisateur à explorer les fonctionnalités et réponds aux questions techniques comme à un expert e-commerce.`;
+Recommandations d'upgrade selon le plan :
+- Free (30 tâches/mois) → Starter (19€, 1000 tâches)
+- Starter → Pro (49€, 20000 tâches, 10 boutiques)
+- Pro → Scale (129€, 100000 tâches, boutiques illimitées + création boutique IA)
+
+Sois toujours précis, encourage l'utilisateur à explorer les fonctionnalités et réponds aux questions techniques comme un expert e-commerce et dropshipping.`;
 
 // Normalize: remove accents, lowercase — so "tâche"="tache", "règle"="regle", etc.
 function normalize(s: string): string {
@@ -174,7 +182,32 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
-  const { messages, currentPage, plan, tasksRemaining, tasksTotal } = parsed.data;
+  const { messages, currentPage } = parsed.data;
+  let { plan, tasksRemaining, tasksTotal } = parsed.data;
+
+  // Fetch fresh user context from DB for a richer, accurate system prompt
+  try {
+    const [{ data: userData }, { data: shopData }, { count: productCount }] = await Promise.all([
+      supabase.from("users").select("plan, actions_used, actions_limit").eq("id", user.id).single(),
+      supabase.from("shops").select("name").eq("user_id", user.id).limit(1).single(),
+      supabase.from("import_history").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    ]);
+    if (userData) {
+      plan = userData.plan || plan || "free";
+      const used = userData.actions_used || 0;
+      const limit = userData.actions_limit || 30;
+      tasksTotal = limit;
+      tasksRemaining = Math.max(0, limit - used);
+    }
+    const shopName = shopData?.name;
+    const products = productCount ?? 0;
+    // Attach these to local vars for contextNote below
+    (parsed.data as { _shopName?: string })._shopName = shopName || undefined;
+    (parsed.data as { _products?: number })._products = products;
+  } catch { /* non-blocking */ }
+
+  const shopName = (parsed.data as { _shopName?: string })._shopName;
+  const productCount2 = (parsed.data as { _products?: number })._products;
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.startsWith("sk-DEMO") || apiKey.startsWith("sk-test")) {
@@ -183,9 +216,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: demoReply, demo: true });
   }
 
-  const contextNote = currentPage
-    ? `\n\nContexte : L'utilisateur se trouve sur la page "${currentPage}". Son plan actuel est "${plan || "free"}" avec ${tasksRemaining ?? "?"} tâches restantes sur ${tasksTotal ?? "?"} ce mois.`
-    : "";
+  const planStr = plan || "free";
+  const remainStr = tasksRemaining !== undefined ? `${tasksRemaining}/${tasksTotal}` : "inconnu";
+  const shopStr = shopName ? `Boutique principale : "${shopName}". ` : "";
+  const productsStr = productCount2 !== undefined ? `Produits importés : ${productCount2}. ` : "";
+  const pageStr = currentPage ? `Page courante : "${currentPage}". ` : "";
+  const contextNote = `\n\nContexte utilisateur : Plan "${planStr}", tâches restantes ce mois : ${remainStr}. ${shopStr}${productsStr}${pageStr}Utilisez ces informations pour personnaliser vos réponses.`;
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

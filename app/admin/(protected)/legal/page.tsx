@@ -44,11 +44,12 @@ export default async function AdminLegalPage() {
             { ok: true,  label: 'Emails transactionnels via Resend (no-reply@ecompilotelite.com)' },
             { ok: true,  label: 'Hébergeur identifié — Vercel Inc., 340 Pine Street, San Francisco' },
             { ok: true,  label: 'CGU accessibles (/cgu)' },
+            { ok: true,  label: 'CGV accessibles (/cgv) — tarifs, paiement, rétractation 14j' },
+            { ok: true,  label: 'Emails jetables bloqués à l\'inscription (blocked_email_domains)' },
             { ok: false, label: 'SIRET à renseigner dans /mentions-legales → [À COMPLÉTER]' },
             { ok: false, label: 'Capital social à renseigner dans /mentions-legales → [À COMPLÉTER]' },
             { ok: false, label: 'RCS à renseigner dans /mentions-legales → [À COMPLÉTER]' },
             { ok: false, label: 'DPO désigné — contact DPO à renseigner dans /politique-confidentialite' },
-            { ok: false, label: 'Bandeau cookies + consentement explicite (à implémenter)' },
             { ok: false, label: 'Registre des traitements (RGPD Art. 30) — à documenter' },
           ].map((item, i) => (
             <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${item.ok ? 'bg-green-50' : 'bg-red-50'}`}>

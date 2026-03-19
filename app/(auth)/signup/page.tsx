@@ -35,20 +35,34 @@ function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") || "free";
+  const refCode = searchParams.get("ref") || "";
   const planInfo = PLAN_LABELS[plan];
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     if (password !== confirmPassword) { setError("Les mots de passe ne correspondent pas."); return; }
-    if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caract�res."); return; }
+    if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caract\u00e8res."); return; }
     setLoading(true);
     try {
+      // Server-side email domain validation (blocks disposable emails + rate limits)
+      const validationRes = await fetch("/api/auth/validate-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const validation = await validationRes.json();
+      if (!validation.valid) {
+        setError(validation.reason || "Email invalide.");
+        setLoading(false);
+        return;
+      }
+
       const supabase = createClient();
       const { error: authError } = await supabase.auth.signUp({
         email, password,
         options: {
-          data: { first_name: firstName, plan: plan || "free" },
+          data: { first_name: firstName, plan: plan || "free", referred_by: refCode || undefined },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });

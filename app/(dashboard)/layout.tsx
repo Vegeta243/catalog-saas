@@ -29,6 +29,8 @@ import {
   Eye,
   ListChecks,
   TrendingUp,
+  Gift,
+  Wand2,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 import AIChatWidget from '@/components/ai-chat-widget';
@@ -63,18 +65,21 @@ const NAV_SECTIONS = [
     label: "ANALYSE",
     items: [
       { href: '/dashboard/rentabilite', label: 'Rentabilité', icon: TrendingUp },
-      { href: '/dashboard/concurrence', label: 'Concurrence', icon: Eye },
+      { href: '/dashboard/concurrence', label: 'Concurrence', icon: Eye, badge: 'BETA' },
+      { href: '/dashboard/recherche-ia', label: 'Recherche IA', icon: Search, badge: 'Pro+' },
     ],
   },
   {
     label: "IMPORT",
     items: [
       { href: '/dashboard/import', label: 'Import produits', icon: Download },
+      { href: '/dashboard/creation-boutique', label: 'Créer boutique IA', icon: Wand2, badge: 'Scale' },
     ],
   },
 ];
 
 const BOTTOM_ITEMS = [
+  { href: '/dashboard/parrainage', label: 'Parrainer → 1 mois offert', icon: Gift },
   { href: '/dashboard/account', label: 'Mon compte', icon: User },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
   { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle },
@@ -227,9 +232,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         {!sidebarCollapsed && (
                           <>
                             <span style={{ color: active ? '#f1f5f9' : '#cbd5e1' }}>{item.label}</span>
-                            {item.href === '/dashboard/concurrence' && (
-                              <span className="ml-auto text-[10px] bg-blue-900 text-blue-300 px-1.5 py-0.5 rounded font-semibold">
-                                Bientôt
+                            {'badge' in item && item.badge && (
+                              <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                                item.badge === 'BETA' ? 'bg-purple-900/60 text-purple-300' :
+                                item.badge === 'Scale' ? 'bg-amber-900/60 text-amber-300' :
+                                'bg-blue-900/60 text-blue-300'
+                              }`}>
+                                {item.badge}
                               </span>
                             )}
                           </>

@@ -211,6 +211,7 @@ export default function PricingPage() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-4">
           <div className="flex items-center gap-6 text-xs" style={{ color: "#94a3b8" }}>
             <Link href="/cgu" className="hover:underline">CGU</Link>
+            <Link href="/cgv" className="hover:underline">CGV</Link>
             <Link href="/politique-confidentialite" className="hover:underline">Confidentialité</Link>
             <Link href="/mentions-legales" className="hover:underline">Mentions légales</Link>
           </div>

@@ -628,6 +628,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-6 text-sm" style={{ color: "#64748b" }}>
               <Link href="/cgu" className="hover:text-blue-600 transition-colors">CGU</Link>
+              <Link href="/cgv" className="hover:text-blue-600 transition-colors">CGV</Link>
               <Link href="/politique-confidentialite" className="hover:text-blue-600 transition-colors">Confidentialité</Link>
               <Link href="/mentions-legales" className="hover:text-blue-600 transition-colors">Mentions légales</Link>
               <a href="mailto:contact@ecompilot.fr" className="hover:text-blue-600 transition-colors">Contact</a>
