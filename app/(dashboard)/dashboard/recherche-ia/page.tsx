@@ -3,10 +3,11 @@
 import { useState } from "react";
 import {
   Search, Sparkles, RefreshCw, ShoppingBag, TrendingUp,
-  Filter, Star, AlertTriangle, ArrowRight, Crown, ChevronDown,
+  Filter, Star, AlertTriangle, ArrowRight, Crown, ChevronDown, ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import Link from "next/link";
+import { BetaLockedPage, useBetaAccess } from "@/components/beta-locked-page";
 
 interface ProductResult {
   title: string;
@@ -48,6 +49,7 @@ const PLATFORMS = ["AliExpress", "CJ", "Temu", "Amazon", "Zendrop", "Alibaba"];
 
 export default function RechercheIAPage() {
   const { addToast } = useToast();
+  const { allowed, loading: betaLoading } = useBetaAccess();
   const [platform, setPlatform] = useState<string>("AliExpress");
   const [niche, setNiche] = useState<string>("Mode");
   const [minPrice, setMinPrice] = useState("");
@@ -111,6 +113,18 @@ export default function RechercheIAPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {/* Beta gate — show loader while checking, block if not admin preview */}
+      {betaLoading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "#94a3b8" }} />
+        </div>
+      ) : !allowed ? (
+        <BetaLockedPage
+          featureName="Recherche IA"
+          featureDescription="Notre moteur de recherche IA pour trouver des produits gagnants est en bêta privée. Inscrivez-vous pour être parmi les premiers à y accéder."
+        />
+      ) : (
+      <>
       <div className="mb-2">
         <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "#0f172a" }}>
           <Search className="w-6 h-6 text-blue-600" />
@@ -332,6 +346,18 @@ export default function RechercheIAPage() {
                     {importingIdx === idx ? <RefreshCw className="w-3 h-3 animate-spin" /> : <ArrowRight className="w-3 h-3" />}
                     {importingIdx === idx ? "Import…" : "Importer"}
                   </button>
+                  {product.url && (
+                    <a
+                      href={product.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-1 mt-1.5 py-1.5 text-[10px] font-medium rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+                      style={{ color: "#64748b" }}
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Voir sur {product.platform}
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
@@ -349,6 +375,8 @@ export default function RechercheIAPage() {
             L&apos;IA analyse les plateformes et sélectionne les produits les plus rentables pour vous
           </p>
         </div>
+      )}
+      </>
       )}
     </div>
   );

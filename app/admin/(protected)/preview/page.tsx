@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ExternalLink, AlertTriangle } from "lucide-react";
 
 const PLANS = ["free", "starter", "pro", "scale"] as const;
 
 export default function PreviewModePage() {
+  const router = useRouter();
   const [activePlan, setActivePlan] = useState<string | null>(null);
   const [selected, setSelected] = useState<string>("pro");
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,11 @@ export default function PreviewModePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ plan: selected }),
     });
-    if (r.ok) setActivePlan(selected);
+    if (r.ok) {
+      setActivePlan(selected);
+      // Redirect to dashboard so the admin can immediately see the preview
+      router.push("/dashboard");
+    }
     setLoading(false);
   }
 

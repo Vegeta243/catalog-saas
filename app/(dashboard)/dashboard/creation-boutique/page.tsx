@@ -5,6 +5,7 @@ import { Sparkles, Palette, LayoutGrid, Rocket, CheckCircle2, RefreshCw, Store, 
 import { useToast } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { BetaLockedPage, useBetaAccess } from "@/components/beta-locked-page";
 
 type Step = 1 | 2 | 3;
 
@@ -49,6 +50,7 @@ const HOMEPAGE_SECTIONS = [
 
 export default function CreationBoutiquePage() {
   const { addToast } = useToast();
+  const { allowed, loading: betaLoading } = useBetaAccess();
   const [plan, setPlan] = useState<string | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
   const [loadingShop, setLoadingShop] = useState(true);
@@ -113,6 +115,23 @@ export default function CreationBoutiquePage() {
       setApplying(false);
     }
   };
+
+  if (betaLoading || loadingShop) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "#94a3b8" }} />
+      </div>
+    );
+  }
+
+  if (!allowed) {
+    return (
+      <BetaLockedPage
+        featureName="Créer boutique IA"
+        featureDescription="Notre assistant IA pour créer et personnaliser votre boutique est en bêta privée. Inscrivez-vous pour accéder en avant-première."
+      />
+    );
+  }
 
   if (plan !== null && !["pro", "scale"].includes(plan || "")) {
     return (

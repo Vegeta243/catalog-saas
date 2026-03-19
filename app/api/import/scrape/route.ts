@@ -433,17 +433,8 @@ async function scrapeAliExpress(url: string, multiplier: number) {
     }
   } catch { /* last resort */ }
 
-  // ── All methods exhausted — return a placeholder the user can edit ────────
-  return {
-    title: `Produit AliExpress #${productId}`,
-    description: "",
-    imageUrl: "",
-    imageList: [],
-    supplierPrice: 0,
-    sellingPrice: "0.00",
-    margin: multiplier,
-    note: "Titre et prix non extraits automatiquement — veuillez les saisir manuellement.",
-  };
+  // ── All methods exhausted — return a clear error instead of placeholder data ──
+  throw new Error("Impossible d'extraire les données de ce produit AliExpress. Toutes les méthodes d'extraction ont échoué. Vérifiez l'URL et réessayez.");
 }
 
 function resolveImageUrl(src: string, baseUrl: string): string {
@@ -500,21 +491,10 @@ export async function POST(req: Request) {
       } catch (err) {
         const msg = (err as Error).message;
         console.error("[AliExpress scraper] Failed:", err);
-        // Return a partial result with a note rather than a hard error
-        const productId = url.match(/\/item\/(\d+)/)?.[1] || "?";
         return NextResponse.json({
-          success: true,
-          preview: {
-            title: `Produit AliExpress #${productId}`,
-            description: "",
-            imageUrl: "",
-            imageList: [],
-            supplierPrice: 0,
-            sellingPrice: "0.00",
-            margin: multiplier,
-            note: msg || "Extraction partielle — veuillez compléter les informations manuellement.",
-          },
-        });
+          error: msg || "Impossible d'extraire les données de ce produit AliExpress. Vérifiez l'URL et réessayez.",
+          code: "SCRAPE_FAILED",
+        }, { status: 422 });
       }
     }
 

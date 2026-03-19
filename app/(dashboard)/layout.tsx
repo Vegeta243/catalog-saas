@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 import AIChatWidget from '@/components/ai-chat-widget';
+import { PreviewBanner } from '@/components/preview-banner';
+import { UserProvider } from '@/lib/contexts/UserContext';
 
 const NAV_SECTIONS = [
   {
@@ -153,6 +155,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       } catch { /* silent — Supabase may not be configured locally */ }
     };
     fetchUserProfile();
+    const interval = setInterval(fetchUserProfile, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {
@@ -166,7 +170,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
+    <UserProvider>
     <div className="flex min-h-screen bg-[#e8f0f8] dark:bg-[#060d1c] overflow-x-hidden">
+      <PreviewBanner />
       {/* Mobile backdrop overlay */}
       {mobileMenuOpen && (
         <div
@@ -468,5 +474,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <AIChatWidget plan={effectivePlan} currentPage={pathname} tasksRemaining={tasksRemaining} tasksTotal={tasksTotal} />
     </div>
+    </UserProvider>
   );
 }
