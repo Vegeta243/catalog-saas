@@ -11,7 +11,7 @@ const admin = createClient(
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
   const s = cookieStore.get("admin_session");
-  if (!s?.value || !verifyAdminSession(s.value).valid) {
+  if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
   const s = cookieStore.get("admin_session");
-  if (!s?.value || !verifyAdminSession(s.value).valid) {
+  if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
   const { id } = await params;

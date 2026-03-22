@@ -1,13 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
 import crypto from 'crypto'
-import { checkAdminLoginRate, createAdminSession, writeAuditLog } from '@/lib/admin-security'
+import {
+  checkAdminLoginRate,
+  createAdminSession,
+  invalidateAdminSession,
+  writeAuditLog,
+} from '@/lib/admin-security'
+import { logSecurityEvent } from '@/lib/security-logger'
 
-/** Constant-time string comparison to prevent timing attacks */
+/**
+ * Constant-time string comparison — always compares full 256-byte windows
+ * so response time doesn't reveal password length.
+ */
 function safeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
+  if (!a || !b) return false;
   try {
-    return crypto.timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+    const aBuf = Buffer.alloc(256);
+    const bBuf = Buffer.alloc(256);
+    aBuf.write(a, 0, 256, 'utf8');
+    bBuf.write(b, 0, 256, 'utf8');
+    const lengthsMatch = a.length === b.length;
+    const contentsMatch = crypto.timingSafeEqual(aBuf, bBuf);
+    return lengthsMatch && contentsMatch;
   } catch {
     return false;
   }
@@ -19,16 +34,23 @@ export async function POST(request: NextRequest) {
     headerStore.get('x-forwarded-for')?.split(',')[0].trim() ||
     headerStore.get('x-real-ip') ||
     'unknown'
+  const userAgent = headerStore.get('user-agent') ?? undefined
 
-  // Rate limit: 5 attempts / 15 min per IP
+  // Two-tier rate limit: 5/15min (warning) + 15/1h (lockout)
   const rateCheck = await checkAdminLoginRate(ip)
   if (!rateCheck.allowed) {
+    await logSecurityEvent('admin_login_rate_limited', 'warning', {
+      ipAddress: ip,
+      userAgent,
+      extra: { lockedOut: rateCheck.lockedOut },
+    })
     return NextResponse.json(
-      { error: 'Too many login attempts. Try again later.' },
       {
-        status: 429,
-        headers: { 'Retry-After': String(rateCheck.retryAfterSec) },
-      }
+        error: rateCheck.lockedOut
+          ? 'Trop de tentatives. Compte verrouillé pendant 1 heure.'
+          : 'Trop de tentatives. Réessayez dans quelques minutes.',
+      },
+      { status: 429, headers: { 'Retry-After': String(rateCheck.retryAfterSec) } }
     )
   }
 
@@ -49,13 +71,21 @@ export async function POST(request: NextRequest) {
     (adminUsername && loginId === adminUsername)
 
   if (!loginId || !password || !isValidUser || !safeCompare(password, adminPassword)) {
+    // Fixed 1 s delay regardless of which check failed (prevents user enumeration)
     await new Promise((r) => setTimeout(r, 1000))
-    await writeAuditLog('anonymous', {
-      action: 'admin.login.failed',
-      detail: { loginId: loginId.slice(0, 50) },
-      ip,
-      userAgent: headerStore.get('user-agent') ?? undefined,
-    })
+    await Promise.all([
+      logSecurityEvent('admin_login_failure', 'warning', {
+        ipAddress: ip,
+        userAgent,
+        extra: { loginId: loginId.slice(0, 50) },
+      }),
+      writeAuditLog('anonymous', {
+        action: 'admin.login.failed',
+        detail: { loginId: loginId.slice(0, 50) },
+        ip,
+        userAgent,
+      }),
+    ])
     return NextResponse.json({ success: false }, { status: 401 })
   }
 
@@ -70,17 +100,23 @@ export async function POST(request: NextRequest) {
     path: '/',
   })
 
-  await writeAuditLog(adminEmail, {
-    action: 'admin.login.success',
-    ip,
-    userAgent: headerStore.get('user-agent') ?? undefined,
-  })
+  await Promise.all([
+    logSecurityEvent('admin_login_success', 'info', { ipAddress: ip, userAgent }),
+    writeAuditLog(adminEmail, { action: 'admin.login.success', ip, userAgent }),
+  ])
 
   return NextResponse.json({ success: true })
 }
 
 export async function DELETE() {
   const cookieStore = await cookies()
+  const token = cookieStore.get('admin_session')?.value
+
+  // Blacklist the token so it cannot be replayed even if intercepted
+  if (token) {
+    await invalidateAdminSession(token)
+  }
+
   cookieStore.delete('admin_session')
   return NextResponse.json({ success: true })
 }

@@ -7,11 +7,28 @@ const ALLOWED_DOMAINS = [
   "aliexpress.com",
   "img.cjdropshipping.com",
   "cbu01.alicdn.com",
+  "shopify.com",
+  "cdn.shopify.com",
+  "images.unsplash.com",
+  "unsplash.com",
 ];
 
 function isAllowed(url: string): boolean {
   try {
-    const { hostname } = new URL(url);
+    const parsed = new URL(url);
+    // Reject non-HTTPS URLs (prevents HTTP downgrade / SSRF via localhost)
+    if (parsed.protocol !== "https:") return false;
+    // Reject localhost, 127.x, or private IP ranges (SSRF protection)
+    const { hostname } = parsed;
+    if (
+      hostname === "localhost" ||
+      hostname.startsWith("127.") ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("172.") ||
+      hostname === "0.0.0.0" ||
+      hostname === "::1"
+    ) return false;
     return ALLOWED_DOMAINS.some((d) => hostname === d || hostname.endsWith("." + d));
   } catch {
     return false;

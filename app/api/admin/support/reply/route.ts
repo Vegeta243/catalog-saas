@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Resend } from "resend";
 import { cookies } from "next/headers";
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
   const adminSession = cookieStore.get("admin_session");
   if (!adminSession?.value) return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
-  const session = verifyAdminSession(adminSession.value);
+  const session = await verifyAdminSession(adminSession.value);
   if (!session.valid) return NextResponse.json({ error: "Session invalide." }, { status: 401 });
 
   const parsed = replySchema.safeParse(await req.json());

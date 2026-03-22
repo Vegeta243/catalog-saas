@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { verifyAdminSession } from "@/lib/admin-security";
@@ -7,7 +7,7 @@ export async function GET() {
   const cookieStore = await cookies();
   const adminSession = cookieStore.get("admin_session");
   if (!adminSession?.value) return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
-  const session = verifyAdminSession(adminSession.value);
+  const session = await verifyAdminSession(adminSession.value);
   if (!session.valid) return NextResponse.json({ error: "Session invalide." }, { status: 401 });
 
   const admin = createAdminClient(

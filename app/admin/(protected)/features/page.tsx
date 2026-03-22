@@ -1,4 +1,4 @@
-import { createClient as createServiceClient } from "@supabase/supabase-js";
+﻿import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { verifyAdminSession } from "@/lib/admin-security";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -18,7 +18,7 @@ async function getFlags() {
 export default async function FeaturesPage() {
   const cookieStore = await cookies();
   const s = cookieStore.get("admin_session");
-  if (!s?.value || !verifyAdminSession(s.value).valid) redirect("/admin/login");
+  if (!s?.value || !(await verifyAdminSession(s.value)).valid) redirect("/admin/login");
 
   const flags = await getFlags();
   return <FeaturesClient initialFlags={flags} />;

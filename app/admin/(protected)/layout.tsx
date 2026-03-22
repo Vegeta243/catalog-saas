@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import {
@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/admin/login");
   }
 
-  const session = verifyAdminSession(adminSession.value);
+  const session = await verifyAdminSession(adminSession.value);
   if (!session.valid) {
     redirect("/admin/login");
   }

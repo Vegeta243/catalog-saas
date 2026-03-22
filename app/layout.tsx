@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/cookie-banner";
+import { validateEnv } from "@/lib/env-validation";
+
+// Validate required environment variables at server startup
+validateEnv();
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ecompilotelite.com"),

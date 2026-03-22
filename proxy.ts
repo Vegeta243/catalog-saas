@@ -19,6 +19,9 @@ const ADMIN_ONLY_API_PATHS = [
 
 /**
  * Verify admin_session token using Web Crypto API (Edge Runtime compatible).
+ * Supports new token format: base64url(<jti>|<email>:<timestamp>.<hmac>)
+ * Old tokens (without '|' separator) are rejected.
+ * Checks the admin_token_blacklist table via Supabase REST for logout invalidation.
  */
 async function verifyAdminSessionEdge(token: string): Promise<boolean> {
   const secret = process.env.ADMIN_SECRET_KEY || '';
@@ -44,12 +47,39 @@ async function verifyAdminSessionEdge(token: string): Promise<boolean> {
     }
     const valid = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(payload));
     if (!valid) return false;
-    const colonIdx = payload.lastIndexOf(':');
+
+    // Parse new format: jti|email:timestamp
+    const pipeIdx = payload.indexOf('|');
+    if (pipeIdx < 0) return false; // old token format (no jti) — reject
+
+    const jti = payload.slice(0, pipeIdx);
+    const rest = payload.slice(pipeIdx + 1);
+    const colonIdx = rest.lastIndexOf(':');
     if (colonIdx < 0) return false;
-    const email = payload.slice(0, colonIdx);
-    const timestamp = Number(payload.slice(colonIdx + 1));
+    const email = rest.slice(0, colonIdx);
+    const timestamp = Number(rest.slice(colonIdx + 1));
     if (isNaN(timestamp) || Date.now() - timestamp > 8 * 60 * 60 * 1000) return false;
-    return email === adminEmail;
+    if (email !== adminEmail) return false;
+
+    // Check token blacklist via Supabase REST (fail open if unreachable)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (supabaseUrl && serviceKey && jti) {
+      try {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/admin_token_blacklist?jti=eq.${encodeURIComponent(jti)}&select=jti&limit=1`,
+          { headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) return false; // blacklisted
+        }
+      } catch {
+        // Blacklist check failed — fail open to avoid locking out admin
+      }
+    }
+
+    return true;
   } catch {
     return false;
   }

@@ -20,7 +20,7 @@ function signImpersonationToken(payload: object): string {
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
   const s = cookieStore.get("admin_session");
-  if (!s?.value || !verifyAdminSession(s.value).valid) {
+  if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

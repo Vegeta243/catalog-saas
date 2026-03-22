@@ -46,6 +46,16 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    // ── Idempotency: skip already-processed events ────────────────────────────
+    const { data: existing } = await supabase
+      .from('processed_webhooks')
+      .select('stripe_event_id')
+      .eq('stripe_event_id', event.id)
+      .maybeSingle();
+    if (existing) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
     // ── checkout.session.completed ────────────────────────────────────────────
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -160,6 +170,14 @@ export async function POST(req: Request) {
         })
         .eq("stripe_subscription_id", subscription.id);
     }
+
+    // ── Mark event as processed (idempotency) ─────────────────────────────────
+    await supabase
+      .from('processed_webhooks')
+      .upsert(
+        { stripe_event_id: event.id, event_type: event.type },
+        { onConflict: 'stripe_event_id', ignoreDuplicates: true }
+      );
 
     return NextResponse.json({ received: true });
   } catch (error) {

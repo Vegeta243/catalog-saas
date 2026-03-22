@@ -2,6 +2,25 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
+/**
+ * Sanitize a CSV field to prevent CSV injection attacks.
+ * Spreadsheet apps execute formulas when a cell starts with =, +, -, @, tab, carriage-return.
+ * We prefix those with a literal apostrophe so they render as plain text.
+ */
+function csvSafe(value: string | number | null | undefined): string {
+  if (value == null) return '';
+  const str = String(value);
+  // Escape injection trigger characters
+  if (/^[=+\-@\t\r|%]/.test(str)) {
+    return `'${str.replace(/'/g, "''")}`;
+  }
+  // Quote fields that contain commas, double-quotes or newlines
+  if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,12 +44,22 @@ export async function GET() {
   const shopCount: Record<string, number> = {};
   (shops || []).forEach(s => { shopCount[s.user_id] = (shopCount[s.user_id] || 0) + 1; });
 
-  // Build CSV
-  const headers = ["id", "email", "plan", "actions_used", "actions_limit", "shops_count", "subscription_status", "created_at", "deleted_at"];
+  // Build CSV — all fields pass through csvSafe() to prevent formula injection
+  const headerRow = ["id", "email", "plan", "actions_used", "actions_limit", "shops_count", "subscription_status", "created_at", "deleted_at"];
   const rows = (users || []).map(u =>
-    [u.id, u.email, u.plan, u.actions_used, u.actions_limit, shopCount[u.id] || 0, u.subscription_status || "", u.created_at, u.deleted_at || ""].join(",")
+    [
+      csvSafe(u.id),
+      csvSafe(u.email),
+      csvSafe(u.plan),
+      csvSafe(u.actions_used),
+      csvSafe(u.actions_limit),
+      csvSafe(shopCount[u.id] || 0),
+      csvSafe(u.subscription_status),
+      csvSafe(u.created_at),
+      csvSafe(u.deleted_at),
+    ].join(",")
   );
-  const csv = [headers.join(","), ...rows].join("\n");
+  const csv = [headerRow.join(","), ...rows].join("\n");
 
   return new NextResponse(csv, {
     headers: {
