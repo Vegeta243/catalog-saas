@@ -1,25 +1,21 @@
-// Rate limiter — prevents abuse on API routes
-// Uses in-memory sliding window (can be upgraded to Redis)
+/**
+ * lib/rate-limit.ts
+ * Thin wrapper around the Supabase-backed rate limiter.
+ * All in-memory Maps removed — works correctly in Vercel serverless
+ * where cold-starts reset any module-level state.
+ */
 
-interface RateLimitWindow {
-  count: number;
-  resetAt: number;
-}
+import { checkRateLimitDB } from './rate-limit-db';
 
-const windows = new Map<string, RateLimitWindow>();
-
-interface RateLimitOptions {
-  maxRequests: number;
-  windowMs: number;
-}
-
-const DEFAULTS: Record<string, RateLimitOptions> = {
-  "ai.generate": { maxRequests: 20, windowMs: 60 * 1000 },       // 20/min
-  "shopify.products": { maxRequests: 30, windowMs: 60 * 1000 },   // 30/min
-  "shopify.bulk": { maxRequests: 5, windowMs: 60 * 1000 },        // 5/min
-  "scrape": { maxRequests: 10, windowMs: 60 * 1000 },             // 10/min
-  "auth": { maxRequests: 5, windowMs: 15 * 60 * 1000 },           // 5/15min
-  "default": { maxRequests: 60, windowMs: 60 * 1000 },            // 60/min
+// ── Per-action defaults ──────────────────────────────────────────────────────
+const DEFAULTS: Record<string, { maxRequests: number; windowMs: number }> = {
+  "ai.generate":      { maxRequests: 20, windowMs: 60 * 60 * 1000 },  // 20 / hour
+  "shopify.products": { maxRequests: 30, windowMs: 60 * 1000 },       // 30 / min
+  "shopify.bulk":     { maxRequests: 5,  windowMs: 60 * 1000 },       // 5 / min
+  "scrape":           { maxRequests: 10, windowMs: 60 * 1000 },       // 10 / min
+  "auth":             { maxRequests: 10, windowMs: 15 * 60 * 1000 },  // 10 / 15 min
+  "import":           { maxRequests: 30, windowMs: 60 * 60 * 1000 },  // 30 / hour
+  "default":          { maxRequests: 60, windowMs: 60 * 1000 },       // 60 / min
 };
 
 export interface RateLimitResult {
@@ -28,25 +24,16 @@ export interface RateLimitResult {
   resetAt: number;
 }
 
-export function checkRateLimit(userId: string, action: string): RateLimitResult {
-  const opts = DEFAULTS[action] || DEFAULTS.default;
-  const key = `${userId}:${action}`;
-  const now = Date.now();
-
-  let window = windows.get(key);
-
-  if (!window || now > window.resetAt) {
-    window = { count: 0, resetAt: now + opts.windowMs };
-    windows.set(key, window);
-  }
-
-  window.count++;
-
-  return {
-    allowed: window.count <= opts.maxRequests,
-    remaining: Math.max(0, opts.maxRequests - window.count),
-    resetAt: window.resetAt,
-  };
+/**
+ * Check rate-limit for a given user/IP + action.
+ * Uses Supabase so the counter is shared across all serverless instances.
+ */
+export async function checkRateLimit(
+  userId: string,
+  action: string,
+): Promise<RateLimitResult> {
+  const opts = DEFAULTS[action] ?? DEFAULTS.default;
+  return checkRateLimitDB(userId, action, opts.maxRequests, opts.windowMs);
 }
 
 export function getRateLimitHeaders(result: RateLimitResult): Record<string, string> {
@@ -54,14 +41,4 @@ export function getRateLimitHeaders(result: RateLimitResult): Record<string, str
     "X-RateLimit-Remaining": String(result.remaining),
     "X-RateLimit-Reset": String(Math.ceil(result.resetAt / 1000)),
   };
-}
-
-// Cleanup old windows periodically
-if (typeof setInterval !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, window] of windows) {
-      if (now > window.resetAt) windows.delete(key);
-    }
-  }, 60 * 1000);
 }

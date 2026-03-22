@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
-  title: "Conditions Générales de Vente — CatalogSaaS",
-  description: "Conditions générales de vente de la plateforme CatalogSaaS",
+  title: "Conditions Générales de Vente — EcomPilot Elite",
+  description: "Conditions générales de vente de la plateforme EcomPilot Elite",
 };
 
 export default function CGVPage() {
@@ -14,7 +14,7 @@ export default function CGVPage() {
       </Link>
 
       <h1 className="text-3xl font-bold mb-2" style={{ color: "#0f172a" }}>Conditions Générales de Vente</h1>
-      <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>Dernière mise à jour : janvier 2025</p>
+      <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>Dernière mise à jour : mars 2026</p>
 
       <div className="prose prose-sm max-w-none space-y-8" style={{ color: "#374151" }}>
 
@@ -22,8 +22,8 @@ export default function CGVPage() {
           <h2 className="text-lg font-semibold mb-3" style={{ color: "#0f172a" }}>1. Objet</h2>
           <p>
             Les présentes Conditions Générales de Vente (CGV) régissent les relations contractuelles entre la société
-            CatalogSaaS (ci-après « le Prestataire ») et toute personne physique ou morale souhaitant accéder aux
-            services proposés sur la plateforme <strong>catalog-saas.vercel.app</strong> ou tout domaine associé (ci-après « le Client »).
+            EcomPilot SAS (ci-après « le Prestataire ») et toute personne physique ou morale souhaitant accéder aux
+            services proposés sur la plateforme <strong>ecompilotelite.com</strong> ou tout domaine associé (ci-après « le Client »).
           </p>
           <p className="mt-2">
             Toute souscription à un forfait payant implique l&apos;acceptation sans réserve des présentes CGV.
@@ -32,7 +32,7 @@ export default function CGVPage() {
 
         <section>
           <h2 className="text-lg font-semibold mb-3" style={{ color: "#0f172a" }}>2. Description des services</h2>
-          <p>CatalogSaaS est une plateforme SaaS (Software as a Service) permettant notamment :</p>
+          <p>EcomPilot Elite est une plateforme SaaS (Software as a Service) permettant notamment :</p>
           <ul className="list-disc ml-5 mt-2 space-y-1">
             <li>L&apos;import automatisé de produits depuis des plateformes tierces (AliExpress, etc.)</li>
             <li>La génération de descriptions produits et contenus marketing via intelligence artificielle</li>
@@ -64,15 +64,15 @@ export default function CGVPage() {
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="border border-gray-200 px-4 py-2">Starter</td>
-                  <td className="border border-gray-200 px-4 py-2">19 €</td>
+                  <td className="border border-gray-200 px-4 py-2">29 €</td>
                   <td className="border border-gray-200 px-4 py-2">1 000</td>
-                  <td className="border border-gray-200 px-4 py-2">3</td>
+                  <td className="border border-gray-200 px-4 py-2">1</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-4 py-2">Pro</td>
-                  <td className="border border-gray-200 px-4 py-2">49 €</td>
+                  <td className="border border-gray-200 px-4 py-2">89 €</td>
                   <td className="border border-gray-200 px-4 py-2">20 000</td>
-                  <td className="border border-gray-200 px-4 py-2">10</td>
+                  <td className="border border-gray-200 px-4 py-2">3</td>
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="border border-gray-200 px-4 py-2">Scale</td>
@@ -112,7 +112,7 @@ export default function CGVPage() {
           </p>
           <p className="mt-2">
             Pour exercer ce droit, le Client doit notifier sa décision par email à{" "}
-            <a href="mailto:support@catalogsaas.com" className="text-blue-600 hover:underline">support@catalogsaas.com</a>
+          <a href="mailto:support@ecompilotelite.com" className="text-blue-600 hover:underline">support@ecompilotelite.com</a>
             {" "}ou via le formulaire de contact.
           </p>
           <p className="mt-2 text-sm p-3 bg-amber-50 border border-amber-200 rounded-xl" style={{ color: "#92400e" }}>
@@ -152,7 +152,7 @@ export default function CGVPage() {
             des modèles sous-jacents (OpenAI).
           </p>
           <p className="mt-2">
-            La plateforme CatalogSaaS, son code, ses interfaces et sa marque sont la propriété exclusive du Prestataire.
+            La plateforme EcomPilot Elite, son code, ses interfaces et sa marque sont la propriété exclusive du Prestataire.
           </p>
         </section>
 
@@ -185,8 +185,8 @@ export default function CGVPage() {
           <h2 className="text-lg font-semibold mb-3" style={{ color: "#0f172a" }}>11. Contact</h2>
           <p>Pour toute question relative aux présentes CGV :</p>
           <ul className="list-disc ml-5 mt-2 space-y-1">
-            <li>Email : <a href="mailto:support@catalogsaas.com" className="text-blue-600 hover:underline">support@catalogsaas.com</a></li>
-            <li>Formulaire de contact : <Link href="/contact" className="text-blue-600 hover:underline">catalog-saas.vercel.app/contact</Link></li>
+            <li>Email : <a href="mailto:support@ecompilotelite.com" className="text-blue-600 hover:underline">support@ecompilotelite.com</a></li>
+            <li>Formulaire de contact : <Link href="/contact" className="text-blue-600 hover:underline">ecompilotelite.com/contact</Link></li>
           </ul>
         </section>
 

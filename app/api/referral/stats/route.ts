@@ -21,7 +21,7 @@ export async function GET() {
 
     const safeReferrals = referrals || [];
     const converted = safeReferrals.filter(r => r.status === "converted").length;
-    const domain = process.env.NEXT_PUBLIC_APP_URL || "https://catalog-saas.vercel.app";
+    const domain = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ecompilotelite.com";
     const referralCode = userData?.referral_code || user.id.substring(0, 8);
     const referralUrl = `${domain}/signup?ref=${referralCode}`;
 

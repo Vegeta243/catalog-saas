@@ -55,26 +55,9 @@ async function verifyAdminSessionEdge(token: string): Promise<boolean> {
   }
 }
 
-// ── Simple edge-compatible rate limiting ──
-const rateLimitMap = new Map<string, { count: number; ts: number }>();
-const RATE_LIMIT_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT_MAX_API = 100;   // API calls per IP per minute
+// ── Rate limiting is handled at the route level (lib/rate-limit.ts → Supabase-backed) ──
+// No in-memory rate limiting in middleware (would be non-functional in serverless).
 
-function getIp(req: NextRequest): string {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-}
-
-function isApiRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const key = `api:${ip}`;
-  const entry = rateLimitMap.get(key);
-  if (!entry || now - entry.ts > RATE_LIMIT_WINDOW) {
-    rateLimitMap.set(key, { count: 1, ts: now });
-    return false;
-  }
-  entry.count++;
-  return entry.count > RATE_LIMIT_MAX_API;
-}
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -100,17 +83,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     return NextResponse.next();
-  }
-
-  // ── Rate limit API routes ──
-  if (pathname.startsWith('/api/')) {
-    const ip = getIp(request);
-    if (isApiRateLimited(ip)) {
-      return new NextResponse(JSON.stringify({ error: 'Trop de requêtes. Veuillez réessayer dans une minute.' }), {
-        status: 429,
-        headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
-      });
-    }
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -3,11 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
 function verifyHmac(body: string, hmac: string): boolean {
-  const generated = crypto
-    .createHmac("sha256", process.env.SHOPIFY_API_SECRET || "")
-    .update(body, "utf8")
-    .digest("base64");
-  return generated === hmac;
+  try {
+    const secret = process.env.SHOPIFY_API_SECRET || "";
+    if (!secret) return false;
+    const generated = crypto
+      .createHmac("sha256", secret)
+      .update(body, "utf8")
+      .digest("base64");
+    return crypto.timingSafeEqual(
+      Buffer.from(generated, "base64"),
+      Buffer.from(hmac, "base64")
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -18,6 +27,5 @@ export async function POST(req: NextRequest) {
   }
   // EcomPilot stores: shop domain, access token, product edits.
   // No personal customer data is stored — acknowledge the request.
-  console.log("[GDPR] customers/data_request received");
   return NextResponse.json({ ok: true });
 }

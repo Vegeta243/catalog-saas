@@ -6,6 +6,7 @@
  */
 
 import crypto from 'crypto';
+import { checkRateLimitDB } from './rate-limit-db';
 
 // ─── HMAC session ───────────────────────────────────────────────────────────
 
@@ -69,25 +70,13 @@ export function verifyAdminSession(token: string): SessionResult {
 
 // ─── Rate limiting for admin login ───────────────────────────────────────────
 
-interface Window { count: number; resetAt: number }
-const loginAttempts = new Map<string, Window>();
-
-/** 5 attempts per 15 minutes per IP */
-export function checkAdminLoginRate(ip: string): { allowed: boolean; retryAfterSec: number } {
-  const max = 5;
+/** 5 attempts per 15 minutes per IP — Supabase-backed, serverless-safe */
+export async function checkAdminLoginRate(ip: string): Promise<{ allowed: boolean; retryAfterSec: number }> {
   const windowMs = 15 * 60 * 1000;
-  const now = Date.now();
-
-  let w = loginAttempts.get(ip);
-  if (!w || now > w.resetAt) {
-    w = { count: 0, resetAt: now + windowMs };
-    loginAttempts.set(ip, w);
-  }
-  w.count++;
-
+  const result = await checkRateLimitDB(ip, 'admin.login', 5, windowMs);
   return {
-    allowed: w.count <= max,
-    retryAfterSec: Math.ceil((w.resetAt - now) / 1000),
+    allowed: result.allowed,
+    retryAfterSec: Math.ceil((result.resetAt - Date.now()) / 1000),
   };
 }
 

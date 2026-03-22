@@ -56,7 +56,6 @@ export async function POST(req: NextRequest) {
 
     // Send email via Supabase (basic notification — in production use Resend/SendGrid)
     // For now we just record it; email sending can be done via a Supabase function or Resend
-    console.log(`[referral/invite] Invite to ${emailLower} with URL: ${referralUrl}`);
 
     return NextResponse.json({ success: true, referralUrl });
   } catch (err) {

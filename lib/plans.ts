@@ -1,51 +1,17 @@
-// ─── Plan limits for EcomPilot Elite ─────────────────────────────────────────
-// Used by API routes to enforce features, and by UI components to show upgrade
-// prompts when a free user tries to access a paid feature.
-
-export const PLAN_LIMITS = {
-  free: {
-    stores: 1,
-    products: 50,
-    ai_tasks_per_month: 30,
-    bulk_edit: false,
-    advanced_seo: false,
-  },
-  starter: {
-    stores: 1,
-    products: 50,
-    ai_tasks_per_month: 200,
-    bulk_edit: true,
-    advanced_seo: true,
-  },
-  pro: {
-    stores: 3,
-    products: 500,
-    ai_tasks_per_month: 1000,
-    bulk_edit: true,
-    advanced_seo: true,
-  },
-  scale: {
-    stores: 999,
-    products: 999999,
-    ai_tasks_per_month: 999999,
-    bulk_edit: true,
-    advanced_seo: true,
-  },
-} as const;
-
-export type PlanName = keyof typeof PLAN_LIMITS;
-export type PlanFeature = keyof (typeof PLAN_LIMITS)['free'];
-
 /**
- * Returns the value for the given plan + feature, falling back to free plan
- * defaults if the plan is unrecognised.
- *
- * For boolean features (bulk_edit, advanced_seo) returns a boolean.
- * For numeric features (stores, products, ai_tasks_per_month) returns a number.
+ * @deprecated Use lib/credits.ts instead — this file is kept only for
+ * backward compatibility and will be removed in a future cleanup.
  */
-export function getPlanLimit(userPlan: string, feature: PlanFeature): boolean | number {
-  const plan = (userPlan as PlanName) in PLAN_LIMITS ? (userPlan as PlanName) : 'free';
-  return PLAN_LIMITS[plan][feature];
+export { PLAN_FEATURES as PLAN_LIMITS, PLAN_FEATURES, PLAN_TASKS, PLAN_PRICES, hasFeature } from './credits';
+
+import { PLAN_FEATURES } from './credits';
+
+export type PlanName = keyof typeof PLAN_FEATURES;
+export type PlanFeature = keyof (typeof PLAN_FEATURES)['free'];
+
+export function getPlanLimit(userPlan: string, feature: string): boolean | number {
+  const plan = PLAN_FEATURES[userPlan as PlanName] ?? PLAN_FEATURES.free;
+  return (plan as unknown as Record<string, boolean | number>)[feature] ?? false;
 }
 
 /**

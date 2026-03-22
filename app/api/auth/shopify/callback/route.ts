@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         .createHmac('sha256', apiSecret)
         .update(message)
         .digest('hex');
-      if (generated !== hmac) {
+      if (!crypto.timingSafeEqual(Buffer.from(generated, 'hex'), Buffer.from(hmac, 'hex'))) {
         console.error('[Shopify OAuth callback] HMAC mismatch — possible forgery');
         return errorRedirect('invalid_hmac');
       }

@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
+import crypto from 'crypto'
 import { checkAdminLoginRate, createAdminSession, writeAuditLog } from '@/lib/admin-security'
+
+/** Constant-time string comparison to prevent timing attacks */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: NextRequest) {
   const headerStore = await headers()
@@ -10,7 +21,7 @@ export async function POST(request: NextRequest) {
     'unknown'
 
   // Rate limit: 5 attempts / 15 min per IP
-  const rateCheck = checkAdminLoginRate(ip)
+  const rateCheck = await checkAdminLoginRate(ip)
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: 'Too many login attempts. Try again later.' },
@@ -37,7 +48,7 @@ export async function POST(request: NextRequest) {
     loginId === adminEmail ||
     (adminUsername && loginId === adminUsername)
 
-  if (!loginId || !password || !isValidUser || password !== adminPassword) {
+  if (!loginId || !password || !isValidUser || !safeCompare(password, adminPassword)) {
     await new Promise((r) => setTimeout(r, 1000))
     await writeAuditLog('anonymous', {
       action: 'admin.login.failed',

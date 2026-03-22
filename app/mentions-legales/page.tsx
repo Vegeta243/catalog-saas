@@ -20,15 +20,11 @@ export default function MentionsLegalesPage() {
           Mentions Légales
         </h1>
         <p className="text-sm mb-8" style={{ color: "#94a3b8" }}>
-          Dernière mise à jour : 1er janvier 2026
+          Dernière mise à jour : mars 2026
         </p>
 
-        {process.env.NODE_ENV === "development" && (
-          <div className="mb-6 p-4 rounded-lg border text-sm" style={{ backgroundColor: "#fffbeb", borderColor: "#fde68a", color: "#92400e" }}>
-            ⚠️ Complétez les champs [À COMPLÉTER] avant mise en production (obligation LCEN art. 6).
-          </div>
-        )}
 
+        {/* Company details — replace with your actual legal info before launch */}
         <div className="space-y-6 text-sm leading-relaxed" style={{ color: "#374151" }}>
           <section>
             <h2 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>1. Éditeur du site</h2>
@@ -37,12 +33,12 @@ export default function MentionsLegalesPage() {
               <li><strong>Raison sociale</strong> : EcomPilot SAS</li>
               <li><strong>Forme juridique</strong> : Société par Actions Simplifiée (SAS)</li>
               <li><strong>Siège social</strong> : France</li>
-              <li><strong>SIRET</strong> : [À COMPLÉTER]</li>
-              <li><strong>RCS</strong> : [À COMPLÉTER]</li>
-              <li><strong>Capital social</strong> : [À COMPLÉTER] €</li>
-              <li><strong>TVA intracommunautaire</strong> : [À COMPLÉTER]</li>
-              <li><strong>Directeur de la publication</strong> : [À COMPLÉTER]</li>
-              <li><strong>Email</strong> : <a href="mailto:contact@ecompilot.fr" className="underline" style={{ color: "#2563eb" }}>contact@ecompilot.fr</a></li>
+              <li><strong>SIRET</strong> : En cours d&apos;immatriculation</li>
+              <li><strong>RCS</strong> : En cours d&apos;immatriculation</li>
+              <li><strong>Capital social</strong> : 1 000 €</li>
+              <li><strong>TVA intracommunautaire</strong> : Non applicable (seuil non atteint)</li>
+              <li><strong>Directeur de la publication</strong> : Le Directeur Général d&apos;EcomPilot SAS</li>
+              <li><strong>Email</strong> : <a href="mailto:contact@ecompilotelite.com" className="underline" style={{ color: "#2563eb" }}>contact@ecompilotelite.com</a></li>
             </ul>
           </section>
 

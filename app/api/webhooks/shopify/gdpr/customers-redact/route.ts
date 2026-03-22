@@ -3,11 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
 function verifyHmac(body: string, hmac: string): boolean {
-  const generated = crypto
-    .createHmac("sha256", process.env.SHOPIFY_API_SECRET || "")
-    .update(body, "utf8")
-    .digest("base64");
-  return generated === hmac;
+  try {
+    const secret = process.env.SHOPIFY_API_SECRET || "";
+    if (!secret) return false;
+    const generated = crypto
+      .createHmac("sha256", secret)
+      .update(body, "utf8")
+      .digest("base64");
+    return crypto.timingSafeEqual(
+      Buffer.from(generated, "base64"),
+      Buffer.from(hmac, "base64")
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -17,6 +26,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid HMAC" }, { status: 401 });
   }
   // No personal customer data stored — acknowledge.
-  console.log("[GDPR] customers/redact received");
   return NextResponse.json({ ok: true });
 }

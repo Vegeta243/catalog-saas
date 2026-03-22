@@ -27,7 +27,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
-    const rl = checkRateLimit(user.id, "shopify.bulk");
+    const rl = await checkRateLimit(user.id, "shopify.bulk");
     if (!rl.allowed) {
       return NextResponse.json(
         { error: "Trop de requêtes. Réessayez dans un moment." },

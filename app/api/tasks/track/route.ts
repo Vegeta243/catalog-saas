@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const cost = ACTION_COSTS[taskType] ?? 1;
 
     // Rate limit check
-    const rateResult = checkRateLimit(user.id, "ai.generate");
+    const rateResult = await checkRateLimit(user.id, "ai.generate");
     if (!rateResult.allowed) {
       return NextResponse.json(
         { error: "Trop de requêtes. Réessayez dans quelques instants." },

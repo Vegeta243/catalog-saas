@@ -30,6 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# test / scratch files (not part of the production build)
+test-*.mjs
+test-*.html
+testShopifyConnection.js
+
 # env files (secrets - ne pas committer)
 .env
 .env.local

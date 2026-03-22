@@ -4,11 +4,20 @@ import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
 function verifyHmac(body: string, hmac: string): boolean {
-  const generated = crypto
-    .createHmac("sha256", process.env.SHOPIFY_API_SECRET || "")
-    .update(body, "utf8")
-    .digest("base64");
-  return generated === hmac;
+  try {
+    const secret = process.env.SHOPIFY_API_SECRET || "";
+    if (!secret) return false;
+    const generated = crypto
+      .createHmac("sha256", secret)
+      .update(body, "utf8")
+      .digest("base64");
+    return crypto.timingSafeEqual(
+      Buffer.from(generated, "base64"),
+      Buffer.from(hmac, "base64")
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {

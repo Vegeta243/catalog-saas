@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ products: [], message: 'Boutique connectée sans token — les produits ne peuvent pas être importés pour l\'instant.' });
     }
 
-    const rateResult = checkRateLimit(user_id || 'anonymous', 'shopify.products');
+    const rateResult = await checkRateLimit(user_id || 'anonymous', 'shopify.products');
     if (!rateResult.allowed) {
       return NextResponse.json(
         { error: 'Trop de requêtes. Réessayez dans quelques instants.' },

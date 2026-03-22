@@ -29,11 +29,11 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // ── Dashboard routes: also embeddable inside Shopify admin ──
+      // ── Dashboard routes: allow framing only from same origin ──
       {
         source: "/dashboard(.*)",
         headers: [
-          { key: "X-Frame-Options", value: "ALLOWALL" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-XSS-Protection", value: "1; mode=block" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

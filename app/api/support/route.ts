@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const rl = checkRateLimit(user.id, "default");
+  const rl = await checkRateLimit(user.id, "default");
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Trop de requêtes. Réessayez dans un moment." },
@@ -54,10 +54,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  console.log('[Support] Ticket created:', ticket.id, '— sending emails...')
-  console.log('[Support] RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY)
-  console.log('[Support] ADMIN_EMAIL:', process.env.ADMIN_EMAIL)
-
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey) {
     const resend = new Resend(apiKey);
@@ -79,7 +75,7 @@ export async function POST(req: NextRequest) {
           <p><a href="https://ecompilotelite.com/admin/support">Gérer dans l'admin →</a></p>
         `
       })
-      console.log('[Support] Admin email result:', JSON.stringify(result))
+      void result; // result logged by Resend SDK on error
     } catch (e) {
       console.error('[Support] Admin email FAILED:', e)
     }
@@ -100,7 +96,7 @@ export async function POST(req: NextRequest) {
           <p>L'équipe EcomPilot Elite</p>
         `
       })
-      console.log('[Support] User confirmation result:', JSON.stringify(result2))
+      void result2;
     } catch (e) {
       console.error('[Support] User email FAILED:', e)
     }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Store, Zap, PackageSearch, Sparkles, ArrowRight, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { PLAN_LIMITS } from "@/lib/plans";
+import { PLAN_FEATURES } from "@/lib/credits";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -53,7 +53,11 @@ export default function OnboardingPage() {
     router.push(`/api/auth/shopify?shop=${encodeURIComponent(domain)}`);
   };
 
-  const freeLimits = PLAN_LIMITS.free;
+  const freeLimits = {
+    stores: PLAN_FEATURES.free.shops,
+    products: PLAN_FEATURES.free.products,
+    ai_tasks_per_month: PLAN_FEATURES.free.tasks,
+  };
 
   return (
     <div className="min-h-screen bg-[#e8f0f8] dark:bg-[#060d1c] flex items-center justify-center p-4">

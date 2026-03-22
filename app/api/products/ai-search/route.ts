@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limit
-    const rateResult = checkRateLimit(user.id, "ai.generate");
+    const rateResult = await checkRateLimit(user.id, "ai.generate");
     if (!rateResult.allowed) {
       return NextResponse.json({ error: "Trop de requêtes." }, { status: 429 });
     }

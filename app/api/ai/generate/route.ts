@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     // Rate limiting
     const rateLimitKey = user.id;
-    const rateResult = checkRateLimit(rateLimitKey, "ai.generate");
+    const rateResult = await checkRateLimit(rateLimitKey, "ai.generate");
     if (!rateResult.allowed) {
       return NextResponse.json(
         { error: "Trop de requêtes. Réessayez dans quelques instants." },
