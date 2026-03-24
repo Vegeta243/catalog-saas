@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/cookie-banner";
 import { validateEnv } from "@/lib/env-validation";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Validate required environment variables at server startup
 validateEnv();
@@ -110,6 +112,8 @@ export default function RootLayout({
       <body className="antialiased">
         {children}
         <CookieBanner />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -218,6 +218,13 @@ export async function PUT(req: Request) {
         );
 
         if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            return NextResponse.json({
+              error: 'Votre connexion Shopify a expiré. Veuillez reconnecter votre boutique.',
+              code: 'SHOPIFY_TOKEN_EXPIRED',
+              reconnect_url: '/dashboard/shops'
+            }, { status: 401 });
+          }
           throw new Error(`Erreur lors de la mise à jour du variant ${id}`);
         }
 

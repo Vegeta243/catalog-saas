@@ -6,14 +6,12 @@ const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', 
 // Pages only accessible by admin
 const ADMIN_ONLY_PATHS = [
   '/dashboard/recherche-ia',
-  '/dashboard/import',
   '/dashboard/creation-boutique',
 ];
 
 // API routes only accessible by admin
 const ADMIN_ONLY_API_PATHS = [
   '/api/products/ai-search',
-  '/api/import',
   '/api/stores/design-ai',
 ];
 

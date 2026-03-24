@@ -66,6 +66,13 @@ export async function GET(request: Request) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Failed to fetch products from Shopify:', errorText);
+        if (response.status === 401 || response.status === 403) {
+          return NextResponse.json({
+            error: 'Votre connexion Shopify a expiré. Veuillez reconnecter votre boutique.',
+            code: 'SHOPIFY_TOKEN_EXPIRED',
+            reconnect_url: '/dashboard/shops'
+          }, { status: 401 });
+        }
         return NextResponse.json({ error: 'Failed to fetch products from Shopify' }, { status: 500 });
       }
 

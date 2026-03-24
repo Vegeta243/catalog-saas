@@ -54,6 +54,13 @@ export async function PUT(req: Request) {
         );
 
         if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            return NextResponse.json({
+              error: 'Votre connexion Shopify a expiré. Veuillez reconnecter votre boutique.',
+              code: 'SHOPIFY_TOKEN_EXPIRED',
+              reconnect_url: '/dashboard/shops'
+            }, { status: 401 });
+          }
           const err = await response.text();
           throw new Error(`Erreur Shopify pour le produit ${id}: ${err}`);
         }

@@ -77,6 +77,7 @@ export async function POST(req: Request) {
       allow_promotion_codes: true,
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
+      automatic_tax: { enabled: true },
     });
 
     return NextResponse.json({ url: session.url });
