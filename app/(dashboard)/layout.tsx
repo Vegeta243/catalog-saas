@@ -65,7 +65,7 @@ const NAV_SECTIONS = [
     label: "ANALYSE",
     items: [
       { href: '/dashboard/rentabilite', label: 'Rentabilité', icon: TrendingUp },
-      { href: '/dashboard/concurrence', label: 'Concurrence', icon: Eye, badge: 'BETA' },
+      { href: '/dashboard/concurrence', label: 'Analyse concurrence', icon: Eye },
     ],
   },
 ];
@@ -234,7 +234,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 item.badge === 'Scale' ? 'bg-amber-900/60 text-amber-300' :
                                 'bg-blue-900/60 text-blue-300'
                               }`}>
-                                {item.badge}
+                                {item.badge as string}
                               </span>
                             )}
                           </>
