@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { PLAN_TASKS } from "@/lib/credits";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { verifyAdminSession } from "@/lib/admin-security";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim()).filter(Boolean);
-    if (!user || !adminEmails.includes(user.email || "")) {
+    const cookieStore = await cookies();
+    const s = cookieStore.get("admin_session");
+    if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -45,10 +45,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim()).filter(Boolean);
-  if (!user || !adminEmails.includes(user.email || "")) {
+  const cookieStore = await cookies();
+  const s = cookieStore.get("admin_session");
+  if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
