@@ -35,9 +35,11 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     // Delete all shop data permanently
-    await supabase.from("shops").delete().eq("shop_domain", shop);
-    await supabase.from("import_history").delete().eq("shop_domain", shop);
-    await supabase.from("action_history").delete().eq("shop_domain", shop);
+    await Promise.all([
+      supabase.from("shops").delete().eq("shop_domain", shop),
+      supabase.from("import_history").delete().eq("shop_domain", shop),
+      supabase.from("action_history").delete().eq("shop_domain", shop),
+    ]);
   } catch (e) {
     console.error("[GDPR] shop/redact error:", e);
   }

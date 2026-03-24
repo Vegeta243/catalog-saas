@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const token = cookieStore.get('admin_session')?.value;
   const session = await verifyAdminSession(token ?? '');
   if (!session.valid) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);

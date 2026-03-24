@@ -1421,7 +1421,53 @@ export default function ProductsPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <>
+          {/* ── Mobile card view ── */}
+          <div className="block sm:hidden space-y-2">
+            {paginatedProducts.map((product) => {
+              const isSelected = selectedProducts.includes(product.id);
+              const imageUrl = product.images?.[0]?.src;
+              const score = seoScore(product);
+              return (
+                <div key={product.id} className={`bg-white border rounded-xl p-3 flex items-center gap-3 ${isSelected ? "border-blue-400 bg-blue-50" : "border-gray-200"}`}>
+                  <button onClick={() => toggleSelectProduct(product.id)} className="flex-shrink-0 p-1">
+                    {isSelected ? <CheckSquare className="w-5 h-5" style={{ color: "#3b82f6" }} /> : <Square className="w-5 h-5" style={{ color: "#d1d5db" }} />}
+                  </button>
+                  {imageUrl ? (
+                    <img src={getProxiedImageUrl(imageUrl)} alt={product.title} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-gray-100" loading="lazy" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <ImageOff className="w-4 h-4" style={{ color: "#cbd5e1" }} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{product.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-sm font-bold" style={{ color: "#059669" }}>{parseFloat(product.price).toFixed(2)} €</span>
+                      {getStatusBadge(product.status)}
+                      <ScoreBadge score={score} />
+                    </div>
+                  </div>
+                  <button onClick={() => setPreviewProduct(product)} className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg flex-shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center">
+                    <Eye className="w-4 h-4" style={{ color: "#374151" }} />
+                  </button>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between px-2 py-3 bg-white rounded-xl border border-gray-100 mt-2">
+              <p className="text-sm" style={{ color: "#64748b" }}>{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredProducts.length)} sur {filteredProducts.length}</p>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1} className="p-2 hover:bg-gray-100 rounded-lg border border-gray-200 disabled:opacity-40">
+                  <ChevronLeft className="w-4 h-4" style={{ color: "#374151" }} />
+                </button>
+                <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} className="p-2 hover:bg-gray-100 rounded-lg border border-gray-200 disabled:opacity-40">
+                  <ChevronRight className="w-4 h-4" style={{ color: "#374151" }} />
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* ── Desktop table view ── */}
+          <div className="hidden sm:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -1603,7 +1649,8 @@ export default function ProductsPage() {
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </>
       )}
       <p className="text-xs mt-3 text-center" style={{ color: "#94a3b8" }}>Ctrl+A : tout sélectionner · Échap : désélectionner · ← → : naviguer</p>
     </div>

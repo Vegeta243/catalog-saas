@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
     const { data: userData } = await supabase
       .from("users")
@@ -73,6 +73,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("[create-ai]", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
   }
 }

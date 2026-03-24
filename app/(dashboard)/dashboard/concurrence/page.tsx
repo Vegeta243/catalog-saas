@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Eye, Plus, Trash2, RefreshCw, TrendingDown, TrendingUp,
   AlertTriangle, CheckCircle, Package, Tag, Star, ExternalLink,
-  Bell, BarChart2, Search, BookOpen, Shield, ChevronRight,
+  Bell, BarChart2, Search, BookOpen, Shield, ChevronRight, Lock,
 } from 'lucide-react'
+import { useFeatureFlag } from '@/lib/hooks/useFeatureFlag'
+import { useToast } from '@/lib/toast'
 
 /* ─────────────────────────── TYPES ─────────────────────────── */
 type SnapshotData = {
@@ -125,7 +127,10 @@ export default function ConcurrencePage() {
   const [newAlertThreshold, setNewAlertThreshold] = useState('')
   const [compScore, setCompScore] = useState<CompetitiveScore>(null)
 
+  const { addToast } = useToast()
   useEffect(() => { document.title = "Concurrence | EcomPilot"; }, []);
+
+  const { enabled: featureEnabled, loading: featureLoading } = useFeatureFlag('concurrence')
 
   /* ─── Fetch ─── */
   const fetchCompetitors = useCallback(async () => {
@@ -194,17 +199,18 @@ export default function ConcurrencePage() {
       if (!res.ok) {
         const d = await res.json()
         if (d.setup_required) {
-          alert('Tables manquantes. Exécutez supabase/migrations/004_new_tables.sql dans Supabase SQL Editor.')
+          addToast('Tables manquantes — contactez le support', 'error')
         } else {
-          alert(d.error || "Erreur lors de l'ajout")
+          addToast(d.error || "Erreur lors de l'ajout", 'error')
         }
         return
       }
       setShowAddModal(false)
       setNewName('')
       setNewUrl('')
+      addToast('Concurrent ajouté', 'success')
       fetchCompetitors()
-    } catch { alert('Erreur réseau') }
+    } catch { addToast('Erreur réseau', 'error') }
     finally { setIsAdding(false) }
   }
 
@@ -253,21 +259,25 @@ export default function ConcurrencePage() {
       setSeoResult(null)
       setCatalogResult(null)
       setCompScore(null)
+      addToast('Analyse terminée', 'success')
     } catch (e: unknown) {
-      alert((e as Error).message || "Erreur lors de l'analyse")
+      addToast((e as Error).message || "Erreur lors de l'analyse", 'error')
     }
     finally { setAnalyzingId(null) }
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Supprimer ce concurrent ?')) return
-    await fetch('/api/concurrence/competitors', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
-    if (selected?.id === id) { setSelected(null); setCompScore(null) }
-    setCompetitors(prev => prev.filter(c => c.id !== id))
+    try {
+      await fetch('/api/concurrence/competitors', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (selected?.id === id) { setSelected(null); setCompScore(null) }
+      setCompetitors(prev => prev.filter(c => c.id !== id))
+      addToast('Concurrent supprimé', 'success')
+    } catch { addToast('Erreur lors de la suppression', 'error') }
   }
 
   const handleSeoCompare = async () => {
@@ -281,7 +291,8 @@ export default function ConcurrencePage() {
       })
       const data = await res.json()
       setSeoResult(data)
-    } catch { setSeoResult(null) }
+      addToast('Comparaison SEO terminée', 'success')
+    } catch { setSeoResult(null); addToast('Erreur lors de la comparaison SEO', 'error') }
     setIsSeoLoading(false)
   }
 
@@ -296,7 +307,8 @@ export default function ConcurrencePage() {
       })
       const data = await res.json()
       setCatalogResult(data)
-    } catch { setCatalogResult(null) }
+      addToast('Comparaison catalogue terminée', 'success')
+    } catch { setCatalogResult(null); addToast('Erreur lors de la comparaison catalogue', 'error') }
     setIsCatalogLoading(false)
   }
 
@@ -308,17 +320,21 @@ export default function ConcurrencePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ competitor_id: selected.id, alert_type: newAlertType, threshold_value: newAlertThreshold ? parseFloat(newAlertThreshold) : null, frequency: newAlertFreq, notification_method: newAlertMethod }),
       })
-      if (res.ok) { setNewAlertThreshold(''); loadAlerts() }
-    } catch { /* silent */ }
+      if (res.ok) { setNewAlertThreshold(''); loadAlerts(); addToast('Alerte créée', 'success') }
+      else addToast('Erreur lors de la création de l\'alerte', 'error')
+    } catch { addToast('Erreur réseau', 'error') }
   }
 
   const handleDeleteAlert = async (id: string) => {
-    await fetch('/api/concurrence/alerts', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
-    setAlerts(prev => prev.filter(a => a.id !== id))
+    try {
+      await fetch('/api/concurrence/alerts', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      setAlerts(prev => prev.filter(a => a.id !== id))
+      addToast('Alerte supprimée', 'success')
+    } catch { addToast('Erreur lors de la suppression', 'error') }
   }
 
   const selectCompetitor = (c: Competitor) => {
@@ -331,6 +347,18 @@ export default function ConcurrencePage() {
   }
 
   return (
+    <>
+    {!featureLoading && !featureEnabled && (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
+        <Lock className="w-12 h-12 mb-4" style={{ color: "#cbd5e1" }} />
+        <h2 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>Fonctionnalité non disponible</h2>
+        <p className="text-sm mb-4" style={{ color: "#64748b" }}>L&apos;analyse concurrentielle n&apos;est pas incluse dans votre plan actuel.</p>
+        <a href="/dashboard/billing" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>
+          Voir les plans
+        </a>
+      </div>
+    )}
+    {(featureLoading || featureEnabled) && (
     <div className="flex h-full" style={{ minHeight: 'calc(100vh - 64px)' }}>
 
       {/* Mobile sidebar backdrop */}
@@ -969,5 +997,7 @@ export default function ConcurrencePage() {
         </div>
       )}
     </div>
+    )}
+    </>
   )
 }

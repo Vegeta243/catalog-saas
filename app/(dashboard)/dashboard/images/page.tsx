@@ -247,7 +247,7 @@ export default function ImagesPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: src }),
     });
-    if (!res.ok) throw new Error("Failed to fetch image from CDN");
+    if (!res.ok) throw new Error("Impossible de récupérer l'image depuis le CDN");
     const { base64 } = await res.json();
     return base64;
   };

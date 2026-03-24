@@ -11,7 +11,7 @@ export async function POST(
     const cookieStore = await cookies();
     const s = cookieStore.get("admin_session");
     if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;

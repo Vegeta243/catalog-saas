@@ -50,34 +50,18 @@ export async function POST(request: NextRequest) {
     const { competitor_id } = body;
     if (!competitor_id) return NextResponse.json({ error: "competitor_id requis." }, { status: 400 });
 
-    // Check quota (5 tasks per analysis)
-    const { data: userData } = await supabase
-      .from("users")
-      .select("actions_used, actions_limit")
-      .eq("id", user.id)
-      .single();
+    // Fetch user quota, competitor, and previous snapshot in parallel
+    const [{ data: userData }, { data: competitor }, { data: prevSnapshots }] = await Promise.all([
+      supabase.from("users").select("actions_used, actions_limit").eq("id", user.id).single(),
+      supabase.from("competitors").select("*").eq("id", competitor_id).eq("user_id", user.id).single(),
+      supabase.from("competitor_snapshots").select("*").eq("competitor_id", competitor_id).order("analyzed_at", { ascending: false }).limit(1),
+    ]);
 
     if (userData && userData.actions_used + 5 > (userData.actions_limit || 50)) {
       return NextResponse.json({ error: "Quota insuffisant (5 tâches requises)." }, { status: 403 });
     }
 
-    // Get competitor
-    const { data: competitor } = await supabase
-      .from("competitors")
-      .select("*")
-      .eq("id", competitor_id)
-      .eq("user_id", user.id)
-      .single();
-
     if (!competitor) return NextResponse.json({ error: "Concurrent introuvable." }, { status: 404 });
-
-    // Get previous snapshot
-    const { data: prevSnapshots } = await supabase
-      .from("competitor_snapshots")
-      .select("*")
-      .eq("competitor_id", competitor_id)
-      .order("analyzed_at", { ascending: false })
-      .limit(1);
 
     const prevSnapshot = prevSnapshots?.[0] || null;
 
@@ -208,26 +192,27 @@ export async function POST(request: NextRequest) {
     } catch { /* OpenAI error — skip */ }
 
     // Save enriched snapshot
-    await supabase.from("competitor_snapshots").insert({
-      competitor_id,
-      user_id: user.id,
-      products_found: uniqueProducts.length,
-      avg_price: avgPrice,
-      price_changes: priceChanges,
-      new_products: newProducts,
-      removed_products: removedProducts,
-      raw_data: { products: uniqueProducts, promo_detected, shipping_info, avg_rating, review_count, social, payment, seo, insights, fetch_error: fetchError },
-    });
-
-    await supabase.from("competitors").update({ last_analyzed_at: new Date().toISOString() }).eq("id", competitor_id);
-    await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: 5 });
-    await logAction(supabase, {
-      userId: user.id,
-      actionType: "competitor.analyze",
-      description: `Analyse concurrentielle: ${competitor.name} — ${uniqueProducts.length} produits`,
-      creditsUsed: 5,
-      details: { competitor_id, products_found: uniqueProducts.length, changes: priceChanges.length + newProducts.length + removedProducts.length },
-    });
+    await Promise.all([
+      supabase.from("competitor_snapshots").insert({
+        competitor_id,
+        user_id: user.id,
+        products_found: uniqueProducts.length,
+        avg_price: avgPrice,
+        price_changes: priceChanges,
+        new_products: newProducts,
+        removed_products: removedProducts,
+        raw_data: { products: uniqueProducts, promo_detected, shipping_info, avg_rating, review_count, social, payment, seo, insights, fetch_error: fetchError },
+      }),
+      supabase.from("competitors").update({ last_analyzed_at: new Date().toISOString() }).eq("id", competitor_id),
+      supabase.rpc("increment_actions", { p_user_id: user.id, p_count: 5 }),
+      logAction(supabase, {
+        userId: user.id,
+        actionType: "competitor.analyze",
+        description: `Analyse concurrentielle: ${competitor.name} — ${uniqueProducts.length} produits`,
+        creditsUsed: 5,
+        details: { competitor_id, products_found: uniqueProducts.length, changes: priceChanges.length + newProducts.length + removedProducts.length },
+      }),
+    ]);
 
     return NextResponse.json({
       products_found: uniqueProducts.length,

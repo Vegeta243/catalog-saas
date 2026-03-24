@@ -13,14 +13,14 @@ export async function PATCH(
     const cookieStore = await cookies();
     const s = cookieStore.get("admin_session");
     if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
     const { plan } = await request.json();
     const validPlans = ["free", "starter", "pro", "scale"];
     if (!validPlans.includes(plan)) {
-      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+      return NextResponse.json({ error: "Plan invalide" }, { status: 400 });
     }
 
     const admin = createAdminClient(
@@ -48,7 +48,7 @@ export async function POST(
   const cookieStore = await cookies();
   const s = cookieStore.get("admin_session");
   if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
   const { id } = await params;

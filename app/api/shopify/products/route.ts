@@ -90,6 +90,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ products });
   } catch (err) {
     console.error('Unexpected error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

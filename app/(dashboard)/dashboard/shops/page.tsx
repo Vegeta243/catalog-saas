@@ -174,7 +174,8 @@ function ShopsContent() {
         if (remaining.length > 0) setActiveShop(remaining[0].id);
         else { setActiveShopId(""); localStorage.removeItem("ecompilot_active_shop"); }
       }
-    } catch { /* silent */ }
+      addToast("Boutique déconnectée", "success");
+    } catch { addToast("Erreur lors de la déconnexion", "error"); }
   };
 
   const activeShop = shops.find((s) => s.id === activeShopId) || shops[0];
