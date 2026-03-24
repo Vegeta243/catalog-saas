@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
+import { verifyAdminSession } from "@/lib/admin-security";
 
 /**
  * Sanitize a CSV field to prevent CSV injection attacks.
@@ -22,10 +23,9 @@ function csvSafe(value: string | number | null | undefined): string {
 }
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim()).filter(Boolean);
-  if (!user || !adminEmails.includes(user.email || "")) {
+  const cookieStore = await cookies();
+  const s = cookieStore.get("admin_session");
+  if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

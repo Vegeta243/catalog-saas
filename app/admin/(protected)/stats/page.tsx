@@ -1,35 +1,41 @@
 "use client";
 
-import { BarChart3, TrendingUp, Users, Zap, Globe, Sparkles, Download, ShoppingBag } from "lucide-react";
+import { useEffect, useState } from "react";
+import { TrendingUp, Users, Zap, Download, ShoppingBag } from "lucide-react";
 
-const monthlyData = [
-  { month: "Sep", users: 1200, revenue: 12400 },
-  { month: "Oct", users: 1450, revenue: 15200 },
-  { month: "Nov", users: 1680, revenue: 17800 },
-  { month: "Déc", users: 1920, revenue: 19600 },
-  { month: "Jan", users: 2230, revenue: 21400 },
-  { month: "Fév", users: 2580, revenue: 23100 },
-  { month: "Mar", users: 2847, revenue: 24580 },
+type StatsData = {
+  totalUsers: number;
+  paidUsers: number;
+  activeCount: number;
+  mrr: number;
+  shopsCount: number;
+  planCounts: Record<string, number>;
+  monthlyData: { month: string; users: number; revenue: number }[];
+};
+
+const PLAN_META = [
+  { key: "free",    label: "Free",    color: "#94a3b8" },
+  { key: "starter", label: "Starter", color: "#3b82f6" },
+  { key: "pro",     label: "Pro",     color: "#059669" },
+  { key: "scale",   label: "Scale",   color: "#7c3aed" },
 ];
-
-const topCountries = [
-  { country: "France", users: 1245, pct: 43.7 },
-  { country: "Belgique", users: 423, pct: 14.9 },
-  { country: "Suisse", users: 312, pct: 11.0 },
-  { country: "Canada", users: 287, pct: 10.1 },
-  { country: "Autres", users: 580, pct: 20.3 },
-];
-
-const apiUsage = [
-  { api: "Shopify REST", calls: 45200, cost: "€0", trend: "+12%" },
-  { api: "OpenAI GPT-4o-mini", calls: 8700, cost: "€87", trend: "+25%" },
-  { api: "OpenAI GPT-4o", calls: 1200, cost: "€156", trend: "+8%" },
-  { api: "Scraping (Cheerio)", calls: 3400, cost: "€0", trend: "-5%" },
-];
-
-const maxRevenue = Math.max(...monthlyData.map((d) => d.revenue));
 
 export default function AdminStatsPage() {
+  const [stats, setStats] = useState<StatsData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/stats-data")
+      .then(r => r.json())
+      .then(d => { setStats(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const monthlyData = stats?.monthlyData ?? [];
+  const maxRevenue = Math.max(...monthlyData.map(d => d.revenue), 1);
+  const maxUsers = Math.max(...monthlyData.map(d => d.users), 1);
+  const lastMonth = monthlyData[monthlyData.length - 1];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -43,115 +49,125 @@ export default function AdminStatsPage() {
         </button>
       </div>
 
+      {loading && (
+        <div className="text-center py-12 text-sm" style={{ color: "#94a3b8" }}>Chargement des statistiques…</div>
+      )}
+
+      {/* KPI summary */}
+      {stats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Utilisateurs total", value: stats.totalUsers.toLocaleString(), color: "#2563eb" },
+            { label: "Abonnés payants", value: stats.paidUsers.toLocaleString(), color: "#059669" },
+            { label: "MRR estimé", value: `€${stats.mrr.toLocaleString()}`, color: "#7c3aed" },
+            { label: "Boutiques créées", value: stats.shopsCount.toLocaleString(), color: "#f59e0b" },
+          ].map(k => (
+            <div key={k.label} className="bg-white border border-gray-200 rounded-xl p-5">
+              <p className="text-xs mb-1" style={{ color: "#94a3b8" }}>{k.label}</p>
+              <p className="text-2xl font-bold" style={{ color: k.color }}>{k.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Revenue Chart */}
+      {monthlyData.length > 0 && (
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <TrendingUp className="w-5 h-5" style={{ color: "#2563eb" }} />
-            <h2 className="font-semibold" style={{ color: "#0f172a" }}>Revenus mensuels (MRR)</h2>
+            <h2 className="font-semibold" style={{ color: "#0f172a" }}>Nouveaux inscrits / mois</h2>
           </div>
-          <span className="text-sm font-bold" style={{ color: "#059669" }}>€24,580 ce mois</span>
+          {lastMonth && (
+            <span className="text-sm font-bold" style={{ color: "#059669" }}>+{lastMonth.users} ce mois</span>
+          )}
         </div>
         <div className="flex items-end gap-3 h-48">
-          {monthlyData.map((d) => (
+          {monthlyData.map((d, i) => (
             <div key={d.month} className="flex-1 flex flex-col items-center gap-2">
-              <span className="text-xs font-semibold" style={{ color: "#0f172a" }}>€{(d.revenue / 1000).toFixed(1)}k</span>
+              <span className="text-xs font-semibold" style={{ color: "#0f172a" }}>{d.users}</span>
               <div className="w-full rounded-t-lg transition-all" style={{
-                height: `${(d.revenue / maxRevenue) * 100}%`,
-                background: d.month === "Mar" ? "linear-gradient(180deg, #2563eb, #3b82f6)" : "#e2e8f0",
-                minHeight: "20px",
+                height: `${(d.users / maxUsers) * 100}%`,
+                background: i === monthlyData.length - 1 ? "linear-gradient(180deg, #2563eb, #3b82f6)" : "#e2e8f0",
+                minHeight: "4px",
               }} />
               <span className="text-xs" style={{ color: "#94a3b8" }}>{d.month}</span>
             </div>
           ))}
         </div>
       </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth */}
+        {monthlyData.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
             <Users className="w-5 h-5" style={{ color: "#7c3aed" }} />
             <h2 className="font-semibold" style={{ color: "#0f172a" }}>Croissance utilisateurs</h2>
           </div>
           <div className="space-y-3">
-            {monthlyData.map((d) => (
+            {monthlyData.map((d, i) => (
               <div key={d.month} className="flex items-center gap-3">
                 <span className="text-xs w-8" style={{ color: "#94a3b8" }}>{d.month}</span>
                 <div className="flex-1 h-6 rounded-lg overflow-hidden" style={{ backgroundColor: "#f1f5f9" }}>
                   <div className="h-full rounded-lg flex items-center px-2"
-                    style={{ width: `${(d.users / 2847) * 100}%`, backgroundColor: d.month === "Mar" ? "#7c3aed" : "#c4b5fd" }}>
-                    <span className="text-[10px] font-bold" style={{ color: "#fff" }}>{d.users.toLocaleString()}</span>
+                    style={{ width: `${Math.max((d.users / maxUsers) * 100, 4)}%`, backgroundColor: i === monthlyData.length - 1 ? "#7c3aed" : "#c4b5fd" }}>
+                    <span className="text-[10px] font-bold" style={{ color: "#fff" }}>{d.users}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+        )}
 
-        {/* Top Countries */}
+        {/* MRR per month */}
+        {monthlyData.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Globe className="w-5 h-5" style={{ color: "#059669" }} />
-            <h2 className="font-semibold" style={{ color: "#0f172a" }}>Top pays</h2>
+            <Zap className="w-5 h-5" style={{ color: "#f59e0b" }} />
+            <h2 className="font-semibold" style={{ color: "#0f172a" }}>MRR estimé / mois</h2>
           </div>
-          <div className="space-y-4">
-            {topCountries.map((c) => (
-              <div key={c.country}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{c.country}</span>
-                  <span className="text-xs" style={{ color: "#64748b" }}>{c.users} utilisateurs ({c.pct}%)</span>
-                </div>
-                <div className="h-2 rounded-full" style={{ backgroundColor: "#f1f5f9" }}>
-                  <div className="h-2 rounded-full" style={{ width: `${c.pct}%`, backgroundColor: "#059669" }} />
+          <div className="space-y-3">
+            {monthlyData.map((d, i) => (
+              <div key={d.month} className="flex items-center gap-3">
+                <span className="text-xs w-8" style={{ color: "#94a3b8" }}>{d.month}</span>
+                <div className="flex-1 h-6 rounded-lg overflow-hidden" style={{ backgroundColor: "#f1f5f9" }}>
+                  <div className="h-full rounded-lg flex items-center px-2"
+                    style={{ width: `${Math.max((d.revenue / maxRevenue) * 100, 4)}%`, backgroundColor: i === monthlyData.length - 1 ? "#f59e0b" : "#fde68a" }}>
+                    <span className="text-[10px] font-bold" style={{ color: "#78350f" }}>€{d.revenue}</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
-
-      {/* API Usage */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Zap className="w-5 h-5" style={{ color: "#f59e0b" }} />
-          <h2 className="font-semibold" style={{ color: "#0f172a" }}>Usage API (ce mois)</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {apiUsage.map((a) => (
-            <div key={a.api} className="p-4 rounded-xl border border-gray-100">
-              <p className="text-xs font-medium mb-1" style={{ color: "#94a3b8" }}>{a.api}</p>
-              <p className="text-xl font-bold" style={{ color: "#0f172a" }}>{a.calls.toLocaleString()}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs font-medium" style={{ color: "#64748b" }}>Coût : {a.cost}</span>
-                <span className="text-xs font-semibold" style={{ color: "#059669" }}>{a.trend}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        )}
       </div>
 
       {/* Plan Distribution */}
+      {stats && (
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center gap-3 mb-4">
           <ShoppingBag className="w-5 h-5" style={{ color: "#2563eb" }} />
           <h2 className="font-semibold" style={{ color: "#0f172a" }}>Répartition des plans</h2>
         </div>
         <div className="grid grid-cols-4 gap-4">
-          {[
-            { plan: "Free", count: 845, pct: 29.7, color: "#94a3b8" },
-            { plan: "Starter", count: 623, pct: 21.9, color: "#3b82f6" },
-            { plan: "Pro", count: 987, pct: 34.7, color: "#059669" },
-            { plan: "Scale", count: 392, pct: 13.7, color: "#7c3aed" },
-          ].map((p) => (
-            <div key={p.plan} className="text-center p-4 rounded-xl" style={{ backgroundColor: `${p.color}10` }}>
-              <p className="text-3xl font-bold" style={{ color: p.color }}>{p.count}</p>
-              <p className="text-sm font-medium mt-1" style={{ color: "#0f172a" }}>{p.plan}</p>
-              <p className="text-xs" style={{ color: "#94a3b8" }}>{p.pct}%</p>
-            </div>
-          ))}
+          {PLAN_META.map(p => {
+            const count = stats.planCounts[p.key] ?? 0;
+            const pct = stats.totalUsers > 0 ? ((count / stats.totalUsers) * 100).toFixed(1) : "0.0";
+            return (
+              <div key={p.key} className="text-center p-4 rounded-xl" style={{ backgroundColor: `${p.color}15` }}>
+                <p className="text-3xl font-bold" style={{ color: p.color }}>{count}</p>
+                <p className="text-sm font-medium mt-1" style={{ color: "#0f172a" }}>{p.label}</p>
+                <p className="text-xs" style={{ color: "#94a3b8" }}>{pct}%</p>
+              </div>
+            );
+          })}
         </div>
       </div>
+      )}
     </div>
   );
 }

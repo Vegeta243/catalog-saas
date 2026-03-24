@@ -54,8 +54,39 @@ export async function POST(req: NextRequest) {
       status: "pending",
     });
 
-    // Send email via Supabase (basic notification — in production use Resend/SendGrid)
-    // For now we just record it; email sending can be done via a Supabase function or Resend
+    // Send invitation email via Resend
+    if (process.env.RESEND_API_KEY) {
+      const inviterName = user.email?.split("@")[0] ?? "Un utilisateur";
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "EcomPilot <noreply@ecompilotelite.com>",
+          to: emailLower,
+          subject: `${inviterName} vous invite à rejoindre EcomPilot`,
+          html: `
+            <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#fff;border-radius:12px;border:1px solid #e2e8f0">
+              <h2 style="color:#0f172a;margin-bottom:8px">Vous avez été invité !</h2>
+              <p style="color:#64748b;line-height:1.6">
+                <strong>${inviterName}</strong> vous invite à utiliser <strong>EcomPilot</strong> — la plateforme d'optimisation de boutique en ligne par IA.
+              </p>
+              <div style="margin:24px 0;text-align:center">
+                <a href="${referralUrl}" style="background:#2563eb;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
+                  Créer mon compte gratuitement
+                </a>
+              </div>
+              <p style="color:#94a3b8;font-size:12px;margin-top:24px">
+                En vous inscrivant via ce lien, vous et votre parrain bénéficiez d'avantages exclusifs.<br>
+                Lien d'invitation : <a href="${referralUrl}" style="color:#2563eb">${referralUrl}</a>
+              </p>
+            </div>
+          `,
+        }),
+      });
+    }
 
     return NextResponse.json({ success: true, referralUrl });
   } catch (err) {
