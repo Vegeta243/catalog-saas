@@ -1,0 +1,11 @@
+{"name":"1.10 Email (Resend)","error":"no resend key in .env.local"}
+{"name":"1.11 OpenAI","note":"no key in .env.local (probably in Vercel)"}
+{"name":"1.1 Homepage","status":200,"body":"<!DOCTYPE html><!--6hrtzC37gTbrxY5agHQq2--><html lang=\"fr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" as=\"image\" href=\"/logo.svg\"/><link rel=\"stylesheet\" href=\"/_next/static/chunks/c9d7d2208d591513.css\" data-precedence=\"next\""}
+{"name":"1.7 Security headers","hsts":"max-age=63072000; includeSubDomains; preload","xframe":"DENY","xcontent":"nosniff","referrer":"strict-origin-when-cross-origin","csp":"present"}
+{"name":"1.9 Stripe webhook","count":0,"correct":false,"url":"none","whs":[]}
+{"name":"1.2 Login","status":200,"body":"<!DOCTYPE html><!--6hrtzC37gTbrxY5agHQq2--><html lang=\"fr\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/chunks/c9d7d2208d591513.css\" data-precedence=\"next\"/><link rel=\"preload\" as=\"script\" fetchPriority=\""}
+{"name":"1.6 AliExpress","status":403,"body":"{\"error\":\"Admin access required\"}"}
+{"name":"1.4 Stripe checkout","status":400,"body":"{\"error\":\"Plan ou période manquante.\"}"}
+{"name":"1.5 AI generate","status":400,"body":"{\"error\":\"Produit manquant.\"}"}
+{"name":"1.8 DB tables","total":48,"missing":[],"allPresent":true}
+{"name":"1.3 Admin login","status":401,"body":"{\"success\":false}"}

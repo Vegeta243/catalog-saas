@@ -8,7 +8,7 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const PLAN_PRICE: Record<string, number> = { starter: 29, pro: 89, scale: 129 };
+const PLAN_PRICE: Record<string, number> = { starter: 19, pro: 49, scale: 129 };
 const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 
 export async function GET() {
@@ -22,7 +22,8 @@ export async function GET() {
   const { data: allUsers } = await admin
     .from("users")
     .select("plan, subscription_status, created_at")
-    .is("deleted_at" as never, null);
+    .is("deleted_at" as never, null)
+    .eq("is_test_account" as never, false);
 
   const users = allUsers ?? [];
 

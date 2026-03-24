@@ -87,8 +87,8 @@ export function hasFeature(plan: string, feature: PlanFeature): boolean {
 
 
 export const PLAN_PRICES: Record<string, string> = {
-  starter: "29€",
-  pro: "89€",
+  starter: "19€",
+  pro: "49€",
   scale: "129€",
 };
 

@@ -1,8 +1,40 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { logAction } from "@/lib/log-action";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import {
+  shopifyQuery,
+  ShopifyTokenExpiredError,
+  UPDATE_METAFIELD_MUTATION,
+  PRODUCT_VARIANTS_BULK_UPDATE,
+  toGid,
+  gidToId,
+} from "@/lib/shopify-graphql";
+
+const TOKEN_EXPIRED = {
+  error: "Votre connexion Shopify a expire. Veuillez reconnecter votre boutique.",
+  code: "SHOPIFY_TOKEN_EXPIRED",
+  reconnect_url: "/dashboard/shops",
+};
+
+const NODES_QUERY = `
+  query Nodes($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on Product {
+        id
+        variants(first: 100) {
+          edges {
+            node {
+              id
+              price
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 const metaUpdateSchema = z.object({
   productIds: z.array(z.string()).min(1).max(250),
@@ -19,25 +51,29 @@ const priceUpdateSchema = z.object({
   pricesMap: z.record(z.string(), z.string()).optional(),
 });
 
+interface NodesData {
+  nodes: Array<{
+    id: string;
+    variants: { edges: { node: { id: string; price: string } }[] };
+  } | null>;
+}
+
 export async function PUT(req: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Non authentifie." }, { status: 401 });
 
     const rl = await checkRateLimit(user.id, "shopify.bulk");
     if (!rl.allowed) {
       return NextResponse.json(
-        { error: "Trop de requêtes. Réessayez dans un moment." },
+        { error: "Trop de requetes. Reessayez dans un moment." },
         { status: 429, headers: getRateLimitHeaders(rl) }
       );
     }
 
     const body = await req.json();
 
-    // Handle meta field updates separately
     if (body.updates && (body.updates.metaTitle !== undefined || body.updates.metaDescription !== undefined)) {
       const parsed = metaUpdateSchema.safeParse(body);
       if (!parsed.success) {
@@ -52,21 +88,23 @@ export async function PUT(req: Request) {
         .eq("is_active", true)
         .limit(1)
         .single();
-      if (shopError || !shop) {
-        return NextResponse.json({ error: "Boutique non connectée." }, { status: 400 });
-      }
+      if (shopError || !shop) return NextResponse.json({ error: "Boutique non connectee." }, { status: 400 });
+
       const { shop_domain, access_token } = shop;
 
       const metaResults = await Promise.all(
         productIds.map(async (productId: string) => {
+          const gid = toGid("Product", productId);
           const metafields = [
             updates.metaTitle && {
+              ownerId: gid,
               namespace: "global",
               key: "title_tag",
               value: updates.metaTitle,
               type: "single_line_text_field",
             },
             updates.metaDescription && {
+              ownerId: gid,
               namespace: "global",
               key: "description_tag",
               value: updates.metaDescription,
@@ -74,18 +112,12 @@ export async function PUT(req: Request) {
             },
           ].filter(Boolean);
 
-          const res = await fetch(
-            `https://${shop_domain}/admin/api/2026-01/products/${productId}.json`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Shopify-Access-Token": access_token,
-              },
-              body: JSON.stringify({ product: { id: productId, metafields } }),
-            }
-          );
-          return res.ok ? { id: productId, success: true } : { id: productId, success: false };
+          try {
+            await shopifyQuery(shop_domain, access_token, UPDATE_METAFIELD_MUTATION, { metafields });
+            return { id: productId, success: true };
+          } catch {
+            return { id: productId, success: false };
+          }
         })
       );
 
@@ -105,130 +137,53 @@ export async function PUT(req: Request) {
       .eq("is_active", true)
       .limit(1)
       .single();
-
-    if (shopError || !shop) {
-      return NextResponse.json({ error: "Boutique non connectée. Veuillez connecter votre boutique Shopify." }, { status: 400 });
-    }
+    if (shopError || !shop) return NextResponse.json({ error: "Boutique non connectee." }, { status: 400 });
 
     const { shop_domain, access_token } = shop;
 
-    // For percent mode, we need to first get current prices
-    let priceUpdates: { id: string; price: string }[] = [];
+    const productGids = productIds.map((id: string) => toGid("Product", id));
+    const nodesData = await shopifyQuery<NodesData>(shop_domain, access_token, NODES_QUERY, { ids: productGids });
 
-    if (mode === "per_product" && pricesMap) {
-      // Per-product mode: client has already computed final prices with rounding
-      const productsRes = await fetch(
-        `https://${shop_domain}/admin/api/2026-01/products.json?ids=${productIds.join(",")}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": access_token,
-          },
+    const productVariantUpdates: Record<string, { id: string; price: string }[]> = {};
+
+    for (const node of nodesData.nodes) {
+      if (!node) continue;
+      const numericProductId = gidToId(node.id);
+      const variantUpdates: { id: string; price: string }[] = [];
+
+      for (const edge of node.variants.edges) {
+        const variantGid = edge.node.id;
+        const currentPrice = parseFloat(edge.node.price);
+        let targetPrice: number;
+
+        if (mode === "per_product" && pricesMap) {
+          const val = pricesMap[numericProductId];
+          if (!val) continue;
+          targetPrice = parseFloat(val);
+        } else if (mode === "fixed") {
+          targetPrice = parseFloat(newPrice ?? "0");
+        } else if (mode === "percent") {
+          targetPrice = currentPrice * (1 + parseFloat(newPrice ?? "0") / 100);
+        } else if (mode === "multiply") {
+          targetPrice = currentPrice * parseFloat(newPrice ?? "1");
+        } else {
+          targetPrice = currentPrice;
         }
-      );
-      if (productsRes.ok) {
-        const data = await productsRes.json();
-        for (const product of data.products || []) {
-          const targetPrice = pricesMap[String(product.id)];
-          if (!targetPrice) continue;
-          for (const variant of product.variants || []) {
-            priceUpdates.push({ id: String(variant.id), price: targetPrice });
-          }
-        }
+
+        variantUpdates.push({ id: variantGid, price: targetPrice.toFixed(2) });
       }
-    } else if (mode === "percent") {
-      // Get current products to calculate new prices
-      const productsRes = await fetch(
-        `https://${shop_domain}/admin/api/2026-01/products.json?ids=${productIds.join(",")}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": access_token,
-          },
-        }
-      );
-      if (productsRes.ok) {
-        const data = await productsRes.json();
-        for (const product of data.products || []) {
-          for (const variant of product.variants || []) {
-            const currentPrice = parseFloat(variant.price);
-            const percent = parseFloat(newPrice ?? "0");
-            const updatedPrice = (currentPrice * (1 + percent / 100)).toFixed(2);
-            priceUpdates.push({ id: variant.id, price: updatedPrice });
-          }
-        }
-      }
-    } else if (mode === "multiply") {
-      const productsRes = await fetch(
-        `https://${shop_domain}/admin/api/2026-01/products.json?ids=${productIds.join(",")}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": access_token,
-          },
-        }
-      );
-      if (productsRes.ok) {
-        const data = await productsRes.json();
-        for (const product of data.products || []) {
-          for (const variant of product.variants || []) {
-            const currentPrice = parseFloat(variant.price);
-            const multiplier = parseFloat(newPrice ?? "1");
-            const updatedPrice = (currentPrice * multiplier).toFixed(2);
-            priceUpdates.push({ id: variant.id, price: updatedPrice });
-          }
-        }
-      }
-    } else {
-      // Fixed price mode - apply to all variants of selected products
-      const productsRes = await fetch(
-        `https://${shop_domain}/admin/api/2026-01/products.json?ids=${productIds.join(",")}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": access_token,
-          },
-        }
-      );
-      if (productsRes.ok) {
-        const data = await productsRes.json();
-        for (const product of data.products || []) {
-          for (const variant of product.variants || []) {
-            priceUpdates.push({ id: variant.id, price: parseFloat(newPrice ?? "0").toFixed(2) });
-          }
-        }
+
+      if (variantUpdates.length > 0) {
+        productVariantUpdates[node.id] = variantUpdates;
       }
     }
 
-    // Apply all price updates in parallel
     const results = await Promise.all(
-      priceUpdates.map(async ({ id, price }) => {
-        const response = await fetch(
-          `https://${shop_domain}/admin/api/2026-01/variants/${id}.json`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Shopify-Access-Token": access_token,
-            },
-            body: JSON.stringify({
-              variant: { price },
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          if (response.status === 401 || response.status === 403) {
-            return NextResponse.json({
-              error: 'Votre connexion Shopify a expiré. Veuillez reconnecter votre boutique.',
-              code: 'SHOPIFY_TOKEN_EXPIRED',
-              reconnect_url: '/dashboard/shops'
-            }, { status: 401 });
-          }
-          throw new Error(`Erreur lors de la mise à jour du variant ${id}`);
-        }
-
-        return response.json();
+      Object.entries(productVariantUpdates).map(async ([productGid, variants]) => {
+        return shopifyQuery(shop_domain, access_token, PRODUCT_VARIANTS_BULK_UPDATE, {
+          productId: productGid,
+          variants: variants.map((v) => ({ id: v.id, price: v.price })),
+        });
       })
     );
 
@@ -242,10 +197,12 @@ export async function PUT(req: Request) {
     });
 
     return NextResponse.json({ success: true, results, updated: results.length });
-  } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  } catch (err) {
+    if (err instanceof ShopifyTokenExpiredError) {
+      return NextResponse.json(TOKEN_EXPIRED, { status: 401 });
+    }
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
 
-// Alias POST → PUT pour compatibilité ascendante
 export { PUT as POST };

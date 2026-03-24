@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { createServerClient } from '@supabase/ssr';
 
-// Scopes required by EcomPilot
+// Scopes required by EcomPilot (Shopify App Store)
 const SCOPES = [
   'read_products',
   'write_products',
@@ -12,8 +12,10 @@ const SCOPES = [
   'read_price_rules',
   'write_price_rules',
   'read_product_listings',
-  'read_orders',           // for analytics
+  'read_orders',
   'read_analytics',
+  'read_customers',
+  'write_customers',
 ].join(',');
 
 function sanitizeShopDomain(shop: string): string {

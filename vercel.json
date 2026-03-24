@@ -2,5 +2,8 @@
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
   "framework": "nextjs",
-  "regions": ["cdg1"]
+  "regions": ["cdg1"],
+  "crons": [
+    { "path": "/api/email/sequence", "schedule": "0 * * * *" }
+  ]
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingUp, Users, Zap, Download, ShoppingBag } from "lucide-react";
+import { TrendingUp, Users, Zap, Download, ShoppingBag, ArrowRight } from "lucide-react";
 
 type StatsData = {
   totalUsers: number;
@@ -13,6 +13,19 @@ type StatsData = {
   monthlyData: { month: string; users: number; revenue: number }[];
 };
 
+type KpiData = {
+  totalSignups: number;
+  withShopCount: number;
+  withActionsCount: number;
+  paidCount: number;
+  mrr: number;
+  funnelSteps: { label: string; count: number; rate: number }[];
+  planCounts: Record<string, number>;
+  last7Signups: number;
+  prev7Signups: number;
+  signupTrend: number;
+};
+
 const PLAN_META = [
   { key: "free",    label: "Free",    color: "#94a3b8" },
   { key: "starter", label: "Starter", color: "#3b82f6" },
@@ -22,13 +35,18 @@ const PLAN_META = [
 
 export default function AdminStatsPage() {
   const [stats, setStats] = useState<StatsData | null>(null);
+  const [kpis, setKpis] = useState<KpiData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/stats-data")
-      .then(r => r.json())
-      .then(d => { setStats(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch("/api/admin/stats-data").then(r => r.json()),
+      fetch("/api/admin/kpis").then(r => r.json()),
+    ]).then(([s, k]) => {
+      setStats(s);
+      setKpis(k);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const monthlyData = stats?.monthlyData ?? [];
@@ -68,6 +86,63 @@ export default function AdminStatsPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Funnel KPI Table */}
+      {kpis && (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <ArrowRight className="w-5 h-5" style={{ color: "#7c3aed" }} />
+          <h2 className="font-semibold" style={{ color: "#0f172a" }}>Entonnoir d&apos;activation</h2>
+          <span className="ml-auto text-sm" style={{ color: "#94a3b8" }}>
+            {kpis.last7Signups} inscrits (7j)
+            {kpis.signupTrend >= 0
+              ? <span style={{ color: "#059669" }}> +{kpis.signupTrend.toFixed(0)}%</span>
+              : <span style={{ color: "#dc2626" }}> {kpis.signupTrend.toFixed(0)}%</span>}
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="text-left py-2 font-medium" style={{ color: "#94a3b8" }}>Étape</th>
+                <th className="text-right py-2 font-medium" style={{ color: "#94a3b8" }}>Utilisateurs</th>
+                <th className="text-right py-2 font-medium" style={{ color: "#94a3b8" }}>% du total</th>
+                <th className="py-2 pl-4" style={{ color: "#94a3b8" }}>Barre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {kpis.funnelSteps.map((step, i) => (
+                <tr key={step.label} className="border-b border-gray-50">
+                  <td className="py-3 font-medium" style={{ color: "#0f172a" }}>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ backgroundColor: i === 0 ? "#dbeafe" : i === kpis.funnelSteps.length - 1 ? "#d1fae5" : "#f3f4f6", color: i === 0 ? "#2563eb" : i === kpis.funnelSteps.length - 1 ? "#059669" : "#374151" }}>
+                        {i + 1}
+                      </span>
+                      {step.label}
+                    </span>
+                  </td>
+                  <td className="py-3 text-right tabular-nums font-semibold" style={{ color: "#0f172a" }}>{step.count.toLocaleString()}</td>
+                  <td className="py-3 text-right tabular-nums" style={{ color: step.rate >= 50 ? "#059669" : step.rate >= 20 ? "#d97706" : "#dc2626" }}>
+                    {step.rate}%
+                  </td>
+                  <td className="py-3 pl-4 w-40">
+                    <div className="h-2 bg-gray-100 rounded-full">
+                      <div className="h-2 rounded-full transition-all"
+                        style={{ width: `${step.rate}%`, backgroundColor: i === kpis.funnelSteps.length - 1 ? "#059669" : "#3b82f6" }} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-sm" style={{ color: "#64748b" }}>MRR total (payants)</span>
+          <span className="text-xl font-bold" style={{ color: "#7c3aed" }}>€{kpis.mrr.toLocaleString()}</span>
+        </div>
+      </div>
       )}
 
       {/* Revenue Chart */}

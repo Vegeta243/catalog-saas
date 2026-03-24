@@ -58,11 +58,9 @@ export default function DashboardPage() {
   // Onboarding
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [onboardingSteps, setOnboardingSteps] = useState([
-    { id: 1, label: "Créer votre compte", done: true, href: "" },
-    { id: 2, label: "Connecter votre boutique Shopify", done: false, href: "/dashboard/shops" },
-    { id: 3, label: "Lancer votre premier workflow", done: false, href: "/dashboard/automation" },
-    { id: 4, label: "Optimiser 5 produits avec l'IA", done: false, href: "/dashboard/ai" },
-    { id: 5, label: "Activer votre abonnement", done: false, href: "/dashboard/credits" },
+    { id: 1, label: "Boutique connectée", done: false, href: "/dashboard/shops" },
+    { id: 2, label: "Produits synchronisés", done: false, href: "/dashboard/products" },
+    { id: 3, label: "Premier produit optimisé", done: false, href: "/dashboard/ai" },
   ]);
 
   // Workflow modals
@@ -145,18 +143,13 @@ export default function DashboardPage() {
   // Sync onboarding steps with real app state
   useEffect(() => {
     if (loading) return;
-    const optimized = products.filter((p) => seoScore(p) >= 50).length;
-    const shopifyConnected = shopCount > 0;
-    const workflowDone = typeof window !== "undefined" && localStorage.getItem("ecompilot_workflow_done") === "1";
-    const enoughOptimized = optimized >= 5;
+    const firstOptimized = products.some((p) => seoScore(p) >= 50);
     setOnboardingSteps([
-      { id: 1, label: "Créer votre compte", done: true, href: "" },
-      { id: 2, label: "Connecter votre boutique Shopify", done: shopifyConnected, href: "/dashboard/shops" },
-      { id: 3, label: "Lancer votre premier workflow", done: workflowDone, href: "/dashboard/automation" },
-      { id: 4, label: "Optimiser 5 produits avec l'IA", done: enoughOptimized, href: "/dashboard/ai" },
-      { id: 5, label: "Activer votre abonnement", done: plan !== "free", href: "/dashboard/credits" },
+      { id: 1, label: "Boutique connectée", done: shopCount > 0, href: "/dashboard/shops" },
+      { id: 2, label: "Produits synchronisés", done: products.length > 0, href: "/dashboard/products" },
+      { id: 3, label: "Premier produit optimisé", done: firstOptimized, href: "/dashboard/ai" },
     ]);
-  }, [loading, products, plan, shopCount]);
+  }, [loading, products, shopCount]);
 
   // Health Score calculations
   const avgScore = products.length > 0
@@ -346,34 +339,34 @@ export default function DashboardPage() {
             })}
           </div>
 
-          {/* Checklist gamifiée */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold" style={{ color: "#0f172a" }}>Votre progression</h3>
-              <span className="text-xs font-medium" style={{ color: "#2563eb" }}>{onboardingDone}/{onboardingTotal}</span>
+          {/* Checklist gamifiée — compact 3 étapes */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold" style={{ color: "#0f172a" }}>Démarrage ({onboardingDone}/3)</h3>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: onboardingDone === 3 ? "#f0fdf4" : "#eff6ff", color: onboardingDone === 3 ? "#059669" : "#2563eb" }}>
+                {onboardingDone === 3 ? "Terminé ✓" : `${onboardingDone}/3 étapes`}
+              </span>
             </div>
-            <div className="h-2 bg-gray-100 rounded-full mb-4">
-              <div className="h-2 bg-blue-600 rounded-full transition-all" style={{ width: `${(onboardingDone / onboardingTotal) * 100}%` }} />
+            <div className="h-1.5 bg-gray-100 rounded-full mb-3">
+              <div className="h-1.5 rounded-full transition-all" style={{ width: `${(onboardingDone / 3) * 100}%`, backgroundColor: onboardingDone === 3 ? "#059669" : "#2563eb" }} />
             </div>
-            <div className="space-y-2">
-              {onboardingSteps.map((step) =>
-                !step.done && step.href ? (
-                  <Link key={step.id} href={step.href}
-                    className="flex items-center gap-3 py-1.5 px-2 -mx-2 hover:bg-blue-50 rounded-lg transition-colors group">
-                    <Circle className="w-4 h-4 flex-shrink-0" style={{ color: "#d1d5db" }} />
-                    <span className="text-sm flex-1" style={{ color: "#374151" }}>{step.label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#2563eb" }} />
-                  </Link>
-                ) : (
-                  <div key={step.id} className="flex items-center gap-3 py-1">
-                    {step.done
-                      ? <CheckCircle2 className="w-4 h-4" style={{ color: "#059669" }} />
-                      : <Circle className="w-4 h-4" style={{ color: "#d1d5db" }} />}
-                    <span className={`text-sm ${step.done ? "line-through" : ""}`}
-                      style={{ color: step.done ? "#94a3b8" : "#374151" }}>{step.label}</span>
+            <div className="flex gap-2">
+              {onboardingSteps.map((step) => (
+                step.done ? (
+                  <div key={step.id} className="flex-1 flex items-center gap-1.5 py-1.5 px-2 bg-emerald-50 rounded-lg">
+                    <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#059669" }} />
+                    <span className="text-xs font-medium line-through" style={{ color: "#94a3b8" }}>{step.label}</span>
                   </div>
+                ) : (
+                  <Link key={step.id} href={step.href}
+                    className="flex-1 flex items-center gap-1.5 py-1.5 px-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group">
+                    <Circle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#93c5fd" }} />
+                    <span className="text-xs font-medium" style={{ color: "#1d4ed8" }}>{step.label}</span>
+                    <ChevronRight className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#2563eb" }} />
+                  </Link>
                 )
-              )}
+              ))}
             </div>
           </div>
         </div>
