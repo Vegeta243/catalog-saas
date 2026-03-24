@@ -10,13 +10,16 @@
     "shopify:deploy": "shopify app deploy",
     "shopify:deploy:no-release": "shopify app deploy --no-release",
     "shopify:setup": "node scripts/shopify-deploy.mjs",
-    "shopify:dev": "shopify app dev"
+    "shopify:dev": "shopify app dev",
+    "icons:generate": "node scripts/generate-icons.mjs",
+    "keystore:generate": "node scripts/generate-keystore.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",
     "@tanstack/react-virtual": "^3.13.23",
     "@types/cheerio": "^1.0.0",
+    "@types/web-push": "^3.6.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "cheerio": "^1.2.0",
@@ -49,7 +52,8 @@
     "supabase": "^2.76.17",
     "tailwindcss": "^4.2.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "web-push": "^3.6.7"
   },
   "type": "module"
 }

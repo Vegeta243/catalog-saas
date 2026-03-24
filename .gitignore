@@ -58,3 +58,8 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Android keystore (NEVER commit — needed for Play Store updates)
+keys/*.keystore
+keys/*.jks
+keys/*.p12
