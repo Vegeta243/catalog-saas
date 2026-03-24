@@ -1,0 +1,57 @@
+{
+  "appId": "com.ecompilotelite.app",
+  "appName": "EcomPilot Elite",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://www.ecompilotelite.com",
+    "cleartext": false,
+    "allowNavigation": [
+      "*.ecompilotelite.com",
+      "*.myshopify.com",
+      "*.supabase.co",
+      "*.stripe.com"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0f172a",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#3b82f6"
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0f172a",
+      "overlaysWebView": false
+    },
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "DARK",
+      "resizeOnFullScreen": true
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#0f172a",
+    "loggingBehavior": "none",
+    "minWebViewVersion": 80
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0f172a",
+    "limitsNavigationsToAppBoundDomains": true
+  }
+}

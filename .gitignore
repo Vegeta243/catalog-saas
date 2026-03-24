@@ -59,7 +59,22 @@ next-env.d.ts
 .vercel
 .env*.local
 
-# Android keystore (NEVER commit — needed for Play Store updates)
+# Android keystore (NEVER commit - needed for Play Store updates)
 keys/*.keystore
 keys/*.jks
 keys/*.p12
+*.keystore
+*.b64
+android/app/ecompilot-release.keystore
+android/app/keystore.b64
+android/app/keystore-clean.b64
+android/app/keystore-secret.txt
+
+# Android build outputs
+android/app/build/
+android/.gradle/
+android/build/
+android/capacitor-cordova-android-plugins/build/
+android/capacitor-android/build/
+android/.idea/
+android/local.properties
