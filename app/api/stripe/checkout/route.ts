@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { createClient } from "@/lib/supabase/server";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -9,28 +10,31 @@ function getStripe() {
   });
 }
 
-// TODO: Update Stripe price IDs in dashboard for new pricing:
-// Starter: 29€/mo monthly, 20€/mo annual (245€/year)
-// Pro:     89€/mo monthly, 62€/mo annual (749€/year)
-// Scale:   129€/mo monthly, 90€/mo annual (1085€/year)
-// Set env vars: STRIPE_STARTER_MONTHLY_PRICE_ID, STRIPE_STARTER_YEARLY_PRICE_ID, etc.
+// Fallback price IDs from .env.vercel.tmp if env vars are missing
 const PLANS = {
   starter: {
-    monthly: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID,
-    yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID,
+    monthly: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || process.env.STRIPE_STARTER_PRICE_ID || 'price_1T9VIXE2Eg0XD50YQi7QKGLB',
+    yearly: process.env.STRIPE_STARTER_YEARLY_PRICE_ID || 'price_1T9VKWE2Eg0XD50YE2m1yXN9',
   },
   pro: {
-    monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
-    yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID,
+    monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || process.env.STRIPE_PRO_PRICE_ID || 'price_1T7LdlE2Eg0XD50YKywVBHL6',
+    yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID || 'price_1T9VMcE2Eg0XD50YO0ixnQDF',
   },
   scale: {
-    monthly: process.env.STRIPE_SCALE_MONTHLY_PRICE_ID,
-    yearly: process.env.STRIPE_SCALE_YEARLY_PRICE_ID,
+    monthly: process.env.STRIPE_SCALE_MONTHLY_PRICE_ID || process.env.STRIPE_SCALE_PRICE_ID || 'price_1T9VNQE2Eg0XD50YAKmjHx0y',
+    yearly: process.env.STRIPE_SCALE_YEARLY_PRICE_ID || 'price_1T9VOaE2Eg0XD50YaBrW4E7P',
   },
 };
 
 export async function POST(req: Request) {
   try {
+    // Require authentication
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    }
+
     const { plan, billing, email, paymentMethod } = await req.json();
 
     if (!plan || !billing) {
@@ -55,7 +59,7 @@ export async function POST(req: Request) {
 
     const priceId = billing === "yearly" ? planConfig.yearly : planConfig.monthly;
     if (!priceId) {
-      return NextResponse.json({ error: "Configuration Stripe incomplète. Ajoutez les Price IDs dans .env.local" }, { status: 500 });
+      return NextResponse.json({ error: `Plan invalide: ${plan}` }, { status: 400 });
     }
 
     // Support multiple payment methods (card + PayPal if enabled)
@@ -77,7 +81,8 @@ export async function POST(req: Request) {
       allow_promotion_codes: true,
       billing_address_collection: "required",
       tax_id_collection: { enabled: true },
-      automatic_tax: { enabled: true },
+      // automatic_tax requires Stripe Tax to be activated in the dashboard
+      ...(process.env.STRIPE_TAX_ENABLED === "true" ? { automatic_tax: { enabled: true } } : {}),
     });
 
     return NextResponse.json({ url: session.url });
