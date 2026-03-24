@@ -132,6 +132,8 @@ export default function HelpPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [sent, setSent] = useState(false);
 
+  useEffect(() => { document.title = "Aide | EcomPilot"; }, []);
+
   const loadTickets = async () => {
     setTicketsLoading(true);
     try {

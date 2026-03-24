@@ -125,6 +125,8 @@ export default function ConcurrencePage() {
   const [newAlertThreshold, setNewAlertThreshold] = useState('')
   const [compScore, setCompScore] = useState<CompetitiveScore>(null)
 
+  useEffect(() => { document.title = "Concurrence | EcomPilot"; }, []);
+
   /* ─── Fetch ─── */
   const fetchCompetitors = useCallback(async () => {
     try {

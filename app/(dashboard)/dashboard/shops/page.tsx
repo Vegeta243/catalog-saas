@@ -40,6 +40,8 @@ function ShopsContent() {
   const [connectError, setConnectError] = useState("");
   const [connectSuccess, setConnectSuccess] = useState("");
 
+  useEffect(() => { document.title = "Boutiques | EcomPilot"; }, []);
+
   useEffect(() => {
     fetchShops();
   }, []);

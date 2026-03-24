@@ -54,6 +54,8 @@ export default function TasksPage() {
   const resetDate = getResetDate();
   const color = getTasksColor(remaining);
 
+  useEffect(() => { document.title = "Crédits | EcomPilot"; }, []);
+
   const fetchData = useCallback(async () => {
     try {
       const supabase = createClient();

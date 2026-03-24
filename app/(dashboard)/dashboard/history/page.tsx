@@ -31,6 +31,8 @@ export default function HistoryPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sortDesc, setSortDesc] = useState(true);
 
+  useEffect(() => { document.title = "Historique | EcomPilot"; }, []);
+
   useEffect(() => {
     const fetchHistory = async () => {
       try {

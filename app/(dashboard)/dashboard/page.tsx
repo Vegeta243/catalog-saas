@@ -78,6 +78,8 @@ export default function DashboardPage() {
   // No fake activity — only real events would be stored in DB
   const recentActivity: { date: string; action: string; products: number; result: string }[] = [];
 
+  useEffect(() => { document.title = "Tableau de bord | EcomPilot"; }, []);
+
   const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch("/api/shopify/products");
@@ -512,13 +514,14 @@ export default function DashboardPage() {
             <p className="text-sm" style={{ color: "#64748b" }}>Aucune activité pour l&apos;instant — lancez votre premier workflow ci-dessus !</p>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left px-5 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Date</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Action</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Produits</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold" style={{ color: "#64748b" }}>Résultat</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold hidden sm:table-cell" style={{ color: "#64748b" }}>Produits</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold hidden sm:table-cell" style={{ color: "#64748b" }}>Résultat</th>
               </tr>
             </thead>
             <tbody>
@@ -526,14 +529,15 @@ export default function DashboardPage() {
                 <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
                   <td className="px-5 py-3 text-xs" style={{ color: "#94a3b8" }}>{a.date}</td>
                   <td className="px-5 py-3 text-sm font-medium" style={{ color: "#0f172a" }}>{a.action}</td>
-                  <td className="px-5 py-3 text-sm" style={{ color: "#374151" }}>{a.products}</td>
-                  <td className="px-5 py-3">
+                  <td className="px-5 py-3 text-sm hidden sm:table-cell" style={{ color: "#374151" }}>{a.products}</td>
+                  <td className="px-5 py-3 hidden sm:table-cell">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 font-medium" style={{ color: "#059669" }}>{a.result}</span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

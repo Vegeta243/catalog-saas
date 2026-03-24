@@ -153,6 +153,8 @@ export default function RentabilitePage() {
   const [savingCost, setSavingCost] = useState(false);
   const [simulationQty, setSimulationQty] = useState(100);
 
+  useEffect(() => { document.title = "Rentabilité | EcomPilot"; }, []);
+
   // Load products
   useEffect(() => {
     fetch("/api/shopify/products")
@@ -278,7 +280,7 @@ export default function RentabilitePage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>
             Calculateur de rentabilité
@@ -568,7 +570,7 @@ export default function RentabilitePage() {
                       unités/mois de ce produit :
                     </label>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
                       { label: "CA total", value: (sellingPrice * simulationQty).toFixed(0) + " €", color: "#2563eb" },
                       { label: "Bénéfice net", value: (netProfit * simulationQty).toFixed(0) + " €", color: netProfit > 0 ? "#059669" : "#dc2626" },

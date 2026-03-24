@@ -63,6 +63,8 @@ export default function RechercheIAPage() {
   const [results, setResults] = useState<ProductResult[]>([]);
   const [importingIdx, setImportingIdx] = useState<number | null>(null);
 
+  useEffect(() => { document.title = "Recherche IA | EcomPilot"; }, []);
+
   // Admin-only gate: check session cookie via API
   useEffect(() => {
     fetch('/api/admin/check')

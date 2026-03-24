@@ -81,6 +81,8 @@ export default function AutomationPage() {
   const [newActionType, setNewActionType] = useState("price_increase");
   const [newActionValue, setNewActionValue] = useState("10");
 
+  useEffect(() => { document.title = "Automatisation | EcomPilot"; }, []);
+
   const fetchRules = useCallback(async () => {
     try {
       const res = await fetch("/api/automation");

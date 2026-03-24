@@ -82,6 +82,8 @@ export default function AIPage() {
   const [previewItems, setPreviewItems] = useState<AIPreviewItem[]>([]);
   const [applyingPreview, setApplyingPreview] = useState(false);
 
+  useEffect(() => { document.title = "Optimisation IA | EcomPilot"; }, []);
+
   useEffect(() => {
     fetch("/api/shopify/products").then((r) => r.json()).then((d) => {
       setProducts((d.products || []).map((p: Product) => ({ ...p, price: p.variants?.[0]?.price || p.price || "0" })));
@@ -547,30 +549,30 @@ export default function AIPage() {
                     </p>
                   </div>
                   <ScoreBadge score={score} />
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                     <button onClick={() => generateForProduct(product, "tags")} disabled={!!generating}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg text-xs font-medium disabled:opacity-50">
-                      <Tag className="w-3.5 h-3.5" style={{ color: "#d97706" }} /><span style={{ color: "#92400e" }}>Tags</span>
+                      <Tag className="w-3.5 h-3.5" style={{ color: "#d97706" }} /><span className="hidden sm:inline" style={{ color: "#92400e" }}>Tags</span>
                     </button>
                     <button onClick={() => generateForProduct(product)} disabled={isGenerating}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 rounded-lg text-xs font-medium disabled:opacity-50">
                       {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#8b5cf6" }} /> : <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />}
-                      <span style={{ color: "#6d28d9" }}>Prévisualiser</span>
+                      <span className="hidden sm:inline" style={{ color: "#6d28d9" }}>Prévisualiser</span>
                     </button>
                     <button onClick={() => generateAndApply(product)} disabled={!!generating}
                       title="Génère et applique directement sans prévisualisation"
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 rounded-lg text-xs font-semibold disabled:opacity-50">
                       {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#059669" }} /> : <Zap className="w-3.5 h-3.5" style={{ color: "#059669" }} />}
-                      <span style={{ color: "#065f46" }}>Appliquer direct</span>
+                      <span className="hidden sm:inline" style={{ color: "#065f46" }}>Appliquer direct</span>
                     </button>
                     {gen && (
                       <button onClick={() => applyGenerated(product.id)} disabled={generating === product.id}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-xs font-semibold">
-                        <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Appliquer</span>
+                        <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#fff" }} /><span className="hidden sm:inline" style={{ color: "#fff" }}>Appliquer</span>
                       </button>
                     )}
                     {gen && (
-                      <button onClick={() => setPreviewId(product.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-medium">
+                      <button onClick={() => setPreviewId(product.id)} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-medium">
                         <Eye className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /><span style={{ color: "#1e40af" }}>Avant/Après</span>
                       </button>
                     )}

@@ -51,6 +51,8 @@ export default function TachesPage() {
   const tasksTotal = PLAN_TASKS[plan] || 50;
   const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
 
+  useEffect(() => { document.title = "Tâches | EcomPilot"; }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();

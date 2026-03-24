@@ -27,6 +27,8 @@ function BillingContent() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
+  useEffect(() => { document.title = "Abonnement | EcomPilot"; }, []);
+
   useEffect(() => {
     // Show checkout success message
     if (searchParams.get("checkout") === "success") {

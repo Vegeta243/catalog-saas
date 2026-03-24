@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     const referralCode = userData?.referral_code || user.id.substring(0, 8);
-    const domain = process.env.NEXT_PUBLIC_APP_URL || "https://catalog-saas.vercel.app";
+    const domain = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ecompilotelite.com";
     const referralUrl = `${domain}/signup?ref=${referralCode}`;
 
     // Record the invite

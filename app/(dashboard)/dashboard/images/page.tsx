@@ -46,7 +46,8 @@ const RESIZE_PRESETS = [
   { label: "Carre HD", width: 1500, height: 1500 },
 ];
 
-const COLS = 3;      // grid columns in the virtual image gallery
+const COLS_DESKTOP = 3; // grid columns on desktop
+const COLS_MOBILE = 2;  // grid columns on mobile
 const ITEM_H = 160; // row height in pixels (image card + label)
 const BATCH_SIZE = 10; // parallel batch size for processing
 
@@ -89,6 +90,21 @@ export default function ImagesPage() {
   const [batchErrors, setBatchErrors] = useState(0);
   const [showOriginal, setShowOriginal] = useState(false);
   const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+
+  const [showEditPanel, setShowEditPanel] = useState(false);
+
+  // Responsive columns for image grid
+  const [cols, setCols] = useState(COLS_DESKTOP);
+
+  useEffect(() => { document.title = "Éditeur d'images | EcomPilot"; }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setCols(mq.matches ? COLS_MOBILE : COLS_DESKTOP);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   /* Load Shopify products */
   const loadShopifyProducts = useCallback(async () => {
@@ -461,8 +477,8 @@ export default function ImagesPage() {
   const activeSrc = activeItem ? getDisplaySrc(activeItem.idx) : "";
   const editedShopifyCount = loadedImages.filter((img) => img.shopifyImageId && processedImages[img.idx] !== undefined && selectedIndices.has(img.idx)).length;
 
-  // Virtual grid: each row holds COLS images
-  const rowCount = Math.ceil(loadedImages.length / COLS);
+  // Virtual grid: each row holds cols images
+  const rowCount = Math.ceil(loadedImages.length / cols);
   const rowVirtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => gridRef.current,
@@ -578,7 +594,7 @@ export default function ImagesPage() {
                       </button>
                       {expandedProduct === product.productId && (
                         <div className="px-3 pb-3 bg-gray-50/50">
-                          <div className="grid grid-cols-5 gap-1.5">
+                          <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                             {product.images.map((img) => {
                               const key = `${product.productId}/${img.id}`;
                               const checked = pendingImages.has(key);
@@ -649,7 +665,7 @@ export default function ImagesPage() {
               style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}
             >
               {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const rowImages = loadedImages.slice(virtualRow.index * COLS, (virtualRow.index + 1) * COLS);
+                const rowImages = loadedImages.slice(virtualRow.index * cols, (virtualRow.index + 1) * cols);
                 return (
                   <div
                     key={virtualRow.key}
@@ -661,7 +677,7 @@ export default function ImagesPage() {
                       height: `${virtualRow.size}px`,
                       transform: `translateY(${virtualRow.start}px)`,
                       display: "grid",
-                      gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+                      gridTemplateColumns: `repeat(${cols}, 1fr)`,
                       gap: "8px",
                       alignContent: "start",
                     }}
@@ -741,7 +757,18 @@ export default function ImagesPage() {
         </div>
 
         {/* ── RIGHT: Editing panel ─────────────────────────────────────── */}
-        <div className="w-72 flex-shrink-0 border-l border-gray-200 bg-white overflow-y-auto flex flex-col">
+        {/* Mobile toggle button */}
+        <button
+          onClick={() => setShowEditPanel(!showEditPanel)}
+          className="md:hidden fixed bottom-4 right-4 z-40 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg"
+        >
+          <Sparkles className="w-5 h-5" />
+        </button>
+        {/* Mobile backdrop */}
+        {showEditPanel && (
+          <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setShowEditPanel(false)} />
+        )}
+        <div className={`${showEditPanel ? "translate-x-0" : "translate-x-full md:translate-x-0"} fixed md:static right-0 top-0 bottom-0 z-50 md:z-auto w-72 flex-shrink-0 border-l border-gray-200 bg-white overflow-y-auto flex flex-col transition-transform duration-200`}>
 
           {/* Preview */}
           <div className="border-b border-gray-100">

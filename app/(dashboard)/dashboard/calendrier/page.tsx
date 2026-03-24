@@ -70,6 +70,8 @@ export default function CalendrierPage() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
+  useEffect(() => { document.title = "Calendrier | EcomPilot"; }, []);
+
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     const from = new Date(year, month, 1).toISOString();

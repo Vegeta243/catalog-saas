@@ -41,6 +41,8 @@ export default function ImportPage() {
   const [adminChecking, setAdminChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  useEffect(() => { document.title = "Import | EcomPilot"; }, []);
+
   // Admin-only gate
   useEffect(() => {
     fetch('/api/admin/check')
@@ -220,7 +222,7 @@ export default function ImportPage() {
   if (!isAdmin) return null;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-0">
       <div className="mb-6">
         <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Importer des produits</h1>
         <p className="text-sm mt-1" style={{ color: "#64748b" }}>Ajoutez des produits depuis une URL ou un fichier CSV</p>

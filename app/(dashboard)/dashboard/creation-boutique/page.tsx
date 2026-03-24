@@ -65,6 +65,8 @@ export default function CreationBoutiquePage() {
     sections: ["hero", "featured_products", "benefits", "newsletter"],
   });
 
+  useEffect(() => { document.title = "Création boutique | EcomPilot"; }, []);
+
   useEffect(() => {
     // Admin-only gate
     fetch('/api/admin/check')

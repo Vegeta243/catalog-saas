@@ -37,3 +37,15 @@ if (Array.isArray(tables)) {
 } else {
   console.log(JSON.stringify(tables));
 }
+
+const userCols = await apiQuery("SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY column_name;");
+console.log('\n=== users columns ===');
+userCols.forEach(r => console.log(' -', r.column_name));
+
+const wsCols = await apiQuery("SELECT column_name FROM information_schema.columns WHERE table_name='workspaces' ORDER BY column_name;");
+console.log('\n=== workspaces columns ===');
+wsCols.forEach(r => console.log(' -', r.column_name));
+
+const chatbotCols = await apiQuery("SELECT column_name FROM information_schema.columns WHERE table_name='chatbot_logs' ORDER BY column_name;");
+console.log('\n=== chatbot_logs columns ===');
+chatbotCols.forEach(r => console.log(' -', r.column_name));

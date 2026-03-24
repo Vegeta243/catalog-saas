@@ -56,6 +56,8 @@ function UpgradeContent() {
   const [autoTriggered, setAutoTriggered] = useState(false);
   const [consent, setConsent] = useState(false);
 
+  useEffect(() => { document.title = "Mise à niveau | EcomPilot"; }, []);
+
   useEffect(() => {
     // Read billing period from URL param
     const billingParam = searchParams.get("billing");

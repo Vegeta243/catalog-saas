@@ -159,6 +159,8 @@ export default function ProductsPage() {
   const itemsPerPage = compactMode ? 50 : 25;
   const inlineSaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
+  useEffect(() => { document.title = "Produits | EcomPilot"; }, []);
+
   /* ──────── Fetch ──────── */
   const fetchProducts = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -1171,28 +1173,28 @@ export default function ProductsPage() {
                 </button>
               ))}
               {/* AI batch buttons */}
-              <div className="w-px h-6 bg-blue-200 mx-1" />
+              <div className="hidden sm:block w-px h-6 bg-blue-200 mx-1" />
               <button onClick={() => aiBatchGenerate("title")} disabled={aiBatchLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
                 <Wand2 className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
-                <span style={{ color: "#6d28d9" }}>IA Titres</span>
+                <span className="hidden sm:inline" style={{ color: "#6d28d9" }}>IA Titres</span>
               </button>
               <button onClick={() => aiBatchGenerate("tags")} disabled={aiBatchLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
                 <Sparkles className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
-                <span style={{ color: "#6d28d9" }}>IA Tags</span>
+                <span className="hidden sm:inline" style={{ color: "#6d28d9" }}>IA Tags</span>
               </button>
               <button onClick={() => aiBatchDescriptions()} disabled={aiBatchLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-lg text-xs font-medium hover:bg-violet-100 disabled:opacity-50">
                 <FileText className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} />
-                <span style={{ color: "#6d28d9" }}>IA Descriptions</span>
+                <span className="hidden sm:inline" style={{ color: "#6d28d9" }}>IA Desc</span>
               </button>
               <button onClick={() => aiBatchGenerate("full")} disabled={aiBatchLoading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 rounded-lg text-xs font-medium disabled:opacity-50">
                 {aiBatchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} /> : <TrendingUp className="w-3.5 h-3.5" style={{ color: "#fff" }} />}
                 <span style={{ color: "#fff" }}>IA Complète</span>
               </button>
-              <div className="w-px h-6 bg-blue-200 mx-1" />
+              <div className="hidden sm:block w-px h-6 bg-blue-200 mx-1" />
               {[{ key: "meta_title", icon: FileText, label: "Meta Titre" }, { key: "meta_description", icon: FileText, label: "Meta Desc" }].map((a) => (
                 <button key={a.key} onClick={() => setActiveAction(activeAction === a.key ? null : a.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${activeAction === a.key ? "bg-blue-600" : "bg-white border border-blue-200 hover:bg-blue-100"}`}>

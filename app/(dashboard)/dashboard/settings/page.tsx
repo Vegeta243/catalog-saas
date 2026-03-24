@@ -36,6 +36,8 @@ export default function SettingsPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => { document.title = "Paramètres | EcomPilot"; }, []);
+
   useEffect(() => {
     const loadUser = async () => {
       try {

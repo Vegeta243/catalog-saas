@@ -88,6 +88,8 @@ export default function AccountPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [dangerZoneExpanded, setDangerZoneExpanded] = useState(false);
 
+  useEffect(() => { document.title = "Mon compte | EcomPilot"; }, []);
+
   // ─── Fetch user data from Supabase ───
   const fetchData = useCallback(async () => {
     try {
