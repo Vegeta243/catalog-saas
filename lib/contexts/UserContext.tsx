@@ -39,7 +39,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (!res.ok) return;
       const data = await res.json();
       setUser(data.user);
-      setPlan(data.plan || "free");
+      // Check for admin preview plan override
+      const previewPlan = typeof document !== 'undefined'
+        ? document.cookie.split('; ').find(c => c.startsWith('ecompilot_preview='))?.split('=')[1]
+        : undefined;
+      setPlan(previewPlan || data.plan || "free");
       setActionsUsed(data.actions_used || 0);
       setActionsLimit(data.actions_limit ?? null);
     } catch {

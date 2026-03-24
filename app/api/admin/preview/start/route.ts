@@ -17,8 +17,10 @@ export async function POST(req: NextRequest) {
   }
 
   const res = NextResponse.json({ success: true, plan });
-  res.cookies.set("admin_preview_plan", plan, {
-    httpOnly: true,
+  // httpOnly:false so the dashboard can read it client-side to override plan gating
+  res.cookies.set("ecompilot_preview", plan, {
+    httpOnly: false,
+    secure: true,
     sameSite: "lax",
     maxAge: 3600,
     path: "/",

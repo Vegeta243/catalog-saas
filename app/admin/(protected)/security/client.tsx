@@ -5,12 +5,9 @@ import { ScrollText, Users, Shield, Activity } from "lucide-react";
 
 interface AuditEntry {
   id: number;
-  admin_email: string;
   action: string;
-  target_type?: string;
-  target_id?: string;
-  detail?: Record<string, unknown>;
-  ip?: string;
+  target?: string;
+  details?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -41,7 +38,7 @@ export default function SecurityClient({
         {[
           { label: "Actions admin (30j)", value: auditLog.length, color: "#3b82f6" },
           { label: "Utilisateurs récents", value: recentUsers.length, color: "#10b981" },
-          { label: "IPs distinctes", value: new Set(auditLog.map(a => a.ip).filter(Boolean)).size, color: "#f59e0b" },
+          { label: "Actions distinctes", value: new Set(auditLog.map(a => a.action)).size, color: "#f59e0b" },
           { label: "Erreurs détectées", value: auditLog.filter(a => /error|fail|block/i.test(a.action)).length, color: "#ef4444" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
@@ -75,7 +72,7 @@ export default function SecurityClient({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-50">
-                  {["Date", "Admin", "Action", "Cible", "IP"].map(h => (
+                  {["Date", "Action", "Cible", "Détails"].map(h => (
                     <th key={h} className="text-left text-xs font-semibold px-4 py-2.5" style={{ color: "#64748b" }}>{h}</th>
                   ))}
                 </tr>
@@ -86,7 +83,6 @@ export default function SecurityClient({
                     <td className="px-4 py-2.5 whitespace-nowrap" style={{ color: "#94a3b8" }}>
                       {new Date(entry.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td className="px-4 py-2.5 font-medium" style={{ color: "#0f172a" }}>{entry.admin_email}</td>
                     <td className="px-4 py-2.5">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         /error|fail|block/i.test(entry.action) ? "bg-red-50 text-red-600" :
@@ -95,9 +91,11 @@ export default function SecurityClient({
                       }`}>{entry.action}</span>
                     </td>
                     <td className="px-4 py-2.5" style={{ color: "#374151" }}>
-                      {entry.target_type && <span>{entry.target_type}{entry.target_id ? ` #${String(entry.target_id).substring(0, 8)}` : ""}</span>}
+                      {entry.target ? String(entry.target).substring(0, 20) : "—"}
                     </td>
-                    <td className="px-4 py-2.5 font-mono" style={{ color: "#94a3b8" }}>{entry.ip || "—"}</td>
+                    <td className="px-4 py-2.5" style={{ color: "#94a3b8" }}>
+                      {entry.details ? JSON.stringify(entry.details).substring(0, 40) : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

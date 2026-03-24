@@ -8,7 +8,10 @@ import { cookies } from "next/headers";
  */
 export async function GET() {
   const cookieStore = await cookies();
-  const plan = cookieStore.get("admin_preview_plan")?.value ?? null;
+  // Support both old and new cookie name during transition
+  const plan = cookieStore.get("ecompilot_preview")?.value
+    ?? cookieStore.get("admin_preview_plan")?.value
+    ?? null;
 
   return NextResponse.json({
     active: plan !== null,

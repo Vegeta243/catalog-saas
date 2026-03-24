@@ -108,7 +108,7 @@ export default function ParrainagePage() {
       </div>
 
       {/* How it works */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { step: 1, icon: "🔗", title: "Partagez votre lien", desc: "Envoyez votre lien unique à vos amis" },
           { step: 2, icon: "✅", title: "Ils s'inscrivent", desc: "Votre filleul crée son compte avec votre lien" },
@@ -123,7 +123,7 @@ export default function ParrainagePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
         {[
           { label: "Filleuls invités", value: stats?.totalReferred ?? 0, color: "#3b82f6" },
           { label: "Convertis", value: stats?.converted ?? 0, color: "#10b981" },

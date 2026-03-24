@@ -2,22 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { verifyAdminSession } from "@/lib/admin-security";
-import { createHmac, randomBytes } from "crypto";
 
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-function signImpersonationToken(payload: object): string {
-  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-  const body = Buffer.from(JSON.stringify({ ...payload, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url");
-  const secret = process.env.ADMIN_SECRET ?? randomBytes(32).toString("hex");
-  const sig = createHmac("sha256", secret).update(`${header}.${body}`).digest("base64url");
-  return `${header}.${body}.${sig}`;
-}
-
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const cookieStore = await cookies();
   const s = cookieStore.get("admin_session");
   if (!s?.value || !(await verifyAdminSession(s.value)).valid) {
@@ -25,12 +14,51 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const { id: targetId } = await params;
-  const { data: user, error } = await admin.from("users").select("id, email, plan").eq("id", targetId).single();
-  if (error || !user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
-  const token = signImpersonationToken({ sub: user.id, email: user.email, plan: user.plan, impersonated: true });
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
-  try { await admin.from("admin_audit_log").insert({ action: "impersonate_user", target: targetId, details: { email: user.email, plan: user.plan } }); } catch {}
+  // Get user from public.users first for email
+  const { data: publicUser } = await supabaseAdmin
+    .from("users")
+    .select("id, email, plan")
+    .eq("id", targetId)
+    .single();
 
-  return NextResponse.json({ token, user });
+  const email = publicUser?.email;
+  if (!email) {
+    // Fallback to auth.users
+    const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(targetId);
+    if (!authUser?.email) {
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    }
+  }
+
+  // Generate a one-time magic link via Supabase Admin API
+  const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+    type: "magiclink",
+    email: email || "",
+    options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.ecompilotelite.com"}/dashboard` },
+  });
+
+  if (error || !data?.properties?.action_link) {
+    console.error("[impersonate] generateLink error:", error);
+    return NextResponse.json({ error: error?.message || "Impossible de générer le lien" }, { status: 500 });
+  }
+
+  try {
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: "impersonate_user",
+      target: targetId,
+      details: { email, plan: publicUser?.plan },
+    });
+  } catch { /* audit non-blocking */ }
+
+  return NextResponse.json({
+    url: data.properties.action_link,
+    email,
+  });
 }

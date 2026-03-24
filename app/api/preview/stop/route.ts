@@ -8,18 +8,16 @@ import { cookies } from "next/headers";
  */
 export async function POST() {
   const cookieStore = await cookies();
-  const plan = cookieStore.get("admin_preview_plan")?.value;
+  const plan = cookieStore.get("ecompilot_preview")?.value
+    ?? cookieStore.get("admin_preview_plan")?.value;
 
   if (!plan) {
     return NextResponse.json({ ok: true, message: "No active preview session." });
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set("admin_preview_plan", "", {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  // Clear both cookie names
+  response.cookies.set("ecompilot_preview", "", { path: "/", maxAge: 0 });
+  response.cookies.set("admin_preview_plan", "", { path: "/", maxAge: 0 });
   return response;
 }

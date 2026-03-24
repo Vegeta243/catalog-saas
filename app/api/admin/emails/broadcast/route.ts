@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify(batch.map(to => ({
-        from: process.env.RESEND_FROM ?? "noreply@catalog-saas.com",
+        from: "EcomPilot Elite <onboarding@resend.dev>",
         to,
         subject,
         html: body.replace(/\n/g, "<br>"),

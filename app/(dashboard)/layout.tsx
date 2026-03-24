@@ -135,7 +135,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             router.push("/account-recovery");
             return;
           }
-          const p = data.plan || "free";
+          // Check for admin preview plan (non-httpOnly cookie readable by JS)
+          const previewPlan = typeof document !== 'undefined'
+            ? document.cookie.split('; ').find(c => c.startsWith('ecompilot_preview='))?.split('=')[1]
+            : undefined;
+          const p = previewPlan || data.plan || "free";
           setPlan(p);
           setTasksUsed(data.actions_used || 0);
           if (data.actions_limit) {
@@ -456,9 +460,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 p-3 md:p-6 overflow-x-hidden dark:bg-[#060d1c]">{children}</main>
 
         {/* Footer */}
-        <footer className="border-t border-gray-200 dark:border-[#18304a] bg-white dark:bg-[#0b1827] px-6 py-3 flex items-center justify-between">
+        <footer className="border-t border-gray-200 dark:border-[#18304a] bg-white dark:bg-[#0b1827] px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs" style={{ color: '#94a3b8' }}>© 2026 EcomPilot. Tous droits réservés.</p>
-          <p className="text-xs" style={{ color: '#94a3b8' }}>v6.0.0</p>
+          <div className="flex items-center gap-4">
+            <a href="/mentions-legales" className="text-xs hover:underline" style={{ color: '#94a3b8' }}>Mentions légales</a>
+            <a href="/cgv" className="text-xs hover:underline" style={{ color: '#94a3b8' }}>CGV</a>
+            <a href="/politique-confidentialite" className="text-xs hover:underline" style={{ color: '#94a3b8' }}>Confidentialité</a>
+            <p className="text-xs" style={{ color: '#94a3b8' }}>v6.0.0</p>
+          </div>
         </footer>
       </div>
 

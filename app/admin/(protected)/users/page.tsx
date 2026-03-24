@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { ImpersonateButton } from "./ImpersonateButton";
 
 function getAdminClient() {
   return createClient(
@@ -244,6 +245,7 @@ export default async function AdminUsersPage({
                             </button>
                           </form>
                           <PlanDropdown userId={user.id} currentPlan={user.plan} />
+                          <ImpersonateButton userId={user.id} />
                         </>
                       )}
                       {isDeleted && (

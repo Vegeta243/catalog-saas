@@ -92,6 +92,18 @@ async function verifyAdminSessionEdge(token: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // ── Maintenance mode ──
+  if (process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true") {
+    if (
+      !pathname.startsWith("/admin") &&
+      !pathname.startsWith("/api") &&
+      !pathname.startsWith("/maintenance") &&
+      !pathname.startsWith("/_next")
+    ) {
+      return NextResponse.redirect(new URL("/maintenance", request.url));
+    }
+  }
+
   // ⚠️ Skip middleware for all admin routes
   // Admin has its own cookie-based auth in app/admin/(protected)/layout.tsx
   if (pathname.startsWith('/admin')) {

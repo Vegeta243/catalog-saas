@@ -199,7 +199,7 @@ function BillingContent() {
       </div>
 
       {/* Billing details */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="w-4 h-4" style={{ color: "#64748b" }} />
