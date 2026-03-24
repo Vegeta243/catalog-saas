@@ -1,5 +1,112 @@
 import type { NextConfig } from "next";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withPWA = require("next-pwa")({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "google-fonts",
+        expiration: { maxEntries: 4, maxAgeSeconds: 365 * 24 * 60 * 60 },
+      },
+    },
+    {
+      urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font\.css)$/i,
+      handler: "StaleWhileRevalidate",
+      options: { cacheName: "static-font-assets" },
+    },
+    {
+      urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "static-image-assets",
+        expiration: { maxEntries: 64, maxAgeSeconds: 24 * 60 * 60 },
+      },
+    },
+    {
+      urlPattern: /\/_next\/static.+\.js$/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "next-static-js-assets",
+        expiration: { maxEntries: 64, maxAgeSeconds: 24 * 60 * 60 },
+      },
+    },
+    {
+      urlPattern: /\/_next\/image\?url=.+$/i,
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "next-image",
+        expiration: { maxEntries: 64, maxAgeSeconds: 24 * 60 * 60 },
+      },
+    },
+    {
+      urlPattern: /\.(?:mp3|wav|ogg)$/i,
+      handler: "CacheFirst",
+      options: { cacheName: "static-audio-assets" },
+    },
+    {
+      urlPattern: /\.(?:mp4)$/i,
+      handler: "CacheFirst",
+      options: { cacheName: "static-video-assets" },
+    },
+    {
+      urlPattern: /\.(?:js)$/i,
+      handler: "StaleWhileRevalidate",
+      options: { cacheName: "static-js-assets" },
+    },
+    {
+      urlPattern: /\.(?:css|less)$/i,
+      handler: "StaleWhileRevalidate",
+      options: { cacheName: "static-style-assets" },
+    },
+    {
+      urlPattern: /\/_next\/data\/.+\/.+\.json$/i,
+      handler: "StaleWhileRevalidate",
+      options: { cacheName: "next-data" },
+    },
+    {
+      urlPattern: /\.(?:json|xml|csv)$/i,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "static-data-assets",
+        expiration: { maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 },
+      },
+    },
+    {
+      urlPattern: ({ url }: { url: URL }) => {
+        const isSameOrigin = self.origin === url.origin;
+        if (!isSameOrigin) return false;
+        const pathname = url.pathname;
+        if (pathname.startsWith("/api/")) return false;
+        return true;
+      },
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "others",
+        expiration: { maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 },
+        networkTimeoutSeconds: 10,
+      },
+    },
+    {
+      urlPattern: ({ url }: { url: URL }) => {
+        const isSameOrigin = self.origin === url.origin;
+        return !isSameOrigin;
+      },
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "cross-origin",
+        expiration: { maxEntries: 32, maxAgeSeconds: 60 * 60 },
+        networkTimeoutSeconds: 10,
+      },
+    },
+  ],
+});
+
 const nextConfig: NextConfig = {
   // sharp is a native Node.js addon — must not be bundled by webpack
   serverExternalPackages: ["sharp"],
@@ -128,5 +235,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
 

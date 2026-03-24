@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [{
+      "appID": "TEAMID.com.ecompilotelite.app",
+      "paths": ["*"]
+    }]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.ecompilotelite.app"]
+  }
+}
