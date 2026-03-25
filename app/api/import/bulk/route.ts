@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+
+export const maxDuration = 60
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { importProduct, detectPlatform } from '@/lib/importers'
 import { shopifyQuery } from '@/lib/shopify-graphql'

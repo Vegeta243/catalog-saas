@@ -1,10 +1,37 @@
 import type { ImportResult } from './types'
-import { fetchWithRetry, cleanHtml } from './utils'
+import { safeFetch, cleanHtml, extractOgData } from './utils'
 
 export async function importFromAlibaba(url: string): Promise<ImportResult> {
   try {
-    const res = await fetchWithRetry(url)
-    const html = await res.text()
+    const { ok, html } = await safeFetch(url)
+    if (!ok || html.length < 200) return { success: false, url, error: 'Alibaba inaccessible' }
+
+    const og = extractOgData(html)
+    if (og.title && og.title.length > 4) {
+      const price = parseFloat(og.price || '0') || 9.99
+      const images: string[] = []
+      if (og.image) images.push(og.image)
+      const imgReg = /https?:\/\/[^"'\s]*\.alicdn\.com\/[^"'\s]+\.jpe?g/g
+      let m: RegExpExecArray | null
+      while ((m = imgReg.exec(html)) !== null && images.length < 8) {
+        if (!images.includes(m[0])) images.push(m[0])
+      }
+      return {
+        success: true, url,
+        product: {
+          title: og.title.replace(/\s*[-|]\s*Alibaba.*$/i, '').trim(),
+          description: cleanHtml(og.description || og.title),
+          price,
+          compareAtPrice: Math.round(price * 2 * 100) / 100,
+          images,
+          variants: [{ title: 'MOQ 1 unit', price }],
+          tags: ['alibaba', 'wholesale'],
+          vendor: 'Alibaba Supplier',
+          platform: 'alibaba',
+          sourceUrl: url,
+        },
+      }
+    }
 
     // JSON-LD extraction
     const jsonLdMatch = html.match(

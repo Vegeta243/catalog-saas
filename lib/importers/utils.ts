@@ -13,6 +13,67 @@ export function detectPlatform(url: string): string {
   return 'unknown'
 }
 
+export async function safeFetch(
+  url: string,
+  timeoutMs = 12000
+): Promise<{ ok: boolean; html: string; status: number }> {
+  try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)' +
+          ' AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        Accept: 'text/html,application/xhtml+xml,*/*;q=0.9',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache',
+      },
+    })
+    clearTimeout(timer)
+    const html = await res.text()
+    return { ok: res.ok, html, status: res.status }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'fetch error'
+    console.error('[safeFetch]', url.slice(0, 80), msg)
+    return { ok: false, html: '', status: 0 }
+  }
+}
+
+export function extractOgData(html: string): {
+  title: string | null
+  image: string | null
+  description: string | null
+  price: string | null
+} {
+  function getMeta(prop: string): string | null {
+    const re1 = new RegExp(
+      `<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']{1,500})["']`, 'i'
+    )
+    const re2 = new RegExp(
+      `<meta[^>]+content=["']([^"']{1,500})["'][^>]+property=["']${prop}["']`, 'i'
+    )
+    const re3 = new RegExp(
+      `<meta[^>]+name=["']${prop}["'][^>]+content=["']([^"']{1,500})["']`, 'i'
+    )
+    const re4 = new RegExp(
+      `<meta[^>]+content=["']([^"']{1,500})["'][^>]+name=["']${prop}["']`, 'i'
+    )
+    for (const re of [re1, re2, re3, re4]) {
+      const m = html.match(re)
+      if (m?.[1]?.trim()) return m[1].trim()
+    }
+    return null
+  }
+  return {
+    title: getMeta('og:title') || getMeta('twitter:title'),
+    image: getMeta('og:image') || getMeta('twitter:image'),
+    description: getMeta('og:description') || getMeta('description'),
+    price: getMeta('product:price:amount'),
+  }
+}
+
 export function cleanHtml(html: string): string {
   return html
     .replace(/<[^>]*>/g, ' ')

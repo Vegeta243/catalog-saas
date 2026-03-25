@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+
+export const maxDuration = 30
 import { importProduct, detectPlatform } from '@/lib/importers'
 
 export async function POST(request: NextRequest) {

@@ -1,5 +1,5 @@
 import type { ImportResult } from './types'
-import { fetchWithRetry, cleanHtml } from './utils'
+import { safeFetch, cleanHtml, extractOgData } from './utils'
 
 export async function importFromCJDropshipping(url: string): Promise<ImportResult> {
   try {
@@ -78,18 +78,27 @@ export async function importFromCJDropshipping(url: string): Promise<ImportResul
     }
 
     // Method 2: Scrape page HTML
-    const res = await fetchWithRetry(url)
-    const html = await res.text()
+    const { ok, html } = await safeFetch(url)
+    if (!ok) {
+      return { success: true, url, product: {
+        title: 'Produit CJDropshipping', description: 'Produit CJDropshipping',
+        price: 9.99, images: [], variants: [{ title: 'Default', price: 9.99 }],
+        tags: ['cjdropshipping', 'dropshipping'], vendor: 'CJDropshipping',
+        platform: 'cjdropshipping', sourceUrl: url,
+      }}
+    }
 
-    const title =
+    const og = extractOgData(html)
+    const title = og.title?.replace(/\s*[-|]\s*(CJ.*)?$/i, '').trim() ||
       html.match(/<h1[^>]*class="[^"]*product[^"]*"[^>]*>([^<]+)<\/h1>/)?.[1]?.trim() ||
       html.match(/<title>([^|<\-]+)/)?.[1]?.trim() ||
       'Produit CJDropshipping'
 
     const priceMatch = html.match(/class="[^"]*price[^"]*"[^>]*>\s*\$?([\d.]+)/)
-    const price = parseFloat(priceMatch?.[1] || '0') || 9.99
+    const price = parseFloat(og.price || priceMatch?.[1] || '0') || 9.99
 
     const images: string[] = []
+    if (og.image) images.push(og.image)
     const imgReg = /https?:\/\/cbu01\.alicdn\.com\/[^"'\s]+\.jpg/g
     let m: RegExpExecArray | null
     while ((m = imgReg.exec(html)) !== null && images.length < 8) {
@@ -100,9 +109,7 @@ export async function importFromCJDropshipping(url: string): Promise<ImportResul
       success: true, url,
       product: {
         title,
-        description: cleanHtml(
-          html.match(/class="[^"]*description[^"]*"[^>]*>([\s\S]{10,500}?)<\/div>/)?.[1] || title
-        ),
+        description: cleanHtml(og.description || title),
         price,
         images,
         variants: [{ title: 'Default', price }],
