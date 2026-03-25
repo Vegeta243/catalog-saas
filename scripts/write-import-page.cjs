@@ -1,4 +1,9 @@
-'use client'
+const fs = require('fs')
+const path = require('path')
+
+const filePath = path.join(__dirname, '..', 'app', '(dashboard)', 'dashboard', 'import', 'page.tsx')
+
+const content = `'use client'
 
 import { useState, useEffect } from 'react'
 import {
@@ -216,7 +221,7 @@ export default function BulkImportPage() {
     const pasted = prompt('Collez vos URLs (une par ligne, max 50) :')
     if (pasted) {
       const lines = pasted
-        .split(/[\n,;]+/)
+        .split(/[\\n,;]+/)
         .map((l: string) => l.trim())
         .filter((l: string) => l.startsWith('http'))
         .slice(0, 50)
@@ -385,7 +390,7 @@ export default function BulkImportPage() {
                 ) : (
                   <>
                     <Upload className="w-4 h-4" />
-                    Importer {validCount > 0 ? `(${validCount})` : ''}
+                    Importer {validCount > 0 ? \`(\${validCount})\` : ''}
                   </>
                 )}
               </button>
@@ -489,7 +494,7 @@ export default function BulkImportPage() {
                         </p>
                         <p className="text-slate-500 text-xs truncate">
                           {r.success
-                            ? `${r.price?.toFixed(2)}EUR - ${r.images} image(s) - ${r.platform}`
+                            ? \`\${r.price?.toFixed(2)}EUR - \${r.images} image(s) - \${r.platform}\`
                             : r.error}
                         </p>
                       </div>
@@ -589,3 +594,8 @@ export default function BulkImportPage() {
     </div>
   )
 }
+`
+
+fs.writeFileSync(filePath, content, 'utf8')
+console.log('Written successfully to:', filePath)
+console.log('Size:', fs.statSync(filePath).size, 'bytes')
