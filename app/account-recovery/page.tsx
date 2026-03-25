@@ -82,8 +82,8 @@ export default function AccountRecoveryPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <AlertTriangle className="w-8 h-8 text-orange-500" />
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <AlertTriangle className="w-8 h-8 text-blue-500" />
         </div>
 
         <h1 className="text-xl font-bold text-gray-900 mb-2">
@@ -93,7 +93,7 @@ export default function AccountRecoveryPage() {
         {daysLeft !== null && (
           <p className="text-gray-600 mb-6">
             Suppression définitive dans{" "}
-            <span className="font-bold text-orange-600">{daysLeft} jour{daysLeft !== 1 ? "s" : ""}</span>
+            <span className="font-bold text-blue-600">{daysLeft} jour{daysLeft !== 1 ? "s" : ""}</span>
           </p>
         )}
 

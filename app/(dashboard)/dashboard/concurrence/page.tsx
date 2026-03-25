@@ -596,7 +596,7 @@ export default function ConcurrencePage() {
                         </h3>
                         <div className="space-y-2">
                           {selected.snapshot.price_changes?.map((c, i) => (
-                            <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg text-sm bg-orange-50">
+                            <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg text-sm bg-blue-50">
                               {c.direction === 'down' ? <TrendingDown className="w-4 h-4 flex-shrink-0 text-red-500" /> : <TrendingUp className="w-4 h-4 flex-shrink-0 text-green-600" />}
                               <span style={{ color: '#374151' }}>
                                 <strong>{c.product}</strong> : {c.old_price}€ → <strong>{c.new_price}€</strong>

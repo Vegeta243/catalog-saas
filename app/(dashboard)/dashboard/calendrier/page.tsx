@@ -31,7 +31,7 @@ interface Suggestion {
 const EVENT_TYPES = [
   { value: "price_change", label: "Modifier les prix", icon: DollarSign, color: "#eab308" },
   { value: "ai_optimization", label: "Optimisation IA", icon: Wand2, color: "#8b5cf6" },
-  { value: "restock", label: "Alerte stock", icon: Package, color: "#f97316" },
+  { value: "restock", label: "Alerte stock", icon: Package, color: "#3b82f6" },
   { value: "promotion", label: "Promotion", icon: PartyPopper, color: "#ec4899" },
   { value: "import", label: "Import produits", icon: Download, color: "#06b6d4" },
   { value: "custom", label: "Personnalisé", icon: Tag, color: "#6b7280" },

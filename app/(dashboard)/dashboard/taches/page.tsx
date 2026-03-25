@@ -23,7 +23,7 @@ const TYPE_CONFIG: Record<string, { icon: typeof Sparkles; label: string; color:
   "ai.generate.title": { icon: Sparkles, label: "Titre IA", color: "#8b5cf6" },
   "ai.generate.description": { icon: Wand2, label: "Description IA", color: "#6366f1" },
   "ai.generate.batch": { icon: Sparkles, label: "IA Batch", color: "#7c3aed" },
-  "image.optimize": { icon: ImageIcon, label: "Image", color: "#f97316" },
+  "image.optimize": { icon: ImageIcon, label: "Image", color: "#3b82f6" },
   "shopify.bulk_update": { icon: Package, label: "Bulk edit", color: "#06b6d4" },
   "shopify.images.push": { icon: ImageIcon, label: "Push images", color: "#10b981" },
   "calendar.suggest": { icon: Clock, label: "Suggestion IA", color: "#ec4899" },
@@ -115,12 +115,12 @@ export default function TachesPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">Utilisation ce mois</span>
-          <span className={`text-sm font-bold ${tasksRemaining <= 5 ? "text-red-500" : tasksRemaining <= 20 ? "text-orange-500" : "text-green-600"}`}>
+          <span className={`text-sm font-bold ${tasksRemaining <= 5 ? "text-red-500" : tasksRemaining <= 20 ? "text-blue-500" : "text-green-600"}`}>
             {tasksUsed} / {tasksTotal} tâches
           </span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-2.5">
-          <div className={`h-2.5 rounded-full transition-all ${tasksRemaining <= 5 ? "bg-red-500" : tasksRemaining <= 20 ? "bg-orange-500" : "bg-blue-500"}`}
+          <div className={`h-2.5 rounded-full transition-all ${tasksRemaining <= 5 ? "bg-red-500" : tasksRemaining <= 20 ? "bg-blue-500" : "bg-blue-500"}`}
             style={{ width: `${Math.min(100, (tasksUsed / tasksTotal) * 100)}%` }} />
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function TachesPage() {
             <span className="text-xs text-gray-700">Description IA — <b>3 tâches</b></span>
           </div>
           <div className="flex items-center gap-2">
-            <ImageIcon className="w-3.5 h-3.5 text-orange-500" />
+            <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
             <span className="text-xs text-gray-700">Image — <b>1 tâche</b></span>
           </div>
           <div className="flex items-center gap-2">

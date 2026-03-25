@@ -463,20 +463,20 @@ function AuthContent() {
                     </div>
                   )}
                   {!lockout.isPermanent && lockout.isLocked && (
-                    <div className="mb-5 p-4 rounded-xl border flex items-start gap-3" style={{ backgroundColor: "#fff7ed", borderColor: "#fed7aa" }}>
-                      <Clock className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#ea580c" }} />
+                    <div className="mb-5 p-4 rounded-xl border flex items-start gap-3" style={{ backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }}>
+                      <Clock className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#2563eb" }} />
                       <div className="flex-1">
-                        <p className="text-sm font-bold" style={{ color: "#9a3412" }}>Delai de securite actif</p>
-                        <p className="text-xs mt-1" style={{ color: "#c2410c" }}>
+                        <p className="text-sm font-bold" style={{ color: "#1e40af" }}>Delai de securite actif</p>
+                        <p className="text-xs mt-1" style={{ color: "#3b82f6" }}>
                           {lockout.attempts} tentatives echouees. Reessayez dans{" "}
                           <strong>{formatCountdown(lockout.countdown)}</strong>.
                         </p>
-                        <div className="mt-2 h-1.5 rounded-full w-full overflow-hidden" style={{ backgroundColor: "#fed7aa" }}>
+                        <div className="mt-2 h-1.5 rounded-full w-full overflow-hidden" style={{ backgroundColor: "#bfdbfe" }}>
                           <div
                             className="h-1.5 rounded-full transition-all"
                             style={{
                               width: `${(lockout.countdown / (lockout.attempts === 4 ? 30 : lockout.attempts === 5 ? 120 : 600)) * 100}%`,
-                              backgroundColor: "#ea580c",
+                              backgroundColor: "#2563eb",
                             }}
                           />
                         </div>
@@ -580,7 +580,7 @@ function AuthContent() {
                             style={{
                               backgroundColor:
                                 i < lockout.attempts
-                                  ? lockout.attempts >= 6 ? "#dc2626" : lockout.attempts >= 4 ? "#ea580c" : "#f59e0b"
+                                  ? lockout.attempts >= 6 ? "#dc2626" : lockout.attempts >= 4 ? "#2563eb" : "#f59e0b"
                                   : "#e2e8f0",
                             }}
                           />

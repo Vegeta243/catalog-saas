@@ -106,7 +106,7 @@ export default async function AdminLegalPage() {
                     <td className="py-2">{new Date(u.deleted_at).toLocaleDateString('fr-FR')}</td>
                     <td className="py-2">{u.deletion_scheduled_at ? new Date(u.deletion_scheduled_at).toLocaleDateString('fr-FR') : 'N/A'}</td>
                     <td className="py-2">
-                      <span className={`font-bold ${daysLeft <= 7 ? 'text-red-600' : 'text-orange-600'}`}>
+                      <span className={`font-bold ${daysLeft <= 7 ? 'text-red-600' : 'text-blue-600'}`}>
                         {daysLeft}j
                       </span>
                     </td>

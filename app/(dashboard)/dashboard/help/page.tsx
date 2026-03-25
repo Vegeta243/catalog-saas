@@ -35,7 +35,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     id: "1", category: "general",
     question: "Comment connecter ma boutique Shopify ?",
-    answer: "Allez dans **Mes boutiques** dans le menu de gauche, puis cliquez sur **Ajouter une boutique**. Entrez votre domaine Shopify (ex : ma-boutique ou ma-boutique.myshopify.com) et cliquez Ajouter. Pour que vos produits soient accessibles, cliquez ensuite sur **Connecter** (bouton orange) sur la carte de votre boutique afin de finaliser la connexion via l'accès OAuth Shopify.",
+    answer: "Allez dans **Mes boutiques** dans le menu de gauche, puis cliquez sur **Ajouter une boutique**. Entrez votre domaine Shopify (ex : ma-boutique ou ma-boutique.myshopify.com) et cliquez Ajouter. Pour que vos produits soient accessibles, cliquez ensuite sur **Connecter** (bouton bleu) sur la carte de votre boutique afin de finaliser la connexion via l'accès OAuth Shopify.",
   },
   {
     id: "2", category: "ai",

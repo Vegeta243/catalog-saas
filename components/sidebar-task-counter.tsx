@@ -54,7 +54,7 @@ export default function SidebarTaskCounter({
         <span className="text-xs font-semibold text-gray-300">Tâches ce mois</span>
         <span className={`text-xs font-bold ${
           tasksRemaining <= 5 ? 'text-red-400' :
-          tasksRemaining <= 10 ? 'text-orange-400' : 'text-green-400'
+          tasksRemaining <= 10 ? 'text-blue-400' : 'text-green-400'
         }`}>
           {tasksRemaining} / {tasksTotal}
         </span>
@@ -63,7 +63,7 @@ export default function SidebarTaskCounter({
         <div
           className={`h-1.5 rounded-full transition-all duration-500 ${
             tasksRemaining <= 5 ? 'bg-red-500' :
-            tasksRemaining <= 10 ? 'bg-orange-500' : 'bg-blue-500'
+            tasksRemaining <= 10 ? 'bg-blue-500' : 'bg-blue-500'
           }`}
           style={{ width: `${Math.max(2, Math.min(100, (tasksUsed / Math.max(tasksTotal, 1)) * 100))}%` }}
         />

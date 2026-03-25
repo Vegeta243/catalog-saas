@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const admin = createClient(
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   const now = new Date();
   let sent = 0;
 
-  // --- Email 1: Welcome (step 0 → 1), send within 5 minutes of signup ---
+  // --- Email 1: Welcome (step 0 â†’ 1), send within 5 minutes of signup ---
   {
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
     const { data: newUsers } = await admin
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     for (const user of newUsers ?? []) {
       await sendEmail(resendKey, {
         to: user.email,
-        subject: "Bienvenue sur EcomPilot 🚀",
+        subject: "Bienvenue sur EcomPilot ðŸš€",
         html: welcomeEmail(user.first_name || ""),
       });
       await admin
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     }
   }
 
-  // --- Email 2: No shop after 1 hour (step 1 → 2) ---
+  // --- Email 2: No shop after 1 hour (step 1 â†’ 2) ---
   {
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
     const { data: noShopUsers } = await admin
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
       if ((count ?? 0) === 0) {
         await sendEmail(resendKey, {
           to: user.email,
-          subject: "Votre boutique Shopify n'est pas encore connectée",
+          subject: "Votre boutique Shopify n'est pas encore connectÃ©e",
           html: noShopEmail(user.first_name || ""),
         });
         await admin
@@ -79,7 +79,7 @@ export async function GET(request: Request) {
           .eq("id", user.id);
         sent++;
       } else {
-        // Has shop — skip to step 2 silently
+        // Has shop â€” skip to step 2 silently
         await admin
           .from("users")
           .update({ email_sequence_step: 2, last_email_sent_at: now.toISOString() } as never)
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
     }
   }
 
-  // --- Email 3: No optimization after 24 hours (step 2 → 3) ---
+  // --- Email 3: No optimization after 24 hours (step 2 â†’ 3) ---
   {
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
     const { data: noOptUsers } = await admin
@@ -109,7 +109,7 @@ export async function GET(request: Request) {
       if ((userData?.actions_used ?? 0) === 0) {
         await sendEmail(resendKey, {
           to: user.email,
-          subject: "Optimisez votre premier produit en 2 minutes ⚡",
+          subject: "Optimisez votre premier produit en 2 minutes âš¡",
           html: noOptimizationEmail(user.first_name || ""),
         });
         sent++;
@@ -143,43 +143,44 @@ async function sendEmail(apiKey: string, { to, subject, html }: { to: string; su
 
 // --- Email templates ---
 function welcomeEmail(firstName: string): string {
-  const name = firstName || "là";
+  const name = firstName || "lÃ ";
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1e293b">
-  <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Bienvenue sur EcomPilot, ${name} 🎉</h1>
-  <p style="color:#475569;line-height:1.6">Votre compte est prêt. Connectez votre boutique Shopify et optimisez votre premier produit en moins de 2 minutes.</p>
+  <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Bienvenue sur EcomPilot, ${name} ðŸŽ‰</h1>
+  <p style="color:#475569;line-height:1.6">Votre compte est prÃªt. Connectez votre boutique Shopify et optimisez votre premier produit en moins de 2 minutes.</p>
   <a href="https://www.ecompilotelite.com/dashboard"
-    style="display:inline-block;margin-top:24px;padding:12px 24px;background:#f97316;color:#fff;font-weight:600;border-radius:8px;text-decoration:none">
-    Connecter ma boutique →
+    style="display:inline-block;margin-top:24px;padding:12px 24px;background:#3b82f6;color:#fff;font-weight:600;border-radius:8px;text-decoration:none">
+    Connecter ma boutique â†’
   </a>
-  <p style="margin-top:32px;font-size:13px;color:#94a3b8">EcomPilot · <a href="https://www.ecompilotelite.com" style="color:#94a3b8">ecompilotelite.com</a></p>
+  <p style="margin-top:32px;font-size:13px;color:#94a3b8">EcomPilot Â· <a href="https://www.ecompilotelite.com" style="color:#94a3b8">ecompilotelite.com</a></p>
 </div>`;
 }
 
 function noShopEmail(firstName: string): string {
-  const name = firstName || "là";
+  const name = firstName || "lÃ ";
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1e293b">
-  <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Votre boutique n'est pas encore connectée, ${name}</h1>
+  <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Votre boutique n'est pas encore connectÃ©e, ${name}</h1>
   <p style="color:#475569;line-height:1.6">Il suffit d'un seul clic dans votre tableau de bord pour connecter Shopify. Tout le reste se fait automatiquement.</p>
   <a href="https://www.ecompilotelite.com/dashboard/shops"
-    style="display:inline-block;margin-top:24px;padding:12px 24px;background:#f97316;color:#fff;font-weight:600;border-radius:8px;text-decoration:none">
-    Connecter Shopify maintenant →
+    style="display:inline-block;margin-top:24px;padding:12px 24px;background:#3b82f6;color:#fff;font-weight:600;border-radius:8px;text-decoration:none">
+    Connecter Shopify maintenant â†’
   </a>
-  <p style="margin-top:32px;font-size:13px;color:#94a3b8">EcomPilot · <a href="https://www.ecompilotelite.com" style="color:#94a3b8">ecompilotelite.com</a></p>
+  <p style="margin-top:32px;font-size:13px;color:#94a3b8">EcomPilot Â· <a href="https://www.ecompilotelite.com" style="color:#94a3b8">ecompilotelite.com</a></p>
 </div>`;
 }
 
 function noOptimizationEmail(firstName: string): string {
-  const name = firstName || "là";
+  const name = firstName || "lÃ ";
   return `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1e293b">
-  <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Optimisez votre premier produit ⚡</h1>
-  <p style="color:#475569;line-height:1.6">Hé ${name} ! Votre boutique est connectée mais vos produits ne sont pas encore optimisés. En 2 minutes, l'IA peut réécrire vos titres et descriptions pour améliorer votre SEO.</p>
+  <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Optimisez votre premier produit âš¡</h1>
+  <p style="color:#475569;line-height:1.6">HÃ© ${name} ! Votre boutique est connectÃ©e mais vos produits ne sont pas encore optimisÃ©s. En 2 minutes, l'IA peut rÃ©Ã©crire vos titres et descriptions pour amÃ©liorer votre SEO.</p>
   <a href="https://www.ecompilotelite.com/dashboard/ai"
-    style="display:inline-block;margin-top:24px;padding:12px 24px;background:#f97316;color:#fff;font-weight:600;border-radius:8px;text-decoration:none">
-    Optimiser mes produits →
+    style="display:inline-block;margin-top:24px;padding:12px 24px;background:#3b82f6;color:#fff;font-weight:600;border-radius:8px;text-decoration:none">
+    Optimiser mes produits â†’
   </a>
-  <p style="margin-top:32px;font-size:13px;color:#94a3b8">EcomPilot · <a href="https://www.ecompilotelite.com" style="color:#94a3b8">ecompilotelite.com</a></p>
+  <p style="margin-top:32px;font-size:13px;color:#94a3b8">EcomPilot Â· <a href="https://www.ecompilotelite.com" style="color:#94a3b8">ecompilotelite.com</a></p>
 </div>`;
 }
+

@@ -85,17 +85,17 @@ export default async function AdminSystemPage() {
 
         {/* Soft-deleted accounts pending */}
         {(softDeleted || []).length > 0 && (
-          <div className="bg-orange-50 rounded-xl border border-orange-200 p-6">
-            <h2 className="text-sm font-semibold mb-4" style={{ color: "#c2410c" }}>
+          <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+            <h2 className="text-sm font-semibold mb-4" style={{ color: "#1e40af" }}>
               🗑️ Comptes en attente de suppression ({(softDeleted || []).length})
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-orange-200">
-                    <th className="text-left pb-2 font-medium" style={{ color: "#9a3412" }}>Email</th>
-                    <th className="text-left pb-2 font-medium" style={{ color: "#9a3412" }}>Supprimé le</th>
-                    <th className="text-right pb-2 font-medium" style={{ color: "#9a3412" }}>Suppression définitive</th>
+                  <tr className="border-b border-blue-200">
+                    <th className="text-left pb-2 font-medium" style={{ color: "#1e40af" }}>Email</th>
+                    <th className="text-left pb-2 font-medium" style={{ color: "#1e40af" }}>Supprimé le</th>
+                    <th className="text-right pb-2 font-medium" style={{ color: "#1e40af" }}>Suppression définitive</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -104,7 +104,7 @@ export default async function AdminSystemPage() {
                       ? Math.max(0, Math.ceil((new Date(u.deletion_scheduled_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
                       : 0;
                     return (
-                      <tr key={i} className="border-b border-orange-100">
+                      <tr key={i} className="border-b border-blue-100">
                         <td className="py-2" style={{ color: "#0f172a" }}>{u.email}</td>
                         <td className="py-2" style={{ color: "#64748b" }}>
                           {u.deleted_at ? new Date(u.deleted_at).toLocaleDateString("fr-FR") : "—"}

@@ -310,8 +310,8 @@ export default function RechercheIAPage() {
                     {product.platform}
                   </span>
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
-                    <TrendingUp className="w-3 h-3 text-orange-500" />
-                    <span className="text-xs font-bold text-orange-500">{product.trendingScore}/10</span>
+                    <TrendingUp className="w-3 h-3 text-blue-500" />
+                    <span className="text-xs font-bold text-blue-500">{product.trendingScore}/10</span>
                   </div>
                 </div>
 

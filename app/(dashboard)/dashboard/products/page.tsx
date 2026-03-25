@@ -1515,7 +1515,7 @@ export default function ProductsPage() {
                             placeholder="Titre produit…"
                             style={{ color: "#0f172a", paddingBottom: "16px", minWidth: "160px" }}
                           />
-                          <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${(product.title?.length || 0) > 230 ? "text-orange-500" : "text-gray-400"}`}>
+                          <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${(product.title?.length || 0) > 230 ? "text-blue-500" : "text-gray-400"}`}>
                             {product.title?.length || 0}/255
                           </span>
                         </div>
@@ -1577,7 +1577,7 @@ export default function ProductsPage() {
                           />
                           <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
                             (product.metaTitle?.length || 0) > 60 ? "text-red-500" :
-                            (product.metaTitle?.length || 0) > 50 ? "text-orange-500" : "text-gray-400"
+                            (product.metaTitle?.length || 0) > 50 ? "text-blue-500" : "text-gray-400"
                           }`}>
                             {product.metaTitle?.length || 0}/60
                           </span>
@@ -1597,7 +1597,7 @@ export default function ProductsPage() {
                           />
                           <span className={`absolute right-1.5 bottom-1 text-[10px] tabular-nums ${
                             (product.metaDescription?.length || 0) > 160 ? "text-red-500" :
-                            (product.metaDescription?.length || 0) > 140 ? "text-orange-500" : "text-gray-400"
+                            (product.metaDescription?.length || 0) > 140 ? "text-blue-500" : "text-gray-400"
                           }`}>
                             {product.metaDescription?.length || 0}/160
                           </span>

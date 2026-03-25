@@ -243,29 +243,29 @@ export default function ImportPage() {
       )}
 
       {cjError && (
-        <div className="flex items-start gap-3 p-4 rounded-xl border border-orange-300 mb-4" style={{ backgroundColor: "#fff7ed" }}>
-          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#ea580c" }} />
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-blue-300 mb-4" style={{ backgroundColor: "#eff6ff" }}>
+          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#2563eb" }} />
           <div className="flex-1">
-            <p className="text-sm font-semibold" style={{ color: "#9a3412" }}>Clé API CJ Dropshipping manquante</p>
-            <p className="text-xs mt-0.5" style={{ color: "#c2410c" }}>
+            <p className="text-sm font-semibold" style={{ color: "#1e40af" }}>Clé API CJ Dropshipping manquante</p>
+            <p className="text-xs mt-0.5" style={{ color: "#3b82f6" }}>
               Pour importer depuis CJ Dropshipping, configurez votre clé API dans les paramètres.
             </p>
           </div>
-          <Link href="/dashboard/settings?tab=api" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#ea580c", color: "#fff" }}>
+          <Link href="/dashboard/settings?tab=api" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#2563eb", color: "#fff" }}>
             Configurer clé CJ →
           </Link>
         </div>
       )}
 
       {aliExpressApiError && (
-        <div className="flex items-start gap-3 p-4 rounded-xl border border-orange-300 mb-4" style={{ backgroundColor: "#fff7ed" }}>
-          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#ea580c" }} />
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-blue-300 mb-4" style={{ backgroundColor: "#eff6ff" }}>
+          <Settings className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#2563eb" }} />
           <div className="flex-1">
-            <p className="text-sm font-semibold" style={{ color: "#9a3412" }}>⚙️ Configuration requise — Import AliExpress</p>
-            <p className="text-xs mt-1" style={{ color: "#c2410c" }}>
+            <p className="text-sm font-semibold" style={{ color: "#1e40af" }}>⚙️ Configuration requise — Import AliExpress</p>
+            <p className="text-xs mt-1" style={{ color: "#3b82f6" }}>
               AliExpress bloque les serveurs cloud. Une clé API RapidAPI est nécessaire pour contourner ce blocage.
             </p>
-            <ol className="mt-2 space-y-0.5 text-xs list-none" style={{ color: "#c2410c" }}>
+            <ol className="mt-2 space-y-0.5 text-xs list-none" style={{ color: "#3b82f6" }}>
               <li>1. Créer un compte gratuit sur <strong>rapidapi.com</strong></li>
               <li>2. S&apos;abonner à <strong>&quot;AliExpress Datahub&quot;</strong> (offre gratuite disponible)</li>
               <li>3. Copier la clé API affichée</li>

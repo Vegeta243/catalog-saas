@@ -293,14 +293,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="text-sm font-bold text-white">Tâches ce mois</span>
                   <span className={`text-sm font-black tabular-nums ${
                     tasksRemaining <= 3 ? 'text-red-400' :
-                    tasksRemaining <= 10 ? 'text-orange-300' : 'text-emerald-400'
+                    tasksRemaining <= 10 ? 'text-blue-300' : 'text-emerald-400'
                   }`}>{tasksRemaining}<span className="text-gray-500 font-normal">/{tasksTotal}</span></span>
                 </div>
                 {/* Bar */}
                 <div className="h-2.5 rounded-full w-full mb-3" style={{ background: '#1e293b' }}>
                   <div className={`h-2.5 rounded-full transition-all duration-700 ${
                     tasksRemaining <= 3 ? 'bg-red-500' :
-                    tasksRemaining <= 10 ? 'bg-orange-400' : 'bg-blue-500'
+                    tasksRemaining <= 10 ? 'bg-blue-400' : 'bg-blue-500'
                   }`} style={{ width: `${tasksTotal > 0 ? Math.min(100, Math.max(5, (tasksUsed / tasksTotal) * 100)) : 5}%` }} />
                 </div>
                 <p className="text-xs" style={{ color: '#94a3b8' }}>

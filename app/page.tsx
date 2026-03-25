@@ -91,15 +91,18 @@ export default function HomePage() {
             <img src="/logo.svg" alt="EcomPilot Elite" className="h-10 w-auto object-contain" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#fonctionnalites" className="text-sm font-medium hover:text-orange-600 transition-colors" style={{ color: "#475569" }}>Fonctionnalités</a>
-            <a href="#tarifs" className="text-sm font-medium hover:text-orange-600 transition-colors" style={{ color: "#475569" }}>Tarifs</a>
-            <a href="#faq" className="text-sm font-medium hover:text-orange-600 transition-colors" style={{ color: "#475569" }}>FAQ</a>
+            <a href="#fonctionnalites" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Fonctionnalités</a>
+            <a href="#tarifs" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>Tarifs</a>
+            <a href="#faq" className="text-sm font-medium hover:text-blue-600 transition-colors" style={{ color: "#475569" }}>FAQ</a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button onClick={() => handleNavigate("/login")} className="hidden sm:block px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all" style={{ color: "#0f172a" }}>
+            <Link href="/download" className="hidden sm:flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors" style={{ color: "#475569" }}>
+              📱 App mobile
+            </Link>
+            <button onClick={() => handleNavigate("/login")} className="hidden sm:block px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all" style={{ color: "#0f172a" }}>
               Se connecter
             </button>
-            <button onClick={() => handleNavigate("/login?tab=signup")} className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shadow-md hover:-translate-y-0.5 whitespace-nowrap" style={{ backgroundColor: "#f97316", color: "#fff" }}>
+            <button onClick={() => handleNavigate("/login?tab=signup")} className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shadow-md hover:-translate-y-0.5 whitespace-nowrap" style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
               <span className="hidden sm:inline">Commencer gratuit →</span>
               <span className="sm:hidden">Gratuit</span>
             </button>
@@ -110,13 +113,13 @@ export default function HomePage() {
       {/* ══════ HERO ══════ */}
       <section className="pt-32 pb-16 px-6 relative overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#fff7ed", color: "#ea580c" }}>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-8" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
             <Sparkles className="w-3.5 h-3.5" /> Copilote IA pour boutiques Shopify
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] mb-8" style={{ color: "#0f172a" }}>
             Laisse l&apos;IA travailler
             <br className="hidden sm:block" />
-            <span style={{ color: "#f97316" }}> à ta place.</span>
+            <span style={{ color: "#3b82f6" }}> à ta place.</span>
           </h1>
           <p className="text-lg md:text-2xl max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: "#475569" }}>
             Descriptions percutantes, SEO, édition en masse — ton catalogue optimisé en{" "}
@@ -124,10 +127,10 @@ export default function HomePage() {
             au lieu de 3h.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <button onClick={() => handleNavigate("/login?tab=signup")} className="px-10 py-4 rounded-xl text-lg font-bold flex items-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5" style={{ backgroundColor: "#f97316", color: "#fff" }}>
+            <button onClick={() => handleNavigate("/login?tab=signup")} className="px-10 py-4 rounded-xl text-lg font-bold flex items-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5" style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
               Commencer gratuit (sans CB) <ArrowRight className="w-5 h-5" />
             </button>
-            <button onClick={() => handleNavigate("/login")} className="px-8 py-4 border-2 border-gray-300 hover:border-orange-400 rounded-xl text-base font-semibold transition-all hover:bg-orange-50/30 flex items-center gap-2" style={{ color: "#0f172a" }}>
+            <button onClick={() => handleNavigate("/login")} className="px-8 py-4 border-2 border-gray-300 hover:border-blue-400 rounded-xl text-base font-semibold transition-all hover:bg-blue-50/30 flex items-center gap-2" style={{ color: "#0f172a" }}>
               <Lock className="w-4 h-4" /> J&apos;ai déjà un compte
             </button>
           </div>
@@ -142,17 +145,36 @@ export default function HomePage() {
               <Clock className="w-4 h-4" style={{ color: "#059669" }} /> Config en 30 secondes
             </p>
           </div>
-          <p className="text-xs mb-12" style={{ color: "#94a3b8" }}>
+          <p className="text-xs mb-6" style={{ color: "#94a3b8" }}>
             <a href="/download" className="hover:underline transition-colors" style={{ color: "#64748b" }}>
               📱 Télécharger l&apos;app Android
             </a>
           </p>
 
-          {/* Video placeholder */}
+          {/* App download row */}
+          <div className="flex items-center justify-center gap-4 mb-12 pt-4 border-t border-slate-200/50">
+            <Link href="/download"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-blue-500/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.523 0h-11.05C5.66 0 5 .664 5 1.474v21.052C5 23.336 5.66 24 6.473 24h11.05c.813 0 1.477-.664 1.477-1.474V1.474C19 .664 18.336 0 17.523 0zM12 23.2a1 1 0 110-2 1 1 0 010 2zm5.5-3.5h-11V3h11v16.7z"/>
+              </svg>
+              App Android
+            </Link>
+            <div className="w-px h-4 bg-slate-300" />
+            <Link href="/download"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-blue-500/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+              App iOS (bientôt)
+            </Link>
+          </div>
+
+
           <div className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-gray-400/20 border border-gray-200 cursor-pointer group" onClick={() => handleNavigate("/login?tab=signup")}>
             <div className="aspect-video flex items-center justify-center" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-8">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: "#f97316" }}>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: "#3b82f6" }}>
                   <svg viewBox="0 0 24 24" fill="white" className="w-9 h-9 translate-x-0.5"><polygon points="5,3 19,12 5,21" /></svg>
                 </div>
                 <div className="text-center">
@@ -160,7 +182,7 @@ export default function HomePage() {
                   <p className="text-sm" style={{ color: "#94a3b8" }}>Comment optimiser 50 fiches produit en 5 minutes avec l&apos;IA</p>
                 </div>
               </div>
-              <div className="absolute bottom-4 right-4 text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "rgba(249,115,22,0.9)", color: "#fff" }}>
+              <div className="absolute bottom-4 right-4 text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "rgba(59,130,246,0.9)", color: "#fff" }}>
                 Essayer gratuitement →
               </div>
             </div>
@@ -173,7 +195,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-8 px-6">
           {[{ icon: Zap, label: "IA GPT-4o" }, { icon: Shield, label: "Compatible Shopify" }, { icon: TrendingUp, label: "RGPD compliant" }, { icon: Clock, label: "Sans engagement" }, { icon: Check, label: "Stripe sécurisé" }].map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center gap-2">
-              <Icon className="w-4 h-4" style={{ color: "#f97316" }} />
+              <Icon className="w-4 h-4" style={{ color: "#3b82f6" }} />
               <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>{label}</span>
             </div>
           ))}
@@ -208,19 +230,19 @@ export default function HomePage() {
       <section className="py-20 px-6 bg-white">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#f97316" }}>3 étapes</p>
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#3b82f6" }}>3 étapes</p>
             <h2 className="text-3xl md:text-5xl font-extrabold mb-4" style={{ color: "#0f172a" }}>Comment ça marche ?</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {STEPS.map((s) => {
               const Icon = s.icon;
               return (
-                <div key={s.step} className="relative rounded-2xl p-8 text-center border border-gray-100 hover:shadow-lg transition-all" style={{ backgroundColor: "#fff7ed" }}>
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: "#f97316", color: "#fff" }}>
+                <div key={s.step} className="relative rounded-2xl p-8 text-center border border-gray-100 hover:shadow-lg transition-all" style={{ backgroundColor: "#eff6ff" }}>
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
                     {s.step}
                   </div>
-                  <div className="w-14 h-14 rounded-xl mx-auto mb-5 mt-2 flex items-center justify-center" style={{ backgroundColor: "rgba(249,115,22,0.12)" }}>
-                    <Icon className="w-7 h-7" style={{ color: "#f97316" }} />
+                  <div className="w-14 h-14 rounded-xl mx-auto mb-5 mt-2 flex items-center justify-center" style={{ backgroundColor: "rgba(59,130,246,0.12)" }}>
+                    <Icon className="w-7 h-7" style={{ color: "#3b82f6" }} />
                   </div>
                   <h3 className="text-base font-bold mb-2" style={{ color: "#0f172a" }}>{s.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>{s.desc}</p>
@@ -235,7 +257,7 @@ export default function HomePage() {
       <section id="fonctionnalites" className="py-20 px-6 bg-gray-50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#f97316" }}>Fonctionnalités</p>
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#3b82f6" }}>Fonctionnalités</p>
             <h2 className="text-3xl md:text-5xl font-extrabold mb-4" style={{ color: "#0f172a" }}>Tout ce dont vous avez besoin.</h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: "#64748b" }}>Un seul outil pour gérer, optimiser et automatiser votre catalogue Shopify.</p>
           </div>
@@ -244,8 +266,8 @@ export default function HomePage() {
               const Icon = f.icon;
               return (
                 <div key={f.title} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:-translate-y-1 transition-all group">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform" style={{ backgroundColor: "#fff7ed" }}>
-                    <Icon className="w-6 h-6" style={{ color: "#f97316" }} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform" style={{ backgroundColor: "#eff6ff" }}>
+                    <Icon className="w-6 h-6" style={{ color: "#3b82f6" }} />
                   </div>
                   <h4 className="text-base font-bold mb-2" style={{ color: "#0f172a" }}>{f.title}</h4>
                   <p className="text-sm leading-relaxed" style={{ color: "#64748b" }}>{f.desc}</p>
@@ -253,12 +275,12 @@ export default function HomePage() {
               );
             })}
             {/* Extra card: CTA */}
-            <div className="rounded-xl p-6 flex flex-col items-start justify-between border-2 border-dashed" style={{ borderColor: "#f97316" }}>
+            <div className="rounded-xl p-6 flex flex-col items-start justify-between border-2 border-dashed" style={{ borderColor: "#3b82f6" }}>
               <div>
-                <p className="text-base font-bold mb-2" style={{ color: "#f97316" }}>+ Export CSV, alertes stock, historique des actions, traitement d&apos;images…</p>
+                <p className="text-base font-bold mb-2" style={{ color: "#3b82f6" }}>+ Export CSV, alertes stock, historique des actions, traitement d&apos;images…</p>
                 <p className="text-sm" style={{ color: "#64748b" }}>Et bien plus encore disponible dès l&apos;inscription.</p>
               </div>
-              <button onClick={() => handleNavigate("/login?tab=signup")} className="mt-4 inline-flex items-center gap-1 text-sm font-bold hover:underline" style={{ color: "#f97316" }}>
+              <button onClick={() => handleNavigate("/login?tab=signup")} className="mt-4 inline-flex items-center gap-1 text-sm font-bold hover:underline" style={{ color: "#3b82f6" }}>
                 Voir toutes les fonctionnalités <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -270,14 +292,14 @@ export default function HomePage() {
       <section id="tarifs" className="py-20 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#f97316" }}>Tarifs</p>
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#3b82f6" }}>Tarifs</p>
             <h2 className="text-3xl md:text-5xl font-extrabold mb-4" style={{ color: "#0f172a" }}>Prix simples. Pas de surprise.</h2>
             <p className="text-lg mb-8" style={{ color: "#64748b" }}>Commencez avec <strong>30 actions gratuites</strong> — sans carte bancaire.</p>
             <div className="inline-flex items-center gap-3 bg-gray-100 border border-gray-200 rounded-full px-2 py-1.5">
-              <button onClick={() => setBillingPeriod("monthly")} className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${billingPeriod === "monthly" ? "shadow-md" : "hover:bg-white"}`} style={{ backgroundColor: billingPeriod === "monthly" ? "#f97316" : "transparent", color: billingPeriod === "monthly" ? "#fff" : "#475569" }}>
+              <button onClick={() => setBillingPeriod("monthly")} className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${billingPeriod === "monthly" ? "shadow-md" : "hover:bg-white"}`} style={{ backgroundColor: billingPeriod === "monthly" ? "#3b82f6" : "transparent", color: billingPeriod === "monthly" ? "#fff" : "#475569" }}>
                 Mensuel
               </button>
-              <button onClick={() => setBillingPeriod("yearly")} className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${billingPeriod === "yearly" ? "shadow-md" : "hover:bg-white"}`} style={{ backgroundColor: billingPeriod === "yearly" ? "#f97316" : "transparent", color: billingPeriod === "yearly" ? "#fff" : "#475569" }}>
+              <button onClick={() => setBillingPeriod("yearly")} className={`px-5 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${billingPeriod === "yearly" ? "shadow-md" : "hover:bg-white"}`} style={{ backgroundColor: billingPeriod === "yearly" ? "#3b82f6" : "transparent", color: billingPeriod === "yearly" ? "#fff" : "#475569" }}>
                 Annuel <span className="text-[11px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: billingPeriod === "yearly" ? "rgba(255,255,255,0.2)" : "#dcfce7", color: billingPeriod === "yearly" ? "#fff" : "#16a34a" }}>-30%</span>
               </button>
             </div>
@@ -287,9 +309,9 @@ export default function HomePage() {
               const price = billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
               const isFree = plan.id === "free";
               return (
-                <div key={plan.id} className={`relative bg-white rounded-2xl border-2 p-6 flex flex-col transition-all hover:shadow-xl ${plan.popular ? "border-orange-400 shadow-lg shadow-orange-500/10 scale-[1.02]" : "border-gray-200 hover:-translate-y-1"}`}>
+                <div key={plan.id} className={`relative bg-white rounded-2xl border-2 p-6 flex flex-col transition-all hover:shadow-xl ${plan.popular ? "border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02]" : "border-gray-200 hover:-translate-y-1"}`}>
                   {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-bold tracking-wide flex items-center gap-1" style={{ backgroundColor: "#f97316", color: "#fff" }}>
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full text-xs font-bold tracking-wide flex items-center gap-1" style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
                       <Crown className="w-3 h-3" /> RECOMMANDÉ
                     </div>
                   )}
@@ -313,7 +335,7 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <div className="p-3 rounded-lg mb-4 text-xs leading-relaxed" style={{ backgroundColor: "#fff7ed", color: "#9a3412" }}>{plan.fit}</div>
+                  <div className="p-3 rounded-lg mb-4 text-xs leading-relaxed" style={{ backgroundColor: "#eff6ff", color: "#1e3a5f" }}>{plan.fit}</div>
                   <button onClick={() => {
                     if (!isFree) {
                       if (typeof window !== "undefined") {
@@ -322,7 +344,7 @@ export default function HomePage() {
                       }
                     }
                     handleNavigate(`/login?tab=signup&plan=${plan.id}&billing=${billingPeriod}`);
-                  }} className="block text-center py-3 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 w-full" style={{ backgroundColor: plan.popular ? "#f97316" : "#0f172a", color: "#fff" }}>
+                  }} className="block text-center py-3 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5 w-full" style={{ backgroundColor: plan.popular ? "#3b82f6" : "#0f172a", color: "#fff" }}>
                     {isFree ? "Démarrer gratuitement" : "Commencer maintenant"}
                   </button>
                 </div>
@@ -347,7 +369,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {TESTIMONIALS.map((t) => (
               <div key={t.name} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all">
-                <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: "#fff7ed", color: "#f97316" }}>{t.context}</span>
+                <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: "#eff6ff", color: "#3b82f6" }}>{t.context}</span>
                 <p className="text-sm leading-relaxed mb-5 italic" style={{ color: "#374151" }}>&ldquo;{t.quote}&rdquo;</p>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#0f172a" }}>{t.name}</p>
@@ -363,13 +385,13 @@ export default function HomePage() {
       <section id="faq" className="py-20 px-6 bg-white">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#f97316" }}>FAQ</p>
+            <p className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: "#3b82f6" }}>FAQ</p>
             <h2 className="text-3xl font-extrabold" style={{ color: "#0f172a" }}>Questions fréquentes</h2>
           </div>
           <div className="space-y-3">
             {FAQ_ITEMS.map((item, idx) => (
-              <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
-                <button onClick={() => setOpenFaq(openFaq === idx ? null : idx)} className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-orange-50/30 transition-colors">
+              <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden hover:border-blue-200 transition-colors">
+                <button onClick={() => setOpenFaq(openFaq === idx ? null : idx)} className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-blue-50/30 transition-colors">
                   <span className="text-base font-semibold pr-4" style={{ color: "#0f172a" }}>{item.q}</span>
                   <ChevronDown className={`w-5 h-5 shrink-0 transition-transform duration-200 ${openFaq === idx ? "rotate-180" : ""}`} style={{ color: "#94a3b8" }} />
                 </button>
@@ -387,11 +409,11 @@ export default function HomePage() {
       {/* ══════ CTA FINAL ══════ */}
       <section className="py-20 px-6" style={{ backgroundColor: "#0f172a" }}>
         <div className="max-w-3xl mx-auto text-center">
-          <Heart className="w-10 h-10 mx-auto mb-6" style={{ color: "#f97316" }} />
+          <Heart className="w-10 h-10 mx-auto mb-6" style={{ color: "#3b82f6" }} />
           <h2 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "#fff" }}>Votre catalogue mérite mieux<br />que du copier-coller.</h2>
           <p className="text-lg mb-8" style={{ color: "#94a3b8" }}>30 actions gratuites · Aucune carte requise · Accès immédiat</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={() => handleNavigate("/login?tab=signup")} className="inline-flex items-center gap-3 px-10 py-5 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg" style={{ backgroundColor: "#f97316", color: "#fff" }}>
+            <button onClick={() => handleNavigate("/login?tab=signup")} className="inline-flex items-center gap-3 px-10 py-5 rounded-xl text-lg font-bold transition-all hover:-translate-y-0.5 shadow-lg" style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
               Commencer gratuit (sans CB) <ArrowRight className="w-5 h-5" />
             </button>
             <button onClick={() => handleNavigate("/login")} className="inline-flex items-center gap-2 px-8 py-4 border border-white/20 hover:border-white/40 rounded-xl text-base font-semibold transition-all hover:bg-white/5" style={{ color: "#94a3b8" }}>
@@ -409,11 +431,11 @@ export default function HomePage() {
               <img src="/logo.svg" alt="EcomPilot Elite" className="h-7 w-auto object-contain" />
             </div>
             <div className="flex flex-wrap items-center justify-center gap-4 text-sm" style={{ color: "#64748b" }}>
-              <Link href="/cgu" className="hover:text-orange-600 transition-colors">CGU</Link>
-              <Link href="/cgv" className="hover:text-orange-600 transition-colors">CGV</Link>
-              <Link href="/politique-confidentialite" className="hover:text-orange-600 transition-colors">Confidentialité</Link>
-              <Link href="/mentions-legales" className="hover:text-orange-600 transition-colors">Mentions légales</Link>
-              <a href="mailto:contact@ecompilot.fr" className="hover:text-orange-600 transition-colors">Contact</a>
+              <Link href="/cgu" className="hover:text-blue-600 transition-colors">CGU</Link>
+              <Link href="/cgv" className="hover:text-blue-600 transition-colors">CGV</Link>
+              <Link href="/politique-confidentialite" className="hover:text-blue-600 transition-colors">Confidentialité</Link>
+              <Link href="/mentions-legales" className="hover:text-blue-600 transition-colors">Mentions légales</Link>
+              <a href="mailto:contact@ecompilot.fr" className="hover:text-blue-600 transition-colors">Contact</a>
             </div>
           </div>
           <div className="mt-6 text-center">
@@ -423,11 +445,18 @@ export default function HomePage() {
       </footer>
 
       {/* ══════ STICKY MOBILE FOOTER CTA ══════ */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden z-40 p-3 border-t border-gray-100" style={{ backgroundColor: "rgba(255,255,255,0.97)", backdropFilter: "blur(10px)" }}>
-        <button onClick={() => handleNavigate("/login?tab=signup")} className="w-full py-4 rounded-xl text-base font-bold flex items-center justify-center gap-2 shadow-lg" style={{ backgroundColor: "#f97316", color: "#fff" }}>
-          Commencer gratuit (sans CB) <ArrowRight className="w-5 h-5" />
-        </button>
-        <p className="text-center text-xs mt-1.5" style={{ color: "#94a3b8" }}>Sans carte bancaire · 30 actions offertes</p>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-4 py-3 flex items-center justify-between md:hidden">
+        <span className="text-white text-sm font-bold">30 actions gratuites — Sans CB</span>
+        <div className="flex items-center gap-2">
+          <Link href="/download"
+            className="px-3 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-lg border border-slate-700">
+            📱
+          </Link>
+          <button onClick={() => handleNavigate("/login?tab=signup")}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-black rounded-xl transition-colors">
+            Essayer →
+          </button>
+        </div>
       </div>
     </div>
   );
