@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react'
 
-const STORAGE_KEY = 'ecompilot_tour_v2'
+const STORAGE_KEY = 'ecompilot_tour_v3'
 
 const TOUR_STEPS = [
   {

@@ -1,4 +1,4 @@
-import type { ImportResult } from './types'
+﻿import type { ImportResult } from './types'
 import { detectPlatform } from './utils'
 import { importFromAliExpress } from './aliexpress'
 import { importFromCJDropshipping } from './cjdropshipping'
@@ -7,23 +7,24 @@ import { importFromAlibaba } from './alibaba'
 import { importFromBanggood } from './banggood'
 import { importUniversal } from './universal'
 
+export type { ProductData, ImportResult } from './types'
+export { detectPlatform } from './utils'
+
 export async function importProduct(url: string): Promise<ImportResult> {
   const platform = detectPlatform(url)
-  console.log(`[Import] Platform: ${platform} | URL: ${url}`)
-
-  switch (platform) {
-    case 'aliexpress':
-      return importFromAliExpress(url)
-    case 'cjdropshipping':
-      return importFromCJDropshipping(url)
-    case 'dhgate':
-      return importFromDHgate(url)
-    case 'alibaba':
-      return importFromAlibaba(url)
-    case 'banggood':
-      return importFromBanggood(url)
-    default:
-      return importUniversal(url)
+  console.log(`[import] platform=${platform} url=${url.slice(0, 60)}`)
+  try {
+    switch (platform) {
+      case 'aliexpress': return await importFromAliExpress(url)
+      case 'cjdropshipping': return await importFromCJDropshipping(url)
+      case 'dhgate': return await importFromDHgate(url)
+      case 'alibaba': return await importFromAlibaba(url)
+      case 'banggood': return await importFromBanggood(url)
+      default: return await importUniversal(url)
+    }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Erreur inconnue'
+    return { success: false, url, error: msg }
   }
 }
 
@@ -32,21 +33,11 @@ export async function importProducts(
   onProgress?: (done: number, total: number) => void
 ): Promise<ImportResult[]> {
   const results: ImportResult[] = []
-  const CONCURRENCY = 3
-
-  for (let i = 0; i < urls.length; i += CONCURRENCY) {
-    const batch = urls.slice(i, i + CONCURRENCY)
-    const batchResults = await Promise.all(batch.map(url => importProduct(url)))
-    results.push(...batchResults)
-    onProgress?.(Math.min(i + CONCURRENCY, urls.length), urls.length)
-
-    if (i + CONCURRENCY < urls.length) {
-      await new Promise(r => setTimeout(r, 500))
-    }
+  for (let i = 0; i < urls.length; i++) {
+    results.push(await importProduct(urls[i]))
+    onProgress?.(i + 1, urls.length)
+    if (i < urls.length - 1)
+      await new Promise(r => setTimeout(r, 300))
   }
-
   return results
 }
-
-export { detectPlatform } from './utils'
-export type { ProductData, ImportResult } from './types'

@@ -1,635 +1,265 @@
 'use client'
-
 import { useState, useEffect } from 'react'
-import {
-  Plus,
-  X,
-  Upload,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Package,
-  Link2,
-  History,
-  RefreshCw,
-} from 'lucide-react'
-import { FeatureHelp } from '@/components/feature-help'
+
+function proxyImg(src: string): string {
+  if (!src) return ''
+  return '/api/import/image-proxy?url=' + encodeURIComponent(src)
+}
 
 const PLATFORMS = [
-  {
-    id: 'aliexpress',
-    name: 'AliExpress',
-    emoji: '🛒',
-    bgColor: 'rgba(239,68,68,0.15)',
-    borderColor: 'rgba(239,68,68,0.35)',
-    textColor: '#fca5a5',
-    example: 'https://www.aliexpress.com/item/...',
-  },
-  {
-    id: 'cjdropshipping',
-    name: 'CJDropshipping',
-    emoji: '📦',
-    bgColor: 'rgba(59,130,246,0.15)',
-    borderColor: 'rgba(59,130,246,0.35)',
-    textColor: '#93c5fd',
-    example: 'https://cjdropshipping.com/product/...',
-  },
-  {
-    id: 'dhgate',
-    name: 'DHgate',
-    emoji: '🏭',
-    bgColor: 'rgba(34,197,94,0.15)',
-    borderColor: 'rgba(34,197,94,0.35)',
-    textColor: '#86efac',
-    example: 'https://www.dhgate.com/product/...',
-  },
-  {
-    id: 'alibaba',
-    name: 'Alibaba',
-    emoji: '🌐',
-    bgColor: 'rgba(234,179,8,0.15)',
-    borderColor: 'rgba(234,179,8,0.35)',
-    textColor: '#fde047',
-    example: 'https://www.alibaba.com/product-detail/...',
-  },
-  {
-    id: 'banggood',
-    name: 'Banggood',
-    emoji: '⚡',
-    bgColor: 'rgba(168,85,247,0.15)',
-    borderColor: 'rgba(168,85,247,0.35)',
-    textColor: '#d8b4fe',
-    example: 'https://www.banggood.com/...',
-  },
-  {
-    id: 'other',
-    name: 'Autre site',
-    emoji: '🔗',
-    bgColor: 'rgba(100,116,139,0.20)',
-    borderColor: 'rgba(100,116,139,0.40)',
-    textColor: '#cbd5e1',
-    example: 'Toute URL produit e-commerce',
-  },
+  { id: 'aliexpress', name: 'AliExpress', emoji: '🛒',
+    bg: '#2d0a0a', border: '#7f1d1d', text: '#fca5a5' },
+  { id: 'cjdropshipping', name: 'CJDropshipping', emoji: '📦',
+    bg: '#0a122d', border: '#1d3a7f', text: '#93c5fd' },
+  { id: 'dhgate', name: 'DHgate', emoji: '🏭',
+    bg: '#0a1f0d', border: '#166534', text: '#86efac' },
+  { id: 'alibaba', name: 'Alibaba', emoji: '🌐',
+    bg: '#1f1500', border: '#854d0e', text: '#fcd34d' },
+  { id: 'banggood', name: 'Banggood', emoji: '⚡',
+    bg: '#150a2d', border: '#6b21a8', text: '#c4b5fd' },
+  { id: 'other', name: 'Autre site', emoji: '🔗',
+    bg: '#111827', border: '#334155', text: '#94a3b8' },
 ]
 
-function proxyImage(src: string | null | undefined): string {
-  if (!src) return ''
-  if (src.startsWith('/') || src.startsWith('data:')) return src
-  return `/api/image-proxy?url=${encodeURIComponent(src)}`
+type Res = {
+  url: string; success: boolean; title?: string
+  price?: number; image?: string; platform?: string
+  shopify_id?: string; error?: string
 }
-
-type ImportResultItem = {
-  url: string
-  success: boolean
-  title?: string
-  price?: number
-  image?: string | null
-  images?: number
-  shopify_id?: string
-  platform?: string
+type Preview = {
+  platform: string; success: boolean
+  product?: { title: string; price: number; images: string[]; description: string }
   error?: string
 }
-
-type PreviewData = {
-  platform: string
-  success: boolean
-  product?: {
-    title: string
-    price: number
-    images: string[]
-    description: string
-    vendor: string
-  }
-  error?: string
-}
-
 type HistoryJob = {
-  id: string
-  platform: string
-  status: string
-  imported_count: number
-  total_products: number
-  failed_count: number
-  created_at: string
+  id: string; platform: string; status: string
+  imported_count: number; total_products: number
+  failed_count: number; created_at: string
 }
 
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
-}
-
-const IMPORT_HELP_STEPS = [
-  {
-    title: 'Copiez une URL',
-    description: "Ouvrez un produit sur AliExpress, CJDropshipping, DHgate etc. et copiez l'URL depuis la barre d'adresse.",
-  },
-  {
-    title: 'Collez dans le champ',
-    description: 'Collez dans le champ ci-dessous. Utilisez "Coller en masse" pour plusieurs URLs en meme temps.',
-  },
-  {
-    title: 'Previsualiser',
-    description: 'Cliquez sur Previsualiser pour verifier le titre, prix et images avant import.',
-  },
-  {
-    title: 'Importer',
-    description: 'Cliquez sur Importer - le produit est ajoute a votre catalogue et synchronise avec Shopify si connecte.',
-  },
-]
-
-export default function BulkImportPage() {
-  const [urls, setUrls] = useState<string[]>([''])
-  const [preview, setPreview] = useState<PreviewData | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [results, setResults] = useState<ImportResultItem[]>([])
-  const [pushToShopify, setPushToShopify] = useState(false)
-  const [shopifyStatus, setShopifyStatus] = useState<'checking' | 'connected' | 'none'>('checking')
+export default function ImportPage() {
   const [tab, setTab] = useState<'import' | 'history'>('import')
+  const [urls, setUrls] = useState([''])
+  const [pushShopify, setPushShopify] = useState(false)
+  const [shopifyOk, setShopifyOk] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [preview, setPreview] = useState<Preview | null>(null)
+  const [results, setResults] = useState<Res[]>([])
   const [history, setHistory] = useState<HistoryJob[]>([])
-  const [showPasteModal, setShowPasteModal] = useState(false)
+  const [showPaste, setShowPaste] = useState(false)
   const [pasteText, setPasteText] = useState('')
 
   useEffect(() => {
-    document.title = 'Import produits — EcomPilot Elite'
-    loadHistory()
-    checkShopify()
+    document.title = 'Import \u2014 EcomPilot Elite'
+    fetch('/api/shopify/products?limit=1')
+      .then(r => { setShopifyOk(r.ok); setPushShopify(r.ok) })
+      .catch(() => {})
+    fetch('/api/import/history')
+      .then(r => r.json()).then(d => setHistory(d.jobs || []))
+      .catch(() => {})
   }, [])
 
-  async function checkShopify() {
-    try {
-      const res = await fetch('/api/shopify/products?limit=1')
-      if (res.ok) {
-        setShopifyStatus('connected')
-        setPushToShopify(true)
-      } else {
-        setShopifyStatus('none')
-      }
-    } catch {
-      setShopifyStatus('none')
-    }
-  }
+  const validUrls = () => urls.filter(u => u.trim().startsWith('http'))
 
-  async function loadHistory() {
-    try {
-      const res = await fetch('/api/import/history')
-      if (res.ok) {
-        const data = await res.json()
-        setHistory(data.jobs || [])
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  function addUrl() {
-    setUrls(prev => [...prev, ''])
-  }
-
-  function removeUrl(i: number) {
-    setUrls(prev => prev.filter((_, idx) => idx !== i))
-  }
-
-  function updateUrl(i: number, value: string) {
-    setUrls(prev => {
-      const next = [...prev]
-      next[i] = value
-      return next
-    })
-  }
-
-  function handlePasteConfirm() {
-    const lines = pasteText
-      .split('\n')
-      .map((l: string) => l.trim())
-      .filter((l: string) => l.startsWith('http'))
-      .slice(0, 50)
-    if (lines.length > 0) {
-      setUrls(lines)
-      setShowPasteModal(false)
-      setPasteText('')
-    }
-  }
-
-  async function handlePreview() {
-    const url = urls.find(u => u.trim().startsWith('http'))
+  async function doPreview() {
+    const url = validUrls()[0]
     if (!url) return
-    setPreviewLoading(true)
-    setPreview(null)
+    setPreviewing(true); setPreview(null)
     try {
-      const res = await fetch('/api/import/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const r = await fetch('/api/import/preview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
       })
-      const data = await res.json()
-      setPreview(data)
-    } catch {
-      setPreview({ platform: 'unknown', success: false, error: 'Erreur de connexion' })
-    }
-    setPreviewLoading(false)
+      setPreview(await r.json())
+    } catch { setPreview({ platform: 'unknown', success: false, error: 'Erreur r\u00e9seau' }) }
+    setPreviewing(false)
   }
 
-  async function handleImport() {
-    const validUrls = urls.filter(u => u.trim().startsWith('http'))
-    if (validUrls.length === 0) return
-
-    setImporting(true)
-    setResults([])
-    setProgress(0)
-
-    const interval = setInterval(() => {
-      setProgress(p => Math.min(p + 100 / validUrls.length / 3, 90))
-    }, 800)
-
+  async function doImport() {
+    const valid = validUrls()
+    if (!valid.length) return
+    setImporting(true); setResults([]); setProgress(5)
+    const iv = setInterval(() => setProgress(p => Math.min(p + 4, 90)), 700)
     try {
-      const res = await fetch('/api/import/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          urls: validUrls,
-          push_to_shopify: pushToShopify && shopifyStatus === 'connected',
-        }),
+      const r = await fetch('/api/import/bulk', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: valid, push_to_shopify: pushShopify && shopifyOk }),
       })
-
-      const data = await res.json()
-      clearInterval(interval)
-      setProgress(100)
-
-      if (data.results) {
-        setResults(data.results)
-        loadHistory()
-      }
+      const data = await r.json()
+      clearInterval(iv); setProgress(100)
+      setResults(data.results || [])
+      fetch('/api/import/history').then(r2 => r2.json())
+        .then(d => setHistory(d.jobs || [])).catch(() => {})
     } catch {
-      clearInterval(interval)
-      setResults([{ url: '', success: false, error: 'Erreur de connexion au serveur' }])
+      clearInterval(iv)
+      setResults([{ url: '', success: false, error: 'Erreur r\u00e9seau' }])
     }
-
-    setTimeout(() => {
-      setImporting(false)
-      setProgress(0)
-    }, 500)
+    setTimeout(() => { setImporting(false); setProgress(0) }, 800)
   }
 
-  const validCount = urls.filter(u => u.trim().startsWith('http')).length
-  const pasteUrlCount = pasteText.split('\n').filter(l => l.trim().startsWith('http')).length
+  function applyPaste() {
+    const lines = pasteText.split(/[\n,;]+/)
+      .map(l => l.trim()).filter(l => l.startsWith('http')).slice(0, 50)
+    if (lines.length) { setUrls(lines); setShowPaste(false); setPasteText('') }
+  }
+
+  const vCount = validUrls().length
+  const card: React.CSSProperties = { background: '#111827', border: '1px solid #1e2d45', borderRadius: '20px', padding: '20px' }
+  const inp: React.CSSProperties = { width: '100%', background: '#0a0f1e', border: '1px solid #1e2d45', borderRadius: '12px', color: '#f0f4ff', fontSize: '16px', padding: '12px 16px', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }
+  const btnPri: React.CSSProperties = { width: '100%', background: '#4f8ef7', color: '#f0f4ff', border: 'none', borderRadius: '12px', padding: '14px', fontWeight: 800, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }
+  const btnSec: React.CSSProperties = { background: '#1a2234', border: '1px solid #1e2d45', color: '#8b9fc4', borderRadius: '12px', padding: '10px 16px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }
+  const lbl: React.CSSProperties = { color: '#8b9fc4', fontSize: '12px', fontWeight: 600 }
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto">
-      {/* Paste modal */}
-      {showPasteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
-            <h3 className="text-white font-black text-lg mb-2">Coller vos URLs en masse</h3>
-            <p className="text-slate-400 text-sm mb-4">Une URL par ligne (max 50)</p>
-            <textarea
-              className="w-full h-48 bg-slate-900 border border-slate-700 text-white text-sm rounded-xl p-3 resize-none focus:border-blue-500 focus:outline-none"
-              placeholder="https://www.aliexpress.com/item/..."
-              value={pasteText}
-              onChange={e => setPasteText(e.target.value)}
-              autoFocus
-            />
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => { setShowPasteModal(false); setPasteText('') }}
-                className="flex-1 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-700 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handlePasteConfirm}
-                disabled={pasteUrlCount === 0}
-                className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-500 transition-colors disabled:opacity-40"
-              >
-                {pasteUrlCount > 0 ? 'Importer ' + pasteUrlCount + ' URL(s)' : 'Importer'}
-              </button>
+    <div style={{ padding: '24px', maxWidth: '1100px', margin: '0 auto' }}>
+      {showPaste && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ ...card, width: '100%', maxWidth: '500px', zIndex: 9001 }}>
+            <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '16px', margin: '0 0 6px' }}>Coller des URLs en masse</p>
+            <p style={{ ...lbl, marginBottom: '12px' }}>Une URL par ligne - max 50</p>
+            <textarea style={{ ...inp, height: '180px', resize: 'vertical', marginBottom: '12px' } as React.CSSProperties} placeholder={'https://www.aliexpress.com/item/...\nhttps://cjdropshipping.com/product/...'} value={pasteText} onChange={e => setPasteText(e.target.value)} autoFocus />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setShowPaste(false)} style={{ ...btnSec, flex: 1 }}>Annuler</button>
+              <button onClick={applyPaste} style={{ ...btnPri, flex: 2 }}>Ajouter {pasteText.split('\n').filter(l => l.trim().startsWith('http')).length} URL(s)</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-black text-white mb-2">Import de produits</h1>
-        <p className="text-slate-400">
-          Importez depuis AliExpress, CJDropshipping, DHgate, Alibaba, Banggood et plus encore.
-        </p>
-      </div>
+      <h1 style={{ color: '#f0f4ff', fontSize: '26px', fontWeight: 900, margin: '0 0 6px' }}>Import de produits</h1>
+      <p style={{ color: '#8b9fc4', fontSize: '14px', margin: '0 0 24px' }}>AliExpress, CJDropshipping, DHgate, Alibaba, Banggood et tout site e-commerce</p>
 
-      {/* Feature Help */}
-      <FeatureHelp
-        title="Import de produits"
-        description="Importez des produits depuis n'importe quelle plateforme en quelques secondes"
-        steps={IMPORT_HELP_STEPS}
-      />
-
-      {/* Platform badges */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
         {PLATFORMS.map(p => (
-          <div
-            key={p.id}
-            style={{
-              background: p.bgColor,
-              border: `1px solid ${p.borderColor}`,
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 12px',
-            }}
-          >
-            <span style={{ fontSize: 16 }}>{p.emoji}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: p.textColor }}>{p.name}</span>
+          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '10px', background: p.bg, border: '1px solid ' + p.border }}>
+            <span style={{ fontSize: '14px' }}>{p.emoji}</span>
+            <span style={{ color: p.text, fontSize: '12px', fontWeight: 700 }}>{p.name}</span>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-slate-800">
-        {[
-          { id: 'import', label: 'Nouvel import' },
-          { id: 'history', label: 'Historique' },
-        ].map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id as 'import' | 'history')}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors -mb-px',
-              tab === t.id
-                ? 'border-blue-500 text-white'
-                : 'border-transparent text-slate-400 hover:text-white'
-            )}
-          >
-            {t.id === 'import'
-              ? <Upload className="w-4 h-4" />
-              : <History className="w-4 h-4" />}
-            {t.label}
+      <div style={{ display: 'flex', borderBottom: '1px solid #1e2d45', marginBottom: '24px' }}>
+        {(['import', 'history'] as const).map(id => (
+          <button key={id} onClick={() => setTab(id)} style={{ padding: '10px 20px', border: 'none', cursor: 'pointer', background: 'transparent', fontWeight: 700, fontSize: '14px', color: tab === id ? '#f0f4ff' : '#4a5878', borderBottom: tab === id ? '2px solid #4f8ef7' : '2px solid transparent' }}>
+            {id === 'import' ? 'Nouvel import' : 'Historique'}
           </button>
         ))}
       </div>
 
-      {/* Import tab */}
       {tab === 'import' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left: URL input + options */}
-          <div className="space-y-4">
-            {/* URL input */}
-            <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-black text-white">URLs a importer</h2>
-                <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded-lg">
-                  {validCount}/50 URL{validCount > 1 ? 's' : ''}
-                </span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '15px', margin: 0 }}>URLs \u00e0 importer</p>
+                <span style={{ ...lbl, background: '#1a2234', padding: '4px 10px', borderRadius: '8px', border: '1px solid #1e2d45' }}>{vCount}/50</span>
               </div>
-
-              <div className="space-y-2 mb-4 max-h-80 overflow-y-auto">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px', maxHeight: '240px', overflowY: 'auto' }}>
                 {urls.map((url, i) => (
-                  <div key={i} className="flex gap-2">
-                    <input
-                      type="url"
-                      value={url}
-                      onChange={e => updateUrl(i, e.target.value)}
-                      placeholder={i === 0 ? 'https://www.aliexpress.com/item/...' : 'URL produit...'}
-                      className="flex-1 bg-slate-900 border border-slate-700 text-white text-sm rounded-xl px-3 py-2.5 focus:border-blue-500 focus:outline-none placeholder:text-slate-600"
-                    />
+                  <div key={i} style={{ display: 'flex', gap: '8px' }}>
+                    <input type="url" value={url} style={inp} placeholder={i === 0 ? 'https://www.aliexpress.com/item/...' : 'URL produit...'} onChange={e => { const next = [...urls]; next[i] = e.target.value; setUrls(next) }} />
                     {urls.length > 1 && (
-                      <button
-                        onClick={() => removeUrl(i)}
-                        className="p-2.5 text-slate-500 hover:text-red-400 transition-colors rounded-xl hover:bg-slate-800"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} style={{ ...btnSec, padding: '10px 14px', color: '#ef4444', borderColor: '#7f1d1d' }}>{String.fromCharCode(10005)}</button>
                     )}
                   </div>
                 ))}
               </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={addUrl}
-                  disabled={urls.length >= 50}
-                  className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40"
-                >
-                  <Plus className="w-4 h-4" />
-                  Ajouter
-                </button>
-                <button
-                  onClick={() => setShowPasteModal(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold transition-colors"
-                >
-                  <Link2 className="w-4 h-4" />
-                  Coller en masse
-                </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setUrls([...urls, ''])} disabled={urls.length >= 50} style={btnSec}>+ Ajouter</button>
+                <button onClick={() => setShowPaste(true)} style={btnSec}>Coller en masse</button>
               </div>
             </div>
 
-            {/* Shopify options */}
-            <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-5">
-              <h3 className="font-bold text-white text-sm mb-4">Options</h3>
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-3 cursor-pointer flex-1">
-                  <div
-                    onClick={() => {
-                      if (shopifyStatus === 'none') {
-                        window.location.href = '/dashboard/shops'
-                        return
-                      }
-                      setPushToShopify(v => !v)
-                    }}
-                    className={cn(
-                      'w-11 h-6 rounded-full transition-colors relative flex-shrink-0',
-                      pushToShopify && shopifyStatus === 'connected'
-                        ? 'bg-blue-600 cursor-pointer'
-                        : shopifyStatus === 'none'
-                        ? 'bg-slate-700 cursor-not-allowed'
-                        : 'bg-slate-700 cursor-pointer'
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        'absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200',
-                        pushToShopify && shopifyStatus === 'connected'
-                          ? 'translate-x-5'
-                          : 'translate-x-1'
-                      )}
-                    />
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-semibold">Synchroniser avec Shopify</p>
-                    <p className={cn('text-xs',
-                      shopifyStatus === 'connected' ? 'text-green-400' : 'text-slate-500')}>
-                      {shopifyStatus === 'checking'
-                        ? 'Verification...'
-                        : shopifyStatus === 'connected'
-                        ? 'Boutique connectee'
-                        : 'Aucune boutique — Cliquer pour connecter'}
-                    </p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handlePreview}
-                disabled={previewLoading || validCount === 0}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-40"
-              >
-                {previewLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Package className="w-4 h-4" />
-                )}
-                Previsualiser
-              </button>
-
-              <button
-                onClick={handleImport}
-                disabled={importing || validCount === 0}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl text-sm transition-colors disabled:opacity-40"
-              >
-                {importing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Importation...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    Importer {validCount > 0 ? '(' + validCount + ')' : ''}
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Progress bar */}
-            {importing && (
-              <div>
-                <div className="flex justify-between text-xs text-slate-400 mb-1">
-                  <span>Importation en cours...</span>
-                  <span>{Math.round(progress)}%</span>
+            <div style={card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div onClick={() => shopifyOk && setPushShopify(!pushShopify)} style={{ width: '44px', height: '24px', borderRadius: '12px', background: pushShopify && shopifyOk ? '#4f8ef7' : '#1a2234', border: '1px solid ' + (pushShopify && shopifyOk ? '#4f8ef7' : '#334155'), position: 'relative', cursor: shopifyOk ? 'pointer' : 'not-allowed', transition: 'all 0.2s', flexShrink: 0 }}>
+                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#f0f4ff', position: 'absolute', top: '3px', transition: 'transform 0.2s', transform: pushShopify && shopifyOk ? 'translateX(23px)' : 'translateX(3px)' }} />
                 </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                    style={{ width: progress + '%' }}
-                  />
+                <div>
+                  <p style={{ color: '#f0f4ff', fontSize: '14px', fontWeight: 600, margin: '0 0 2px' }}>Synchroniser avec Shopify</p>
+                  <p style={{ ...lbl, margin: 0, color: shopifyOk ? '#86efac' : '#ef4444' }}>
+                    {shopifyOk ? '\u2713 Boutique connect\u00e9e' : 'Aucune boutique \u2014 '}
+                    {!shopifyOk && <a href="/dashboard/shops" style={{ color: '#4f8ef7', textDecoration: 'none' }}>Connecter</a>}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={doPreview} disabled={previewing || vCount === 0} style={{ ...btnSec, flex: 1, fontSize: '14px', padding: '14px', opacity: vCount === 0 ? 0.4 : 1 }}>
+                {previewing ? '\u23F3 ...' : '\uD83D\uDC41 Pr\u00e9visualiser'}
+              </button>
+              <button onClick={doImport} disabled={importing || vCount === 0} style={{ ...btnPri, flex: 2, opacity: vCount === 0 ? 0.4 : 1 }}>
+                {importing ? '\u23F3 Importation...' : `\u2B06 Importer${vCount > 0 ? ` (${vCount})` : ''}`}
+              </button>
+            </div>
+
+            {importing && progress > 0 && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', ...lbl, marginBottom: '6px' }}>
+                  <span>Importation...</span><span>{Math.round(progress)}%</span>
+                </div>
+                <div style={{ height: '6px', background: '#1a2234', borderRadius: '3px' }}>
+                  <div style={{ height: '100%', background: '#4f8ef7', borderRadius: '3px', width: progress + '%', transition: 'width 0.4s' }} />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Right: Preview + Results */}
-          <div className="space-y-4">
-            {/* Preview */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {preview && (
-              <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-5">
-                <h3 className="font-black text-white mb-4 flex items-center gap-2">
-                  {preview.success ? (
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-400" />
-                  )}
-                  Previsualisation
-                </h3>
-
+              <div style={card}>
+                <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '15px', margin: '0 0 14px' }}>
+                  {preview.success ? '\u2705 Pr\u00e9visualisation' : '\u274C Erreur'}
+                </p>
                 {preview.success && preview.product ? (
-                  <div>
-                    <div className="w-full h-48 rounded-xl mb-3 overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
+                  <>
+                    <div style={{ width: '100%', height: '180px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #1e2d45', marginBottom: '12px', background: '#0a0f1e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {preview.product.images?.[0] ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={proxyImage(preview.product.images[0])}
-                          alt={preview.product.title}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            const t = e.target as HTMLImageElement
-                            t.style.display = 'none'
-                          }}
-                        />
+                        <img src={proxyImg(preview.product.images[0])} alt={preview.product.title} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                       ) : (
-                        <div className="text-slate-600 text-center">
-                          <Package className="w-10 h-10 mx-auto mb-2" />
-                          <p className="text-xs">Aucune image disponible</p>
-                        </div>
+                        <p style={{ color: '#4a5878', fontSize: '13px', margin: 0 }}>Aucune image</p>
                       )}
                     </div>
-                    <p className="text-white font-bold text-sm mb-2">{preview.product.title}</p>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-blue-400 font-black text-lg">
-                        {preview.product.price > 0
-                          ? preview.product.price.toFixed(2) + ' EUR'
-                          : 'Prix non disponible'}
-                      </span>
-                      <span className="text-slate-500 text-xs capitalize">
-                        via {preview.product.vendor || preview.platform}
-                      </span>
+                    <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '14px', margin: '0 0 8px', lineHeight: 1.4 }}>{preview.product.title}</p>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <span style={{ color: '#4f8ef7', fontWeight: 900, fontSize: '22px' }}>{preview.product.price > 0 ? preview.product.price.toFixed(2) + ' EUR' : 'Prix N/A'}</span>
+                      <span style={{ ...lbl, textTransform: 'capitalize' }}>via {preview.platform}</span>
                     </div>
-                    {preview.product.description &&
-                     preview.product.description !== preview.product.title && (
-                      <p className="text-slate-400 text-xs line-clamp-2">
-                        {preview.product.description.slice(0, 200)}
-                      </p>
-                    )}
-                  </div>
+                  </>
                 ) : (
-                  <p className="text-red-400 text-sm">
-                    {preview.error || 'Impossible de recuperer le produit'}
-                  </p>
+                  <p style={{ color: '#fca5a5', fontSize: '13px', margin: 0 }}>{preview.error || 'Produit introuvable'}</p>
                 )}
               </div>
             )}
 
-            {/* Results */}
             {results.length > 0 && (
-              <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-5">
-                <h3 className="font-black text-white mb-4">
-                  Resultats ({results.filter(r => r.success).length}/{results.length} reussis)
-                </h3>
-                <div className="space-y-2 max-h-80 overflow-y-auto">
+              <div style={card}>
+                <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '15px', margin: '0 0 14px' }}>
+                  R\u00e9sultats ({results.filter(r => r.success).length}/{results.length} r\u00e9ussis)
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
                   {results.map((r, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        'flex items-center gap-3 p-3 rounded-xl text-sm',
-                        r.success
-                          ? 'bg-green-500/10 border border-green-500/20'
-                          : 'bg-red-500/10 border border-red-500/20'
-                      )}
-                    >
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', background: r.success ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', border: '1px solid ' + (r.success ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)') }}>
                       {r.success && r.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={proxyImage(r.image)}
-                          alt={r.title || ''}
-                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-slate-700"
-                          onError={e => {
-                            const t = e.target as HTMLImageElement
-                            t.style.display = 'none'
-                          }}
-                        />
-                      ) : r.success ? (
-                        <div className="w-12 h-12 rounded-lg bg-slate-800 flex-shrink-0 flex items-center justify-center">
-                          <Package className="w-5 h-5 text-slate-600" />
-                        </div>
+                        <img src={proxyImg(r.image)} alt={r.title || ''} style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0, border: '1px solid #1e2d45' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                       ) : (
-                        <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                        <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: '#1a2234', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                          {r.success ? '\uD83D\uDCE6' : '\u274C'}
+                        </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white truncate text-sm">
-                          {r.success ? r.title : "Echec de l'import"}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ color: r.success ? '#f0f4ff' : '#fca5a5', fontSize: '13px', fontWeight: 600, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {r.success ? r.title : '\u00c9chec'}
                         </p>
-                        <p className="text-slate-500 text-xs truncate">
-                          {r.success
-                            ? (r.price ? r.price.toFixed(2) + ' EUR' : '') + ' ' + (r.platform || '')
-                            : r.error?.slice(0, 80)}
+                        <p style={{ ...lbl, margin: 0 }}>
+                          {r.success ? `${r.price?.toFixed(2)} EUR \u00b7 ${r.platform}` : r.error?.slice(0, 60)}
                         </p>
                       </div>
                       {r.shopify_id && (
-                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-lg flex-shrink-0 font-bold">
-                          Shopify
-                        </span>
+                        <span style={{ background: 'rgba(34,197,94,0.15)', color: '#86efac', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', flexShrink: 0 }}>\u2713 Shopify</span>
                       )}
                     </div>
                   ))}
@@ -637,17 +267,16 @@ export default function BulkImportPage() {
               </div>
             )}
 
-            {/* Platform guide */}
             {!preview && results.length === 0 && (
-              <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-5">
-                <h3 className="font-bold text-white text-sm mb-4">Plateformes supportees</h3>
-                <div className="space-y-3">
+              <div style={card}>
+                <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '15px', margin: '0 0 14px' }}>Plateformes support\u00e9es</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   {PLATFORMS.slice(0, 5).map(p => (
-                    <div key={p.id} className="flex items-start gap-3">
-                      <span className="text-xl">{p.emoji}</span>
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      <span style={{ fontSize: '20px', flexShrink: 0 }}>{p.emoji}</span>
                       <div>
-                        <p style={{ color: p.textColor }} className="font-bold text-sm">{p.name}</p>
-                        <p className="text-slate-600 text-xs truncate">{p.example}</p>
+                        <p style={{ color: p.text, fontWeight: 700, fontSize: '13px', margin: '0 0 2px' }}>{p.name}</p>
+                        <p style={{ ...lbl, margin: 0 }}>Collez l&apos;URL du produit</p>
                       </div>
                     </div>
                   ))}
@@ -658,61 +287,32 @@ export default function BulkImportPage() {
         </div>
       )}
 
-      {/* History tab */}
       {tab === 'history' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="font-black text-white">Historique des imports</h2>
-            <button
-              onClick={loadHistory}
-              className="p-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
-
+        <div>
           {history.length === 0 ? (
-            <div className="text-center py-16">
-              <Package className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-              <p className="text-slate-500">Aucun import pour l&apos;instant</p>
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <p style={{ fontSize: '40px', margin: '0 0 12px' }}>\uD83D\uDCCB</p>
+              <p style={{ color: '#f0f4ff', fontWeight: 700, margin: '0 0 6px' }}>Aucun import</p>
+              <p style={{ ...lbl }}>Votre historique apparaitra ici</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {history.map(job => (
-                <div
-                  key={job.id}
-                  className="bg-[#1e293b] border border-slate-700 rounded-2xl p-4"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          'text-xs px-2 py-0.5 rounded-lg font-bold',
-                          job.status === 'completed'
-                            ? 'bg-green-500/20 text-green-400'
-                            : job.status === 'failed'
-                            ? 'bg-red-500/20 text-red-400'
-                            : 'bg-blue-500/20 text-blue-400'
-                        )}
-                      >
-                        {job.status === 'completed'
-                          ? 'Termine'
-                          : job.status === 'failed'
-                          ? 'Echoue'
-                          : 'En cours'}
-                      </span>
-                      <span className="text-slate-500 text-xs capitalize">{job.platform}</span>
+                <div key={job.id} style={card}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ padding: '3px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, background: job.status === 'completed' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', color: job.status === 'completed' ? '#86efac' : '#fca5a5' }}>
+                          {job.status === 'completed' ? 'Termin\u00e9' : '\u00c9chou\u00e9'}
+                        </span>
+                        <span style={{ ...lbl, textTransform: 'capitalize' }}>{job.platform}</span>
+                      </div>
+                      <p style={{ color: '#f0f4ff', fontSize: '14px', fontWeight: 700, margin: 0 }}>
+                        {job.imported_count}/{job.total_products} produits import\u00e9s
+                      </p>
                     </div>
-                    <span className="text-slate-600 text-xs">
-                      {new Date(job.created_at).toLocaleDateString('fr-FR')}
-                    </span>
+                    <p style={{ ...lbl }}>{new Date(job.created_at).toLocaleDateString('fr-FR')}</p>
                   </div>
-                  <p className="text-white text-sm font-semibold">
-                    {job.imported_count}/{job.total_products} produits importes
-                  </p>
-                  {job.failed_count > 0 && (
-                    <p className="text-red-400 text-xs">{job.failed_count} echec(s)</p>
-                  )}
                 </div>
               ))}
             </div>
