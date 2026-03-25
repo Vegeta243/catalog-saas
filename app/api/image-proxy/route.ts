@@ -11,6 +11,20 @@ const ALLOWED_DOMAINS = [
   "cdn.shopify.com",
   "images.unsplash.com",
   "unsplash.com",
+  // Import-supported platforms
+  "dhgate.com",
+  "img.dhgate.com",
+  "m.dhgate.com",
+  "alibaba.com",
+  "s.alicdn.com",
+  "sc01.alicdn.com",
+  "banggood.com",
+  "imgaz.staticbg.com",
+  "bgstatic01.banggood.com",
+  "cf.geekbuying.com",
+  "i.ebayimg.com",
+  "images-na.ssl-images-amazon.com",
+  "m.media-amazon.com",
 ];
 
 function isAllowed(url: string): boolean {

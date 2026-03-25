@@ -19,58 +19,64 @@ const PLATFORMS = [
   {
     id: 'aliexpress',
     name: 'AliExpress',
-    emoji: '\u{1F6D2}',
-    bg: 'bg-red-500/15',
-    border: 'border-red-500/30',
-    text: 'text-red-300',
+    emoji: '🛒',
+    bgColor: 'rgba(239,68,68,0.15)',
+    borderColor: 'rgba(239,68,68,0.35)',
+    textColor: '#fca5a5',
     example: 'https://www.aliexpress.com/item/...',
   },
   {
     id: 'cjdropshipping',
     name: 'CJDropshipping',
-    emoji: '\u{1F4E6}',
-    bg: 'bg-blue-500/15',
-    border: 'border-blue-500/30',
-    text: 'text-blue-300',
+    emoji: '📦',
+    bgColor: 'rgba(59,130,246,0.15)',
+    borderColor: 'rgba(59,130,246,0.35)',
+    textColor: '#93c5fd',
     example: 'https://cjdropshipping.com/product/...',
   },
   {
     id: 'dhgate',
     name: 'DHgate',
-    emoji: '\u{1F3ED}',
-    bg: 'bg-green-500/15',
-    border: 'border-green-500/30',
-    text: 'text-green-300',
+    emoji: '🏭',
+    bgColor: 'rgba(34,197,94,0.15)',
+    borderColor: 'rgba(34,197,94,0.35)',
+    textColor: '#86efac',
     example: 'https://www.dhgate.com/product/...',
   },
   {
     id: 'alibaba',
     name: 'Alibaba',
-    emoji: '\u{1F310}',
-    bg: 'bg-yellow-500/15',
-    border: 'border-yellow-500/30',
-    text: 'text-yellow-300',
+    emoji: '🌐',
+    bgColor: 'rgba(234,179,8,0.15)',
+    borderColor: 'rgba(234,179,8,0.35)',
+    textColor: '#fde047',
     example: 'https://www.alibaba.com/product-detail/...',
   },
   {
     id: 'banggood',
     name: 'Banggood',
-    emoji: '\u26A1',
-    bg: 'bg-purple-500/15',
-    border: 'border-purple-500/30',
-    text: 'text-purple-300',
+    emoji: '⚡',
+    bgColor: 'rgba(168,85,247,0.15)',
+    borderColor: 'rgba(168,85,247,0.35)',
+    textColor: '#d8b4fe',
     example: 'https://www.banggood.com/...',
   },
   {
     id: 'other',
     name: 'Autre site',
-    emoji: '\u{1F517}',
-    bg: 'bg-slate-700/50',
-    border: 'border-slate-600',
-    text: 'text-slate-300',
+    emoji: '🔗',
+    bgColor: 'rgba(100,116,139,0.20)',
+    borderColor: 'rgba(100,116,139,0.40)',
+    textColor: '#cbd5e1',
     example: 'Toute URL produit e-commerce',
   },
 ]
+
+function proxyImage(src: string | null | undefined): string {
+  if (!src) return ''
+  if (src.startsWith('/') || src.startsWith('data:')) return src
+  return `/api/image-proxy?url=${encodeURIComponent(src)}`
+}
 
 type ImportResultItem = {
   url: string
@@ -322,10 +328,18 @@ export default function BulkImportPage() {
         {PLATFORMS.map(p => (
           <div
             key={p.id}
-            className={'flex items-center gap-2 px-3 py-2 ' + p.bg + ' border ' + p.border + ' rounded-xl'}
+            style={{
+              background: p.bgColor,
+              border: `1px solid ${p.borderColor}`,
+              borderRadius: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 12px',
+            }}
           >
-            <span className="text-base">{p.emoji}</span>
-            <span className={'text-sm font-bold ' + p.text}>{p.name}</span>
+            <span style={{ fontSize: 16 }}>{p.emoji}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: p.textColor }}>{p.name}</span>
           </div>
         ))}
       </div>
@@ -526,7 +540,7 @@ export default function BulkImportPage() {
                       {preview.product.images?.[0] ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={preview.product.images[0]}
+                          src={proxyImage(preview.product.images[0])}
                           alt={preview.product.title}
                           className="w-full h-full object-contain"
                           onError={(e) => {
@@ -587,7 +601,7 @@ export default function BulkImportPage() {
                       {r.success && r.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={r.image}
+                          src={proxyImage(r.image)}
                           alt={r.title || ''}
                           className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-slate-700"
                           onError={e => {
@@ -632,7 +646,7 @@ export default function BulkImportPage() {
                     <div key={p.id} className="flex items-start gap-3">
                       <span className="text-xl">{p.emoji}</span>
                       <div>
-                        <p className={'font-bold text-sm ' + p.text}>{p.name}</p>
+                        <p style={{ color: p.textColor }} className="font-bold text-sm">{p.name}</p>
                         <p className="text-slate-600 text-xs truncate">{p.example}</p>
                       </div>
                     </div>

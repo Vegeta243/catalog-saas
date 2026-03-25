@@ -1,60 +1,84 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react'
+
+const STORAGE_KEY = 'ecompilot_tour_v2'
 
 const TOUR_STEPS = [
   {
+    emoji: '👋',
     title: 'Bienvenue sur EcomPilot Elite !',
     description: "Votre assistant IA pour optimiser votre boutique Shopify. Laissez-nous vous montrer les fonctionnalites cles en 30 secondes.",
+    ctaLabel: 'Commencer le guide',
+    navigateTo: null as string | null,
   },
   {
+    emoji: '🏪',
     title: 'Connectez votre boutique',
-    description: "Commencez par connecter votre boutique Shopify. Tous vos produits seront synchronises automatiquement.",
+    description: "Commencez par connecter votre boutique Shopify. Tous vos produits seront synchronises automatiquement et vous pourrez les gerer depuis EcomPilot.",
+    ctaLabel: 'Connecter ma boutique →',
+    navigateTo: '/dashboard/shops',
   },
   {
+    emoji: '🛒',
+    title: 'Importez des produits',
+    description: "Importez des produits depuis AliExpress, CJDropshipping, DHgate et plus encore directement dans votre boutique en quelques secondes.",
+    ctaLabel: "Importer des produits →",
+    navigateTo: '/dashboard/import',
+  },
+  {
+    emoji: '✨',
     title: 'Optimisation IA',
-    description: "Generez des titres et descriptions optimises SEO pour vos produits en 1 clic grace a l'IA.",
+    description: "Generez des titres et descriptions optimises SEO pour vos produits en 1 clic grace a l'IA. Augmentez votre visibilite sur Google.",
+    ctaLabel: "Optimiser avec l'IA →",
+    navigateTo: '/dashboard/ai',
   },
   {
-    title: 'Import de produits',
-    description: "Importez des produits depuis AliExpress, CJDropshipping, DHgate et plus encore directement dans votre boutique.",
-  },
-  {
+    emoji: '📦',
     title: 'Modifier en masse',
-    description: "Editez les prix, titres et descriptions de centaines de produits simultanement.",
+    description: "Editez les prix, titres et descriptions de centaines de produits simultanement. Un seul clic pour appliquer des changements globaux.",
+    ctaLabel: "Modifier en masse →",
+    navigateTo: '/dashboard/products',
   },
   {
+    emoji: '🚀',
     title: 'Vous etes pret !',
-    description: "Votre essai gratuit inclut 30 actions IA. Commencez par connecter votre boutique Shopify.",
+    description: "Votre essai gratuit inclut 30 actions IA. Commencez par connecter votre boutique Shopify pour debloquer toutes les fonctionnalites.",
+    ctaLabel: 'Acceder au tableau de bord',
+    navigateTo: '/dashboard',
   },
 ]
 
 export function OnboardingTour() {
+  const router = useRouter()
   const [step, setStep] = useState(0)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const done = localStorage.getItem('onboarding_tour_done')
-    const skipped = localStorage.getItem('onboarding_tour_skipped')
-    if (!done && !skipped) {
+    const done = localStorage.getItem(STORAGE_KEY)
+    if (!done) {
       const t = setTimeout(() => setVisible(true), 1500)
       return () => clearTimeout(t)
     }
   }, [])
 
   function dismiss(completed = false) {
-    if (completed) {
-      localStorage.setItem('onboarding_tour_done', 'true')
-    } else {
-      localStorage.setItem('onboarding_tour_skipped', 'true')
-    }
+    localStorage.setItem(STORAGE_KEY, completed ? 'done' : 'skipped')
     setVisible(false)
   }
 
-  function next() {
+  function handleCta() {
+    const current = TOUR_STEPS[step]
     if (step < TOUR_STEPS.length - 1) {
+      if (current.navigateTo) {
+        router.push(current.navigateTo)
+      }
       setStep(s => s + 1)
     } else {
+      if (current.navigateTo) {
+        router.push(current.navigateTo)
+      }
       dismiss(true)
     }
   }
@@ -68,71 +92,112 @@ export function OnboardingTour() {
   const current = TOUR_STEPS[step]
   const isFirst = step === 0
   const isLast = step === TOUR_STEPS.length - 1
+  const progress = ((step) / (TOUR_STEPS.length - 1)) * 100
 
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 z-[90] backdrop-blur-sm"
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 90, backdropFilter: 'blur(4px)' }}
         onClick={() => dismiss(false)}
       />
-      <div className="fixed z-[100] inset-0 flex items-center justify-center p-4 pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-md bg-[#1e293b] border border-[#334155] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b border-[#334155]">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-400" />
-              <span className="text-slate-400 text-sm font-semibold">Guide de demarrage</span>
+      <div style={{ position: 'fixed', zIndex: 100, inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, pointerEvents: 'none' }}>
+        <div style={{
+          pointerEvents: 'auto',
+          width: '100%',
+          maxWidth: 440,
+          background: '#111827',
+          border: '1px solid #1e2d45',
+          borderRadius: 20,
+          boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+          overflow: 'hidden',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1e2d45' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Sparkles style={{ width: 18, height: 18, color: '#4f8ef7' }} />
+              <span style={{ color: '#8b9fc4', fontSize: 13, fontWeight: 600 }}>Guide de demarrage • Etape {step + 1}/{TOUR_STEPS.length}</span>
             </div>
             <button
               onClick={() => dismiss(false)}
-              className="p-1.5 text-slate-500 hover:text-white rounded-lg hover:bg-slate-700 transition-colors"
+              style={{ padding: 6, color: '#4a5878', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onMouseOver={e => (e.currentTarget.style.color = '#f0f4ff')}
+              onMouseOut={e => (e.currentTarget.style.color = '#4a5878')}
             >
-              <X className="w-4 h-4" />
+              <X style={{ width: 16, height: 16 }} />
             </button>
           </div>
 
-          <div className="p-6">
-            <h3 className="text-white font-black text-xl mb-3">{current.title}</h3>
-            <p className="text-slate-400 leading-relaxed">{current.description}</p>
+          {/* Progress bar */}
+          <div style={{ height: 3, background: '#1a2234' }}>
+            <div style={{ height: '100%', background: '#4f8ef7', width: `${progress}%`, transition: 'width 0.3s ease', borderRadius: '0 2px 2px 0' }} />
           </div>
 
-          <div className="flex items-center justify-center gap-2 px-6 pb-2">
+          {/* Body */}
+          <div style={{ padding: '28px 24px 20px' }}>
+            <div style={{ fontSize: 40, marginBottom: 16, textAlign: 'center' }}>{current.emoji}</div>
+            <h3 style={{ color: '#f0f4ff', fontWeight: 900, fontSize: 20, marginBottom: 12, lineHeight: 1.3, textAlign: 'center' }}>{current.title}</h3>
+            <p style={{ color: '#8b9fc4', lineHeight: 1.7, fontSize: 14, textAlign: 'center' }}>{current.description}</p>
+          </div>
+
+          {/* Step dots */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, paddingBottom: 4 }}>
             {TOUR_STEPS.map((_, i) => (
-              <div
+              <button
                 key={i}
-                className={`rounded-full transition-all ${
-                  i === step
-                    ? 'w-6 h-2 bg-blue-500'
-                    : i < step
-                    ? 'w-2 h-2 bg-blue-500/40'
-                    : 'w-2 h-2 bg-slate-700'
-                }`}
+                onClick={() => setStep(i)}
+                style={{
+                  borderRadius: 999,
+                  transition: 'all 0.2s',
+                  background: i === step ? '#4f8ef7' : i < step ? 'rgba(79,142,247,0.4)' : '#1a2234',
+                  width: i === step ? 24 : 8,
+                  height: 8,
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
               />
             ))}
           </div>
 
-          <div className="flex items-center justify-between p-5 border-t border-[#334155]">
+          {/* Footer */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderTop: '1px solid #1e2d45' }}>
             <button
               onClick={() => dismiss(false)}
-              className="text-slate-500 hover:text-slate-300 text-sm transition-colors font-semibold"
+              style={{ color: '#4a5878', fontSize: 13, fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+              onMouseOver={e => (e.currentTarget.style.color = '#8b9fc4')}
+              onMouseOut={e => (e.currentTarget.style.color = '#4a5878')}
             >
               Passer le guide
             </button>
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               {!isFirst && (
                 <button
                   onClick={prev}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm font-bold transition-colors"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '8px 14px', background: '#1a2234', border: '1px solid #1e2d45',
+                    color: '#8b9fc4', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = '#253552'; e.currentTarget.style.color = '#f0f4ff' }}
+                  onMouseOut={e => { e.currentTarget.style.background = '#1a2234'; e.currentTarget.style.color = '#8b9fc4' }}
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  Precedent
+                  <ArrowLeft style={{ width: 14, height: 14 }} />
+                  Retour
                 </button>
               )}
               <button
-                onClick={next}
-                className="flex items-center gap-1.5 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-black transition-colors"
+                onClick={handleCta}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 18px', background: '#4f8ef7', border: 'none',
+                  color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s',
+                  boxShadow: '0 4px 15px rgba(79,142,247,0.3)',
+                }}
+                onMouseOver={e => (e.currentTarget.style.background = '#3b82f6')}
+                onMouseOut={e => (e.currentTarget.style.background = '#4f8ef7')}
               >
-                {isLast ? 'Commencer !' : 'Suivant'}
-                {!isLast && <ArrowRight className="w-4 h-4" />}
+                {current.ctaLabel}
+                {!isLast && <ArrowRight style={{ width: 14, height: 14 }} />}
               </button>
             </div>
           </div>
