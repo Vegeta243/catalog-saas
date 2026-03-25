@@ -27,7 +27,8 @@ export function extractPrice(text: string): number {
 
 export async function safeFetch(
   url: string,
-  ms = 15000
+  ms = 15000,
+  extraHeaders?: Record<string, string>
 ): Promise<{ ok: boolean; html: string; status: number }> {
   try {
     const ctrl = new AbortController()
@@ -39,6 +40,7 @@ export async function safeFetch(
         'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
         'Accept-Language': 'fr-FR,fr;q=0.9',
         'Cache-Control': 'no-cache',
+        ...extraHeaders,
       },
     })
     clearTimeout(t)
