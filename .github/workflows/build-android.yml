@@ -40,18 +40,24 @@ jobs:
 
       - name: Build Android AAB
         working-directory: android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
           ./gradlew bundleRelease \
-            -PKEYSTORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
-            -PKEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
+            -PKEYSTORE_PASSWORD="$KS_PASS" \
+            -PKEY_PASSWORD="$KEY_PASS"
 
       - name: Build Android APK
         working-directory: android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           ./gradlew assembleRelease \
-            -PKEYSTORE_PASSWORD="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
-            -PKEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}"
+            -PKEYSTORE_PASSWORD="$KS_PASS" \
+            -PKEY_PASSWORD="$KEY_PASS"
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
