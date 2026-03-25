@@ -111,6 +111,17 @@ const nextConfig: NextConfig = {
   // sharp is a native Node.js addon — must not be bundled by webpack
   serverExternalPackages: ["sharp"],
 
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    minimumCacheTTL: 86400,
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.alicdn.com' },
+      { protocol: 'https', hostname: '**.aliexpress.com' },
+      { protocol: 'https', hostname: '**.supabase.co' },
+    ],
+  },
+
   async headers() {
     return [
       // ── Shopify embed routes: allow framing from Shopify admin ──

@@ -29,11 +29,14 @@ export async function GET(request: NextRequest) {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
         'Referer': 'https://www.aliexpress.com/',
+        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
       },
       signal: ctrl.signal,
     })
     clearTimeout(t)
-    if (!res.ok) throw new Error('HTTP ' + res.status)
+    if (!res.ok) {
+      return new NextResponse(null, { status: res.status })
+    }
     const buf = await res.arrayBuffer()
     const ct = res.headers.get('content-type') || 'image/jpeg'
     return new NextResponse(buf, {
@@ -43,8 +46,7 @@ export async function GET(request: NextRequest) {
         'Access-Control-Allow-Origin': '*',
       }
     })
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Proxy error'
-    return new NextResponse('Error: ' + msg, { status: 500 })
+  } catch {
+    return new NextResponse(null, { status: 502 })
   }
 }

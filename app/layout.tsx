@@ -12,46 +12,48 @@ validateEnv();
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ecompilotelite.com"),
   title: {
-    default: "EcomPilot — Optimisez votre catalogue Shopify avec l'IA",
-    template: "%s | EcomPilot",
+    default: "EcomPilot Elite — IA pour boutiques Shopify",
+    template: "%s — EcomPilot Elite",
   },
   description:
-    "EcomPilot est le copilote IA pour Shopify : générez des descriptions, optimisez votre SEO, éditez en masse et automatisez votre catalogue. 30 actions gratuites, sans carte bancaire.",
+    "Optimisez votre boutique Shopify avec l'IA. Générez des fiches produits SEO, importez depuis AliExpress, éditez vos prix en masse. Essai gratuit sans CB.",
   keywords: [
-    "Shopify",
-    "catalogue Shopify",
-    "optimisation SEO",
-    "descriptions IA",
-    "gestion catalogue",
-    "EcomPilot",
-    "dropshipping",
-    "import AliExpress",
-    "automatisation boutique",
+    "shopify optimisation",
+    "ia ecommerce",
+    "seo shopify",
+    "import aliexpress",
+    "dropshipping france",
+    "fiches produits ia",
+    "optimisation catalogue shopify",
+    "ecompilot",
+    "bulk edit shopify",
   ],
-  authors: [{ name: "EcomPilot", url: "https://www.ecompilotelite.com" }],
-  creator: "EcomPilot",
+  authors: [{ name: "EcomPilot Elite" }],
+  creator: "EcomPilot Elite",
+  publisher: "EcomPilot Elite",
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: "https://www.ecompilotelite.com",
-    siteName: "EcomPilot",
-    title: "EcomPilot — Optimisez votre catalogue Shopify avec l'IA",
+    siteName: "EcomPilot Elite",
+    title: "EcomPilot Elite — L'IA qui optimise votre boutique Shopify",
     description:
-      "Générez des descriptions IA, éditez en masse, importez depuis AliExpress & CJ. Le copilote de votre boutique Shopify.",
+      "Générez des fiches produits pro en 1 clic, importez depuis AliExpress, éditez 500 prix en masse. 30 actions gratuites sans CB.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "EcomPilot — Copilote IA pour Shopify",
+        alt: "EcomPilot Elite — Optimisation Shopify par IA",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "EcomPilot — Copilote IA pour Shopify",
-    description: "30 actions gratuites. Descriptions IA, édition en masse, automatisations. Sans carte bancaire.",
-    images: ["/og-image.png"],
+    title: "EcomPilot Elite — L'IA pour Shopify",
+    description: "Fiches produits SEO en 1 clic. Import AliExpress. Édition en masse.",
+    images: ["/api/og"],
+    creator: "@ecompilotelite",
   },
   robots: {
     index: true,
@@ -66,6 +68,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://www.ecompilotelite.com",
+    languages: {
+      "fr-FR": "https://www.ecompilotelite.com",
+    },
   },
   manifest: "/manifest.json",
   appleWebApp: {
@@ -100,6 +105,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://api.supabase.co" />
+        <link rel="dns-prefetch" href="https://api.stripe.com" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="EcomPilot Elite" />
@@ -113,23 +122,31 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "EcomPilot",
+              name: "EcomPilot Elite",
               applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
+              operatingSystem: "Web, Android, iOS",
               url: "https://www.ecompilotelite.com",
               description:
-                "Le copilote IA pour optimiser votre catalogue Shopify. Descriptions IA, édition en masse, import AliExpress, automatisations.",
+                "Optimisez votre boutique Shopify avec l'IA. Fiches produits SEO, import AliExpress, édition prix en masse.",
               offers: {
-                "@type": "Offer",
-                price: "0",
+                "@type": "AggregateOffer",
                 priceCurrency: "EUR",
-                description: "30 actions gratuites sans carte bancaire",
+                lowPrice: "0",
+                highPrice: "129",
+                offerCount: 4,
               },
               aggregateRating: {
                 "@type": "AggregateRating",
-                ratingValue: "4.9",
-                reviewCount: "127",
+                ratingValue: "4.8",
+                reviewCount: "47",
               },
+              featureList: [
+                "Génération de fiches produits par IA",
+                "Import depuis AliExpress",
+                "Édition de prix en masse",
+                "Analyse SEO automatique",
+                "Analyse de la concurrence",
+              ],
             }),
           }}
         />
