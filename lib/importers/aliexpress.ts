@@ -58,10 +58,38 @@ export async function importFromAliExpress(url: string): Promise<ImportResult> {
     }
 
     // Method 2: Scrape HTML page
-    const pageRes = await fetchWithRetry(
-      url.replace('fr.aliexpress.com', 'www.aliexpress.com')
-    )
+    const cleanUrl = url.replace('fr.aliexpress.com', 'www.aliexpress.com')
+    const pageRes = await fetchWithRetry(cleanUrl)
     const html = await pageRes.text()
+
+    // Helper: extract meta content regardless of attribute order
+    function getMeta(h: string, prop: string): string | undefined {
+      return h.match(new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`))?.[1] ||
+        h.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`))?.[1]
+    }
+
+    // Try OG tags from main page (often blocked by AliExpress, but worth trying)
+    const ogTitle = getMeta(html, 'og:title')
+    const ogImage = getMeta(html, 'og:image')
+    const ogPrice = getMeta(html, 'product:price:amount')
+
+    if (ogTitle && ogImage) {
+      const price = parseFloat(ogPrice || '0') || 9.99
+      return {
+        success: true, url,
+        product: {
+          title: ogTitle,
+          description: ogTitle,
+          price,
+          images: [ogImage],
+          variants: [{ title: 'Default', price }],
+          tags: ['aliexpress', 'dropshipping'],
+          vendor: 'AliExpress',
+          platform: 'aliexpress',
+          sourceUrl: url,
+        },
+      }
+    }
 
     // Try window.runParams JSON
     const dataMatch = html.match(/window\.runParams\s*=\s*([\s\S]{1,200000}?);\s*(?:window|var|let|const)/)
@@ -113,7 +141,38 @@ export async function importFromAliExpress(url: string): Promise<ImportResult> {
       }
     }
 
-    // Method 3: Minimal extraction
+    // Method 3.5: Try mobile URL for OG tags (simpler HTML, often accessible)
+    try {
+      const mobileUrl = cleanUrl.replace('www.aliexpress.com', 'm.aliexpress.com')
+      if (mobileUrl !== cleanUrl) {
+        const mRes = await fetchWithRetry(mobileUrl)
+        const mHtml = await mRes.text()
+        const mTitle = getMeta(mHtml, 'og:title')
+        const mImage = getMeta(mHtml, 'og:image')
+        const mPrice = getMeta(mHtml, 'product:price:amount')
+        if (mTitle && mTitle !== 'AliExpress' && mImage) {
+          const price = parseFloat(mPrice || '0') || 9.99
+          return {
+            success: true, url,
+            product: {
+              title: mTitle,
+              description: mTitle,
+              price,
+              images: [mImage],
+              variants: [{ title: 'Default', price }],
+              tags: ['aliexpress', 'dropshipping'],
+              vendor: 'AliExpress',
+              platform: 'aliexpress',
+              sourceUrl: url,
+            },
+          }
+        }
+      }
+    } catch {
+      // ignore mobile fallback error
+    }
+
+    // Method 4: Minimal extraction
     const title =
       html.match(/<h1[^>]*>([^<]{5,200})<\/h1>/)?.[1]?.trim() ||
       html.match(/<title>([^|<]+)/)?.[1]?.trim() ||

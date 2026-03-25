@@ -34,6 +34,7 @@ import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 import AIChatWidget from '@/components/ai-chat-widget';
 import { PreviewBanner } from '@/components/preview-banner';
 import { UserProvider } from '@/lib/contexts/UserContext';
+import { OnboardingTour } from '@/components/onboarding-tour';
 
 const NAV_SECTIONS = [
   {
@@ -477,6 +478,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       <AIChatWidget plan={effectivePlan} currentPage={pathname} tasksRemaining={tasksRemaining} tasksTotal={tasksTotal} />
+      <OnboardingTour />
     </div>
     </UserProvider>
   );

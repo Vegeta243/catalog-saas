@@ -7,7 +7,38 @@ export async function importUniversal(url: string): Promise<ImportResult> {
     const html = await res.text()
     const platform = new URL(url).hostname.replace('www.', '').split('.')[0]
 
-    // Try JSON-LD first (best structured data)
+    // Helper: extract meta content regardless of attribute order
+    function getMeta(prop: string): string | undefined {
+      return html.match(new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`))?.[1] ||
+        html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${prop}["']`))?.[1]
+    }
+
+    // Strategy 1: OpenGraph tags (always present on e-commerce sites, most reliable)
+    const ogTitle = getMeta('og:title')
+    const ogDesc = getMeta('og:description')
+    const ogImage = getMeta('og:image')
+    const ogPrice = getMeta('product:price:amount')
+
+    if (ogTitle && ogImage) {
+      const price = parseFloat(ogPrice || '0') || 9.99
+      return {
+        success: true, url,
+        product: {
+          title: ogTitle,
+          description: cleanHtml(ogDesc || ogTitle),
+          price,
+          compareAtPrice: price * 1.4,
+          images: [ogImage],
+          variants: [{ title: 'Default', price }],
+          tags: [platform, 'dropshipping'],
+          vendor: platform,
+          platform,
+          sourceUrl: url,
+        },
+      }
+    }
+
+    // Strategy 2: JSON-LD structured data
     const allJsonLd = [...html.matchAll(
       /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
     )]
@@ -49,12 +80,7 @@ export async function importUniversal(url: string): Promise<ImportResult> {
       }
     }
 
-    // OpenGraph tags
-    const ogTitle = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/)?.[1]
-    const ogDesc = html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]+)"/)?.[1]
-    const ogImage = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/)?.[1]
-    const ogPrice = html.match(/<meta[^>]*property="product:price:amount"[^>]*content="([^"]+)"/)?.[1]
-
+    // Strategy 3: OG title alone (no image)
     if (ogTitle) {
       const price = parseFloat(ogPrice || '0') || 9.99
       return {

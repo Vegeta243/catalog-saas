@@ -374,42 +374,53 @@ export default function DashboardPage() {
 
       {/* ─── BLOC 4 : KPI Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+        <div className="relative rounded-2xl p-5 overflow-hidden border border-blue-500/20"
+          style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.05) 100%)' }}>
+          <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-blue-500/20" />
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-blue-50 p-2 rounded-lg"><Package className="w-5 h-5" style={{ color: "#3b82f6" }} /></div>
+            <div className="bg-blue-500/20 p-2 rounded-lg"><Package className="w-5 h-5" style={{ color: "#60a5fa" }} /></div>
           </div>
-          <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{optimizedCount}</p>
-          <p className="text-sm" style={{ color: "#64748b" }}>Produits optimisés</p>
-          <p className="text-xs mt-1" style={{ color: "#059669" }}>+{Math.min(optimizedCount, 12)} cette semaine</p>
+          <p className="text-2xl font-bold" style={{ color: "#f8fafc" }}>{optimizedCount}</p>
+          <p className="text-sm" style={{ color: "#94a3b8" }}>Produits optimisés</p>
+          <p className="text-xs mt-1" style={{ color: "#34d399" }}>+{Math.min(optimizedCount, 12)} cette semaine</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+        <div className="relative rounded-2xl p-5 overflow-hidden border border-purple-500/20"
+          style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.12) 0%, rgba(139,92,246,0.05) 100%)' }}>
+          <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-purple-500/20" />
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-violet-50 p-2 rounded-lg"><Clock className="w-5 h-5" style={{ color: "#8b5cf6" }} /></div>
+            <div className="bg-purple-500/20 p-2 rounded-lg"><Clock className="w-5 h-5" style={{ color: "#c084fc" }} /></div>
           </div>
-          <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{timeSaved >= 60 ? `${Math.floor(timeSaved / 60)}h ${timeSaved % 60}min` : `${timeSaved}min`}</p>
-          <p className="text-sm" style={{ color: "#64748b" }}>Temps économisé</p>
+          <p className="text-2xl font-bold" style={{ color: "#f8fafc" }}>{timeSaved >= 60 ? `${Math.floor(timeSaved / 60)}h ${timeSaved % 60}min` : `${timeSaved}min`}</p>
+          <p className="text-sm" style={{ color: "#94a3b8" }}>Temps économisé</p>
           <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>vs modification manuelle</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+        <div className="relative rounded-2xl p-5 overflow-hidden border border-emerald-500/20"
+          style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.05) 100%)' }}>
+          <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-emerald-500/20" />
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-emerald-50 p-2 rounded-lg"><TrendingUp className="w-5 h-5" style={{ color: "#059669" }} /></div>
+            <div className="bg-emerald-500/20 p-2 rounded-lg"><TrendingUp className="w-5 h-5" style={{ color: "#34d399" }} /></div>
           </div>
-          <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{avgScore}/100</p>
-          <p className="text-sm" style={{ color: "#64748b" }}>Score SEO moyen</p>
+          <p className="text-2xl font-bold" style={{ color: "#f8fafc" }}>{avgScore}/100</p>
+          <p className="text-sm" style={{ color: "#94a3b8" }}>Score SEO moyen</p>
           <span className="text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block"
-            style={{ backgroundColor: avgScore >= 70 ? "#f0fdf4" : avgScore >= 40 ? "#fffbeb" : "#fef2f2", color: healthColor }}>
+            style={{
+              backgroundColor: avgScore >= 70 ? "rgba(16,185,129,0.2)" : avgScore >= 40 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)",
+              color: avgScore >= 70 ? "#34d399" : avgScore >= 40 ? "#fbbf24" : "#f87171"
+            }}>
             {healthLabel}
           </span>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+        <div className="relative rounded-2xl p-5 overflow-hidden border border-amber-500/20"
+          style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.05) 100%)' }}>
+          <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-amber-500/20" />
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-amber-50 p-2 rounded-lg"><Zap className="w-5 h-5" style={{ color: "#d97706" }} /></div>
+            <div className="bg-amber-500/20 p-2 rounded-lg"><Zap className="w-5 h-5" style={{ color: "#fbbf24" }} /></div>
           </div>
           <p className="text-2xl font-bold" style={{ color: getTasksColor(tasksRemaining) }}>{tasksRemaining}</p>
-          <p className="text-sm" style={{ color: "#64748b" }}>Tâches restantes</p>
+          <p className="text-sm" style={{ color: "#94a3b8" }}>Tâches restantes</p>
           <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Renouvellement le {resetDate}</p>
         </div>
       </div>

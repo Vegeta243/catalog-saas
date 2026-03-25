@@ -1,4 +1,9 @@
-'use client'
+const fs = require('fs')
+const path = require('path')
+
+const filePath = path.join(__dirname, '..', 'app', '(dashboard)', 'dashboard', 'import', 'page.tsx')
+
+const content = `'use client'
 
 import { useState, useEffect } from 'react'
 import {
@@ -19,7 +24,7 @@ const PLATFORMS = [
   {
     id: 'aliexpress',
     name: 'AliExpress',
-    emoji: '\u{1F6D2}',
+    emoji: '\\u{1F6D2}',
     bg: 'bg-red-500/15',
     border: 'border-red-500/30',
     text: 'text-red-300',
@@ -28,7 +33,7 @@ const PLATFORMS = [
   {
     id: 'cjdropshipping',
     name: 'CJDropshipping',
-    emoji: '\u{1F4E6}',
+    emoji: '\\u{1F4E6}',
     bg: 'bg-blue-500/15',
     border: 'border-blue-500/30',
     text: 'text-blue-300',
@@ -37,7 +42,7 @@ const PLATFORMS = [
   {
     id: 'dhgate',
     name: 'DHgate',
-    emoji: '\u{1F3ED}',
+    emoji: '\\u{1F3ED}',
     bg: 'bg-green-500/15',
     border: 'border-green-500/30',
     text: 'text-green-300',
@@ -46,7 +51,7 @@ const PLATFORMS = [
   {
     id: 'alibaba',
     name: 'Alibaba',
-    emoji: '\u{1F310}',
+    emoji: '\\u{1F310}',
     bg: 'bg-yellow-500/15',
     border: 'border-yellow-500/30',
     text: 'text-yellow-300',
@@ -55,7 +60,7 @@ const PLATFORMS = [
   {
     id: 'banggood',
     name: 'Banggood',
-    emoji: '\u26A1',
+    emoji: '\\u26A1',
     bg: 'bg-purple-500/15',
     border: 'border-purple-500/30',
     text: 'text-purple-300',
@@ -64,7 +69,7 @@ const PLATFORMS = [
   {
     id: 'other',
     name: 'Autre site',
-    emoji: '\u{1F517}',
+    emoji: '\\u{1F517}',
     bg: 'bg-slate-700/50',
     border: 'border-slate-600',
     text: 'text-slate-300',
@@ -194,7 +199,7 @@ export default function BulkImportPage() {
 
   function handlePasteConfirm() {
     const lines = pasteText
-      .split('\n')
+      .split('\\n')
       .map((l: string) => l.trim())
       .filter((l: string) => l.startsWith('http'))
       .slice(0, 50)
@@ -266,7 +271,7 @@ export default function BulkImportPage() {
   }
 
   const validCount = urls.filter(u => u.trim().startsWith('http')).length
-  const pasteUrlCount = pasteText.split('\n').filter(l => l.trim().startsWith('http')).length
+  const pasteUrlCount = pasteText.split('\\n').filter(l => l.trim().startsWith('http')).length
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto">
@@ -708,3 +713,7 @@ export default function BulkImportPage() {
     </div>
   )
 }
+`
+
+fs.writeFileSync(filePath, content, 'utf8')
+console.log('Written successfully. Size:', fs.statSync(filePath).size, 'bytes')

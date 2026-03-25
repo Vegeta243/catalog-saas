@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
         success: true,
         title: p.title,
         price: p.price,
+        image: p.images?.[0] || null,
         images: p.images.length,
         shopify_id: shopifyId,
         platform: p.platform,
