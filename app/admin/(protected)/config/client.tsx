@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Save, RefreshCw, AlertTriangle } from "lucide-react";
 import { useToast } from "@/lib/toast";
 
@@ -61,6 +61,51 @@ export default function ConfigClient({ initialConfigs }: { initialConfigs: Syste
     Object.fromEntries(initialConfigs.map(c => [c.key, c]))
   );
   const [saving, setSaving] = useState<string | null>(null);
+
+  // Demo video state
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/demo-video')
+      .then(r => r.json())
+      .then(d => { setVideoUrl(d.url || null); setVideoLoaded(true) })
+      .catch(() => setVideoLoaded(true))
+  }, [])
+
+  async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('video', file)
+      const res = await fetch('/api/admin/demo-video', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok) {
+        setVideoUrl(data.url)
+        addToast('Vidéo uploadée avec succès', 'success')
+      } else {
+        addToast(data.error || 'Erreur upload', 'error')
+      }
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleDeleteVideo() {
+    if (!confirm('Supprimer la vidéo de démonstration ?')) return
+    const res = await fetch('/api/admin/demo-video', { method: 'DELETE' })
+    if (res.ok) {
+      setVideoUrl(null)
+      addToast('Vidéo supprimée', 'success')
+    } else {
+      addToast('Erreur lors de la suppression', 'error')
+    }
+  }
 
   const updateField = (configKey: string, field: string, value: unknown) => {
     setConfigs(cs => ({
@@ -171,6 +216,69 @@ export default function ConfigClient({ initialConfigs }: { initialConfigs: Syste
             </div>
           );
         })}
+      </div>
+
+      {/* Demo video upload section */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold mb-1" style={{ color: '#0f172a' }}>
+          🎥 Vidéo démo (page d&apos;accueil)
+        </h2>
+        <p className="text-xs mb-4" style={{ color: '#64748b' }}>
+          Uploadez une vidéo MP4 de 30-90 secondes. Elle apparaîtra sur la page d&apos;accueil.
+        </p>
+
+        {!videoLoaded && (
+          <div className="h-8 bg-gray-100 rounded animate-pulse mb-4" />
+        )}
+
+        {videoLoaded && videoUrl && (
+          <div className="mb-4 rounded-xl overflow-hidden border border-gray-200">
+            <video src={videoUrl} controls className="w-full max-h-48 bg-black" />
+            <p className="text-xs p-2" style={{ color: '#94a3b8' }}>
+              Vidéo actuelle — visible sur la page d&apos;accueil
+            </p>
+          </div>
+        )}
+
+        {videoLoaded && !videoUrl && (
+          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+            <p className="text-xs" style={{ color: '#94a3b8' }}>Aucune vidéo uploadée — le placeholder s&apos;affiche.</p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime"
+            onChange={handleVideoUpload}
+            className="hidden"
+            id="video-upload"
+          />
+          <label
+            htmlFor="video-upload"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white cursor-pointer transition-colors"
+            style={{ backgroundColor: uploading ? '#1d4ed8' : '#2563eb' }}
+          >
+            {uploading ? (
+              <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Upload en cours...</>
+            ) : (
+              <>+ Uploader une vidéo</>
+            )}
+          </label>
+          {videoUrl && (
+            <button
+              onClick={handleDeleteVideo}
+              className="px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
+              style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
+            >
+              Supprimer
+            </button>
+          )}
+        </div>
+        <p className="text-xs mt-2" style={{ color: '#94a3b8' }}>
+          Formats: MP4, WebM · Max: 100MB
+        </p>
       </div>
 
       {/* All configs raw view */}

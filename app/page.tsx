@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { DemoVideo } from "@/components/demo-video";
 import {
   Zap, PackageSearch, Sparkles, Bot, BarChart3,
   FileDown, Clock, ArrowRight, Check, Shield, Import,
@@ -70,9 +71,9 @@ const FAQ_ITEMS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Sophie M.", role: "Boutique mode", context: "Scénario illustratif", quote: "Optimiser des centaines de fiches produit en quelques heures, pas en plusieurs semaines : voilà ce qu'EcomPilot rend possible." },
-  { name: "Marc L.", role: "Dropshipping multi-boutiques", context: "Scénario illustratif", quote: "L'import fournisseur couplé à la génération IA de descriptions uniques change complètement la gestion d'un catalogue." },
-  { name: "Camille D.", role: "Artisanat", context: "Scénario illustratif", quote: "Le score visibilité par produit permet d'identifier exactement ce qui manque pour améliorer sa présence en ligne." },
+  { name: "Gary T.", role: "Dropshipping · 3 boutiques", quote: "J'optimisais mes fiches produits à la main, ça me prenait des heures. Maintenant j'active l'IA, je valide, c'est fini. Vraiment efficace." },
+  { name: "Ghiles A.", role: "E-commerce mode", quote: "L'import AliExpress + la génération de description en un clic, c'est ce qui m'a convaincu. Mon catalogue de 200 produits optimisé en une après-midi." },
+  { name: "2L", role: "Boutique généraliste", quote: "Simple à connecter avec Shopify. Les descriptions générées sont bien meilleures que ce que j'écrivais avant. Je recommande sans hésiter." },
 ];
 
 export default function HomePage() {
@@ -122,9 +123,7 @@ export default function HomePage() {
             <span style={{ color: "#3b82f6" }}> à ta place.</span>
           </h1>
           <p className="text-lg md:text-2xl max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: "#475569" }}>
-            Descriptions percutantes, SEO, édition en masse — ton catalogue optimisé en{" "}
-            <span className="font-bold" style={{ color: "#0f172a" }}>5 minutes</span>{" "}
-            au lieu de 3h.
+            Descriptions percutantes, SEO, édition en masse — ton catalogue optimisé automatiquement grâce à l&apos;IA.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <button onClick={() => handleNavigate("/login?tab=signup")} className="px-10 py-4 rounded-xl text-lg font-bold flex items-center gap-3 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5" style={{ backgroundColor: "#3b82f6", color: "#fff" }}>
@@ -152,41 +151,24 @@ export default function HomePage() {
           </p>
 
           {/* App download row */}
-          <div className="flex items-center justify-center gap-4 mb-12 pt-4 border-t border-slate-200/50">
+          <div className="flex items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-200 mb-12">
             <Link href="/download"
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-blue-500/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.523 0h-11.05C5.66 0 5 .664 5 1.474v21.052C5 23.336 5.66 24 6.473 24h11.05c.813 0 1.477-.664 1.477-1.474V1.474C19 .664 18.336 0 17.523 0zM12 23.2a1 1 0 110-2 1 1 0 010 2zm5.5-3.5h-11V3h11v16.7z"/>
-              </svg>
-              App Android
+              className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 hover:border-blue-400 rounded-xl transition-all text-sm font-semibold shadow-sm"
+              style={{ color: '#374151' }}>
+              <span>🤖</span>
+              <span>App Android</span>
             </Link>
-            <div className="w-px h-4 bg-slate-300" />
+            <div className="w-px h-5 bg-gray-200" />
             <Link href="/download"
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-blue-500/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-              </svg>
-              App iOS (bientôt)
+              className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 hover:border-blue-400 rounded-xl transition-all text-sm font-semibold shadow-sm"
+              style={{ color: '#374151' }}>
+              <span>🍎</span>
+              <span>iOS bientôt</span>
             </Link>
           </div>
 
 
-          <div className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-gray-400/20 border border-gray-200 cursor-pointer group" onClick={() => handleNavigate("/login?tab=signup")}>
-            <div className="aspect-video flex items-center justify-center" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-8">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: "#3b82f6" }}>
-                  <svg viewBox="0 0 24 24" fill="white" className="w-9 h-9 translate-x-0.5"><polygon points="5,3 19,12 5,21" /></svg>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold mb-2" style={{ color: "#fff" }}>Voir la démo en 90 secondes →</p>
-                  <p className="text-sm" style={{ color: "#94a3b8" }}>Comment optimiser 50 fiches produit en 5 minutes avec l&apos;IA</p>
-                </div>
-              </div>
-              <div className="absolute bottom-4 right-4 text-xs px-3 py-1.5 rounded-full font-semibold" style={{ backgroundColor: "rgba(59,130,246,0.9)", color: "#fff" }}>
-                Essayer gratuitement →
-              </div>
-            </div>
-          </div>
+          <DemoVideo />
         </div>
       </section>
 
@@ -363,13 +345,11 @@ export default function HomePage() {
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "#0f172a" }}>Ce qu&apos;EcomPilot rend possible.</h2>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Scénarios illustratifs basés sur l&apos;usage typique de l&apos;outil.</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "#0f172a" }}>Ils utilisent EcomPilot Elite</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {TESTIMONIALS.map((t) => (
               <div key={t.name} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all">
-                <span className="inline-block text-xs font-semibold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: "#eff6ff", color: "#3b82f6" }}>{t.context}</span>
                 <p className="text-sm leading-relaxed mb-5 italic" style={{ color: "#374151" }}>&ldquo;{t.quote}&rdquo;</p>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#0f172a" }}>{t.name}</p>

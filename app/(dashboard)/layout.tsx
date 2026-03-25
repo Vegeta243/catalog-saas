@@ -402,7 +402,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden dark:bg-[#060d1c]">
         {/* Top bar */}
-        <header className="h-16 bg-white dark:bg-[#0b1827] dark:border-[#18304a] border-b border-gray-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+        <header className="bg-white dark:bg-[#0b1827] dark:border-[#18304a] border-b border-gray-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10"
+          style={{
+            paddingTop: 'max(12px, env(safe-area-inset-top))',
+            paddingBottom: '12px',
+            minHeight: '64px',
+          }}>
           {/* Hamburger button — mobile only */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors mr-2 flex-shrink-0"

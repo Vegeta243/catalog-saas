@@ -1,161 +1,289 @@
-﻿'use client'
+'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
+const STEPS_ANDROID = [
+  'Appuyez sur le bouton bleu ci-dessus',
+  'Le fichier EcomPilotElite.apk se telecharge',
+  'Ouvrez le fichier dans vos telechargements',
+  'Autorisez les sources inconnues si demande',
+  'Appuyez sur Installer - termine !',
+]
+
 export default function DownloadPage() {
-  const [os, setOs] = useState<'android' | 'ios' | 'desktop' | null>(null)
+  const [os, setOs] = useState<string>('loading')
   const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
-    document.title = 'Télécharger EcomPilot Elite'
+    document.title = 'Telecharger EcomPilot Elite'
     const ua = navigator.userAgent.toLowerCase()
     if (ua.includes('android')) setOs('android')
     else if (/iphone|ipad|ipod/.test(ua)) setOs('ios')
     else setOs('desktop')
   }, [])
 
-  const handleDownload = () => {
+  function handleDownload() {
     setDownloading(true)
-    window.location.href = '/api/download/apk'
-    setTimeout(() => setDownloading(false), 3000)
+    const link = document.createElement('a')
+    link.href = '/api/download/apk'
+    link.setAttribute('download', 'EcomPilotElite.apk')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => setDownloading(false), 4000)
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center p-6">
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#0f172a',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
+    }}>
 
-      {/* Back to site */}
-      <div className="fixed top-4 left-4">
-        <Link href="/"
-          className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Retour
+      <div style={{ position: 'fixed', top: 16, left: 16 }}>
+        <Link href="/" style={{
+          color: '#94a3b8',
+          textDecoration: 'none',
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          &larr; Retour
         </Link>
       </div>
 
-      <div className="max-w-sm w-full">
+      <div style={{ maxWidth: '360px', width: '100%' }}>
 
-        {/* App icon */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-3xl flex items-center justify-center mb-4 shadow-2xl shadow-blue-500/30">
-            <span className="text-white font-black text-4xl">E</span>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{
+            width: '96px', height: '96px',
+            background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+            borderRadius: '24px',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+            boxShadow: '0 20px 40px rgba(59,130,246,0.3)'
+          }}>
+            <span style={{ color: 'white', fontWeight: '900', fontSize: '40px' }}>E</span>
           </div>
-          <h1 className="text-2xl font-black text-white">EcomPilot Elite</h1>
-          <p className="text-slate-400 text-sm mt-1">Version 1.0 · 4.3 MB</p>
+          <h1 style={{ color: '#ffffff', fontWeight: '900', fontSize: '24px', margin: '0 0 4px' }}>
+            EcomPilot Elite
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+            Version 1.0 &middot; Android &middot; 4.3 MB
+          </p>
         </div>
 
-        {/* Android */}
+        {os === 'loading' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: '32px', height: '32px',
+              border: '2px solid #3b82f6',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              margin: '0 auto',
+              animation: 'spin 0.8s linear infinite'
+            }} />
+          </div>
+        )}
+
         {(os === 'android' || os === 'desktop') && (
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             {os === 'android' && (
-              <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse flex-shrink-0" />
-                <p className="text-blue-300 text-sm font-semibold">
-                  Android détecté — prêt à installer
-                </p>
+              <div style={{
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                border: '1px solid rgba(59,130,246,0.3)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <div style={{
+                  width: '8px', height: '8px',
+                  backgroundColor: '#3b82f6',
+                  borderRadius: '50%'
+                }} />
+                <span style={{ color: '#93c5fd', fontSize: '14px', fontWeight: '600' }}>
+                  Android detecte - pret a installer
+                </span>
               </div>
             )}
 
-            {/* Download button */}
             <button
               onClick={handleDownload}
               disabled={downloading}
-              className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-70 text-white font-black rounded-2xl text-base transition-all hover:scale-105 shadow-lg shadow-blue-500/20 active:scale-95">
+              style={{
+                width: '100%',
+                padding: '18px',
+                backgroundColor: downloading ? '#1d4ed8' : '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '16px',
+                fontSize: '16px',
+                fontWeight: '900',
+                cursor: downloading ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                transition: 'background-color 0.2s',
+                boxShadow: '0 8px 24px rgba(37,99,235,0.4)'
+              }}>
               {downloading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Démarrage du téléchargement...
+                  <div style={{
+                    width: '20px', height: '20px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: 'white',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                  <span style={{ color: '#ffffff' }}>Telechargement en cours...</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Télécharger l&apos;app Android
+                  <span style={{ fontSize: '20px', color: '#ffffff' }}>&#8659;</span>
+                  <span style={{ color: '#ffffff' }}>Telecharger l&apos;app Android</span>
                 </>
               )}
             </button>
 
-            {/* Install steps */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-              <p className="text-white font-bold text-sm mb-3">Comment installer :</p>
-              <div className="space-y-3">
-                {[
-                  "Appuyez sur \"Télécharger l'app Android\"",
-                  'Attendez la fin du téléchargement',
-                  'Ouvrez le fichier .apk téléchargé',
-                  'Si demandé → autoriser les sources inconnues',
-                  'Appuyez sur "Installer"',
-                ].map((step, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-white text-xs font-black">{i + 1}</span>
-                    </div>
-                    <p className="text-slate-300 text-sm leading-relaxed">{step}</p>
+            <div style={{
+              backgroundColor: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '16px',
+              padding: '20px'
+            }}>
+              <p style={{ color: '#ffffff', fontWeight: '700', fontSize: '14px', margin: '0 0 16px' }}>
+                Comment installer :
+              </p>
+              {STEPS_ANDROID.map((step, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  marginBottom: i < STEPS_ANDROID.length - 1 ? '12px' : 0
+                }}>
+                  <div style={{
+                    minWidth: '24px', height: '24px',
+                    backgroundColor: '#2563eb',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <span style={{ color: '#ffffff', fontSize: '12px', fontWeight: '900' }}>{i + 1}</span>
                   </div>
+                  <p style={{ color: '#cbd5e1', fontSize: '14px', margin: 0, lineHeight: '1.5' }}>{step}</p>
+                </div>
+              ))}
+            </div>
+
+            <div style={{
+              backgroundColor: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '12px',
+              padding: '14px 16px'
+            }}>
+              <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0, lineHeight: '1.5' }}>
+                <strong style={{ color: '#e2e8f0' }}>Google Play Protect ?</strong>
+                <br />
+                Normal pour une app hors Play Store.
+                Appuyez sur &quot;Installer sans analyser&quot;
+                ou &quot;Quand meme installer&quot;.
+                L&apos;app est securisee.
+              </p>
+            </div>
+
+            <div style={{ textAlign: 'center', paddingTop: '8px' }}>
+              <p style={{ color: '#475569', fontSize: '12px', margin: '0 0 4px' }}>
+                Pas d&apos;installation ? Utilisez la version web
+              </p>
+              <Link href="/dashboard" style={{
+                color: '#3b82f6',
+                fontSize: '14px',
+                fontWeight: '600',
+                textDecoration: 'none'
+              }}>
+                Acceder au dashboard &rarr;
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {os === 'ios' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{
+              backgroundColor: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '16px',
+              padding: '24px',
+              textAlign: 'center'
+            }}>
+              <p style={{ fontSize: '40px', margin: '0 0 12px' }}>&#127822;</p>
+              <h2 style={{ color: '#ffffff', fontWeight: '900', fontSize: '18px', margin: '0 0 8px' }}>
+                App iOS - Bientot disponible
+              </h2>
+              <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.6', margin: '0 0 20px' }}>
+                En attendant, accedez a EcomPilot Elite
+                depuis Safari et installez-le sur votre
+                ecran d&apos;accueil.
+              </p>
+              <div style={{
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                border: '1px solid rgba(59,130,246,0.2)',
+                borderRadius: '12px',
+                padding: '14px',
+                textAlign: 'left',
+                marginBottom: '16px'
+              }}>
+                {[
+                  "Ouvrez ce lien dans Safari",
+                  "Appuyez sur l'icone Partager",
+                  "Selectionnez Sur l'ecran d'accueil",
+                  "Appuyez sur Ajouter",
+                ].map((s, i) => (
+                  <p key={i} style={{
+                    color: '#cbd5e1',
+                    fontSize: '13px',
+                    margin: i < 3 ? '0 0 6px' : 0
+                  }}>
+                    <span style={{ color: '#60a5fa', fontWeight: '700' }}>{i + 1}.</span>
+                    {' '}{s}
+                  </p>
                 ))}
               </div>
-            </div>
-
-            {/* PWA alternative */}
-            <div className="bg-slate-900/50 border border-slate-800/50 rounded-2xl p-4 text-center">
-              <p className="text-slate-500 text-xs mb-2">Alternative sans installation</p>
-              <Link href="/dashboard"
-                className="text-blue-400 text-sm font-semibold hover:text-blue-300 transition-colors">
-                Utiliser la version web →
+              <Link href="/dashboard" style={{
+                display: 'block',
+                padding: '14px',
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                textDecoration: 'none',
+                borderRadius: '12px',
+                fontWeight: '900',
+                fontSize: '14px'
+              }}>
+                Ouvrir EcomPilot Elite &rarr;
               </Link>
             </div>
           </div>
         )}
-
-        {/* iOS */}
-        {os === 'ios' && (
-          <div className="space-y-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center">
-              <div className="text-4xl mb-4">🍎</div>
-              <h2 className="text-white font-black text-lg mb-2">App iOS — Bientôt</h2>
-              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                L&apos;app iOS est en cours de développement.
-                En attendant, installez EcomPilot Elite directement depuis Safari.
-              </p>
-
-              {/* PWA install on iOS */}
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-4 text-left">
-                <p className="text-blue-300 text-sm font-bold mb-2">Installer via Safari :</p>
-                <ol className="space-y-1">
-                  {[
-                    "Ouvrez ce lien dans Safari",
-                    "Appuyez sur l'icône Partager ↑",
-                    "Sélectionnez \"Sur l'écran d'accueil\"",
-                    'Appuyez sur "Ajouter"',
-                  ].map((s, i) => (
-                    <li key={i} className="text-slate-300 text-xs flex items-start gap-2">
-                      <span className="text-blue-400 font-bold flex-shrink-0">{i + 1}.</span>
-                      {s}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              <Link href="/dashboard"
-                className="block w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl transition-colors text-sm">
-                Ouvrir dans Safari →
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Loading state */}
-        {os === null && (
-          <div className="flex justify-center">
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
       </div>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
