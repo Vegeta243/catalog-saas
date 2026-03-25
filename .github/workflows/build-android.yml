@@ -12,76 +12,120 @@ permissions:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - uses: actions/setup-java@v4
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Decode keystore
-        env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: |
-          printf '%s' "$KEYSTORE_B64" > /tmp/keystore.b64
-          base64 -d /tmp/keystore.b64 > android/app/ecompilot-release.keystore
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Sync Capacitor
+      - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build Android AAB
-        working-directory: android
+      - name: Decode keystore from base64
         env:
-          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          chmod +x gradlew
-          ./gradlew bundleRelease \
-            -PKEYSTORE_PASSWORD="$KS_PASS" \
-            -PKEY_PASSWORD="$KEY_PASS"
+          printf '%s' "$KEYSTORE_BASE64" > /tmp/keystore.b64
+          base64 -d /tmp/keystore.b64 > android/app/ecompilot-release.keystore
+          ls -la android/app/ecompilot-release.keystore
 
-      - name: Build Android APK
+      - name: Verify keystore
+        env:
+          STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          keytool -list \
+            -keystore android/app/ecompilot-release.keystore \
+            -storepass "$STORE_PASS" \
+            -alias ecompilot 2>&1 || true
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build Release APK
         working-directory: android
         env:
-          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           ./gradlew assembleRelease \
-            -PKEYSTORE_PASSWORD="$KS_PASS" \
-            -PKEY_PASSWORD="$KEY_PASS"
+            -PKEYSTORE_PASSWORD="$KEYSTORE_PASSWORD" \
+            -PKEY_PASSWORD="$KEY_PASSWORD" \
+            --stacktrace
 
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-bundle
-          path: android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 30
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 30
-
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            android/app/build/outputs/bundle/release/app-release.aab
-            android/app/build/outputs/apk/release/app-release.apk
+      - name: Build Release AAB
+        working-directory: android
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew bundleRelease \
+            -PKEYSTORE_PASSWORD="$KEYSTORE_PASSWORD" \
+            -PKEY_PASSWORD="$KEY_PASSWORD" \
+            --stacktrace
+
+      - name: Rename APK for download
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             android/app/build/outputs/apk/release/EcomPilotElite-v1.0.apk
+
+      - name: List build outputs
+        run: |
+          find android/app/build/outputs -name "*.apk" -o -name "*.aab" 2>/dev/null
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcomPilot-Elite-v1.0-Android.apk
+          path: android/app/build/outputs/apk/release/EcomPilotElite-v1.0.apk
+          retention-days: 90
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcomPilot-Elite-Android-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 90
+
+      - name: Create GitHub Release with APK
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: EcomPilot Elite ${{ github.ref_name }}
+          body: |
+            ## EcomPilot Elite — Application Android
+
+            ### Installation sur Android
+            1. Téléchargez le fichier **EcomPilotElite-v1.0.apk** ci-dessous
+            2. Sur votre téléphone : **Paramètres → Sécurité → Activer "Sources inconnues"**
+               (ou Paramètres → Applications → Autoriser depuis cette source)
+            3. Ouvrez le fichier APK téléchargé depuis vos Téléchargements
+            4. Appuyez sur **"Installer"**
+
+            ### Fichiers disponibles
+            - **EcomPilotElite-v1.0.apk** — Installation directe sur Android
+            - **app-release.aab** — Pour publication sur Google Play Store
+
+            ### Lien de téléchargement direct
+            [Télécharger EcomPilotElite-v1.0.apk](https://github.com/Vegeta243/catalog-saas/releases/latest/download/EcomPilotElite-v1.0.apk)
+          files: |
+            android/app/build/outputs/apk/release/EcomPilotElite-v1.0.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+          token: ${{ secrets.GITHUB_TOKEN }}

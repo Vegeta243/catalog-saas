@@ -142,6 +142,11 @@ export default function HomePage() {
               <Clock className="w-4 h-4" style={{ color: "#059669" }} /> Config en 30 secondes
             </p>
           </div>
+          <p className="text-xs mb-12" style={{ color: "#94a3b8" }}>
+            <a href="/download" className="hover:underline transition-colors" style={{ color: "#64748b" }}>
+              📱 Télécharger l&apos;app Android
+            </a>
+          </p>
 
           {/* Video placeholder */}
           <div className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-gray-400/20 border border-gray-200 cursor-pointer group" onClick={() => handleNavigate("/login?tab=signup")}>
