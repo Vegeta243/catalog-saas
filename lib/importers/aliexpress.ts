@@ -5,6 +5,42 @@ import { cleanHtml, safeFetch, extractOgData } from './utils'
 const AE_IMG_RE =
   /https?:\/\/(?:(?:ae\d*|img|s)\.alicdn\.com|ae-pic-a\d+\.aliexpress-media\.com)\/[^"'\s>]{10,}/g
 
+/** Extract product title from AliExpress HTML using all known patterns */
+function extractAeTitle(html: string, og: { title?: string | null }): string | null {
+  // 1. OG tag (populated when JS fully hydrates the page)
+  if (og.title && og.title.length > 5 && !/^AliExpress$/i.test(og.title)) return og.title
+
+  // 2. window.runParams JSON (populated by React hydration)
+  const rpM = html.match(/window\.runParams\s*=\s*(\{[\s\S]{50,100000}?\})\s*;/)
+  if (rpM) {
+    try {
+      const rp = JSON.parse(rpM[1])
+      const t =
+        rp?.data?.productInfoComponent?.subject ||
+        rp?.data?.productModule?.subject ||
+        rp?.data?.item?.subject ||
+        rp?.productModule?.subject ||
+        rp?.subject
+      if (t && t.length > 5) return t
+    } catch { /* malformed JSON — fall through */ }
+  }
+
+  // 3. JSON strings embedded in script blocks
+  const sub = html.match(/"subject"\s*:\s*"([^"]{10,300})"/)
+  if (sub?.[1]) return sub[1]
+  const ptitle = html.match(/"productTitle"\s*:\s*"([^"]{10,300})"/)
+  if (ptitle?.[1]) return ptitle[1]
+
+  // 4. H1 with a product-title CSS class (React-rendered)
+  const ptxt = html.match(/class="[^"]*product-title[^"]*"[^>]*>([\s\S]{10,300}?)<\/(?:h1|h2|span|div)>/i)
+  if (ptxt?.[1]) {
+    const clean = ptxt[1].replace(/<[^>]*>/g, '').trim()
+    if (clean.length > 5) return clean
+  }
+
+  return null
+}
+
 function extractAeImages(html: string, og: { image?: string | null }): string[] {
   const imgs: string[] = []
   if (og.image?.startsWith('http') && !/favicon|logo/.test(og.image)) imgs.push(og.image)
@@ -102,8 +138,13 @@ export async function importFromAliExpress(url: string): Promise<ImportResult> {
   }
 
   // ── Strategy 2: ScrapingBee (1000 req/month free, requires SCRAPINGBEE_API_KEY) ──
-  // ScrapingBee uses headless Chrome which executes JavaScript, so AliExpress
-  // will fully populate window.runParams and og: meta tags.
+  // Uses headless Chromium that executes JavaScript. We use wait_browser=networkidle0
+  // so the scraper waits until ALL XHR/fetch calls finish — including the product
+  // data API calls that AliExpress loads after page boot.
+  // Note: AliExpress has advanced anti-bot that returns empty window.runParams even
+  // in headless Chrome without premium proxies. If title extraction fails, the
+  // fallback (strategy 4) fires. Upgrade to premium_proxy:true (25 credits/req)
+  // for higher success rates.
   const sbKey = process.env.SCRAPINGBEE_API_KEY
   if (sbKey && pid) {
     try {
@@ -112,11 +153,11 @@ export async function importFromAliExpress(url: string): Promise<ImportResult> {
         url: `https://www.aliexpress.com/item/${pid}.html`,
         render_js: 'true',
         premium_proxy: 'false',
+        wait_browser: 'networkidle0',
         country_code: 'us',
-        wait: '3000',
       })
       const ctrl = new AbortController()
-      const t = setTimeout(() => ctrl.abort(), 35000)
+      const t = setTimeout(() => ctrl.abort(), 60000)
       const sbRes = await fetch(`https://app.scrapingbee.com/api/v1/?${sbParams}`, {
         signal: ctrl.signal,
       })
@@ -125,25 +166,10 @@ export async function importFromAliExpress(url: string): Promise<ImportResult> {
         const html = await sbRes.text()
         const og = extractOgData(html)
 
-        // After JS execution, window.runParams is populated — parse it for extra data
-        if (!og.title || og.title.length < 5) {
-          const rpM = html.match(/window\.runParams\s*=\s*(\{[\s\S]{50,20000}?\}\s*;)/)
-          if (rpM) {
-            try {
-              const rp = JSON.parse(rpM[1].replace(/;\s*$/, ''))
-              const item =
-                rp?.data?.item ||
-                rp?.data?.productNode ||
-                rp?.data?.itemInfo?.item ||
-                {}
-              ;(og as Record<string, string | null>).title =
-                item.title || item.subject || og.title
-            } catch { /* ignore parse errors */ }
-          }
-        }
-
-        if (og.title && og.title.length > 5) {
-          const title = og.title.replace(/\s*[-|]\s*(AliExpress|Alibaba)[^\n]*/i, '').trim()
+        // After JS execution, extract from all known AliExpress data patterns
+        const title = extractAeTitle(html, og)
+        if (title && title.length > 5) {
+          ;(og as Record<string, string | null>).title = title
           return buildProduct(title, html, og, url)
         }
       }
