@@ -1,131 +1,144 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { shopifyCache, shopifyCacheKey } from '@/lib/cache';
-import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
-import {
-  shopifyQuery,
-  ShopifyTokenExpiredError,
-  PRODUCTS_QUERY,
-  gidToId,
-} from '@/lib/shopify-graphql';
 
-const TOKEN_EXPIRED_RESPONSE = {
-  error: 'Votre connexion Shopify a expiré. Veuillez reconnecter votre boutique.',
-  code: 'SHOPIFY_TOKEN_EXPIRED',
-  reconnect_url: '/dashboard/shops',
-};
+const PRODUCTS_QUERY = `
+  query getProducts($first: Int!) {
+    products(first: $first) {
+      edges {
+        node {
+          id
+          title
+          descriptionHtml
+          vendor
+          productType
+          tags
+          status
+          createdAt
+          updatedAt
+          images(first: 5) {
+            edges {
+              node {
+                id
+                url
+                altText
+              }
+            }
+          }
+          variants(first: 5) {
+            edges {
+              node {
+                id
+                price
+                sku
+                inventoryManagement
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
-interface GqlImage { id: string; url: string; altText: string | null }
-interface GqlVariant { id: string; price: string; sku: string | null; inventoryManagement: string | null }
-interface GqlProduct {
-  id: string; title: string; descriptionHtml: string; vendor: string;
-  productType: string; tags: string[]; status: string;
-  createdAt: string; updatedAt: string;
-  images: { edges: { node: GqlImage }[] };
-  variants: { edges: { node: GqlVariant }[] };
-}
-interface ProductsData {
-  products: {
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-    edges: { node: GqlProduct }[];
-  };
-}
-
-function normalizeProduct(node: GqlProduct) {
-  const numericId = parseInt(gidToId(node.id), 10);
-  return {
-    id: numericId,
-    title: node.title,
-    body_html: node.descriptionHtml,
-    vendor: node.vendor,
-    product_type: node.productType,
-    tags: Array.isArray(node.tags) ? node.tags.join(',') : node.tags,
-    status: node.status.toLowerCase(),
-    created_at: node.createdAt,
-    updated_at: node.updatedAt,
-    images: node.images.edges.map((e) => ({
-      id: parseInt(gidToId(e.node.id), 10),
-      src: e.node.url,
-      alt: e.node.altText || node.title,
-    })),
-    variants: node.variants.edges.map((e) => ({
-      id: parseInt(gidToId(e.node.id), 10),
-      price: e.node.price,
-      sku: e.node.sku,
-      inventory_management: e.node.inventoryManagement,
-    })),
-  };
+function gidToId(gid: string): string {
+  const match = gid.match(/gid:\/\/shopify\/\w+\/(\d+)/);
+  return match ? match[1] : gid;
 }
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const limitParam = parseInt(url.searchParams.get('limit') || '50', 10);
-  const pageSize = Math.min(Math.max(limitParam, 1), 250);
-
   try {
     const supabase = await createClient();
+    
+    // Get authenticated user
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Non authentifié.' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
 
-    const { data: shop, error } = await supabase
+    // Get user's active shop
+    const { data: shop, error: shopError } = await supabase
       .from('shops')
-      .select('shop_domain, access_token, user_id')
+      .select('shop_domain, access_token')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .limit(1)
       .single();
 
-    if (error || !shop) {
-      return NextResponse.json({ error: 'Failed to fetch shop' }, { status: 500 });
-    }
-    const { shop_domain, access_token, user_id } = shop;
-
-    if (!access_token) {
-      return NextResponse.json({
+    if (shopError || !shop) {
+      return NextResponse.json({ 
         products: [],
-        message: "Boutique connectée sans token — les produits ne peuvent pas être importés pour l'instant.",
+        message: 'Aucune boutique connectée'
       });
     }
 
-    const rateResult = await checkRateLimit(user_id || 'anonymous', 'shopify.products');
-    if (!rateResult.allowed) {
-      return NextResponse.json(
-        { error: 'Trop de requêtes. Réessayez dans quelques instants.' },
-        { status: 429, headers: getRateLimitHeaders(rateResult) }
-      );
+    const { shop_domain, access_token } = shop;
+
+    if (!access_token) {
+      return NextResponse.json({ 
+        products: [],
+        message: 'Token Shopify manquant'
+      });
     }
 
-    const cacheKey = shopifyCacheKey(shop_domain, 'products-gql', { limit: String(pageSize) });
-    const cached = shopifyCache.get(cacheKey);
-    if (cached) return NextResponse.json({ ...(cached as object), cached: true });
+    // Query Shopify API
+    const shopifyUrl = `https://${shop_domain}/admin/api/2024-01/graphql.json`;
+    
+    const response = await fetch(shopifyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': access_token,
+      },
+      body: JSON.stringify({
+        query: PRODUCTS_QUERY,
+        variables: { first: 50 },
+      }),
+    });
 
-    const products: ReturnType<typeof normalizeProduct>[] = [];
-    let after: string | null = null;
-    let hasNextPage = true;
-
-    while (hasNextPage) {
-      // eslint-disable-next-line no-await-in-loop
-      const result: ProductsData = await shopifyQuery<ProductsData>(
-        shop_domain,
-        access_token,
-        PRODUCTS_QUERY,
-        { first: pageSize, after }
-      );
-      const data = result;
-      for (const edge of data.products.edges) {
-        products.push(normalizeProduct(edge.node));
-      }
-      hasNextPage = data.products.pageInfo.hasNextPage;
-      after = data.products.pageInfo.endCursor;
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Shopify API error:', error);
+      return NextResponse.json({ 
+        products: [],
+        error: 'Erreur connexion Shopify'
+      });
     }
 
-    shopifyCache.set(cacheKey, { products });
+    const data = await response.json();
+    
+    // Normalize products
+    const products = data.data?.products?.edges?.map((edge: any) => {
+      const node = edge.node;
+      return {
+        id: parseInt(gidToId(node.id), 10),
+        title: node.title,
+        body_html: node.descriptionHtml,
+        vendor: node.vendor,
+        product_type: node.productType,
+        tags: Array.isArray(node.tags) ? node.tags.join(',') : '',
+        status: node.status?.toLowerCase() || 'draft',
+        created_at: node.createdAt,
+        updated_at: node.updatedAt,
+        images: node.images?.edges?.map((img: any) => ({
+          id: parseInt(gidToId(img.node.id), 10),
+          src: img.node.url,
+          alt: img.node.altText || node.title,
+        })) || [],
+        variants: node.variants?.edges?.map((v: any) => ({
+          id: parseInt(gidToId(v.node.id), 10),
+          price: v.node.price,
+          sku: v.node.sku,
+          inventory_management: v.node.inventoryManagement,
+        })) || [],
+      };
+    }) || [];
+
     return NextResponse.json({ products });
-  } catch (err) {
-    if (err instanceof ShopifyTokenExpiredError) {
-      return NextResponse.json(TOKEN_EXPIRED_RESPONSE, { status: 401 });
-    }
-    console.error('Unexpected error in products route:', err);
-    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return NextResponse.json({ 
+      products: [],
+      error: error instanceof Error ? error.message : 'Erreur serveur'
+    }, { status: 500 });
   }
 }
