@@ -92,49 +92,63 @@ export async function importFromAliExpress(url: string): Promise<ImportResult> {
     url.match(/(\d{12,})/)
   const pid = idMatch?.[1]
 
-  // ── Strategy 1: RapidAPI (free 100 req/month, requires RAPIDAPI_KEY) ──────
+  // ── Strategy 1: RapidAPI (free plan, requires RAPIDAPI_KEY) ────────────────
+  // Tries item_detail_2 first, then item_detail as fallback (both on free plan).
   const apiKey = process.env.RAPIDAPI_KEY
   if (apiKey && pid) {
-    try {
-      const ctrl = new AbortController()
-      const t = setTimeout(() => ctrl.abort(), 8000)
-      const r = await fetch(
-        `https://aliexpress-datahub.p.rapidapi.com/item_detail_3?itemId=${pid}`,
-        {
-          headers: {
-            'X-RapidAPI-Key': apiKey,
-            'X-RapidAPI-Host': 'aliexpress-datahub.p.rapidapi.com',
-          },
-          signal: ctrl.signal,
-        }
-      )
-      clearTimeout(t)
-      if (r.ok) {
-        const data = await r.json()
-        const item = data?.result?.item
-        if (item?.title) {
-          const price =
-            parseFloat(item?.sku?.def?.promotionPrice || item?.sku?.def?.price || '9.99') || 9.99
-          const imgs: string[] = (item.imagePathList || item.images || [])
-            .map((i: string) => (i.startsWith('http') ? i : 'https:' + i))
-            .slice(0, 8)
-          return {
-            success: true, url,
-            product: {
-              title: item.title,
-              description: cleanHtml(item.title),
-              price,
-              compareAtPrice: Math.round(price * 1.5 * 100) / 100,
-              images: imgs,
-              variants: [{ title: 'Default', price }],
-              tags: ['aliexpress', 'dropshipping'],
-              vendor: item.storeInfo?.storeName || 'AliExpress',
-              platform: 'aliexpress', sourceUrl: url,
+    for (const endpoint of ['item_detail_2', 'item_detail', 'item_detail_3']) {
+      try {
+        const ctrl = new AbortController()
+        const t = setTimeout(() => ctrl.abort(), 10000)
+        const r = await fetch(
+          `https://aliexpress-datahub.p.rapidapi.com/${endpoint}?itemId=${pid}`,
+          {
+            headers: {
+              'X-RapidAPI-Key': apiKey,
+              'X-RapidAPI-Host': 'aliexpress-datahub.p.rapidapi.com',
             },
+            signal: ctrl.signal,
           }
+        )
+        clearTimeout(t)
+        // 403 = not subscribed to this endpoint, try next
+        if (r.status === 403) continue
+        if (!r.ok) continue
+        const data = await r.json()
+        // item_detail_2 / item_detail_3: data.result.item
+        // item_detail: data.result (flat)
+        const item = data?.result?.item ?? data?.result
+        const title: string | undefined = item?.title || item?.subject || item?.productTitle
+        if (!title) continue
+        const price =
+          parseFloat(
+            item?.sku?.def?.promotionPrice ||
+            item?.sku?.def?.price ||
+            item?.salePrice ||
+            item?.originalPrice ||
+            '9.99'
+          ) || 9.99
+        const rawImgs: string[] =
+          item?.imagePathList || item?.productImageList || item?.images || []
+        const imgs = rawImgs
+          .map((i: string) => (i.startsWith('http') ? i : 'https:' + i))
+          .slice(0, 8)
+        return {
+          success: true as const, url,
+          product: {
+            title,
+            description: cleanHtml(item?.description || title),
+            price,
+            compareAtPrice: Math.round(price * 1.5 * 100) / 100,
+            images: imgs,
+            variants: [{ title: 'Default', price }],
+            tags: ['aliexpress', 'dropshipping'],
+            vendor: item?.storeInfo?.storeName || item?.seller?.storeName || 'AliExpress',
+            platform: 'aliexpress', sourceUrl: url,
+          },
         }
-      }
-    } catch { /* fall through */ }
+      } catch { /* fall through to next endpoint */ }
+    }
   }
 
   // ── Strategy 2: ScrapingBee (1000 req/month free, requires SCRAPINGBEE_API_KEY) ──
