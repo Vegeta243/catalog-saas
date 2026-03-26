@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/lib/toast";
 import { getTasksColor, getResetDate, PLAN_TASKS } from "@/lib/credits";
 import { createClient } from "@/lib/supabase/client";
+import BulkImportModal from "@/components/BulkImportModal";
 
 interface Product {
   id: number;
@@ -71,6 +72,9 @@ export default function DashboardPage() {
   const [importUrl, setImportUrl] = useState("");
   const [workflowLoading, setWorkflowLoading] = useState(false);
   const [aiResults, setAiResults] = useState<Record<number, { title?: string; description?: string }>>({});
+  
+  // Bulk import modal
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   // No fake activity — only real events would be stored in DB
   const recentActivity: { date: string; action: string; products: number; result: string }[] = [];
@@ -315,16 +319,26 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold" style={{ color: "#0f172a" }}>Démarrage rapide — {onboardingTotal - onboardingDone} action{onboardingTotal - onboardingDone > 1 ? "s" : ""} restante{onboardingTotal - onboardingDone > 1 ? "s" : ""}</h2>
           </div>
 
-          {/* 3 workflow cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* 4 workflow cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
               { id: "optimize", icon: Sparkles, color: "#8b5cf6", bg: "bg-violet-50", title: "Optimiser mon catalogue en 3 clics", desc: "L'IA analyse vos produits et améliore automatiquement les titres et descriptions pour mieux vendre" },
               { id: "pricing", icon: DollarSign, color: "#059669", bg: "bg-emerald-50", title: "Mettre à jour mes prix en masse", desc: "Modifiez les prix de tous vos produits ou d'une sélection en quelques secondes" },
-              { id: "import", icon: Download, color: "#2563eb", bg: "bg-blue-50", title: "Importer des produits depuis AliExpress", desc: "Collez un lien AliExpress et le produit est ajouté à votre boutique automatiquement" },
+              { id: "import", icon: Download, color: "#2563eb", bg: "bg-blue-50", title: "Importer depuis AliExpress", desc: "Collez un lien AliExpress et le produit est ajouté à votre boutique automatiquement" },
+              { 
+                id: "bulk-import", 
+                icon: Package, 
+                color: "#f59e0b", 
+                bg: "bg-amber-50", 
+                title: "Import en Masse", 
+                desc: "Importez jusqu'à 100 produits simultanément depuis AliExpress, Alibaba, CJ, etc." 
+              },
             ].map((wf) => {
               const Icon = wf.icon;
               return (
-                <button key={wf.id} onClick={() => startWorkflow(wf.id)}
+                <button 
+                  key={wf.id} 
+                  onClick={() => wf.id === "bulk-import" ? setShowBulkImport(true) : startWorkflow(wf.id)}
                   className={`${wf.bg} rounded-xl p-5 text-left hover:shadow-md transition-all border border-transparent hover:border-gray-200 group`}>
                   <Icon className="w-8 h-8 mb-3" style={{ color: wf.color }} />
                   <h3 className="text-sm font-bold mb-2" style={{ color: "#0f172a" }}>{wf.title}</h3>
@@ -809,6 +823,16 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal 
+        isOpen={showBulkImport}
+        onClose={() => setShowBulkImport(false)}
+        onSuccess={(count) => {
+          addToast(`${count} produit(s) importé(s) avec succès !`, "success");
+          fetchProducts();
+        }}
+      />
     </div>
   );
 }

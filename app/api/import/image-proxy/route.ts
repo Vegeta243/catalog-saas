@@ -1,52 +1,65 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+﻿/**
+ * /api/import/image-proxy/route.ts
+ * Proxy images to avoid CORS issues and broken links
+ */
 
-const ALLOWED = [
-  'alicdn.com', 'aliexpress.com', 'ae01.alicdn.com',
-  'ae02.alicdn.com', 'ae03.alicdn.com', 's.alicdn.com',
-  'cjdropshipping.com', 'cjimg.net',
-  'dhresource.com', 'dhgate.com',
-  'banggood.com', 'bgstatic.com', 'staticbg.com',
-  'alibaba.com', 'alibabagroup.com',
-]
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  const url = request.nextUrl.searchParams.get('url')
-  if (!url) return new NextResponse('Missing url', { status: 400 })
+  const searchParams = request.nextUrl.searchParams
+  const url = searchParams.get('url')
 
-  let allowed = false
-  try {
-    const h = new URL(url).hostname
-    allowed = ALLOWED.some(d => h.includes(d))
-  } catch {
-    return new NextResponse('Invalid URL', { status: 400 })
+  if (!url) {
+    return NextResponse.json({ error: 'URL manquante' }, { status: 400 })
   }
-  if (!allowed) return new NextResponse('Domain not allowed', { status: 403 })
+
+  // Validate URL
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return NextResponse.json({ error: 'URL invalide' }, { status: 400 })
+  }
 
   try {
-    const ctrl = new AbortController()
-    const t = setTimeout(() => ctrl.abort(), 10000)
-    const res = await fetch(url, {
+    // Fetch image with proper headers
+    const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
-        'Referer': 'https://www.aliexpress.com/',
-        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
       },
-      signal: ctrl.signal,
     })
-    clearTimeout(t)
-    if (!res.ok) {
-      return new NextResponse(null, { status: res.status })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
     }
-    const buf = await res.arrayBuffer()
-    const ct = res.headers.get('content-type') || 'image/jpeg'
-    return new NextResponse(buf, {
+
+    // Get content type
+    const contentType = response.headers.get('content-type') || 'image/jpeg'
+
+    // Get image data
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Return proxied image
+    return new NextResponse(buffer, {
       headers: {
-        'Content-Type': ct,
-        'Cache-Control': 'public, max-age=86400',
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400, immutable',
         'Access-Control-Allow-Origin': '*',
-      }
+      },
     })
-  } catch {
-    return new NextResponse(null, { status: 502 })
+  } catch (error) {
+    console.error('[ImageProxy] Error:', error)
+    
+    // Return placeholder image on error
+    const placeholder = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'base64'
+    )
+    
+    return new NextResponse(placeholder, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    })
   }
 }

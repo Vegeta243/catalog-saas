@@ -4,11 +4,11 @@
 @variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════
-   APPLE-STYLE DESIGN SYSTEM
+   APPLE-STYLE DESIGN TOKENS
    Inspired by apple.com - Clean, Modern, Premium
    ═══════════════════════════════════════════════════════════ */
 :root {
-  /* Apple Color Palette */
+  /* Pure blacks and whites */
   --apple-white: #ffffff;
   --apple-black: #000000;
   --apple-gray-50: #f5f5f7;
@@ -19,7 +19,7 @@
   --apple-gray-500: #424245;
   --apple-gray-600: #1d1d1f;
   
-  /* Apple Blue */
+  /* Apple Blue (primary accent) */
   --apple-blue: #0066cc;
   --apple-blue-hover: #0077ed;
   --apple-blue-light: #2997ff;
@@ -41,7 +41,7 @@
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.1);
   
-  /* Border Radius */
+  /* Border radius - Smooth curves */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -50,7 +50,7 @@
   --radius-full: 9999px;
   
   /* Spacing */
-  --section-spacing: 100px;
+  --section-spacing: 120px;
   --container-max: 1200px;
 }
 
@@ -83,6 +83,7 @@
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.6);
 }
 
+/* ── Tailwind theme wiring ── */
 @theme inline {
   --color-background: var(--surface-primary);
   --color-foreground: var(--text-primary);
@@ -95,7 +96,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   BASE STYLES
+   BASE STYLES - Apple.com Aesthetic
    ═══════════════════════════════════════════════════════════ */
 * {
   box-sizing: border-box;
@@ -117,21 +118,30 @@ body {
   letter-spacing: -0.01em;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
 }
 
+/* Typography - Apple Style */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.1;
   margin: 0;
-  color: var(--text-primary);
 }
 
-h1 { font-size: clamp(40px, 8vw, 96px); }
-h2 { font-size: clamp(32px, 6vw, 64px); }
-h3 { font-size: clamp(24px, 4vw, 40px); }
-h4 { font-size: clamp(20px, 3vw, 28px); }
+h1 {
+  font-size: clamp(40px, 8vw, 96px);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: clamp(32px, 6vw, 64px);
+  font-weight: 600;
+}
+
+h3 {
+  font-size: clamp(24px, 4vw, 40px);
+  font-weight: 600;
+}
 
 p {
   font-size: clamp(16px, 2vw, 21px);
@@ -140,6 +150,7 @@ p {
   max-width: 680px;
 }
 
+/* Links - Apple Blue */
 a {
   color: var(--text-link);
   text-decoration: none;
@@ -150,9 +161,7 @@ a:hover {
   color: var(--apple-blue-hover);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   BUTTONS - Apple Style
-   ═══════════════════════════════════════════════════════════ */
+/* Buttons - Apple Style */
 button, .btn {
   font-family: inherit;
   font-size: 17px;
@@ -163,14 +172,11 @@ button, .btn {
   cursor: pointer;
   transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .btn-primary {
   background: var(--apple-blue);
-  color: white !important;
+  color: white;
 }
 
 .btn-primary:hover {
@@ -186,28 +192,16 @@ button, .btn {
 
 .btn-secondary:hover {
   background: var(--apple-blue);
-  color: white !important;
+  color: white;
 }
 
-.btn-large {
-  padding: 16px 32px;
-  font-size: 19px;
-}
-
-.btn-small {
-  padding: 8px 16px;
-  font-size: 14px;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   CARDS - Minimal & Clean
-   ═══════════════════════════════════════════════════════════ */
+/* Cards - Minimal, Clean */
 .card {
   background: var(--surface-primary);
   border-radius: var(--radius-xl);
   padding: 40px;
   box-shadow: var(--shadow-md);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
 
 .card:hover {
@@ -215,8 +209,22 @@ button, .btn {
   box-shadow: var(--shadow-lg);
 }
 
+/* Sections - Spacious */
+section {
+  padding: var(--section-spacing) 20px;
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+/* Container */
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
 /* ═══════════════════════════════════════════════════════════
-   ANIMATIONS
+   ANIMATIONS - Smooth & Subtle (Apple-like)
    ═══════════════════════════════════════════════════════════ */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -245,33 +253,26 @@ button, .btn {
   }
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
 }
 
-.animate-fade-in { animation: fadeIn 0.6s ease-out; }
-.animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
-.animate-scale-in { animation: scaleIn 0.6s ease-out; }
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out;
+}
 
+.animate-scale-in {
+  animation: scaleIn 0.6s ease-out;
+}
+
+/* Stagger animations for lists */
 .stagger-1 { animation-delay: 0.1s; }
 .stagger-2 { animation-delay: 0.2s; }
 .stagger-3 { animation-delay: 0.3s; }
 .stagger-4 { animation-delay: 0.4s; }
 
-.reveal {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.reveal.active {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 /* ═══════════════════════════════════════════════════════════
-   NAVBAR - Apple-Style Sticky
+   NAVIGATION - Apple-Style Sticky Header
    ═══════════════════════════════════════════════════════════ */
 .navbar {
   position: sticky;
@@ -299,7 +300,7 @@ button, .btn {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   HERO SECTION
+   HERO SECTION - Apple Product Page Style
    ═══════════════════════════════════════════════════════════ */
 .hero {
   text-align: center;
@@ -319,12 +320,17 @@ button, .btn {
   background-clip: text;
 }
 
+.hero p {
+  margin: 0 auto 40px;
+  font-size: clamp(20px, 3vw, 28px);
+  max-width: 800px;
+}
+
 .hero-cta {
   display: flex;
   gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 40px;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -362,8 +368,20 @@ button, .btn {
   color: white;
 }
 
+.feature-card h3 {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.feature-card p {
+  font-size: 17px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 /* ═══════════════════════════════════════════════════════════
-   PRICING CARDS
+   PRICING - Clean Cards
    ═══════════════════════════════════════════════════════════ */
 .pricing-grid {
   display: grid;
@@ -419,6 +437,20 @@ button, .btn {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   SCROLL ANIMATIONS
+   ═══════════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════
    UTILITIES
    ═══════════════════════════════════════════════════════════ */
 .text-gradient {
@@ -448,6 +480,7 @@ button, .btn {
   margin: 80px 0;
 }
 
+/* Glassmorphism */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
@@ -460,20 +493,33 @@ button, .btn {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.container {
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-section {
-  padding: var(--section-spacing) 20px;
-  max-width: var(--container-max);
-  margin: 0 auto;
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  :root {
+    --section-spacing: 80px;
+  }
+  
+  h1 {
+    font-size: clamp(36px, 10vw, 56px);
+  }
+  
+  h2 {
+    font-size: clamp(28px, 8vw, 48px);
+  }
+  
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SCROLLBARS
+   SCROLLBARS - Minimal
    ═══════════════════════════════════════════════════════════ */
 ::-webkit-scrollbar {
   width: 8px;
@@ -493,65 +539,10 @@ section {
   background: var(--apple-gray-400);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   SELECTION - Apple Blue
+   ═══════════════════════════════════════════════════════════ */
 ::selection {
   background: var(--apple-blue);
   color: white;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  :root {
-    --section-spacing: 80px;
-  }
-  
-  h1 { font-size: clamp(36px, 10vw, 56px); }
-  h2 { font-size: clamp(28px, 8vw, 48px); }
-  
-  .feature-grid,
-  .pricing-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .hero-cta {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DARK MODE OVERRIDES
-   ═══════════════════════════════════════════════════════════ */
-.dark body {
-  background-color: var(--surface-primary) !important;
-}
-
-.dark .bg-white {
-  background-color: var(--surface-card) !important;
-}
-
-.dark .bg-gray-50 {
-  background-color: var(--surface-secondary) !important;
-}
-
-.dark .text-gray-600,
-.dark .text-gray-700,
-.dark .text-gray-800,
-.dark .text-gray-900 {
-  color: var(--text-primary) !important;
-}
-
-.dark .text-gray-500 {
-  color: var(--text-secondary) !important;
-}
-
-.dark .border-gray-200,
-.dark .border-gray-300 {
-  border-color: var(--apple-gray-200) !important;
 }
