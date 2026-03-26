@@ -4,63 +4,48 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Zap, PackageSearch, Sparkles, Bot, BarChart3,
-  ArrowRight, Check, Shield, Import,
-  ChevronDown, TrendingUp, Heart,
-  Crown, Star,
+  Zap, PackageSearch, Sparkles, BarChart3,
+  ArrowRight, Check, Import, TrendingUp,
+  ChevronDown, Star, Shield, Clock,
 } from "lucide-react";
 
-/* ═══════════════════════════════════════════════════════════════
-   DATA
-   ═══════════════════════════════════════════════════════════════ */
-
 const FEATURES = [
-  { icon: PackageSearch, title: "Édition en masse ultra-rapide", desc: "Modifiez prix, titres, descriptions et tags sur des centaines de produits en quelques clics." },
-  { icon: Import, title: "Import AliExpress en 1 clic", desc: "Importez des produits depuis n'importe quelle URL fournisseur. Marge automatique, description IA incluse." },
-  { icon: Sparkles, title: "Descriptions IA percutantes", desc: "Générez des descriptions qui vendent, adaptées à votre audience. Par lot de 10, 50 ou 200." },
-  { icon: TrendingUp, title: "SEO Shopify optimisé", desc: "Titres SEO, meta descriptions, tags structurés — faites remonter vos produits dans Google." },
-  { icon: BarChart3, title: "Score visibilité par produit", desc: "Visualisez la santé de chaque fiche produit. Identifiez en un coup d'œil ce qui manque." },
-  { icon: Zap, title: "Automatisations intelligentes", desc: "Laissez l'IA optimiser votre boutique 24h/24. Gagnez du temps, vendez plus." },
+  { icon: PackageSearch, title: "Édition en masse", desc: "Modifiez prix, titres et descriptions sur des centaines de produits en quelques clics." },
+  { icon: Import, title: "Import AliExpress", desc: "Importez des produits depuis n'importe quelle URL. Marge automatique, description IA incluse." },
+  { icon: Sparkles, title: "Descriptions IA", desc: "Générez des descriptions qui vendent, adaptées à votre audience. Par lot de 10, 50 ou 200." },
+  { icon: TrendingUp, title: "SEO optimisé", desc: "Titres SEO, meta descriptions, tags structurés pour mieux ranker sur Google." },
+  { icon: BarChart3, title: "Score visibilité", desc: "Visualisez la santé de chaque fiche produit et identifiez ce qui manque." },
+  { icon: Zap, title: "Automatisations", desc: "Laissez l'IA optimiser votre boutique 24/7. Gagnez du temps, vendez plus." },
 ];
 
 const PLANS = [
   {
     id: "free", name: "Gratuit",
-    monthlyPrice: 0, yearlyPrice: 0, popular: false,
-    target: "Pour découvrir EcomPilot sans engagement",
-    features: ["30 actions IA offertes", "1 boutique Shopify", "Édition en masse de base", "Score SEO par produit"],
+    monthlyPrice: 0, yearlyPrice: 0,
+    features: ["30 actions IA", "1 boutique", "Édition de base", "Score SEO"],
   },
   {
     id: "starter", name: "Starter",
-    monthlyPrice: 19, yearlyPrice: 13, popular: false,
-    target: "Pour les boutiques qui démarrent",
-    features: ["500 actions IA/mois", "Jusqu'à 500 produits", "Édition en masse complète", "Import produits : 20/mois", "Support email (48h)"],
+    monthlyPrice: 19, yearlyPrice: 13,
+    features: ["500 actions IA", "500 produits", "Import AliExpress", "Support email"],
   },
   {
     id: "pro", name: "Pro",
-    monthlyPrice: 49, yearlyPrice: 34, popular: true,
-    target: "Pour les boutiques en croissance",
-    features: ["5 000 actions IA/mois", "Produits illimités", "3 boutiques", "Import illimité AliExpress", "Automatisations avancées", "Support prioritaire (24h)"],
+    monthlyPrice: 49, yearlyPrice: 34,
+    popular: true,
+    features: ["5000 actions IA", "Produits illimités", "3 boutiques", "Automatisations", "Support 24h"],
   },
   {
     id: "agency", name: "Agency",
-    monthlyPrice: 149, yearlyPrice: 104, popular: false,
-    target: "Pour les agences et multi-boutiques",
-    features: ["Actions illimitées", "Boutiques illimitées", "Tout Pro inclus", "Automatisations illimitées", "Support dédié (4h)", "Accès anticipé nouveautés"],
+    monthlyPrice: 149, yearlyPrice: 104,
+    features: ["Tout illimité", "Boutiques illimitées", "Support dédié", "Accès anticipé"],
   },
 ];
 
 const TESTIMONIALS = [
-  { name: "Gary T.", role: "Dropshipping · 3 boutiques", quote: "J'optimisais mes fiches produits à la main, ça me prenait des heures. Maintenant j'active l'IA, je valide, c'est fini. Vraiment efficace." },
-  { name: "Ghiles A.", role: "E-commerce mode", quote: "L'import AliExpress + la génération de description en un clic, c'est ce qui m'a convaincu. Mon catalogue de 200 produits optimisé en une après-midi." },
-  { name: "2L", role: "Boutique généraliste", quote: "Simple à connecter avec Shopify. Les descriptions générées sont bien meilleures que ce que j'écrivais avant. Je recommande sans hésiter." },
-];
-
-const FAQ_ITEMS = [
-  { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer. Vous gardez le contrôle total sur chaque modification." },
-  { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec vos 30 premières actions, sans renseigner de carte. Vous n'en avez besoin que lorsque vous choisissez un plan payant." },
-  { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic depuis votre tableau de bord. Aucun engagement, aucun frais caché. Si vous annulez, vous gardez l'accès jusqu'à la fin de votre période payée." },
-  { q: "Quel modèle d'IA est utilisé ?", a: "EcomPilot utilise GPT-4o-mini d'OpenAI, optimisé pour le e-commerce francophone. Les descriptions sont naturelles, uniques et pensées pour convertir." },
+  { name: "Gary T.", role: "3 boutiques", quote: "J'optimisais mes fiches à la main, maintenant l'IA fait tout. Vraiment efficace." },
+  { name: "Ghiles A.", role: "E-commerce mode", quote: "L'import AliExpress + descriptions IA, mon catalogue de 200 produits optimisé en une après-midi." },
+  { name: "2L", role: "Boutique généraliste", quote: "Simple à connecter. Les descriptions sont bien meilleures que ce que j'écrivais." },
 ];
 
 export default function HomePage() {
@@ -75,42 +60,29 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-  }, []);
+  const faqItems = [
+    { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer." },
+    { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec 30 actions, sans carte." },
+    { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic. Aucun engagement, aucun frais caché." },
+    { q: "Quel modèle d'IA est utilisé ?", a: "GPT-4o-mini d'OpenAI, optimisé pour le e-commerce francophone." },
+  ];
 
   return (
-    <div className="min-h-screen">
-      {/* Navbar Apple-Style */}
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-        <div className="container flex items-center justify-between py-3">
-          <Link href="/" className="text-xl font-bold text-gradient">
+    <div className="min-h-screen bg-background">
+      {/* Navbar */}
+      <nav className={`sticky top-0 z-50 border-b transition-all ${scrolled ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-background'}`}>
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold text-primary">
             EcomPilot
           </Link>
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Fonctionnalités</Link>
-            <Link href="#pricing" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Tarifs</Link>
-            <Link href="#testimonials" className="text-sm" style={{ color: 'var(--text-secondary)' }}>Avis</Link>
-            <Link href="#faq" className="text-sm" style={{ color: 'var(--text-secondary)' }}>FAQ</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium" style={{ color: 'var(--text-link)' }}>
-              Connexion
-            </Link>
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground">Fonctionnalités</Link>
+            <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">Tarifs</Link>
+            <Link href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground">Avis</Link>
+            <Link href="/login" className="text-sm font-medium text-primary">Connexion</Link>
             <button 
               onClick={() => router.push('/signup')}
-              className="btn btn-primary btn-small"
+              className="btn btn-primary btn-sm"
             >
               Essai gratuit
             </button>
@@ -118,365 +90,254 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="animate-fade-in-up">
-          <h1>
-            Optimisez votre boutique<br />Shopify avec l'IA
-          </h1>
-          <p style={{ margin: '24px auto 0' }}>
-            Générez descriptions, titres et tags SEO en un clic.
-            <br />
-            Importez depuis AliExpress. Automatisez tout.
-          </p>
-          <div className="hero-cta animate-scale-in">
-            <button 
-              onClick={() => router.push('/signup')}
-              className="btn btn-primary btn-large"
-            >
-              Commencer gratuitement
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => router.push('/dashboard')}
-              className="btn btn-secondary btn-large"
-            >
-              Voir la démo
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" style={{ background: 'var(--surface-secondary)' }}>
-        <div className="text-center mb-16 reveal">
-          <h2 className="mb-4">
-            Tout ce dont vous avez besoin
-          </h2>
-          <p style={{ margin: '0 auto' }}>
-            Des outils puissants dans une interface simple et élégante.
-          </p>
-        </div>
-
-        <div className="feature-grid">
-          {FEATURES.map((feature, i) => (
-            <div key={i} className="feature-card reveal" style={{ animationDelay: `${i * 0.1}s` }}>
-              <div className="feature-icon">
-                <feature.icon className="w-7 h-7" />
-              </div>
-              <h3 style={{ fontSize: '24px', marginBottom: '12px' }}>{feature.title}</h3>
-              <p style={{ fontSize: '17px', margin: 0 }}>{feature.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Bulk Import Feature */}
-      <section>
-        <div className="text-center reveal">
-          <div style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '8px', 
-            padding: '8px 16px',
-            background: 'rgba(0, 102, 204, 0.1)',
-            borderRadius: '9999px',
-            marginBottom: '24px',
-            color: 'var(--apple-blue)',
-            fontWeight: '600',
-            fontSize: '14px',
-          }}>
-            <Star className="w-4 h-4" />
-            NOUVEAU
-          </div>
-          <h2 className="mb-4">
-            Import en Masse
-          </h2>
-          <p style={{ margin: '0 auto 40px', maxWidth: '600px' }}>
-            Importez jusqu'à 100 produits simultanément depuis AliExpress, Alibaba, CJ Dropshipping et plus encore.
-            Gain de temps : 90%.
-          </p>
-          <button 
-            onClick={() => router.push('/dashboard')}
-            className="btn btn-primary btn-large"
-          >
-            Essayer l'import en masse
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" style={{ background: 'var(--surface-secondary)' }}>
-        <div className="text-center mb-16 reveal">
-          <h2 className="mb-4">
-            Des prix simples et transparents
-          </h2>
-          <p style={{ margin: '0 auto 32px' }}>
-            Commencez gratuitement. Évoluez selon vos besoins.
-          </p>
-
-          {/* Billing Toggle */}
-          <div style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '12px',
-            padding: '6px',
-            background: 'var(--surface-tertiary)',
-            borderRadius: '9999px',
-          }}>
-            <button
-              onClick={() => setBillingPeriod('monthly')}
-              style={{
-                padding: '10px 20px',
-                borderRadius: '9999px',
-                border: 'none',
-                background: billingPeriod === 'monthly' ? 'var(--apple-blue)' : 'transparent',
-                color: billingPeriod === 'monthly' ? 'white' : 'var(--text-secondary)',
-                fontWeight: '600',
-                fontSize: '15px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              Mensuel
-            </button>
-            <button
-              onClick={() => setBillingPeriod('yearly')}
-              style={{
-                padding: '10px 20px',
-                borderRadius: '9999px',
-                border: 'none',
-                background: billingPeriod === 'yearly' ? 'var(--apple-blue)' : 'transparent',
-                color: billingPeriod === 'yearly' ? 'white' : 'var(--text-secondary)',
-                fontWeight: '600',
-                fontSize: '15px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              Annuel
-              <span style={{ 
-                marginLeft: '6px', 
-                fontSize: '12px', 
-                opacity: 0.8,
-                background: 'rgba(5, 150, 105, 0.2)',
-                color: '#059669',
-                padding: '2px 8px',
-                borderRadius: '9999px',
-              }}>
-                -30%
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <div className="pricing-grid">
-          {PLANS.map((plan, i) => (
-            <div 
-              key={i} 
-              className={`pricing-card ${plan.popular ? 'popular' : ''} reveal`}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px' }}>{plan.name}</h3>
-              <p style={{ fontSize: '14px', margin: '0 0 24px', color: 'var(--text-tertiary)' }}>{plan.target}</p>
-              <div className="price" style={{ fontSize: '48px', marginBottom: '24px' }}>
-                {billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice}€
-                <span style={{ fontSize: '17px', fontWeight: '400' }}>/{billingPeriod === 'monthly' ? 'mois' : 'an'}</span>
-              </div>
-              <ul style={{ margin: '0 0 32px', padding: 0, listStyle: 'none' }}>
-                {plan.features.map((feature, j) => (
-                  <li key={j} style={{ 
-                    display: 'flex', 
-                    alignItems: 'flex-start', 
-                    gap: '12px', 
-                    marginBottom: '16px',
-                    fontSize: '15px',
-                  }}>
-                    <Check className="w-5 h-5 flex-shrink-0" style={{ color: '#059669', marginTop: '2px' }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
-                  </li>
-                ))}
-              </ul>
+      {/* Hero */}
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4 text-center">
+          <div className="animate-fade-in-up">
+            <h1 className="mb-4">
+              Optimisez votre boutique<br />Shopify avec l'IA
+            </h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+              Générez descriptions, titres et tags SEO en un clic. Importez depuis AliExpress. Automatisez tout.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
               <button 
-                onClick={() => router.push(`/signup?plan=${plan.id}`)}
-                className={`btn ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => router.push('/signup')}
+                className="btn btn-primary"
               >
-                {plan.monthlyPrice === 0 ? 'Commencer' : 'Essai gratuit'}
+                Commencer gratuitement
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => router.push('/dashboard')}
+                className="btn btn-secondary"
+              >
+                Voir la démo
               </button>
             </div>
-          ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="py-16 bg-secondary/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="mb-3">Tout ce dont vous avez besoin</h2>
+            <p className="text-muted-foreground">Des outils puissants dans une interface simple.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {FEATURES.map((feature, i) => (
+              <div key={i} className="card animate-fade-in-up" style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Bulk Import Banner */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="card bg-primary/5 border-primary/20 text-center py-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <Star className="w-4 h-4" />
+              NOUVEAU
+            </div>
+            <h2 className="mb-3">Import en Masse</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+              Importez jusqu'à 100 produits simultanément depuis AliExpress, Alibaba, CJ et plus encore.
+            </p>
+            <button 
+              onClick={() => router.push('/dashboard')}
+              className="btn btn-primary"
+            >
+              Essayer l'import
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-16 bg-secondary/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="mb-3">Des prix simples</h2>
+            <p className="text-muted-foreground mb-6">Commencez gratuitement. Évoluez selon vos besoins.</p>
+
+            <div className="inline-flex items-center gap-2 p-1 bg-secondary rounded-full">
+              <button
+                onClick={() => setBillingPeriod('monthly')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === 'monthly' ? 'bg-primary text-white' : 'text-muted-foreground'}`}
+              >
+                Mensuel
+              </button>
+              <button
+                onClick={() => setBillingPeriod('yearly')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${billingPeriod === 'yearly' ? 'bg-primary text-white' : 'text-muted-foreground'}`}
+              >
+                Annuel -30%
+              </button>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PLANS.map((plan, i) => (
+              <div 
+                key={i} 
+                className={`card relative ${plan.popular ? 'border-primary shadow-md' : ''}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white text-xs font-medium rounded-full">
+                    Populaire
+                  </div>
+                )}
+                <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
+                <div className="mb-4">
+                  <span className="text-3xl font-bold">{billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice}€</span>
+                  <span className="text-muted-foreground text-sm">/{billingPeriod === 'monthly' ? 'mois' : 'an'}</span>
+                </div>
+                <ul className="space-y-2 mb-6">
+                  {plan.features.map((feature, j) => (
+                    <li key={j} className="flex items-start gap-2 text-sm">
+                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button 
+                  onClick={() => router.push(`/signup?plan=${plan.id}`)}
+                  className={`btn w-full ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  {plan.monthlyPrice === 0 ? 'Commencer' : 'Essai gratuit'}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials">
-        <div className="text-center mb-16 reveal">
-          <h2 className="mb-4">
-            Ils nous font confiance
-          </h2>
-          <p style={{ margin: '0 auto' }}>
-            Rejoignez des centaines de e-commerçants qui optimisent leur boutique avec EcomPilot.
-          </p>
-        </div>
+      <section id="testimonials" className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="mb-3">Ils nous font confiance</h2>
+            <p className="text-muted-foreground">Rejoignez des centaines de e-commerçants.</p>
+          </div>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-          gap: '24px' 
-        }}>
-          {TESTIMONIALS.map((testimonial, i) => (
-            <div 
-              key={i} 
-              className="card reveal"
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
-                {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-5 h-5" style={{ fill: '#FFB800', stroke: '#FFB800' }} />
-                ))}
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((testimonial, i) => (
+              <div key={i} className="card">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-sm mb-4 italic">"{testimonial.quote}"</p>
+                <div>
+                  <p className="font-medium text-sm">{testimonial.name}</p>
+                  <p className="text-muted-foreground text-xs">{testimonial.role}</p>
+                </div>
               </div>
-              <p style={{ fontSize: '17px', lineHeight: '1.6', marginBottom: '20px', fontStyle: 'italic' }}>
-                "{testimonial.quote}"
-              </p>
-              <div>
-                <p style={{ fontWeight: '600', fontSize: '15px' }}>{testimonial.name}</p>
-                <p style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>{testimonial.role}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" style={{ background: 'var(--surface-secondary)' }}>
-        <div className="text-center mb-16 reveal">
-          <h2 className="mb-4">
-            Questions fréquentes
-          </h2>
-          <p style={{ margin: '0 auto' }}>
-            Tout ce que vous devez savoir sur EcomPilot.
-          </p>
-        </div>
+      <section className="py-16 bg-secondary/50">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="text-center mb-12">
+            <h2 className="mb-3">Questions fréquentes</h2>
+            <p className="text-muted-foreground">Tout ce que vous devez savoir.</p>
+          </div>
 
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          {FAQ_ITEMS.map((item, i) => (
-            <div 
-              key={i} 
-              className="reveal"
-              style={{ 
-                background: 'var(--surface-primary)',
-                borderRadius: 'var(--radius-xl)',
-                marginBottom: '16px',
-                overflow: 'hidden',
-                boxShadow: 'var(--shadow-sm)',
-              }}
-            >
-              <button
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                style={{
-                  width: '100%',
-                  padding: '24px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <span style={{ fontWeight: '600', fontSize: '17px' }}>{item.q}</span>
-                <ChevronDown 
-                  className="w-5 h-5" 
-                  style={{ 
-                    transition: 'transform 0.3s ease',
-                    transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0deg)',
-                  }} 
-                />
-              </button>
-              {openFaq === i && (
-                <div style={{ padding: '0 24px 24px', color: 'var(--text-secondary)', fontSize: '16px', lineHeight: '1.6' }}>
-                  {item.a}
-                </div>
-              )}
-            </div>
-          ))}
+          <div className="space-y-3">
+            {faqItems.map((item, i) => (
+              <div key={i} className="card overflow-hidden p-0">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-secondary/50 transition-colors"
+                >
+                  <span className="font-medium">{item.q}</span>
+                  <ChevronDown className={`w-5 h-5 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === i && (
+                  <div className="px-6 pb-4 text-muted-foreground text-sm">
+                    {item.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CTA Final */}
-      <section className="text-center" style={{ padding: '120px 20px' }}>
-        <div className="reveal">
-          <h2 className="mb-4">
-            Prêt à optimiser votre boutique ?
-          </h2>
-          <p style={{ margin: '0 auto 40px', maxWidth: '600px' }}>
-            Rejoignez EcomPilot aujourd'hui et transformez votre façon de gérer votre catalogue Shopify.
-          </p>
-          <button 
-            onClick={() => router.push('/signup')}
-            className="btn btn-primary btn-large"
-          >
-            Commencer gratuitement
-            <ArrowRight className="w-5 h-5" />
-          </button>
+      {/* CTA */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 text-center">
+          <div className="card bg-primary/5 border-primary/20 py-12">
+            <h2 className="mb-3">Prêt à optimiser votre boutique ?</h2>
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">
+              Rejoignez EcomPilot aujourd'hui et transformez votre façon de gérer votre catalogue.
+            </p>
+            <button 
+              onClick={() => router.push('/signup')}
+              className="btn btn-primary"
+            >
+              Commencer gratuitement
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={{ 
-        padding: '60px 20px', 
-        borderTop: '1px solid var(--apple-gray-200)',
-        background: 'var(--surface-primary)',
-      }}>
-        <div className="container">
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '40px',
-            marginBottom: '40px',
-          }}>
+      <footer className="border-t py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>Produit</h4>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                <li style={{ marginBottom: '12px' }}><Link href="#features" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Fonctionnalités</Link></li>
-                <li style={{ marginBottom: '12px' }}><Link href="#pricing" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Tarifs</Link></li>
-                <li style={{ marginBottom: '12px' }}><Link href="/dashboard" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Dashboard</Link></li>
+              <h4 className="font-semibold mb-4 text-sm">Produit</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="#features" className="hover:text-foreground">Fonctionnalités</Link></li>
+                <li><Link href="#pricing" className="hover:text-foreground">Tarifs</Link></li>
+                <li><Link href="/dashboard" className="hover:text-foreground">Dashboard</Link></li>
               </ul>
             </div>
             <div>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>Entreprise</h4>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                <li style={{ marginBottom: '12px' }}><Link href="/about" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>À propos</Link></li>
-                <li style={{ marginBottom: '12px' }}><Link href="/contact" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Contact</Link></li>
-                <li style={{ marginBottom: '12px' }}><Link href="/blog" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Blog</Link></li>
+              <h4 className="font-semibold mb-4 text-sm">Entreprise</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/about" className="hover:text-foreground">À propos</Link></li>
+                <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
               </ul>
             </div>
             <div>
-              <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>Légal</h4>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                <li style={{ marginBottom: '12px' }}><Link href="/cgu" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>CGU</Link></li>
-                <li style={{ marginBottom: '12px' }}><Link href="/cgv" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>CGV</Link></li>
-                <li style={{ marginBottom: '12px' }}><Link href="/mentions-legales" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Mentions légales</Link></li>
+              <h4 className="font-semibold mb-4 text-sm">Légal</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/cgu" className="hover:text-foreground">CGU</Link></li>
+                <li><Link href="/cgv" className="hover:text-foreground">CGV</Link></li>
+                <li><Link href="/mentions-legales" className="hover:text-foreground">Mentions légales</Link></li>
               </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4 text-sm">Suivez-nous</h4>
+              <div className="flex gap-4">
+                <Link href="#" className="text-muted-foreground hover:text-foreground text-sm">Twitter</Link>
+                <Link href="#" className="text-muted-foreground hover:text-foreground text-sm">LinkedIn</Link>
+              </div>
             </div>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            paddingTop: '32px',
-            borderTop: '1px solid var(--apple-gray-200)',
-          }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-tertiary)', margin: 0 }}>
-              © 2026 EcomPilot Elite. Tous droits réservés.
-            </p>
-            <div style={{ display: 'flex', gap: '24px' }}>
-              <Link href="/twitter" style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>Twitter</Link>
-              <Link href="/linkedin" style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>LinkedIn</Link>
-              <Link href="/github" style={{ fontSize: '14px', color: 'var(--text-tertiary)' }}>GitHub</Link>
+          <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground">© 2026 EcomPilot Elite. Tous droits réservés.</p>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <Link href="/privacy" className="hover:text-foreground">Confidentialité</Link>
+              <Link href="/terms" className="hover:text-foreground">Conditions</Link>
             </div>
           </div>
         </div>
