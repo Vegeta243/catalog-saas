@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
 
-const PLAN_ORDER = ["free", "starter", "pro", "scale"] as const;
+const PLAN_ORDER = ["free", "starter", "pro", "agency"] as const;
 
 // All flags are cached server-side per-request via Supabase.
 // Client caches for 60s.
@@ -40,12 +40,12 @@ export async function GET() {
 
     const result: Record<string, boolean> = {};
     for (const flag of flags || []) {
-      const plans: string[] = flag.visible_plans || ["free", "starter", "pro", "scale"];
+      const plans: string[] = flag.visible_plans || ["free", "starter", "pro", "agency"];
       const minPlan = plans.reduce((min: string, p: string) => {
         const idx = PLAN_ORDER.indexOf(p as (typeof PLAN_ORDER)[number]);
         const minIdx = PLAN_ORDER.indexOf(min as (typeof PLAN_ORDER)[number]);
         return idx < minIdx ? p : min;
-      }, "scale");
+      }, "agency");
       const reqLevel = PLAN_ORDER.indexOf(minPlan as (typeof PLAN_ORDER)[number]);
       result[flag.key] = flag.enabled === true && (plans.length === 0 || userLevel >= reqLevel);
     }

@@ -7,7 +7,7 @@
 | App name | EcomPilot |
 | Tagline | Optimisez votre catalogue Shopify avec l'IA |
 | Category | Store management / Inventory & products |
-| Pricing model | Freemium — Free / Starter €19 / Pro €49 / Scale €129 per month |
+| Pricing model | Freemium — Free / Starter €19 / Pro €49 / Agency €149 per month |
 | Support URL | https://www.ecompilotelite.com/support |
 | Privacy Policy URL | https://www.ecompilotelite.com/privacy |
 | App URL | https://www.ecompilotelite.com |
@@ -49,7 +49,7 @@ write_customers
 ### 3. Billing API
 
 - [x] Uses Shopify Billing API (`appSubscriptionCreate` mutation) — NOT Stripe for Shopify-embedded billing
-- [x] Plans: Starter €19 / Pro €49 / Scale €129 per month (`EVERY_30_DAYS`)
+- [x] Plans: Starter €19 / Pro €49 / Agency €149 per month (`EVERY_30_DAYS`)
 - [x] `test: true` set in non-production environments
 - [x] Pending subscription stored in `users.shopify_pending_plan`
 - [x] Subscription confirmed at `/api/shopify/billing/confirm` after Shopify redirect
@@ -61,14 +61,14 @@ Required GDPR webhooks must be registered and handled:
 
 | Webhook | Path | Status |
 |---------|------|--------|
-| `customers/data_request` | `/api/webhooks/shopify/customers-data-request` | ⚠️ Must implement |
-| `customers/redact` | `/api/webhooks/shopify/customers-redact` | ⚠️ Must implement |
-| `shop/redact` | `/api/webhooks/shopify/shop-redact` | ⚠️ Must implement |
+| `customers/data_request` | `/api/webhooks/shopify/gdpr/customers-data-request` | ✅ Implemented — HMAC verified, returns 200 (no customer PII stored) |
+| `customers/redact` | `/api/webhooks/shopify/gdpr/customers-redact` | ✅ Implemented — HMAC verified, returns 200 (no customer PII stored) |
+| `shop/redact` | `/api/webhooks/shopify/gdpr/shop-redact` | ✅ Implemented — HMAC verified, deletes shops/import_history/action_history rows by shop_domain |
 
-**Required action before submission**: Create these 3 webhook handler routes. Each must:
-1. Verify Shopify HMAC signature (`X-Shopify-Hmac-Sha256`)
-2. Return HTTP 200 within 5 seconds
-3. Queue any data deletion/export asynchronously
+All three handlers:
+1. Verify Shopify HMAC signature (`X-Shopify-Hmac-Sha256`) using `crypto.timingSafeEqual`
+2. Return HTTP 200 immediately
+3. `shop/redact` performs data deletion synchronously (small dataset per shop)
 
 ### 5. App Bridge (Embedded App)
 
@@ -127,16 +127,20 @@ Required GDPR webhooks must be registered and handled:
 
 ### 10. Pending Tasks Before Submission
 
-- [ ] Implement 3 GDPR webhook handlers
-- [ ] Add `is_test_account`, `email_sequence_step`, `last_email_sent_at`, `shopify_subscription_id`, `shopify_pending_plan` columns to `users` table in Supabase
-- [ ] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test_account BOOLEAN DEFAULT false;`
-- [ ] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_sequence_step INTEGER DEFAULT 0;`
-- [ ] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS last_email_sent_at TIMESTAMPTZ;`
-- [ ] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS shopify_subscription_id TEXT;`
-- [ ] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS shopify_pending_plan TEXT;`
-- [ ] SQL: `UPDATE users SET is_test_account = true;` (marks all existing users as test)
+- [x] Implement 3 GDPR webhook handlers (done — `/api/webhooks/shopify/gdpr/`)
+- [x] Add `is_test_account`, `email_sequence_step`, `last_email_sent_at`, `shopify_subscription_id`, `shopify_pending_plan` columns to `users` table in Supabase
+- [x] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test_account BOOLEAN DEFAULT false;`
+- [x] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_sequence_step INTEGER DEFAULT 0;`
+- [x] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS last_email_sent_at TIMESTAMPTZ;`
+- [x] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS shopify_subscription_id TEXT;`
+- [x] SQL: `ALTER TABLE users ADD COLUMN IF NOT EXISTS shopify_pending_plan TEXT;`
+- [x] SQL: `UPDATE users SET is_test_account = true;` (marks all existing users as test)
+- [ ] Register GDPR webhook URLs in Shopify Partners Dashboard → App Setup → GDPR webhooks
+- [ ] Create `/app/privacy/page.tsx` English privacy policy page (Shopify requires English URL)
 - [ ] Test full OAuth install flow end-to-end on development store
 - [ ] Test Billing API confirm flow with `test: true` subscriptions
+- [ ] Capture 4 screenshots (1280×800): Dashboard, Bulk Edit, Product List, Pricing
+- [ ] Record ≤3 min demo video on development store
 - [ ] Submit to Shopify Partners dashboard
 
 ---
@@ -155,6 +159,6 @@ Required GDPR webhooks must be registered and handled:
 
 **Plans disponibles :**
 - Free : 30 actions/mois
-- Starter (€19/mois) : 200 actions
-- Pro (€49/mois) : 1000 actions
-- Scale (€129/mois) : illimité
+- Starter (€19/mois) : 500 actions
+- Pro (€49/mois) : 5 000 actions
+- Agency (€149/mois) : illimité

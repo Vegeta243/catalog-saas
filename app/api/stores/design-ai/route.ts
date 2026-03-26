@@ -8,8 +8,8 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
     const { data: userData } = await supabase.from("users").select("plan").eq("id", user.id).single();
-    if (!userData || !["pro", "scale"].includes(userData.plan || "")) {
-      return NextResponse.json({ error: "Forfait Pro ou Scale requis" }, { status: 403 });
+    if (!userData || !["pro", "agency", "scale"].includes(userData.plan || "")) {
+      return NextResponse.json({ error: "Forfait Pro ou Agency requis" }, { status: 403 });
     }
 
     const { shopId, ambiance, primaryColor, sections } = await req.json() as {

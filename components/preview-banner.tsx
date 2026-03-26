@@ -33,7 +33,8 @@ export function PreviewBanner() {
     free: "Free",
     starter: "Starter",
     pro: "Pro",
-    scale: "Scale",
+    agency: "Agency",
+    scale: "Agency",
   };
 
   return (

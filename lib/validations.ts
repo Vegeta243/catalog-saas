@@ -66,7 +66,7 @@ export const aiGenerateSchema = z.object({
 
 export const checkoutSchema = z.object({
   priceId: z.string().min(1, "L'identifiant du prix est requis"),
-  plan: z.enum(["starter", "pro", "scale"]),
+  plan: z.enum(["starter", "pro", "agency", "scale"]),
 });
 
 // --- Contact / Support schema ---

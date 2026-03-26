@@ -9,8 +9,8 @@ const PLAN_OPTIONS = [
   { value: "free", label: "Plan Free uniquement" },
   { value: "starter", label: "Plan Starter uniquement" },
   { value: "pro", label: "Plan Pro uniquement" },
-  { value: "scale", label: "Plan Scale uniquement" },
-  { value: "paid", label: "Tous les payants (starter+pro+scale)" },
+  { value: "agency", label: "Plan Agency uniquement" },
+  { value: "paid", label: "Tous les payants (starter+pro+agency)" },
 ];
 
 const TEMPLATES = [

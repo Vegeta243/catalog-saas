@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 
 const PLAN_LABELS: Record<string, { name: string; monthly: number }> = {
-  starter: { name: "Starter", monthly: 39 },
-  pro: { name: "Pro", monthly: 89 },
-  scale: { name: "Scale", monthly: 179 },
+  starter: { name: "Starter", monthly: 19 },
+  pro: { name: "Pro", monthly: 49 },
+  agency: { name: "Agency", monthly: 149 },
+  scale: { name: "Agency", monthly: 149 },
 };
 
 export default function SignupPage() {

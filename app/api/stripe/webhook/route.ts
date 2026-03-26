@@ -18,9 +18,11 @@ function priceIdToPlan(priceId: string): string {
     priceId === process.env.STRIPE_PRO_YEARLY_PRICE_ID
   ) return "pro";
   if (
+    priceId === process.env.STRIPE_AGENCY_MONTHLY_PRICE_ID ||
+    priceId === process.env.STRIPE_AGENCY_YEARLY_PRICE_ID ||
     priceId === process.env.STRIPE_SCALE_MONTHLY_PRICE_ID ||
     priceId === process.env.STRIPE_SCALE_YEARLY_PRICE_ID
-  ) return "scale";
+  ) return "agency";
   return "starter";
 }
 

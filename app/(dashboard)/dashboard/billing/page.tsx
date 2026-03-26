@@ -10,9 +10,10 @@ import { createClient } from "@/lib/supabase/client";
 
 const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string }> = {
   free:    { name: "Free",    icon: Star,   price: 0,   yearlyPrice: 0,   color: "#6b7280" },
-  starter: { name: "Starter", icon: Zap,    price: 29,  yearlyPrice: 20,  color: "#2563eb" },
-  pro:     { name: "Pro",     icon: Crown,  price: 89,  yearlyPrice: 62,  color: "#8b5cf6" },
-  scale:   { name: "Scale",   icon: Rocket, price: 129, yearlyPrice: 90,  color: "#059669" },
+  starter: { name: "Starter", icon: Zap,    price: 19,  yearlyPrice: 13,  color: "#2563eb" },
+  pro:     { name: "Pro",     icon: Crown,  price: 49,  yearlyPrice: 34,  color: "#8b5cf6" },
+  agency:  { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#059669" },
+  scale:   { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#059669" },
 };
 
 function BillingContent() {
@@ -250,12 +251,12 @@ function BillingContent() {
       </div>
 
       {/* Upgrade options */}
-      {plan !== "scale" && (
+      {plan !== "agency" && plan !== "scale" && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
           <h3 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>Passer à un plan supérieur</h3>
           <div className="space-y-3">
             {Object.entries(PLAN_INFO).filter(([key]) => {
-              const order = ["free", "starter", "pro", "scale"];
+              const order = ["free", "starter", "pro", "agency"];
               return order.indexOf(key) > order.indexOf(plan);
             }).map(([key, p]) => {
               const PlanIcon = p.icon;

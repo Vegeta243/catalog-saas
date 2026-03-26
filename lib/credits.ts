@@ -3,9 +3,11 @@
 
 export const PLAN_TASKS: Record<string, number> = {
   free: 30,
-  starter: 1000,
-  pro: 20000,
-  scale: 100000,
+  starter: 500,
+  pro: 5000,
+  agency: 999999,
+  // Legacy alias so existing DB rows with plan="scale" still resolve
+  scale: 999999,
 };
 
 export const PLAN_FEATURES = {
@@ -26,7 +28,7 @@ export const PLAN_FEATURES = {
     advanced_automations: false,
   },
   starter: {
-    tasks: 1000,
+    tasks: 500,
     shops: 1,
     products: 500,
     ai_titles: true,
@@ -42,7 +44,7 @@ export const PLAN_FEATURES = {
     advanced_automations: false,
   },
   pro: {
-    tasks: 20000,
+    tasks: 5000,
     shops: 3,
     products: -1,
     ai_titles: true,
@@ -57,8 +59,25 @@ export const PLAN_FEATURES = {
     webhooks: true,
     advanced_automations: true,
   },
+  agency: {
+    tasks: 999999,
+    shops: -1,
+    products: -1,
+    ai_titles: true,
+    ai_descriptions: true,
+    bulk_edit: true,
+    image_editor: true,
+    import_aliexpress: true,
+    automations: true,
+    calendar: true,
+    competitor_analysis: true,
+    api_access: true,
+    webhooks: true,
+    advanced_automations: true,
+  },
+  // Legacy alias
   scale: {
-    tasks: 100000,
+    tasks: 999999,
     shops: -1,
     products: -1,
     ai_titles: true,
@@ -89,7 +108,8 @@ export function hasFeature(plan: string, feature: PlanFeature): boolean {
 export const PLAN_PRICES: Record<string, string> = {
   starter: "19€",
   pro: "49€",
-  scale: "129€",
+  agency: "149€",
+  scale: "149€",
 };
 
 // Coût en tâches par action (invisible pour l'utilisateur)

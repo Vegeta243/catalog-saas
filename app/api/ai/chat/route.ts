@@ -27,13 +27,13 @@ Fonctionnalités disponibles dans EcomPilot :
 - **Rentabilité** : calculer marges et profits
 - **Concurrence (BETA)** : suivre les concurrents et leurs prix
 - **Recherche IA (Pro+)** : trouver des produits gagnants avec l'IA sur AliExpress, CJ, Temu, Amazon
-- **Création boutique IA (Scale)** : créer une boutique Shopify complète automatiquement
+- **Création boutique IA (Agency)** : créer une boutique Shopify complète automatiquement
 - **Parrainage** : inviter des amis et gagner 1 mois offert par filleul converti
 
 Recommandations d'upgrade selon le plan :
-- Free (30 tâches/mois) → Starter (19€, 1000 tâches)
-- Starter → Pro (49€, 20000 tâches, 10 boutiques)
-- Pro → Scale (129€, 100000 tâches, boutiques illimitées + création boutique IA)
+- Free (30 tâches/mois) → Starter (19€, 500 tâches)
+- Starter → Pro (49€, 5000 tâches, 3 boutiques)
+- Pro → Agency (149€, actions illimitées, boutiques illimitées + création boutique IA)
 
 Sois toujours précis, encourage l'utilisateur à explorer les fonctionnalités et réponds aux questions techniques comme un expert e-commerce et dropshipping.`;
 
@@ -64,9 +64,9 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemai
     const derivedPlan = (() => {
       if (plan && plan !== "free") return plan;
       if (tasksTotal !== undefined) {
-        if (tasksTotal >= 100000) return "scale";
-        if (tasksTotal >= 20000) return "pro";
-        if (tasksTotal >= 1000) return "starter";
+        if (tasksTotal >= 100000) return "agency";
+        if (tasksTotal >= 5000) return "pro";
+        if (tasksTotal >= 500) return "starter";
       }
       return plan || "free";
     })();
@@ -74,8 +74,8 @@ function getSmartDemoReply(msg: string, page?: string, plan?: string, tasksRemai
     const remainingStr = tasksRemaining !== undefined ? tasksRemaining.toLocaleString("fr-FR") : "—";
     const totalStr = tasksTotal !== undefined ? tasksTotal.toLocaleString("fr-FR") : "—";
     const limits: Record<string, string> = {
-      free: "30 tâches/mois", starter: "1 000 tâches/mois",
-      pro: "20 000 tâches/mois", scale: "100 000 tâches/mois",
+      free: "30 tâches/mois", starter: "500 tâches/mois",
+      pro: "5 000 tâches/mois", agency: "illimité",
     };
     const planLimit = limits[derivedPlan] || `${totalStr} tâches/mois`;
     return `Vous êtes sur le **plan ${displayPlan}** (${planLimit}).\n\nVos tâches restantes ce mois : **${remainingStr} tâches** sur ${totalStr}.\nRenouvellement automatique le 1er du mois.\n\nPour voir le détail → menu gauche → **Mon forfait**.`;

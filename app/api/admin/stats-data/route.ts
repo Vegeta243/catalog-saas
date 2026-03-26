@@ -8,7 +8,7 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const PLAN_PRICE: Record<string, number> = { starter: 19, pro: 49, scale: 129 };
+const PLAN_PRICE: Record<string, number> = { starter: 19, pro: 49, agency: 149, scale: 149 };
 const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 
 export async function GET() {
@@ -27,14 +27,15 @@ export async function GET() {
 
   const users = allUsers ?? [];
 
-  const planCounts: Record<string, number> = { free: 0, starter: 0, pro: 0, scale: 0 };
+  const planCounts: Record<string, number> = { free: 0, starter: 0, pro: 0, agency: 0, scale: 0 };
   for (const u of users) planCounts[u.plan] = (planCounts[u.plan] ?? 0) + 1;
 
   const totalUsers = users.length;
-  const paidUsers = (planCounts.starter ?? 0) + (planCounts.pro ?? 0) + (planCounts.scale ?? 0);
+  const paidUsers = (planCounts.starter ?? 0) + (planCounts.pro ?? 0) + (planCounts.agency ?? 0) + (planCounts.scale ?? 0);
   const mrr =
     (planCounts.starter ?? 0) * PLAN_PRICE.starter +
     (planCounts.pro ?? 0) * PLAN_PRICE.pro +
+    (planCounts.agency ?? 0) * PLAN_PRICE.agency +
     (planCounts.scale ?? 0) * PLAN_PRICE.scale;
 
   // Monthly signups — last 7 months

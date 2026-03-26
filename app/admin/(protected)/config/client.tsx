@@ -40,7 +40,7 @@ const CONFIG_META: Record<string, { label: string; icon: string; fields: Array<{
       { key: "free", label: "Free — tâches/mois", type: "number" },
       { key: "starter", label: "Starter — tâches/mois", type: "number" },
       { key: "pro", label: "Pro — tâches/mois", type: "number" },
-      { key: "scale", label: "Scale — tâches/mois", type: "number" },
+      { key: "agency", label: "Agency — tâches/mois", type: "number" },
     ],
   },
   global_settings: {

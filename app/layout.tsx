@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/cookie-banner";
 import { PushNotificationSetup } from "@/components/push-notifications";
+import { TrackingPixels } from "@/components/tracking-pixels";
 import { validateEnv } from "@/lib/env-validation";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -155,6 +156,7 @@ export default function RootLayout({
         {children}
         <CookieBanner />
         <PushNotificationSetup />
+        <TrackingPixels />
         <Analytics />
         <SpeedInsights />
       </body>

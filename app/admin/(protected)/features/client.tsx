@@ -15,7 +15,7 @@ interface FeatureFlag {
   admin_preview: boolean;
 }
 
-const ALL_PLANS = ["free", "starter", "pro", "scale"];
+const ALL_PLANS = ["free", "starter", "pro", "agency"];
 const BADGE_OPTIONS = [null, "BETA", "NEW", "SOON"];
 
 export default function FeaturesClient({ initialFlags }: { initialFlags: FeatureFlag[] }) {

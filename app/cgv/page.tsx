@@ -64,20 +64,20 @@ export default function CGVPage() {
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="border border-gray-200 px-4 py-2">Starter</td>
-                  <td className="border border-gray-200 px-4 py-2">29 €</td>
-                  <td className="border border-gray-200 px-4 py-2">1 000</td>
+                  <td className="border border-gray-200 px-4 py-2">19 €</td>
+                  <td className="border border-gray-200 px-4 py-2">500</td>
                   <td className="border border-gray-200 px-4 py-2">1</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-4 py-2">Pro</td>
-                  <td className="border border-gray-200 px-4 py-2">89 €</td>
-                  <td className="border border-gray-200 px-4 py-2">20 000</td>
+                  <td className="border border-gray-200 px-4 py-2">49 €</td>
+                  <td className="border border-gray-200 px-4 py-2">5 000</td>
                   <td className="border border-gray-200 px-4 py-2">3</td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="border border-gray-200 px-4 py-2">Scale</td>
-                  <td className="border border-gray-200 px-4 py-2">129 €</td>
-                  <td className="border border-gray-200 px-4 py-2">100 000</td>
+                  <td className="border border-gray-200 px-4 py-2">Agency</td>
+                  <td className="border border-gray-200 px-4 py-2">149 €</td>
+                  <td className="border border-gray-200 px-4 py-2">Illimité</td>
                   <td className="border border-gray-200 px-4 py-2">Illimité</td>
                 </tr>
               </tbody>

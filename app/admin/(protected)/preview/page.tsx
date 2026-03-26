@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ExternalLink, AlertTriangle } from "lucide-react";
 
-const PLANS = ["free", "starter", "pro", "scale"] as const;
+const PLANS = ["free", "starter", "pro", "agency"] as const;
 
 export default function PreviewModePage() {
   const router = useRouter();
@@ -47,6 +47,7 @@ export default function PreviewModePage() {
     starter: { color: "#3b82f6", desc: "10 produits, 5 tâches IA/mois, import basique" },
     pro: { color: "#8b5cf6", desc: "50 produits, tâches IA illimitées, boutique connectée" },
     scale: { color: "#f59e0b", desc: "Illimité, toutes les fonctionnalités premium actives" },
+    agency: { color: "#f59e0b", desc: "Illimité, toutes les fonctionnalités premium actives" },
   };
 
   return (

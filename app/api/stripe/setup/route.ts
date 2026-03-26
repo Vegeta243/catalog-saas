@@ -8,9 +8,9 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const PLANS = [
-  { id: "starter", name: "EcomPilot Starter", monthly: 3900, yearly: 2900 },
-  { id: "pro",     name: "EcomPilot Pro",     monthly: 8900, yearly: 6900 },
-  { id: "scale",   name: "EcomPilot Scale",   monthly: 17900, yearly: 13900 },
+  { id: "starter", name: "EcomPilot Starter", monthly: 1900, yearly: 1300 },
+  { id: "pro",     name: "EcomPilot Pro",     monthly: 4900, yearly: 3400 },
+  { id: "agency",  name: "EcomPilot Agency",  monthly: 14900, yearly: 10400 },
 ];
 
 export async function POST(req: Request) {
@@ -97,8 +97,8 @@ STRIPE_STARTER_MONTHLY_PRICE_ID=${result.starter.monthly_price_id}
 STRIPE_STARTER_YEARLY_PRICE_ID=${result.starter.yearly_price_id}
 STRIPE_PRO_MONTHLY_PRICE_ID=${result.pro.monthly_price_id}
 STRIPE_PRO_YEARLY_PRICE_ID=${result.pro.yearly_price_id}
-STRIPE_SCALE_MONTHLY_PRICE_ID=${result.scale.monthly_price_id}
-STRIPE_SCALE_YEARLY_PRICE_ID=${result.scale.yearly_price_id}
+STRIPE_AGENCY_MONTHLY_PRICE_ID=${result.agency.monthly_price_id}
+STRIPE_AGENCY_YEARLY_PRICE_ID=${result.agency.yearly_price_id}
   `.trim();
 
   return NextResponse.json({

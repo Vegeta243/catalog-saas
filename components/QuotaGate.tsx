@@ -24,7 +24,7 @@ export default function QuotaGate({ plan, tasksUsed, children }: QuotaGateProps)
   }
 
   // Determine upgrade target
-  const planOrder = ["free", "starter", "pro", "scale"];
+  const planOrder = ["free", "starter", "pro", "agency", "scale"];
   const currentIdx = planOrder.indexOf(plan);
   const nextPlan = currentIdx < planOrder.length - 1 ? planOrder[currentIdx + 1] : null;
   const nextPlanName = nextPlan

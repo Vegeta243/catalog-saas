@@ -8,7 +8,7 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const PLAN_ORDER = ["free", "starter", "pro", "scale"];
+const PLAN_ORDER = ["free", "starter", "pro", "agency"];
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   let query = admin.from("users").select("id, email, plan");
   if (segment && segment !== "all") {
     if (segment === "paid") {
-      query = query.in("plan", ["starter", "pro", "scale"]);
+      query = query.in("plan", ["starter", "pro", "agency", "scale"]);
     } else {
       query = query.eq("plan", segment);
     }

@@ -47,7 +47,41 @@ export default function AnalyticsClient({ users, tasks, shops, referrals }: { us
   const planCounts = users.reduce((acc, u) => { acc[u.plan] = (acc[u.plan] || 0) + 1; return acc; }, {} as Record<string, number>);
   const taskTypeCounts = tasks.reduce((acc, t) => { acc[t.task_type] = (acc[t.task_type] || 0) + 1; return acc; }, {} as Record<string, number>);
 
-  const mrr = (planCounts["starter"] || 0) * 39 + (planCounts["pro"] || 0) * 89 + (planCounts["scale"] || 0) * 179;
+  // Churn calculation (users with paid plan but not active)
+  const churnedCount = users.filter(u => u.plan !== "free" && u.subscription_status !== "active").length;
+  const totalEverPaid = (planCounts["starter"] || 0) + (planCounts["pro"] || 0) + (planCounts["agency"] || 0) + (planCounts["scale"] || 0);
+  const activePayingCount = users.filter(u => u.plan !== "free" && u.subscription_status === "active").length;
+  const churnRate = totalEverPaid > 0 ? ((churnedCount / totalEverPaid) * 100).toFixed(1) : "0";
+
+  const mrr = activePayingCount > 0
+    ? users.filter(u => u.plan !== "free" && u.subscription_status === "active")
+        .reduce((sum, u) => sum + ({ starter: 19, pro: 49, agency: 149, scale: 149 }[u.plan] || 0), 0)
+    : 0;
+
+  // RAG helper
+  const ragColor = (rate: number, green: number, amber: number) =>
+    rate >= green ? "#22c55e" : rate >= amber ? "#f59e0b" : "#ef4444";
+  const ragLabel = (rate: number, green: number, amber: number) =>
+    rate >= green ? "🟢" : rate >= amber ? "🟡" : "🔴";
+
+  // Funnel data
+  const funnelData = [
+    { label: "Inscrits", count: users.length, rate: 100, green: 0, amber: 0 },
+    { label: "Boutique connectée", count: users.filter(u => shops.some(s => s.user_id === u.id)).length, rate: users.length > 0 ? Math.round((users.filter(u => shops.some(s => s.user_id === u.id)).length / users.length) * 100) : 0, green: 50, amber: 30 },
+    { label: "Au moins 1 action", count: tasks.length > 0 ? new Set(tasks.map(t => t.user_id)).size : 0, rate: users.length > 0 ? Math.round(((tasks.length > 0 ? new Set(tasks.map(t => t.user_id)).size : 0) / users.length) * 100) : 0, green: 40, amber: 20 },
+    { label: "Payants (actifs)", count: activePayingCount, rate: users.length > 0 ? parseFloat(((activePayingCount / users.length) * 100).toFixed(1)) : 0, green: 5, amber: 2 },
+  ];
+
+  // Weekly objectives
+  const MS7 = 7 * 86400000;
+  const now = Date.now();
+  const usersLast7 = users.filter(u => now - new Date(u.created_at).getTime() < MS7);
+  const weeklyObj = [
+    { label: "Inscriptions", current: usersLast7.length, target: 20 },
+    { label: "Boutiques", current: shops.filter(s => now - new Date(s.created_at).getTime() < MS7).length, target: 10 },
+    { label: "Actions IA", current: tasks.filter(t => now - new Date(t.created_at).getTime() < MS7).length, target: 50 },
+    { label: "Conversions payantes", current: usersLast7.filter(u => u.plan !== "free" && u.subscription_status === "active").length, target: 2 },
+  ];
 
   const TABS = [
     { id: "growth", label: "Croissance", icon: TrendingUp },
@@ -64,12 +98,13 @@ export default function AnalyticsClient({ users, tasks, shops, referrals }: { us
       </div>
 
       {/* KPI summary */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
           { label: "Utilisateurs total", value: users.length, sub: `+${Object.values(usersByDay).reduce((a, b) => a + b, 0)} (30j)`, color: "#3b82f6" },
-          { label: "MRR estimé", value: `${mrr}€`, sub: `${(planCounts["pro"] || 0) + (planCounts["scale"] || 0)} payants`, color: "#10b981" },
+          { label: "MRR (actifs)", value: `${mrr}€`, sub: `${activePayingCount} payants actifs`, color: "#10b981" },
           { label: "Tâches IA (30j)", value: tasks.length, sub: `${Object.keys(taskTypeCounts).length} types`, color: "#8b5cf6" },
           { label: "Boutiques connectées", value: shops.length, sub: `+${Object.values(shopsByDay).reduce((a, b) => a + b, 0)} (30j)`, color: "#f59e0b" },
+          { label: "Churn", value: `${churnRate}%`, sub: `${churnedCount} perdu${churnedCount > 1 ? "s" : ""}`, color: parseFloat(churnRate) > 10 ? "#ef4444" : parseFloat(churnRate) > 5 ? "#f59e0b" : "#22c55e" },
         ].map(({ label, value, sub, color }) => (
           <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
             <p className="text-2xl font-bold" style={{ color }}>{value}</p>
@@ -115,21 +150,54 @@ export default function AnalyticsClient({ users, tasks, shops, referrals }: { us
             <MiniBar data={days.map(d => refByDay[d] || 0)} color="#f59e0b" />
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
-            <h3 className="text-xs font-semibold mb-3" style={{ color: "#374151" }}>Taux de conversion plans</h3>
-            <div className="space-y-2 mt-2">
-              {["free", "starter", "pro", "scale"].map(p => {
-                const count = planCounts[p] || 0;
-                const pct = users.length > 0 ? Math.round((count / users.length) * 100) : 0;
-                const color = { free: "#94a3b8", starter: "#3b82f6", pro: "#8b5cf6", scale: "#f59e0b" }[p];
+            <h3 className="text-xs font-semibold mb-3" style={{ color: "#374151" }}>Funnel de conversion (RAG)</h3>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-1.5 font-semibold" style={{ color: "#64748b" }}>Étape</th>
+                  <th className="text-right py-1.5 font-semibold" style={{ color: "#64748b" }}>Nb</th>
+                  <th className="text-right py-1.5 font-semibold" style={{ color: "#64748b" }}>Taux</th>
+                  <th className="text-center py-1.5 font-semibold" style={{ color: "#64748b" }}>RAG</th>
+                </tr>
+              </thead>
+              <tbody>
+                {funnelData.map((step) => (
+                  <tr key={step.label} className="border-b border-gray-50 last:border-0">
+                    <td className="py-2 font-medium" style={{ color: "#0f172a" }}>{step.label}</td>
+                    <td className="py-2 text-right font-bold" style={{ color: "#0f172a" }}>{step.count}</td>
+                    <td className="py-2 text-right font-semibold" style={{ color: ragColor(step.rate, step.green, step.amber) }}>{step.rate}%</td>
+                    <td className="py-2 text-center">{step.label === "Inscrits" ? "—" : ragLabel(step.rate, step.green, step.amber)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Churn */}
+            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-xs font-semibold" style={{ color: "#374151" }}>Churn</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold" style={{ color: parseFloat(churnRate) > 10 ? "#ef4444" : parseFloat(churnRate) > 5 ? "#f59e0b" : "#22c55e" }}>
+                  {churnRate}%
+                </span>
+                <span className="text-[10px]" style={{ color: "#94a3b8" }}>({churnedCount} churned / {totalEverPaid} total paid)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Weekly objectives */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 col-span-2">
+            <h3 className="text-xs font-semibold mb-3" style={{ color: "#374151" }}>Objectifs hebdomadaires</h3>
+            <div className="grid grid-cols-4 gap-4">
+              {weeklyObj.map((obj) => {
+                const pct = Math.min(100, Math.round((obj.current / obj.target) * 100));
+                const color = pct >= 100 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
                 return (
-                  <div key={p}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="capitalize font-medium" style={{ color: "#374151" }}>{p}</span>
-                      <span style={{ color }}>{count} ({pct}%)</span>
+                  <div key={obj.label} className="text-center">
+                    <p className="text-2xl font-bold" style={{ color }}>{obj.current}</p>
+                    <p className="text-[10px] font-medium" style={{ color: "#64748b" }}>/ {obj.target} — {obj.label}</p>
+                    <div className="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
                     </div>
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-                    </div>
+                    <p className="text-[10px] mt-1 font-bold" style={{ color }}>{pct}%</p>
                   </div>
                 );
               })}
@@ -144,9 +212,9 @@ export default function AnalyticsClient({ users, tasks, shops, referrals }: { us
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
             <h3 className="text-sm font-semibold mb-4" style={{ color: "#0f172a" }}>MRR par plan</h3>
             {[
-              { plan: "Starter", count: planCounts["starter"] || 0, price: 39, color: "#3b82f6" },
-              { plan: "Pro", count: planCounts["pro"] || 0, price: 89, color: "#8b5cf6" },
-              { plan: "Scale", count: planCounts["scale"] || 0, price: 179, color: "#f59e0b" },
+              { plan: "Starter", count: planCounts["starter"] || 0, price: 19, color: "#3b82f6" },
+              { plan: "Pro", count: planCounts["pro"] || 0, price: 49, color: "#8b5cf6" },
+              { plan: "Agency", count: (planCounts["agency"] || 0) + (planCounts["scale"] || 0), price: 149, color: "#f59e0b" },
             ].map(({ plan, count, price, color }) => (
               <div key={plan} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                 <div>
@@ -219,14 +287,14 @@ export default function AnalyticsClient({ users, tasks, shops, referrals }: { us
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {["free", "starter", "pro", "scale"].map(plan => {
+              {["free", "starter", "pro", "agency"].map(plan => {
                 const count = planCounts[plan] || 0;
                 const pct = users.length > 0 ? Math.round((count / users.length) * 100) : 0;
                 const active = users.filter(u => u.plan === plan && u.subscription_status === "active").length;
                 return (
                   <tr key={plan} className="hover:bg-gray-50/50">
                     <td className="px-4 py-3 text-sm font-bold capitalize"
-                      style={{ color: { free: "#94a3b8", starter: "#3b82f6", pro: "#8b5cf6", scale: "#f59e0b" }[plan] }}>
+                      style={{ color: { free: "#94a3b8", starter: "#3b82f6", pro: "#8b5cf6", agency: "#f59e0b" }[plan] }}>
                       {plan}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium" style={{ color: "#0f172a" }}>{count}</td>

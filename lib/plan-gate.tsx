@@ -4,16 +4,18 @@ import { Crown, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface PlanGateProps {
-  requiredPlan: "pro" | "scale";
+  requiredPlan: "pro" | "agency" | "scale";
   currentPlan?: string | null;
   children: React.ReactNode;
   feature: string;
 }
 
 export default function PlanGate({ requiredPlan, currentPlan, children, feature }: PlanGateProps) {
-  const planOrder = ["starter", "pro", "scale"];
-  const currentIdx = currentPlan ? planOrder.indexOf(currentPlan) : -1;
-  const requiredIdx = planOrder.indexOf(requiredPlan);
+  const planOrder = ["starter", "pro", "agency", "scale"];
+  const effectivePlan = currentPlan === "scale" ? "agency" : currentPlan;
+  const effectiveRequired = requiredPlan === "scale" ? "agency" : requiredPlan;
+  const currentIdx = effectivePlan ? planOrder.indexOf(effectivePlan) : -1;
+  const requiredIdx = planOrder.indexOf(effectiveRequired);
 
   if (currentIdx >= requiredIdx) {
     return <>{children}</>;
@@ -30,10 +32,10 @@ export default function PlanGate({ requiredPlan, currentPlan, children, feature 
             <Crown className="w-7 h-7" style={{ color: "#d97706" }} />
           </div>
           <h3 className="text-lg font-bold mb-2" style={{ color: "#0f172a" }}>
-            Fonctionnalité {requiredPlan === "scale" ? "Scale" : "Pro"}
+            Fonctionnalité {requiredPlan === "agency" || requiredPlan === "scale" ? "Agency" : "Pro"}
           </h3>
           <p className="text-sm mb-6" style={{ color: "#64748b" }}>
-            {feature} nécessite un abonnement {requiredPlan === "scale" ? "Scale" : "Pro"} ou supérieur.
+            {feature} nécessite un abonnement {requiredPlan === "agency" || requiredPlan === "scale" ? "Agency" : "Pro"} ou supérieur.
           </p>
           <Link href="/pricing"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm font-semibold transition-colors"

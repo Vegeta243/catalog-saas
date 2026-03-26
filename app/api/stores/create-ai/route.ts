@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (userData?.plan !== "scale") {
-      return NextResponse.json({ error: "Scale plan required" }, { status: 403 });
+    if (userData?.plan !== "agency" && userData?.plan !== "scale") {
+      return NextResponse.json({ error: "Agency plan required" }, { status: 403 });
     }
 
     const body = await req.json();

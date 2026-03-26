@@ -100,9 +100,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Derive the real plan tier from actions_limit if it exceeds what the plan field says
   const effectivePlan = (() => {
     const effectiveTotal = tasksTotalOverride ?? PLAN_TASKS[plan] ?? 30;
-    if (effectiveTotal >= 100000) return "scale";
-    if (effectiveTotal >= 20000) return "pro";
-    if (effectiveTotal >= 1000) return "starter";
+    if (effectiveTotal >= 100000) return "agency";
+    if (effectiveTotal >= 5000) return "pro";
+    if (effectiveTotal >= 500) return "starter";
     return plan;
   })();
 
@@ -236,7 +236,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             {'badge' in item && item.badge && (
                               <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded font-semibold ${
                                 item.badge === 'BETA' ? 'bg-purple-900/60 text-purple-300' :
-                                item.badge === 'Scale' ? 'bg-amber-900/60 text-amber-300' :
+                                item.badge === 'Agency' ? 'bg-amber-900/60 text-amber-300' :
                                 'bg-blue-900/60 text-blue-300'
                               }`}>
                                 {item.badge as string}
@@ -254,9 +254,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Bottom nav separator */}
           {!sidebarCollapsed && (
-            <div className="px-4 pt-5 pb-1">
+            <>
+            {/* Actions restantes badge */}
+            <div className="mx-3 mt-4 mb-2">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: tasksRemaining <= 5 ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.12)', border: `1px solid ${tasksRemaining <= 5 ? 'rgba(239,68,68,0.3)' : 'rgba(59,130,246,0.2)'}` }}>
+                <Zap className="w-4 h-4 flex-shrink-0" style={{ color: tasksRemaining <= 5 ? '#f87171' : '#60a5fa' }} />
+                <span className="text-xs font-bold" style={{ color: tasksRemaining <= 5 ? '#fca5a5' : '#93c5fd' }}>
+                  {tasksRemaining} action{tasksRemaining !== 1 ? 's' : ''} restante{tasksRemaining !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+            <div className="px-4 pb-1">
               <p className="text-[10px] font-semibold uppercase tracking-widest px-3" style={{ color: '#94a3b8' }}>COMPTE</p>
             </div>
+            </>
           )}
           <nav className={`${sidebarCollapsed ? 'px-2 pt-2' : 'px-3 pt-1'} space-y-0.5`}>
             {BOTTOM_ITEMS.map((item) => {
@@ -333,10 +344,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="relative">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-sm font-black text-white">🚀 Starter</span>
-                    <span className="text-xs font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">29€/mois</span>
+                    <span className="text-xs font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">19€/mois</span>
                   </div>
                   <p className="text-xs text-blue-200 mb-3 leading-relaxed">
-                    1 000 tâches IA · 500 produits<br/>Import AliExpress inclus
+                    500 actions IA · 500 produits<br/>Import AliExpress inclus
                   </p>
                   <a href="/dashboard/account?tab=subscription"
                     className="block text-center text-xs font-black py-2 rounded-xl transition-all hover:scale-105"
@@ -353,10 +364,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="relative">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-sm font-black text-white">⚡ Pro</span>
-                    <span className="text-xs font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">89€/mois</span>
+                    <span className="text-xs font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">49€/mois</span>
                   </div>
                   <p className="text-xs text-green-200 mb-3 leading-relaxed">
-                    20 000 tâches · 3 boutiques<br/>Webhooks &amp; automatisations avancées
+                    5 000 actions · 3 boutiques<br/>Webhooks &amp; automatisations avancées
                   </p>
                   <a href="/dashboard/account?tab=subscription"
                     className="block text-center text-xs font-black py-2 rounded-xl transition-all hover:scale-105"

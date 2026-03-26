@@ -68,7 +68,7 @@ export default function CGUPage() {
           <section>
             <h2 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>4. Abonnements et tarifs</h2>
             <p>
-              Le Service propose plusieurs plans d&apos;abonnement (Free, Starter, Pro, Scale) dont les caractéristiques et tarifs
+              Le Service propose plusieurs plans d&apos;abonnement (Free, Starter, Pro, Agency) dont les caractéristiques et tarifs
               sont détaillés sur la page <Link href="/pricing" className="underline" style={{ color: "#2563eb" }}>Tarifs</Link>.
             </p>
             <ul className="list-disc pl-6 mt-2 space-y-1">

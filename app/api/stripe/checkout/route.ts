@@ -20,9 +20,14 @@ const PLANS = {
     monthly: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || process.env.STRIPE_PRO_PRICE_ID || 'price_1T7LdlE2Eg0XD50YKywVBHL6',
     yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID || 'price_1T9VMcE2Eg0XD50YO0ixnQDF',
   },
+  agency: {
+    monthly: process.env.STRIPE_AGENCY_MONTHLY_PRICE_ID || process.env.STRIPE_SCALE_MONTHLY_PRICE_ID || 'price_1T9VNQE2Eg0XD50YAKmjHx0y',
+    yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID || process.env.STRIPE_SCALE_YEARLY_PRICE_ID || 'price_1T9VOaE2Eg0XD50YaBrW4E7P',
+  },
+  // Legacy alias
   scale: {
-    monthly: process.env.STRIPE_SCALE_MONTHLY_PRICE_ID || process.env.STRIPE_SCALE_PRICE_ID || 'price_1T9VNQE2Eg0XD50YAKmjHx0y',
-    yearly: process.env.STRIPE_SCALE_YEARLY_PRICE_ID || 'price_1T9VOaE2Eg0XD50YaBrW4E7P',
+    monthly: process.env.STRIPE_AGENCY_MONTHLY_PRICE_ID || process.env.STRIPE_SCALE_MONTHLY_PRICE_ID || 'price_1T9VNQE2Eg0XD50YAKmjHx0y',
+    yearly: process.env.STRIPE_AGENCY_YEARLY_PRICE_ID || process.env.STRIPE_SCALE_YEARLY_PRICE_ID || 'price_1T9VOaE2Eg0XD50YaBrW4E7P',
   },
 };
 

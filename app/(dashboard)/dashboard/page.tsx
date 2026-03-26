@@ -55,8 +55,7 @@ export default function DashboardPage() {
   const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
   const resetDate = getResetDate();
 
-  // Onboarding
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  // Onboarding — always visible until all steps done
   const [onboardingSteps, setOnboardingSteps] = useState([
     { id: 1, label: "Boutique connectée", done: false, href: "/dashboard/shops" },
     { id: 2, label: "Produits synchronisés", done: false, href: "/dashboard/products" },
@@ -310,11 +309,10 @@ export default function DashboardPage() {
       </div>
 
       {/* ─── BLOC 2 : Workflows guidés ─── */}
-      {showOnboarding && (
+      {onboardingDone < onboardingTotal && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold" style={{ color: "#0f172a" }}>Démarrage rapide</h2>
-            <button onClick={() => setShowOnboarding(false)} className="text-xs hover:underline" style={{ color: "#64748b" }}>Masquer</button>
+            <h2 className="text-lg font-bold" style={{ color: "#0f172a" }}>Démarrage rapide — {onboardingTotal - onboardingDone} action{onboardingTotal - onboardingDone > 1 ? "s" : ""} restante{onboardingTotal - onboardingDone > 1 ? "s" : ""}</h2>
           </div>
 
           {/* 3 workflow cards */}

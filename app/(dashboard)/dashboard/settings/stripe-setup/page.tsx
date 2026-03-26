@@ -11,7 +11,7 @@ type SetupStatus = "idle" | "loading" | "success" | "error";
 interface PriceIds {
   starter: { monthly: string; yearly: string };
   pro: { monthly: string; yearly: string };
-  scale: { monthly: string; yearly: string };
+  agency: { monthly: string; yearly: string };
 }
 
 export default function StripeSetupPage() {
@@ -93,7 +93,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE`}
       content: (
         <div className="space-y-4">
           <p className="text-sm" style={{ color: "#64748b" }}>
-            Créez automatiquement tous les produits et prix EcomPilot (Starter/Pro/Scale × Mensuel/Annuel) en un clic.
+            Créez automatiquement tous les produits et prix EcomPilot (Starter/Pro/Agency × Mensuel/Annuel) en un clic.
           </p>
           <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
             <p className="text-xs font-medium" style={{ color: "#92400e" }}>

@@ -5,7 +5,9 @@ import { shopifyQuery, ShopifyTokenExpiredError, APP_SUBSCRIPTION_CREATE } from 
 const PLANS: Record<string, { name: string; price: number; interval: 'EVERY_30_DAYS' | 'ANNUAL' }> = {
   starter: { name: 'EcomPilot Starter', price: 19.0, interval: 'EVERY_30_DAYS' },
   pro:     { name: 'EcomPilot Pro',     price: 49.0, interval: 'EVERY_30_DAYS' },
-  scale:   { name: 'EcomPilot Scale',   price: 129.0, interval: 'EVERY_30_DAYS' },
+  agency:  { name: 'EcomPilot Agency',  price: 149.0, interval: 'EVERY_30_DAYS' },
+  // Legacy alias
+  scale:   { name: 'EcomPilot Agency',  price: 149.0, interval: 'EVERY_30_DAYS' },
 };
 
 interface AppSubscriptionData {
@@ -26,7 +28,7 @@ export async function POST(req: Request) {
     const planKey = (body.plan as string)?.toLowerCase();
 
     if (!planKey || !(planKey in PLANS)) {
-      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : starter, pro, scale.' }, { status: 400 });
+      return NextResponse.json({ error: 'Plan invalide. Valeurs acceptées : starter, pro, agency.' }, { status: 400 });
     }
 
     const plan = PLANS[planKey];
