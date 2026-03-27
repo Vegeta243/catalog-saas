@@ -1,598 +1,443 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Zap, Play, Plus, Trash2, ToggleLeft, ToggleRight, Clock, RefreshCw,
-  AlertTriangle, TrendingUp, TrendingDown, Tag, Archive, Bell, ChevronDown,
-  ChevronUp, History, CheckCircle2, XCircle, Filter, BarChart3, Settings2,
-  Sparkles,
-} from "lucide-react";
+import { Zap, Play, Plus, Trash2, Clock, RefreshCw, Search, ToggleLeft, ToggleRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { hasFeature } from "@/lib/credits";
 import { createClient } from "@/lib/supabase/client";
 
-interface AutomationRule {
+interface Automation {
   id: string;
   name: string;
-  condition_type: string;
-  condition_value: string;
-  action_type: string;
-  action_value: string;
-  enabled: boolean;
-  last_run?: string;
+  type: "seo" | "price" | "import" | "stock_alert";
+  config: Record<string, unknown>;
+  is_active: boolean;
+  last_run_at?: string | null;
   run_count: number;
+  created_at: string;
 }
 
-interface ExecutionLog {
-  id: string;
-  ruleId: string;
-  ruleName: string;
-  status: "success" | "error";
-  timestamp: string;
-  details: string;
-}
-
-const CONDITION_LABELS: Record<string, string> = {
-  stock_low: "Stock bas",
-  stock_zero: "Rupture de stock",
-  price_above: "Prix supérieur à",
-  price_below: "Prix inférieur à",
-  scheduled: "Planifié",
-  tag_match: "Tag spécifique",
-  no_images: "Sans images",
-  no_description: "Sans description",
+const TYPE_LABELS: Record<string, string> = {
+  seo: "Génération SEO",
+  price: "Ajustement prix",
+  import: "Import produits",
+  stock_alert: "Alerte stock",
 };
 
-const ACTION_LABELS: Record<string, string> = {
-  price_increase: "Augmenter le prix",
-  price_decrease: "Réduire le prix",
-  add_tag: "Ajouter un tag",
-  remove_tag: "Retirer un tag",
-  set_status: "Changer le statut",
-  archive: "Archiver",
-  notify: "Envoyer une notification",
-  generate_seo: "Générer SEO (IA)",
+const TYPE_COLORS: Record<string, string> = {
+  seo: "#6366f1",
+  price: "#f59e0b",
+  import: "#10b981",
+  stock_alert: "#ef4444",
 };
 
-const SCHEDULE_OPTIONS = [
-  { value: "daily", label: "Tous les jours" },
-  { value: "monday", label: "Chaque lundi" },
-  { value: "friday", label: "Chaque vendredi" },
-  { value: "weekly", label: "Chaque semaine" },
-  { value: "monthly", label: "Chaque mois" },
-];
+function ConfigFields({ type, config, onChange }: {
+  type: string;
+  config: Record<string, unknown>;
+  onChange: (key: string, value: unknown) => void;
+}) {
+  const inputStyle: React.CSSProperties = {
+    background: "#1a1a2e",
+    border: "1px solid #334155",
+    borderRadius: 6,
+    color: "#e2e8f0",
+    padding: "6px 10px",
+    fontSize: 13,
+    width: "100%",
+    boxSizing: "border-box",
+  };
 
-export default function AutomationPage() {
-  const { addToast } = useToast();
-  const [userPlan, setUserPlan] = useState<string | null>(null);
-  const [rules, setRules] = useState<AutomationRule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [expandedRule, setExpandedRule] = useState<string | null>(null);
-  const [executing, setExecuting] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const [showLogs, setShowLogs] = useState(false);
-  const [logs, setLogs] = useState<ExecutionLog[]>([]);
-
-  // Create form state
-  const [newName, setNewName] = useState("");
-  const [newConditionType, setNewConditionType] = useState("stock_low");
-  const [newConditionValue, setNewConditionValue] = useState("5");
-  const [newActionType, setNewActionType] = useState("price_increase");
-  const [newActionValue, setNewActionValue] = useState("10");
-
-  useEffect(() => { document.title = "Automatisation | EcomPilot"; }, []);
-
-  const fetchRules = useCallback(async () => {
-    try {
-      const res = await fetch("/api/automation");
-      const data = await res.json();
-      if (data.rules) setRules(data.rules);
-    } catch {
-      addToast("Erreur lors du chargement", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [addToast]);
-
-  useEffect(() => { fetchRules(); }, [fetchRules]);
-
-  useEffect(() => {
-    const fetchPlan = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setUserPlan('free'); return; }
-        const { data } = await supabase.from('users').select('plan').eq('id', user.id).single();
-        setUserPlan(data?.plan || 'free');
-      } catch {
-        setUserPlan('free');
-      }
-    };
-    fetchPlan();
-  }, []);
-
-  // Show gate UI for plans without automations
-  if (userPlan !== null && !hasFeature(userPlan, 'automations')) {
+  if (type === "seo") {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8" style={{ minHeight: '60vh' }}>
-        <div className="text-5xl mb-4"></div>
-        <h2 className="text-2xl font-bold mb-2">Automatisations</h2>
-        <p className="text-gray-500 mb-6 max-w-md">
-          Les automatisations sont disponibles à partir du plan <strong>Starter</strong>.
-          Créez des règles pour modifier vos prix, optimiser vos titres, et plus encore — automatiquement.
-        </p>
-        <a href="/dashboard/account?tab=subscription"
-          className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700">
-          Passer au Starter — 29€/mois →
-        </a>
+      <div>
+        <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>
+          Nb produits max à traiter
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={String(config.limit ?? 20)}
+          onChange={(e) => onChange("limit", Number(e.target.value))}
+          style={inputStyle}
+        />
       </div>
     );
   }
-  const toggleRule = async (rule: AutomationRule) => {
-    try {
-      const res = await fetch("/api/automation", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: rule.id, enabled: !rule.enabled }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setRules((prev) => prev.map((r) => r.id === rule.id ? { ...r, enabled: !r.enabled } : r));
-        addToast(rule.enabled ? "Règle désactivée" : "Règle activée", "success");
-      }
-    } catch {
-      addToast("Erreur lors de la mise à jour", "error");
-    }
-  };
 
-  const deleteRule = async (id: string) => {
-    try {
-      const res = await fetch(`/api/automation?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        setRules((prev) => prev.filter((r) => r.id !== id));
-        addToast("Règle supprimée", "success");
-      }
-    } catch {
-      addToast("Erreur lors de la suppression", "error");
-    }
-  };
+  if (type === "price") {
+    return (
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 120 }}>
+          <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>Direction</label>
+          <select
+            value={String(config.direction ?? "increase")}
+            onChange={(e) => onChange("direction", e.target.value)}
+            style={{ ...inputStyle, cursor: "pointer" }}
+          >
+            <option value="increase">Augmenter</option>
+            <option value="decrease">Réduire</option>
+          </select>
+        </div>
+        <div style={{ flex: 1, minWidth: 120 }}>
+          <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>Pourcentage (%)</label>
+          <input
+            type="number" min={1} max={100}
+            value={String(config.percent ?? 10)}
+            onChange={(e) => onChange("percent", Number(e.target.value))}
+            style={inputStyle}
+          />
+        </div>
+      </div>
+    );
+  }
 
-  const executeRule = async (rule: AutomationRule) => {
-    setExecuting(rule.id);
-    try {
-      const res = await fetch("/api/automation", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: rule.id, execute: true }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setRules((prev) => prev.map((r) => r.id === rule.id ? data.rule : r));
-        setLogs((prev) => [{
-          id: Date.now().toString(),
-          ruleId: rule.id,
-          ruleName: rule.name,
-          status: "success",
-          timestamp: new Date().toLocaleString("fr-FR"),
-          details: data.message || `Action: ${ACTION_LABELS[rule.action_type]} (${rule.action_value})`,
-        }, ...prev]);
-        addToast(`"${rule.name}" — ${data.message || "exécutée"}`, "success");
-      }
-    } catch {
-      setLogs((prev) => [{
-        id: Date.now().toString(),
-        ruleId: rule.id,
-        ruleName: rule.name,
-        status: "error",
-        timestamp: new Date().toLocaleString("fr-FR"),
-        details: "Erreur lors de l'exécution",
-      }, ...prev]);
-      addToast("Erreur lors de l'exécution", "error");
-    } finally {
-      setExecuting(null);
-    }
-  };
+  if (type === "stock_alert") {
+    return (
+      <div>
+        <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>
+          Seuil d\'alerte (quantité)
+        </label>
+        <input
+          type="number" min={0}
+          value={String(config.threshold ?? 5)}
+          onChange={(e) => onChange("threshold", Number(e.target.value))}
+          style={inputStyle}
+        />
+      </div>
+    );
+  }
 
-  const createRule = async () => {
-    if (!newName) return;
-    try {
-      const res = await fetch("/api/automation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName,
-          condition_type: newConditionType,
-          condition_value: newConditionValue,
-          action_type: newActionType,
-          action_value: newActionValue,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setRules((prev) => [...prev, data.rule]);
-        setShowCreate(false);
-        setNewName("");
-        setNewConditionValue("5");
-        setNewActionValue("10");
-        addToast("Règle créée avec succès", "success");
-      }
-    } catch {
-      addToast("Erreur lors de la création", "error");
-    }
-  };
+  if (type === "import") {
+    return (
+      <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+        Synchronise les produits depuis votre boutique Shopify connectée.
+      </p>
+    );
+  }
 
-  const executeAll = async () => {
-    const activeRules = rules.filter((r) => r.enabled);
-    if (activeRules.length === 0) {
-      addToast("Aucune règle active", "error");
-      return;
-    }
-    await Promise.all(activeRules.map((rule) => executeRule(rule)));
-    addToast(`${activeRules.length} règles exécutées`, "success");
-  };
+  return null;
+}
 
-  const filteredRules = rules.filter((r) => {
-    if (filter === "active") return r.enabled;
-    if (filter === "inactive") return !r.enabled;
-    return true;
+export default function AutomationPage() {
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [running, setRunning] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const [form, setForm] = useState({
+    name: "",
+    type: "seo" as Automation["type"],
+    config: {} as Record<string, unknown>,
   });
 
-  const activeCount = rules.filter((r) => r.enabled).length;
-  const totalExecutions = rules.reduce((s, r) => s + r.run_count, 0);
+  const { addToast } = useToast();
+  const toastSuccess = (msg: string) => addToast(msg, "success");
+  const toastError = (msg: string) => addToast(msg, "error");
 
-  const getConditionIcon = (type: string) => {
-    switch (type) {
-      case "stock_low":
-      case "stock_zero": return <AlertTriangle className="w-4 h-4" style={{ color: "#f59e0b" }} />;
-      case "price_above": return <TrendingUp className="w-4 h-4" style={{ color: "#ef4444" }} />;
-      case "price_below": return <TrendingDown className="w-4 h-4" style={{ color: "#3b82f6" }} />;
-      case "scheduled": return <Clock className="w-4 h-4" style={{ color: "#8b5cf6" }} />;
-      case "tag_match": return <Tag className="w-4 h-4" style={{ color: "#06b6d4" }} />;
-      default: return <Settings2 className="w-4 h-4" style={{ color: "#64748b" }} />;
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/automations");
+      const data = await res.json();
+      if (data.automations) setAutomations(data.automations);
+    } catch {
+      toastError("Erreur lors du chargement");
+    } finally {
+      setLoading(false);
+    }
+  }, [toastError]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }: { data: { user: { user_metadata?: { plan?: string } } | null } }) => {
+      const user = data.user;
+      if (user) {
+        const plan = (user.user_metadata?.plan ?? "free") as string;
+        setHasAccess(hasFeature(plan, "automations"));
+        load();
+      }
+    });
+  }, [load]);
+
+  const handleToggle = async (id: string, currentValue: boolean) => {
+    try {
+      const res = await fetch("/api/automations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, is_active: !currentValue }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setAutomations((prev) => prev.map((a) => (a.id === id ? { ...a, is_active: !currentValue } : a)));
+    } catch (err) {
+      toastError((err as Error).message);
     }
   };
 
-  if (loading) {
+  const handleRun = async (id: string) => {
+    if (running) return;
+    setRunning(id);
+    try {
+      const res = await fetch("/api/automations/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error ?? data.message);
+      toastSuccess(data.message ?? "Automatisation exécutée !");
+      await load();
+    } catch (err) {
+      toastError((err as Error).message);
+    } finally {
+      setRunning(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Supprimer cette automatisation ?")) return;
+    try {
+      const res = await fetch("/api/automations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error);
+      }
+      setAutomations((prev) => prev.filter((a) => a.id !== id));
+      toastSuccess("Automatisation supprimée");
+    } catch (err) {
+      toastError((err as Error).message);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!form.name.trim()) { toastError("Le nom est requis"); return; }
+    try {
+      const res = await fetch("/api/automations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name.trim(), type: form.type, config: form.config }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toastSuccess("Automatisation créée !");
+      setShowCreate(false);
+      setForm({ name: "", type: "seo", config: {} });
+      await load();
+    } catch (err) {
+      toastError((err as Error).message);
+    }
+  };
+
+  const updateFormConfig = (key: string, value: unknown) => {
+    setForm((prev) => ({ ...prev, config: { ...prev.config, [key]: value } }));
+  };
+
+  const filtered = automations.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()));
+
+  const card: React.CSSProperties = {
+    background: "#0f172a",
+    border: "1px solid #1e293b",
+    borderRadius: 12,
+    padding: "clamp(12px, 3vw, 20px)",
+    marginBottom: 12,
+  };
+
+  const typeBadge = (type: string): React.CSSProperties => ({
+    background: (TYPE_COLORS[type] ?? "#334155") + "22",
+    color: TYPE_COLORS[type] ?? "#94a3b8",
+    border: "1px solid " + (TYPE_COLORS[type] ?? "#334155") + "44",
+    borderRadius: 6,
+    padding: "2px 8px",
+    fontSize: 11,
+    fontWeight: 600 as const,
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.05em",
+    whiteSpace: "nowrap" as const,
+  });
+
+  if (!hasAccess && !loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "#2563eb" }} />
+      <div style={{ padding: "clamp(16px, 4vw, 32px)", textAlign: "center", color: "#94a3b8" }}>
+        <Zap size={40} color="#6366f1" style={{ marginBottom: 16 }} />
+        <p style={{ fontSize: 18, fontWeight: 600, color: "#e2e8f0" }}>Automatisations indisponibles</p>
+        <p>Passez à un plan supérieur pour accéder aux automatisations.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Automatisations</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>
-            Créez des règles intelligentes pour automatiser votre catalogue
-          </p>
+    <div style={{ padding: "clamp(16px, 4vw, 32px)", maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Zap size={22} color="#6366f1" />
+          <h1 style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, color: "#f1f5f9", margin: 0 }}>
+            Automatisations
+          </h1>
+          <span style={{ background: "#6366f122", color: "#818cf8", border: "1px solid #6366f144", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 600 }}>
+            {automations.length}
+          </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setShowLogs(!showLogs)}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
-            style={{ color: "#374151" }}>
-            <History className="w-4 h-4" />
-            Historique
-          </button>
-          <button onClick={executeAll}
-            className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-sm font-medium"
-            style={{ color: "#065f46" }}>
-            <Play className="w-4 h-4" />
-            Tout exécuter
-          </button>
-          <button onClick={() => setShowCreate(!showCreate)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium">
-            <Plus className="w-4 h-4" style={{ color: "#fff" }} />
-            <span style={{ color: "#fff" }}>Nouvelle règle</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setShowCreate(!showCreate)}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "#6366f1", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+        >
+          <Plus size={15} />
+          Nouvelle
+        </button>
       </div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{rules.length}</p>
-          <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Règles totales</p>
-        </div>
-        <div className="bg-white rounded-xl border border-emerald-200 p-4">
-          <p className="text-2xl font-bold" style={{ color: "#059669" }}>{activeCount}</p>
-          <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Actives</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{rules.length - activeCount}</p>
-          <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Inactives</p>
-        </div>
-        <div className="bg-white rounded-xl border border-blue-200 p-4">
-          <p className="text-2xl font-bold" style={{ color: "#2563eb" }}>{totalExecutions}</p>
-          <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Exécutions totales</p>
-        </div>
-      </div>
-
-      {/* Execution logs panel */}
-      {showLogs && logs.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#0f172a" }}>
-              <History className="w-4 h-4" /> Historique d&apos;exécution
-            </h2>
-            <button onClick={() => setLogs([])} className="text-xs hover:underline" style={{ color: "#ef4444" }}>
-              Effacer
-            </button>
-          </div>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {logs.map((log) => (
-              <div key={log.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs py-1.5 border-b border-gray-100">
-                {log.status === "success"
-                  ? <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#059669" }} />
-                  : <XCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />}
-                <span className="font-medium" style={{ color: "#0f172a" }}>{log.ruleName}</span>
-                <span className="flex-1 min-w-0 truncate" style={{ color: "#64748b" }}>{log.details}</span>
-                <span className="flex-shrink-0" style={{ color: "#94a3b8" }}>{log.timestamp}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Create form */}
       {showCreate && (
-        <div className="bg-white rounded-xl border border-blue-200 p-6 mb-6">
-          <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
-            <Zap className="w-4 h-4" style={{ color: "#2563eb" }} />
-            Créer une règle d&apos;automatisation
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div className="col-span-1 sm:col-span-2">
-              <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>
-                Nom de la règle
-              </label>
-              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
-                placeholder="Ex: Stock bas → Prix +15%"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
-                style={{ color: "#0f172a" }} />
-            </div>
+        <div style={{ ...card, border: "1px solid #6366f144", marginBottom: 20 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0", margin: "0 0 14px" }}>Nouvelle automatisation</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <input
+              type="text"
+              placeholder="Nom de l automatisation"
+              value={form.name}
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+              style={{ background: "#1a1a2e", border: "1px solid #334155", borderRadius: 6, color: "#e2e8f0", padding: "8px 12px", fontSize: 14, width: "100%", boxSizing: "border-box" }}
+            />
             <div>
-              <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>
-                Condition (SI)
-              </label>
-              <select value={newConditionType} onChange={(e) => setNewConditionType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                style={{ color: "#0f172a" }}>
-                {Object.entries(CONDITION_LABELS).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
+              <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 6 }}>Type</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
+                {(["seo", "price", "import", "stock_alert"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setForm((prev) => ({ ...prev, type: t, config: {} }))}
+                    style={{
+                      background: form.type === t ? (TYPE_COLORS[t] + "22") : "#1e293b",
+                      border: "1px solid " + (form.type === t ? TYPE_COLORS[t] : "#334155"),
+                      borderRadius: 8,
+                      color: form.type === t ? TYPE_COLORS[t] : "#94a3b8",
+                      padding: "8px 6px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {TYPE_LABELS[t]}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>
-                Valeur de condition
-              </label>
-              {newConditionType === "scheduled" ? (
-                <select value={newConditionValue} onChange={(e) => setNewConditionValue(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                  style={{ color: "#0f172a" }}>
-                  {SCHEDULE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              ) : (
-                <input type="text" value={newConditionValue} onChange={(e) => setNewConditionValue(e.target.value)}
-                  placeholder={newConditionType.includes("price") ? "29.99" : newConditionType.includes("tag") ? "promo" : "5"}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none"
-                  style={{ color: "#0f172a" }} />
-              )}
+            <ConfigFields type={form.type} config={form.config} onChange={updateFormConfig} />
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => { setShowCreate(false); setForm({ name: "", type: "seo", config: {} }); }}
+                style={{ background: "#1e293b", border: "1px solid #334155", color: "#94a3b8", borderRadius: 6, padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCreate}
+                style={{ background: "#6366f1", border: "none", color: "#fff", borderRadius: 6, padding: "7px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                Créer
+              </button>
             </div>
-            <div>
-              <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>
-                Action (ALORS)
-              </label>
-              <select value={newActionType} onChange={(e) => setNewActionType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                style={{ color: "#0f172a" }}>
-                {Object.entries(ACTION_LABELS).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>
-                Valeur d&apos;action
-              </label>
-              <input type="text" value={newActionValue} onChange={(e) => setNewActionValue(e.target.value)}
-                placeholder={newActionType.includes("price") ? "15" : newActionType.includes("tag") ? "soldes" : "10"}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none"
-                style={{ color: "#0f172a" }} />
-            </div>
-          </div>
-
-          {/* Visual preview */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-4 flex items-center gap-3">
-            <span className="text-xs font-medium px-2 py-1 bg-blue-100 rounded" style={{ color: "#2563eb" }}>
-              SI {CONDITION_LABELS[newConditionType]} {newConditionValue && `(${newConditionValue})`}
-            </span>
-            <span style={{ color: "#94a3b8" }}>→</span>
-            <span className="text-xs font-medium px-2 py-1 bg-emerald-100 rounded" style={{ color: "#059669" }}>
-              ALORS {ACTION_LABELS[newActionType]} {newActionValue && `(${newActionValue})`}
-            </span>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setShowCreate(false)}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium"
-              style={{ color: "#374151" }}>
-              Annuler
-            </button>
-            <button onClick={createRule} disabled={!newName}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium">
-              <span style={{ color: "#fff" }}>Créer la règle</span>
-            </button>
           </div>
         </div>
       )}
 
-      {/* Filter tabs */}
-      <div className="flex items-center gap-2 mb-4">
-        <Filter className="w-4 h-4" style={{ color: "#94a3b8" }} />
-        {(["all", "active", "inactive"] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === f ? "bg-blue-600" : "bg-gray-100 hover:bg-gray-200"}`}
-            style={{ color: filter === f ? "#fff" : "#374151" }}>
-            {f === "all" ? `Toutes (${rules.length})` : f === "active" ? `Actives (${activeCount})` : `Inactives (${rules.length - activeCount})`}
-          </button>
-        ))}
-      </div>
+      {automations.length > 0 && (
+        <div style={{ position: "relative", marginBottom: 16 }}>
+          <Search size={14} color="#64748b" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
+          <input
+            type="text" placeholder="Rechercher..." value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "100%", background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, color: "#e2e8f0", padding: "8px 12px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
+          />
+        </div>
+      )}
 
-      {/* Rules list */}
-      {filteredRules.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <Zap className="w-12 h-12 mx-auto mb-4" style={{ color: "#cbd5e1" }} />
-          <h3 className="text-lg font-semibold mb-2" style={{ color: "#0f172a" }}>
-            {filter === "all" ? "Aucune automatisation" : filter === "active" ? "Aucune règle active" : "Aucune règle inactive"}
-          </h3>
-          <p className="text-sm" style={{ color: "#64748b" }}>
-            {filter === "all" ? "Créez votre première règle pour automatiser votre catalogue" : "Changez le filtre pour voir d'autres règles"}
+      {loading ? (
+        <div style={{ ...card, textAlign: "center", color: "#64748b" }}>
+          <RefreshCw size={20} style={{ animation: "spin 1s linear infinite" }} />
+          <p style={{ margin: "8px 0 0" }}>Chargement...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={{ ...card, textAlign: "center", color: "#64748b" }}>
+          <Zap size={32} color="#334155" style={{ marginBottom: 12 }} />
+          <p style={{ fontSize: 14, margin: "0 0 4px", color: "#94a3b8" }}>
+            {search ? "Aucun résultat" : "Aucune automatisation créée"}
           </p>
+          {!search && <p style={{ fontSize: 12, margin: 0 }}>Créez votre première automatisation.</p>}
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredRules.map((rule) => (
-            <div key={rule.id}
-              className={`bg-white rounded-xl border transition-all ${rule.enabled ? "border-emerald-200" : "border-gray-200"} ${expandedRule === rule.id ? "shadow-md" : ""}`}>
-              {/* Main row */}
-              <div className="flex items-center gap-4 p-5">
-                <button onClick={() => toggleRule(rule)} title={rule.enabled ? "Désactiver" : "Activer"}>
-                  {rule.enabled
-                    ? <ToggleRight className="w-8 h-8" style={{ color: "#059669" }} />
-                    : <ToggleLeft className="w-8 h-8" style={{ color: "#94a3b8" }} />}
+        filtered.map((auto) => {
+          const isExpanded = expandedId === auto.id;
+          const isRunning = running === auto.id;
+          return (
+            <div key={auto.id} style={{ ...card, opacity: auto.is_active ? 1 : 0.65 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => handleToggle(auto.id, auto.is_active)}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0, flexShrink: 0 }}
+                >
+                  {auto.is_active ? <ToggleRight size={22} color="#6366f1" /> : <ToggleLeft size={22} color="#475569" />}
                 </button>
-
-                <button onClick={() => setExpandedRule(expandedRule === rule.id ? null : rule.id)}
-                  className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {getConditionIcon(rule.condition_type)}
-                    <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{rule.name}</p>
-                    {rule.enabled && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 bg-emerald-100 rounded flex-shrink-0"
-                        style={{ color: "#059669" }}>ACTIVE</span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    <span className="text-xs px-2 py-0.5 bg-blue-50 rounded"
-                      style={{ color: "#2563eb" }}>
-                      SI: {CONDITION_LABELS[rule.condition_type] || rule.condition_type}
-                      {rule.condition_value && ` (${rule.condition_value})`}
-                    </span>
-                    <span style={{ color: "#d1d5db" }}>→</span>
-                    <span className="text-xs px-2 py-0.5 bg-emerald-50 rounded"
-                      style={{ color: "#059669" }}>
-                      ALORS: {ACTION_LABELS[rule.action_type] || rule.action_type}
-                      {rule.action_value && ` (${rule.action_value})`}
-                    </span>
-                  </div>
-                </button>
-
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {rule.run_count > 0 && (
-                    <span className="hidden sm:flex items-center gap-1 text-xs px-2 py-1 bg-gray-100 rounded"
-                      style={{ color: "#64748b" }}>
-                      <BarChart3 className="w-3 h-3" /> {rule.run_count}
-                    </span>
-                  )}
-                  <button onClick={() => executeRule(rule)} disabled={executing === rule.id}
-                    className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-xs font-medium transition-colors">
-                    {executing === rule.id
-                      ? <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ color: "#059669" }} />
-                      : <Play className="w-3.5 h-3.5" style={{ color: "#059669" }} />}
-                    <span className="hidden sm:inline" style={{ color: "#065f46" }}>Exécuter</span>
+                <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "clamp(13px, 2vw, 15px)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {auto.name}
+                </span>
+                <span style={typeBadge(auto.type)}>{TYPE_LABELS[auto.type] ?? auto.type}</span>
+                <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: "auto" }}>
+                  <button
+                    onClick={() => handleRun(auto.id)}
+                    disabled={!auto.is_active || !!running}
+                    style={{ background: auto.is_active && !running ? "#10b98122" : "#1e293b", border: "1px solid " + (auto.is_active && !running ? "#10b981" : "#334155"), color: auto.is_active && !running ? "#10b981" : "#475569", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: auto.is_active && !running ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 4 }}
+                  >
+                    {isRunning ? <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Play size={13} />}
                   </button>
-                  <button onClick={() => deleteRule(rule.id)} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 className="w-4 h-4" style={{ color: "#ef4444" }} />
+                  <button onClick={() => setExpandedId(isExpanded ? null : auto.id)} style={{ background: "#1e293b", border: "1px solid #334155", color: "#94a3b8", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                    {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
-                  <button onClick={() => setExpandedRule(expandedRule === rule.id ? null : rule.id)}
-                    className="p-1 hover:bg-gray-100 rounded">
-                    {expandedRule === rule.id
-                      ? <ChevronUp className="w-4 h-4" style={{ color: "#64748b" }} />
-                      : <ChevronDown className="w-4 h-4" style={{ color: "#64748b" }} />}
+                  <button onClick={() => handleDelete(auto.id)} style={{ background: "#1e293b", border: "1px solid #334155", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                    <Trash2 size={13} />
                   </button>
                 </div>
               </div>
-
-              {/* Expanded details */}
-              {expandedRule === rule.id && (
-                <div className="border-t border-gray-100 px-3 sm:px-5 py-4 bg-gray-50/50">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                    <div>
-                      <p className="font-medium mb-1" style={{ color: "#64748b" }}>Condition</p>
-                      <p style={{ color: "#0f172a" }}>
-                        {CONDITION_LABELS[rule.condition_type] || rule.condition_type}
-                      </p>
-                      <p className="mt-0.5" style={{ color: "#94a3b8" }}>
-                        Valeur: {rule.condition_value || "—"}
-                      </p>
+              <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                  <Play size={10} />{auto.run_count} exécution{auto.run_count !== 1 ? "s" : ""}
+                </span>
+                {auto.last_run_at && (
+                  <span style={{ fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                    <Clock size={10} />{new Date(auto.last_run_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+                <span style={{ fontSize: 11, color: auto.is_active ? "#10b981" : "#64748b", marginLeft: "auto" }}>
+                  {auto.is_active ? "● Actif" : "○ Inactif"}
+                </span>
+              </div>
+              {isExpanded && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #1e293b" }}>
+                  <p style={{ fontSize: 11, color: "#64748b", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Configuration</p>
+                  {Object.keys(auto.config ?? {}).length === 0 ? (
+                    <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>Configuration par défaut</p>
+                  ) : (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {Object.entries(auto.config ?? {}).map(([k, v]) => (
+                        <span key={k} style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, padding: "3px 8px", fontSize: 12, color: "#94a3b8" }}>
+                          {k}: <strong style={{ color: "#e2e8f0" }}>{String(v)}</strong>
+                        </span>
+                      ))}
                     </div>
-                    <div>
-                      <p className="font-medium mb-1" style={{ color: "#64748b" }}>Action</p>
-                      <p style={{ color: "#0f172a" }}>
-                        {ACTION_LABELS[rule.action_type] || rule.action_type}
-                      </p>
-                      <p className="mt-0.5" style={{ color: "#94a3b8" }}>
-                        Valeur: {rule.action_value || "—"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-medium mb-1" style={{ color: "#64748b" }}>Statistiques</p>
-                      <p style={{ color: "#0f172a" }}>Exécutions: {rule.run_count}</p>
-                      {rule.last_run && (
-                        <p className="flex items-center gap-1 mt-0.5" style={{ color: "#94a3b8" }}>
-                          <Clock className="w-3 h-3" />
-                          {new Date(rule.last_run).toLocaleString("fr-FR")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
-          ))}
-        </div>
+          );
+        })
       )}
-
-      {/* Pro-locked features upsell */}
-      <div className="mt-6 bg-white rounded-xl border border-indigo-200 p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap className="w-4 h-4" style={{ color: "#6366f1" }} />
-          <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>Fonctionnalités avancées</h3>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#6366f1", color: "#fff" }}>PRO</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { label: "Génération SEO automatique (IA)", desc: "Optimise automatiquement titres et descriptions", icon: Sparkles },
-            { label: "Règles planifiées avancées", desc: "Exécution horaire, quotidienne ou hebdomadaire", icon: Clock },
-            { label: "Webhooks & intégrations", desc: "Connectez Zapier, Make.com et vos outils", icon: Bell },
-          ].map((feat) => (
-            <div key={feat.label} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: "#f5f3ff" }}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#ede9fe" }}>
-                <feat.icon className="w-4 h-4" style={{ color: "#6366f1" }} />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <p className="text-xs font-semibold" style={{ color: "#0f172a" }}>{feat.label}</p>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#6366f1", color: "#fff" }}>PRO</span>
-                </div>
-                <p className="text-[11px]" style={{ color: "#64748b" }}>{feat.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <a href="/dashboard/billing" className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold" style={{ color: "#6366f1" }}>
-          Débloquer ces fonctionnalités →
-        </a>
-      </div>
+      <style>{"@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }"}</style>
     </div>
   );
 }

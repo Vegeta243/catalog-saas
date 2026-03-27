@@ -158,7 +158,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 32px',
+    padding: '0 clamp(12px, 4vw, 32px)',
     position: 'sticky' as const,
     top: 0,
     zIndex: 99,
@@ -387,7 +387,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               {/* Tasks Progress */}
-              <div style={{ minWidth: '200px' }}>
+              <div className="hidden md:block" style={{ minWidth: '200px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Actions</span>
                   <span style={{ fontWeight: '600', color: tasksColor }}>{tasksRemaining}/{tasksTotal}</span>
@@ -428,9 +428,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               {/* User Menu */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ textAlign: 'right' }}>
+                <div className="hidden sm:block" style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{userName}</p>
-                  <p style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{userEmail}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</p>
                 </div>
                 <div style={{
                   width: '36px',
@@ -451,7 +451,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
 
           {/* Page Content */}
-          <main style={{ padding: '32px' }}>
+          <main style={{ padding: 'clamp(16px, 4vw, 32px)' }}>
             {children}
           </main>
 
