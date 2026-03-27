@@ -1,66 +1,118 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-export const maxDuration = 30
+export const maxDuration = 60
 
-export async function POST() {
+type ShopRecord = {
+  shop_domain: string
+  access_token: string
+}
+
+async function getActiveShop(supabase: any, userId: string): Promise<ShopRecord | null> {
+  const { data } = await supabase
+    .from('shops')
+    .select('shop_domain, access_token')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .single()
+
+  if (!data?.shop_domain || !data?.access_token) {
+    return null
+  }
+  return data
+}
+
+export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const { data: shop, error: shopError } = await supabase
-      .from('shops')
-      .select('shop_domain, access_token')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .single()
-
-    if (shopError || !shop) {
-      return NextResponse.json({ error: 'Aucune boutique connectée' }, { status: 404 })
+    const shop = await getActiveShop(supabase, user.id)
+    if (!shop) {
+      return NextResponse.json({ error: 'Aucune boutique Shopify connectée' }, { status: 400 })
     }
 
-    // Fetch all products via REST API with pagination
-    const allProducts: unknown[] = []
-    let pageInfo: string | null = null
+    let allProducts: any[] = []
+    let nextUrl: string | null = `https://${shop.shop_domain}/admin/api/2024-01/products.json?limit=250&fields=id,title,body_html,vendor,product_type,tags,status,variants,images,created_at,updated_at`
 
-    do {
-      const url: string = pageInfo
-        ? `https://${shop.shop_domain}/admin/api/2024-01/products.json?limit=250&page_info=${pageInfo}`
-        : `https://${shop.shop_domain}/admin/api/2024-01/products.json?limit=250`
-
-      const res: Response = await fetch(url, {
+    while (nextUrl) {
+      const res: Response = await fetch(nextUrl, {
         headers: { 'X-Shopify-Access-Token': shop.access_token },
       })
 
       if (!res.ok) {
-        return NextResponse.json({ error: 'Erreur lors de la synchronisation Shopify' }, { status: res.status })
+        const details = await res.text()
+        console.error('[sync] Shopify API error:', res.status, details)
+        return NextResponse.json({ error: `Shopify API error: ${res.status}` }, { status: 502 })
       }
 
       const data = await res.json()
-      allProducts.push(...(data.products || []))
+      allProducts = allProducts.concat(data.products || [])
 
-      // Extract next page cursor from Link header
-      const linkHeader: string = res.headers.get('Link') || ''
-      const nextMatch: RegExpMatchArray | null = linkHeader.match(/<[^>]*page_info=([^&>]+)[^>]*>;\s*rel="next"/)
-      pageInfo = nextMatch ? nextMatch[1] : null
-    } while (pageInfo)
+      const link: string = res.headers.get('Link') || ''
+      const nextMatch: RegExpMatchArray | null = link.match(/<([^>]+)>;\s*rel="next"/)
+      nextUrl = nextMatch ? nextMatch[1] : null
+    }
+
+    const toUpsert = allProducts.map((p: any) => ({
+      shopify_product_id: String(p.id),
+      user_id: user.id,
+      shop_domain: shop.shop_domain,
+      title: p.title || '',
+      body_html: p.body_html || '',
+      description: p.body_html || '',
+      vendor: p.vendor || '',
+      product_type: p.product_type || '',
+      tags: typeof p.tags === 'string' ? p.tags : '',
+      status: p.status || 'active',
+      price: parseFloat(p.variants?.[0]?.price || '0') || 0,
+      compare_at_price: parseFloat(p.variants?.[0]?.compare_at_price || '0') || null,
+      images: JSON.stringify((p.images || []).map((img: any) => img.src)),
+      variants: JSON.stringify(p.variants || []),
+      synced_at: new Date().toISOString(),
+      updated_at: p.updated_at || new Date().toISOString(),
+    }))
+
+    let synced = 0
+    let cacheEnabled = true
+
+    for (let i = 0; i < toUpsert.length; i += 100) {
+      const chunk = toUpsert.slice(i, i + 100)
+      const { error } = await supabase
+        .from('shopify_products')
+        .upsert(chunk, { onConflict: 'shopify_product_id,user_id' })
+
+      if (error) {
+        // If table is missing or constraint is absent, continue without failing sync.
+        cacheEnabled = false
+        const message = (error as any)?.message || ''
+        if (message.includes('relation') || message.includes('does not exist') || message.includes('constraint')) {
+          break
+        }
+      } else {
+        synced += chunk.length
+      }
+    }
 
     return NextResponse.json({
       success: true,
       total: allProducts.length,
+      synced: cacheEnabled ? synced : 0,
+      cacheEnabled,
       shop: shop.shop_domain,
-      products: allProducts,
     })
-  } catch (error) {
-    console.error('POST /api/shopify/sync:', error)
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+  } catch (e: any) {
+    console.error('[sync]', e?.message || e)
+    return NextResponse.json({ error: e?.message || 'Erreur serveur' }, { status: 500 })
   }
 }
 
-export async function GET() {
-  // Alias: same as POST for convenience
-  return POST()
+export async function GET(request: NextRequest) {
+  return POST(request)
 }

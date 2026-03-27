@@ -284,34 +284,34 @@ export default function AccountPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom complet</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                  <div className="flex items-center gap-2.5">
+                    <User className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
                     <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
-                    <input type="email" value={email} disabled className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 cursor-not-allowed" style={{ color: "#64748b" }} />
+                  <div className="flex items-center gap-2.5">
+                    <Mail className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
+                    <input type="email" value={email} disabled className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 cursor-not-allowed" style={{ color: "#64748b" }} />
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Téléphone</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
                     <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }}
                       placeholder="+33 6 00 00 00 00" />
                   </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Fuseau horaire</label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                  <div className="flex items-center gap-2.5">
+                    <Globe className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
                     <select value={timezone} onChange={(e) => setTimezone(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none" style={{ color: "#0f172a" }}>
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none" style={{ color: "#0f172a" }}>
                       <option value="Europe/Paris">Europe/Paris (GMT+1)</option>
                       <option value="America/New_York">America/New York (GMT-5)</option>
                       <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
@@ -670,22 +670,22 @@ export default function AccountPage() {
                 <div className="space-y-3 max-w-md">
                   <div>
                     <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nouveau mot de passe</label>
-                    <div className="relative">
-                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                    <div className="flex items-center gap-2.5">
+                      <Key className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
                       <input type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full pl-9 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} placeholder="6 caractères minimum" />
-                      <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} placeholder="6 caractères minimum" />
+                      <button onClick={() => setShowPassword(!showPassword)} className="p-1" type="button">
                         {showPassword ? <EyeOff className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <Eye className="w-4 h-4" style={{ color: "#94a3b8" }} />}
                       </button>
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Confirmer</label>
-                    <div className="relative">
-                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                    <div className="flex items-center gap-2.5">
+                      <Key className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
                       <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full pl-9 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
-                      <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
+                      <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="p-1" type="button">
                         {showConfirmPassword ? <EyeOff className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <Eye className="w-4 h-4" style={{ color: "#94a3b8" }} />}
                       </button>
                     </div>
