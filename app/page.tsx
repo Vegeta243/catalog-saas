@@ -91,28 +91,100 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <div className="animate-fade-in-up">
-            <h1 className="mb-4">
-              L&apos;IA qui transforme ton catalogue<br />Shopify en machine à vendre.
-            </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-              Descriptions IA, import AliExpress, SEO automatique. Ton catalogue optimisé en quelques minutes.
+      <section style={{
+        padding: '80px 24px 100px',
+        textAlign: 'center',
+        maxWidth: '800px',
+        margin: '0 auto',
+      }}>
+        {/* Badge */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
+          padding: '6px 16px', borderRadius: '100px',
+          background: 'rgba(79,142,247,0.1)',
+          border: '1px solid rgba(79,142,247,0.25)',
+          color: '#4f8ef7', fontSize: '13px', fontWeight: 700,
+          marginBottom: '32px',
+        }}>
+          ✨ IA GPT-4 • Compatible Shopify • Sans CB
+        </div>
+
+        {/* H1 */}
+        <h1 style={{
+          fontSize: 'clamp(32px, 5vw, 56px)',
+          fontWeight: 900, lineHeight: 1.15,
+          margin: '0 0 20px',
+        }}>
+          L&apos;IA qui transforme ton catalogue
+          <span style={{ color: '#4f8ef7' }}> Shopify </span>
+          en machine à vendre.
+        </h1>
+
+        {/* Subtitle */}
+        <p style={{
+          fontSize: '18px',
+          lineHeight: 1.7, margin: '0 0 40px',
+          maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto',
+        }} className="text-muted-foreground">
+          Fiches produits pro en 1 clic • SEO inclus •
+          30 actions gratuites sans carte bancaire.
+        </p>
+
+        {/* Video placeholder */}
+        <div style={{
+          width: '100%', maxWidth: '640px',
+          margin: '0 auto 40px',
+          borderRadius: '16px', overflow: 'hidden',
+          aspectRatio: '16 / 9',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+        }} className="border bg-secondary/30">
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: '64px', height: '64px',
+              background: 'rgba(79,142,247,0.2)',
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 12px',
+              fontSize: '28px',
+            }}>▶</div>
+            <p className="text-muted-foreground" style={{ fontSize: '14px', margin: 0 }}>
+              Démo 30 secondes — Avant/Après fiche produit
             </p>
-            <div className="flex flex-col items-center gap-3">
-              <button 
-                onClick={() => router.push('/signup')}
-                className="btn btn-primary"
-              >
-                Commencer gratuitement — c&apos;est gratuit
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
-                J&apos;ai déjà un compte →
-              </Link>
-            </div>
           </div>
+        </div>
+
+        {/* MAIN CTA */}
+        <a href="/signup" style={{
+          display: 'inline-block',
+          padding: '18px 48px',
+          background: '#4f8ef7',
+          color: '#fff', fontWeight: 900,
+          fontSize: '18px', borderRadius: '16px',
+          textDecoration: 'none',
+          boxShadow: '0 8px 32px rgba(79,142,247,0.4)',
+          marginBottom: '16px',
+        }}>
+          Commencer gratuit (sans CB) →
+        </a>
+
+        {/* Secondary link */}
+        <div style={{ marginBottom: '28px' }}>
+          <Link href="/login" className="text-muted-foreground" style={{ fontSize: '14px', textDecoration: 'none' }}>
+            J&apos;ai déjà un compte
+          </Link>
+        </div>
+
+        {/* Trust strip */}
+        <div style={{
+          display: 'flex', justifyContent: 'center',
+          gap: '24px', flexWrap: 'wrap',
+        }}>
+          {['✓ 30 actions gratuites', '✓ Sans carte bancaire', '✓ Annulation en 1 clic'].map(t => (
+            <span key={t} className="text-muted-foreground" style={{ fontSize: '13px', fontWeight: 600 }}>
+              {t}
+            </span>
+          ))}
         </div>
       </section>
 
