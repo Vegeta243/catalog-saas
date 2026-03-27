@@ -15,7 +15,6 @@ const FEATURES = [
   { icon: Sparkles, title: "Descriptions IA", desc: "Générez des descriptions qui vendent, adaptées à votre audience. Par lot de 10, 50 ou 200." },
   { icon: TrendingUp, title: "SEO optimisé", desc: "Titres SEO, meta descriptions, tags structurés pour mieux ranker sur Google." },
   { icon: BarChart3, title: "Score visibilité", desc: "Visualisez la santé de chaque fiche produit et identifiez ce qui manque." },
-  { icon: Zap, title: "Automatisations", desc: "Laissez l'IA optimiser votre boutique 24/7. Gagnez du temps, vendez plus." },
 ];
 
 const PLANS = [
@@ -65,7 +64,6 @@ export default function HomePage() {
     { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer." },
     { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec 30 actions, sans carte." },
     { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic. Aucun engagement, aucun frais caché." },
-    { q: "Quel modèle d'IA est utilisé ?", a: "GPT-4o-mini d'OpenAI, optimisé pour le e-commerce francophone." },
   ];
 
   return (
@@ -97,25 +95,22 @@ export default function HomePage() {
         <div className="container mx-auto px-4 text-center">
           <div className="animate-fade-in-up">
             <h1 className="mb-4">
-              Optimisez votre boutique<br />Shopify avec l'IA
+              L&apos;IA qui transforme ton catalogue<br />Shopify en machine à vendre.
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-              Générez descriptions, titres et tags SEO en un clic. Importez depuis AliExpress. Automatisez tout.
+              Descriptions IA, import AliExpress, SEO automatique. Ton catalogue optimisé en quelques minutes.
             </p>
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               <button 
                 onClick={() => router.push('/signup')}
                 className="btn btn-primary"
               >
-                Commencer gratuitement
+                Commencer gratuitement — c&apos;est gratuit
                 <ArrowRight className="w-4 h-4" />
               </button>
-              <button 
-                onClick={() => router.push('/dashboard')}
-                className="btn btn-secondary"
-              >
-                Voir la démo
-              </button>
+              <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
+                J&apos;ai déjà un compte →
+              </Link>
             </div>
           </div>
         </div>
@@ -143,25 +138,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Bulk Import Banner */}
+      {/* Before / After */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="card bg-primary/5 border-primary/20 text-center py-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-              <Star className="w-4 h-4" />
-              NOUVEAU
-            </div>
-            <h2 className="mb-3">Import en Masse</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-              Importez jusqu'à 100 produits simultanément depuis AliExpress, Alibaba, CJ et plus encore.
-            </p>
-            <button 
-              onClick={() => router.push('/dashboard')}
-              className="btn btn-primary"
-            >
-              Essayer l'import
-              <ArrowRight className="w-4 h-4" />
-            </button>
+          <div className="text-center mb-10">
+            <h2 className="mb-3">Avant / Après EcomPilot</h2>
+            <p className="text-muted-foreground">Vos fiches produits transformées en quelques secondes.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                product: "Montre connectée",
+                before: "Montre connectée noire — livraison 2-3 semaines",
+                after: "Montre connectée premium — suivi cardio, notifications, autonomie 7 jours. Parfait pour sportifs exigeants.",
+              },
+              {
+                product: "T-shirt oversize",
+                before: "T-shirt blanc oversize taille M/L",
+                after: "T-shirt oversize streetwear 100% coton — coupe relaxée, polyvalent du casual au soirée. Livré en 48h.",
+              },
+              {
+                product: "Lampe LED bureau",
+                before: "Lampe LED USB — plusieurs couleurs",
+                after: "Lampe LED USB tactile 3 températures — idéale télétravail et gaming. Design épuré, fixation universelle.",
+              },
+            ].map((item, i) => (
+              <div key={i} className="card overflow-hidden p-0">
+                <div className="px-5 py-4 bg-red-50 dark:bg-red-950/20 border-b">
+                  <p className="text-xs font-semibold text-red-500 uppercase mb-1">Avant</p>
+                  <p className="text-sm text-muted-foreground">{item.before}</p>
+                </div>
+                <div className="px-5 py-4 bg-green-50 dark:bg-green-950/20">
+                  <p className="text-xs font-semibold text-green-600 uppercase mb-1">Après IA</p>
+                  <p className="text-sm">{item.after}</p>
+                </div>
+                <div className="px-5 py-3 border-t">
+                  <p className="text-xs text-muted-foreground font-medium">{item.product}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -196,8 +211,8 @@ export default function HomePage() {
                 className={`card relative ${plan.popular ? 'border-primary shadow-md' : ''}`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white text-xs font-medium rounded-full">
-                    Populaire
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white text-xs font-semibold rounded-full tracking-wide">
+                    RECOMMANDÉ
                   </div>
                 )}
                 <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
