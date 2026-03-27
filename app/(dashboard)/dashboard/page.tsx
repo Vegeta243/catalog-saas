@@ -6,33 +6,31 @@ import { createClient } from '@/lib/supabase/client'
 
 const S = {
   page: {
-    padding: '32px',
+    padding: '16px',
     maxWidth: '960px',
     margin: '0 auto',
-    background: '#080d1a',
-    borderRadius: '14px',
   } as CSSProperties,
   h1: {
-    color: '#e8ecf4',
+    color: '#111827',
     fontSize: '22px',
-    fontWeight: 600,
+    fontWeight: 700,
     margin: '0 0 4px 0',
     letterSpacing: '-0.01em',
   } as CSSProperties,
   sub: {
-    color: '#6b7a99',
+    color: '#6b7280',
     fontSize: '14px',
-    margin: '0 0 32px 0',
+    margin: '0 0 24px 0',
     fontWeight: 400,
   } as CSSProperties,
   card: {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)',
+    background: '#ffffff',
+    border: '1px solid #e5e7eb',
     borderRadius: '14px',
     padding: '20px',
   } as CSSProperties,
   sectionTitle: {
-    color: '#e8ecf4',
+    color: '#111827',
     fontSize: '15px',
     fontWeight: 600,
     margin: '0 0 16px 0',
@@ -117,23 +115,23 @@ export default function DashboardPage() {
       <h1 style={S.h1}>Bonjour{firstName ? `, ${firstName}` : ''}</h1>
       <p style={S.sub}>Vue d'ensemble de votre boutique</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+      <div className="dash-stats-grid">
         {[
-          { label: 'Produits', value: loading ? '-' : String(productCount), color: '#4f8ef7', href: '/dashboard/products' },
+          { label: 'Produits', value: loading ? '-' : String(productCount), color: '#2563eb', href: '/dashboard/products' },
           {
             label: 'Actions IA',
             value: loading ? '-' : actionsLimit === -1 ? 'Illimite' : `${actionsUsed}/${actionsLimit}`,
-            color: '#8b5cf6',
+            color: '#7c3aed',
             href: '/dashboard/ai',
           },
-          { label: 'Boutiques', value: loading ? '-' : String(shopCount), color: '#10b981', href: '/dashboard/shops' },
-          { label: 'Plan actuel', value: loading ? '-' : plan.charAt(0).toUpperCase() + plan.slice(1), color: '#6b7a99', href: '/dashboard/billing' },
+          { label: 'Boutiques', value: loading ? '-' : String(shopCount), color: '#059669', href: '/dashboard/shops' },
+          { label: 'Plan actuel', value: loading ? '-' : plan.charAt(0).toUpperCase() + plan.slice(1), color: '#6b7280', href: '/dashboard/billing' },
         ].map((k) => (
           <a key={k.label} href={k.href} style={{ textDecoration: 'none' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '18px 16px' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '14px', padding: '18px 16px' }}>
               <p
                 style={{
-                  color: '#6b7a99',
+                  color: '#6b7280',
                   fontSize: '11px',
                   fontWeight: 500,
                   textTransform: 'uppercase',
@@ -152,12 +150,12 @@ export default function DashboardPage() {
       {remaining !== null && (
         <div style={{ ...S.card, marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <p style={{ color: '#e8ecf4', fontSize: '14px', fontWeight: 500, margin: 0 }}>Actions IA restantes ce mois</p>
+            <p style={{ color: '#111827', fontSize: '14px', fontWeight: 500, margin: 0 }}>Actions IA restantes ce mois</p>
             <p style={{ color: remaining <= 5 ? '#f87171' : '#4f8ef7', fontSize: '14px', fontWeight: 600, margin: 0 }}>
               {remaining} / {actionsLimit}
             </p>
           </div>
-          <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ height: '4px', background: '#e5e7eb', borderRadius: '2px', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
@@ -178,7 +176,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div className="dash-bottom-grid">
         {!allDone && (
           <div style={S.card}>
             <p style={S.sectionTitle}>Demarrer</p>
@@ -192,8 +190,8 @@ export default function DashboardPage() {
                       gap: '12px',
                       padding: '12px 14px',
                       borderRadius: '10px',
-                      background: s.done ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)',
-                      border: `1px solid ${s.done ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.04)'}`,
+                      background: s.done ? 'rgba(16,185,129,0.06)' : '#f9fafb',
+                      border: `1px solid ${s.done ? 'rgba(16,185,129,0.15)' : '#e5e7eb'}`,
                     }}
                   >
                     <div
@@ -205,20 +203,20 @@ export default function DashboardPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         background: s.done ? '#10b981' : 'transparent',
-                        border: `1.5px solid ${s.done ? '#10b981' : 'rgba(255,255,255,0.15)'}`,
+                        border: `1.5px solid ${s.done ? '#10b981' : '#d1d5db'}`,
                         flexShrink: 0,
                       }}
                     >
                       {s.done ? (
                         <span style={{ color: 'white', fontSize: '11px', fontWeight: 700 }}>OK</span>
                       ) : (
-                        <span style={{ color: '#6b7a99', fontSize: '11px', fontWeight: 600 }}>{i + 1}</span>
+                        <span style={{ color: '#6b7280', fontSize: '11px', fontWeight: 600 }}>{i + 1}</span>
                       )}
                     </div>
                     <div style={{ flex: 1 }}>
                       <p
                         style={{
-                          color: s.done ? '#10b981' : '#e8ecf4',
+                          color: s.done ? '#10b981' : '#111827',
                           fontSize: '13px',
                           fontWeight: 500,
                           margin: '0 0 1px 0',
@@ -228,7 +226,7 @@ export default function DashboardPage() {
                       >
                         {s.label}
                       </p>
-                      <p style={{ color: '#6b7a99', fontSize: '12px', margin: 0, fontWeight: 400 }}>{s.desc}</p>
+                      <p style={{ color: '#6b7280', fontSize: '12px', margin: 0, fontWeight: 400 }}>{s.desc}</p>
                     </div>
                   </div>
                 </a>
@@ -255,21 +253,44 @@ export default function DashboardPage() {
                   alignItems: 'center',
                   padding: '11px 14px',
                   borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.04)',
+                  background: '#f9fafb',
+                  border: '1px solid #e5e7eb',
                   textDecoration: 'none',
                 }}
               >
                 <div>
-                  <p style={{ color: '#e8ecf4', fontSize: '13px', fontWeight: 500, margin: '0 0 1px 0' }}>{a.label}</p>
-                  <p style={{ color: '#6b7a99', fontSize: '12px', margin: 0, fontWeight: 400 }}>{a.desc}</p>
+                  <p style={{ color: '#111827', fontSize: '13px', fontWeight: 500, margin: '0 0 1px 0' }}>{a.label}</p>
+                  <p style={{ color: '#6b7280', fontSize: '12px', margin: 0, fontWeight: 400 }}>{a.desc}</p>
                 </div>
-                <span style={{ color: '#3d4d6b', fontSize: '16px' }}>›</span>
+                <span style={{ color: '#9ca3af', fontSize: '16px' }}>›</span>
               </a>
             ))}
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .dash-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        @media (min-width: 640px) {
+          .dash-stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+        .dash-bottom-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        @media (min-width: 640px) {
+          .dash-bottom-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+      `}</style>
     </div>
   )
 }

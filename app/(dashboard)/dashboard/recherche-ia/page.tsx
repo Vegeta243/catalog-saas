@@ -53,7 +53,7 @@ export default function RechercheIAPage() {
   const [adminChecking, setAdminChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [platform, setPlatform] = useState<string>("AliExpress");
-  const [niche, setNiche] = useState<string>("Mode");
+  const [niche, setNiche] = useState<string>("Décoration intérieure");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("50");
   const [minMargin, setMinMargin] = useState("2");

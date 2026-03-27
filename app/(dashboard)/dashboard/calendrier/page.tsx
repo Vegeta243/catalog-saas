@@ -209,22 +209,22 @@ export default function CalendrierPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <CalendarDays className="w-6 h-6 text-blue-600" /> Calendrier
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" /> Calendrier
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Planifiez et automatisez vos actions e-commerce</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Planifiez et automatisez vos actions e-commerce</p>
         </div>
         <div className="flex gap-2">
           <button onClick={handleSuggest} disabled={suggestLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 disabled:opacity-50 border border-purple-200">
-            <Sparkles className={`w-4 h-4 ${suggestLoading ? "animate-spin" : ""}`} />
+            className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-100 disabled:opacity-50 border border-purple-200">
+            <Sparkles className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${suggestLoading ? "animate-spin" : ""}`} />
             {suggestLoading ? "Analyse..." : "Suggestions IA"}
           </button>
           <button onClick={() => openCreateModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-            <Plus className="w-4 h-4" /> Planifier une action
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700">
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Planifier
           </button>
         </div>
       </div>
@@ -292,12 +292,14 @@ export default function CalendrierPage() {
                 className="p-1.5 hover:bg-gray-100 rounded-lg"><ChevronRight className="w-4 h-4" /></button>
             </div>
 
-            {/* Day headers */}
-            <div className="grid grid-cols-7 border-b border-gray-100">
-              {DAYS_FR.map(d => (
-                <div key={d} className="text-center text-[10px] font-medium text-gray-400 py-2">{d}</div>
-              ))}
-            </div>
+            <div className="overflow-x-auto">
+              <div className="min-w-[340px]">
+                {/* Day headers */}
+                <div className="grid grid-cols-7 border-b border-gray-100">
+                  {DAYS_FR.map(d => (
+                    <div key={d} className="text-center text-[10px] font-medium text-gray-400 py-2">{d}</div>
+                  ))}
+                </div>
 
             {/* Calendar grid */}
             {loading ? (
@@ -307,18 +309,18 @@ export default function CalendrierPage() {
             ) : (
               <div className="grid grid-cols-7">
                 {calendarDays.map((day, i) => {
-                  if (day === null) return <div key={`empty-${i}`} className="h-24 border-b border-r border-gray-50" />;
+                  if (day === null) return <div key={`empty-${i}`} className="h-16 sm:h-24 border-b border-r border-gray-50" />;
                   const dayEvents = getEventsForDay(day);
                   const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
                   const isSelected = selectedDay && day === selectedDay.getDate() && month === selectedDay.getMonth() && year === selectedDay.getFullYear();
                   return (
                     <div key={day}
                       onClick={() => setSelectedDay(new Date(year, month, day))}
-                      className={`h-24 border-b border-r border-gray-50 p-1.5 cursor-pointer transition-colors hover:bg-blue-50/50 ${isSelected ? "bg-blue-50" : ""}`}>
-                      <div className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? "bg-blue-600 text-white" : "text-gray-600"}`}>
+                      className={`h-16 sm:h-24 border-b border-r border-gray-50 p-0.5 sm:p-1.5 cursor-pointer transition-colors hover:bg-blue-50/50 ${isSelected ? "bg-blue-50" : ""}`}>
+                      <div className={`text-[10px] sm:text-xs font-medium mb-0.5 sm:mb-1 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full ${isToday ? "bg-blue-600 text-white" : "text-gray-600"}`}>
                         {day}
                       </div>
-                      <div className="space-y-0.5">
+                          <div className="space-y-0.5 hidden sm:block">
                         {dayEvents.slice(0, 3).map(e => {
                           const tc = getTypeConfig(e.event_type);
                           return (
@@ -332,11 +334,21 @@ export default function CalendrierPage() {
                           <span className="text-[9px] text-gray-400">+{dayEvents.length - 3} de plus</span>
                         )}
                       </div>
+                      {dayEvents.length > 0 && (
+                        <div className="flex gap-0.5 mt-0.5 sm:hidden">
+                          {dayEvents.slice(0, 3).map(e => {
+                            const tc = getTypeConfig(e.event_type);
+                            return <div key={e.id} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tc.color }} />;
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
             )}
+              </div>{/* end min-w */}
+            </div>{/* end overflow-x-auto */}
           </div>
 
           {/* Selected day detail */}

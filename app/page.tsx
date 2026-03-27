@@ -43,8 +43,8 @@ const PLANS = [
 
 const TESTIMONIALS = [
   { name: "Gary T.", role: "3 boutiques", quote: "J'optimisais mes fiches à la main, maintenant l'IA fait tout. Vraiment efficace." },
-  { name: "Ghiles A.", role: "E-commerce mode", quote: "L'import AliExpress + descriptions IA, mon catalogue de 200 produits optimisé en une après-midi." },
-  { name: "2L", role: "Boutique généraliste", quote: "Simple à connecter. Les descriptions sont bien meilleures que ce que j'écrivais." },
+  { name: "Ghiles A.", role: "Décoration intérieure", quote: "Simple à connecter. Les descriptions sont bien meilleures que ce que j'écrivais." },
+  { name: "2L", role: "Boutique généraliste", quote: "L'import AliExpress + descriptions IA, mon catalogue de 200 produits optimisé en une après-midi." },
 ];
 
 export default function HomePage() {
@@ -92,7 +92,8 @@ export default function HomePage() {
 
       {/* Hero */}
       <section style={{
-        padding: '80px 24px 100px',
+        padding: '40px 24px 100px',
+        paddingTop: 'max(40px, env(safe-area-inset-top, 40px))',
         textAlign: 'center',
         maxWidth: '800px',
         margin: '0 auto',

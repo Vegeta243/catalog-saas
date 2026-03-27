@@ -30,15 +30,15 @@ type EditState = {
 const PER_PAGE = 24
 
 const palette = {
-  text: '#e8ecf4',
-  sub: '#6b7a99',
-  accent: '#4f8ef7',
-  ok: '#10b981',
-  err: '#f87171',
-  card: 'rgba(255,255,255,0.03)',
-  cardAlt: 'rgba(255,255,255,0.04)',
-  border: 'rgba(255,255,255,0.07)',
-  borderStrong: 'rgba(255,255,255,0.1)',
+  text: '#111827',
+  sub: '#6b7280',
+  accent: '#2563eb',
+  ok: '#16a34a',
+  err: '#dc2626',
+  card: '#ffffff',
+  cardAlt: '#f9fafb',
+  border: '#e5e7eb',
+  borderStrong: '#d1d5db',
 }
 
 function asImageUrls(value: unknown): string[] {
@@ -85,8 +85,8 @@ function parsePrice(v: string): number | null {
 
 const inputStyle: CSSProperties = {
   width: '100%',
-  background: 'rgba(255,255,255,0.04)',
-  border: `1px solid ${palette.borderStrong}`,
+  background: '#ffffff',
+  border: `1px solid ${palette.border}`,
   borderRadius: 10,
   color: palette.text,
   fontSize: 14,
@@ -510,29 +510,29 @@ export default function ProductsPage() {
         .productsPage {
           max-width: 1240px;
           margin: 0 auto;
-          padding: 20px;
+          padding: 16px;
         }
 
         .headerRow {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          gap: 14px;
-          margin-bottom: 18px;
+          gap: 12px;
+          margin-bottom: 16px;
           flex-wrap: wrap;
         }
 
         .title {
           margin: 0;
           color: ${palette.text};
-          font-size: 22px;
+          font-size: 20px;
           line-height: 1.25;
-          font-weight: 600;
+          font-weight: 700;
           letter-spacing: -0.01em;
         }
 
         .subtitle {
-          margin: 6px 0 0 0;
+          margin: 4px 0 0 0;
           color: ${palette.sub};
           font-size: 14px;
           line-height: 1.4;
@@ -554,8 +554,8 @@ export default function ProductsPage() {
 
         .productGrid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 10px;
         }
 
         .productCard {
@@ -567,11 +567,17 @@ export default function ProductsPage() {
           overflow: hidden;
           cursor: pointer;
           padding: 0;
+          transition: box-shadow 0.15s, border-color 0.15s;
+        }
+
+        .productCard:hover {
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .productCard.selected {
-          background: rgba(79, 142, 247, 0.09);
-          border-color: rgba(79, 142, 247, 0.34);
+          background: #eff6ff;
+          border-color: #93c5fd;
+          box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
         }
 
         .thumbWrap {
@@ -596,18 +602,18 @@ export default function ProductsPage() {
           align-items: center;
           justify-content: center;
           color: ${palette.sub};
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 400;
           padding: 6px;
           text-align: center;
         }
 
         .cardInfo {
-          padding: 10px 12px 12px;
+          padding: 8px 10px 10px;
         }
 
         .prodTitle {
-          margin: 0 0 4px 0;
+          margin: 0 0 3px 0;
           color: ${palette.text};
           font-size: 13px;
           line-height: 1.35;
@@ -627,7 +633,7 @@ export default function ProductsPage() {
 
         .editorPanel {
           background: ${palette.card};
-          border: 1px solid ${palette.borderStrong};
+          border: 1px solid ${palette.border};
           border-radius: 14px;
           padding: 16px;
           align-self: start;
@@ -644,11 +650,16 @@ export default function ProductsPage() {
           border: 0;
           background: transparent;
           color: ${palette.sub};
-          font-size: 16px;
+          font-size: 18px;
           line-height: 1;
           font-weight: 500;
           cursor: pointer;
-          padding: 4px;
+          padding: 4px 8px;
+          border-radius: 6px;
+        }
+
+        .closeBtn:hover {
+          background: #f3f4f6;
         }
 
         .editorImageWrap {
@@ -680,12 +691,12 @@ export default function ProductsPage() {
 
         .twoCols {
           display: grid;
-          grid-template-columns: 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 10px;
         }
 
         .primaryBtn {
-          border: 1px solid rgba(79, 142, 247, 0.35);
+          border: none;
           background: ${palette.accent};
           color: white;
           border-radius: 10px;
@@ -693,6 +704,11 @@ export default function ProductsPage() {
           font-weight: 500;
           padding: 10px 16px;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .primaryBtn:hover {
+          background: #1d4ed8;
         }
 
         .primaryBtn:disabled {
@@ -702,7 +718,7 @@ export default function ProductsPage() {
 
         .primaryLink {
           display: inline-block;
-          border: 1px solid rgba(79, 142, 247, 0.35);
+          border: none;
           background: ${palette.accent};
           color: white;
           border-radius: 10px;
@@ -732,14 +748,19 @@ export default function ProductsPage() {
         }
 
         .ghostBtn {
-          border: 1px solid ${palette.borderStrong};
-          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid ${palette.border};
+          background: white;
           color: ${palette.text};
           border-radius: 8px;
           font-size: 13px;
           font-weight: 500;
           padding: 7px 14px;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .ghostBtn:hover {
+          background: #f9fafb;
         }
 
         .ghostBtn:disabled {
@@ -747,9 +768,19 @@ export default function ProductsPage() {
           cursor: not-allowed;
         }
 
+        @media (min-width: 480px) {
+          .productGrid {
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+          }
+        }
+
         @media (min-width: 700px) {
-          .twoCols {
-            grid-template-columns: 1fr 1fr;
+          .productsPage {
+            padding: 20px;
+          }
+          .productGrid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
           }
         }
 
