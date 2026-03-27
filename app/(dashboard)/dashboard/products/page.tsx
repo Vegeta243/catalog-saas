@@ -968,8 +968,8 @@ export default function ProductsPage() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Catalogue produits</h1>
-          <p className="text-sm mt-1 flex flex-wrap items-center gap-2" style={{ color: "#64748b" }}>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Catalogue produits</h1>
+          <p className="text-sm mt-1 flex flex-wrap items-center gap-2" style={{ color: "var(--text-secondary)" }}>
             {filteredProducts.length} produit{filteredProducts.length > 1 ? "s" : ""}
             {lowStockCount > 0 && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 bg-red-50 rounded-full" style={{ color: "#dc2626" }}>
