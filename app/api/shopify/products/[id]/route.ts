@@ -28,6 +28,7 @@ export async function PUT(
 
     const { title, body_html, vendor, tags, status, variants, images, metafields_global_title_tag, metafields_global_description_tag } = body
 
+    // Build main product payload — metafields handled separately below
     const productPayload: Record<string, unknown> = { id: parseInt(id) }
     if (title !== undefined) productPayload.title = title
     if (body_html !== undefined) productPayload.body_html = body_html
@@ -36,16 +37,16 @@ export async function PUT(
     if (status !== undefined) productPayload.status = status
     if (variants !== undefined) productPayload.variants = variants
     if (images !== undefined) productPayload.images = images
-    if (metafields_global_title_tag !== undefined) productPayload.metafields_global_title_tag = metafields_global_title_tag
-    if (metafields_global_description_tag !== undefined) productPayload.metafields_global_description_tag = metafields_global_description_tag
 
-    const shopifyUrl = `https://${shop.shop_domain}/admin/api/2024-01/products/${id}.json`
-    const shopifyRes = await fetch(shopifyUrl, {
+    const shopifyBase = `https://${shop.shop_domain}/admin/api/2024-01`
+    const shopifyHeaders = {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': shop.access_token,
+    }
+
+    const shopifyRes = await fetch(`${shopifyBase}/products/${id}.json`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': shop.access_token,
-      },
+      headers: shopifyHeaders,
       body: JSON.stringify({ product: productPayload }),
     })
 
@@ -56,6 +57,43 @@ export async function PUT(
     }
 
     const result = await shopifyRes.json()
+
+    // Handle SEO metafields via the Metafields API (not inline on product)
+    const seoFields: { key: string; value: string; type: string }[] = []
+    if (metafields_global_title_tag !== undefined && metafields_global_title_tag !== '')
+      seoFields.push({ key: 'title_tag', value: String(metafields_global_title_tag), type: 'single_line_text_field' })
+    if (metafields_global_description_tag !== undefined && metafields_global_description_tag !== '')
+      seoFields.push({ key: 'description_tag', value: String(metafields_global_description_tag), type: 'multi_line_text_field' })
+
+    if (seoFields.length > 0) {
+      try {
+        const mfRes = await fetch(`${shopifyBase}/products/${id}/metafields.json?namespace=global`, {
+          headers: shopifyHeaders,
+        })
+        const mfData = mfRes.ok ? await mfRes.json() : { metafields: [] }
+        const existing: any[] = mfData.metafields || []
+
+        for (const sf of seoFields) {
+          const found = existing.find((m: any) => m.namespace === 'global' && m.key === sf.key)
+          if (found) {
+            await fetch(`${shopifyBase}/metafields/${found.id}.json`, {
+              method: 'PUT',
+              headers: shopifyHeaders,
+              body: JSON.stringify({ metafield: { id: found.id, value: sf.value, type: sf.type } }),
+            })
+          } else {
+            await fetch(`${shopifyBase}/products/${id}/metafields.json`, {
+              method: 'POST',
+              headers: shopifyHeaders,
+              body: JSON.stringify({ metafield: { namespace: 'global', key: sf.key, value: sf.value, type: sf.type } }),
+            })
+          }
+        }
+      } catch (mfErr) {
+        console.warn('Metafields update error (non-blocking):', mfErr)
+      }
+    }
+
     return NextResponse.json({ product: result.product, success: true })
   } catch (error) {
     console.error('PUT /api/shopify/products/[id]:', error)

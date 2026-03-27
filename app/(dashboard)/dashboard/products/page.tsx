@@ -103,7 +103,7 @@ function BulkAIModal({
   const [preview, setPreview] = useState<PreviewEntry[]>([])
   const [publishing, setPublishing] = useState(false)
   const [pubProgress, setPubProgress] = useState(0)
-  const [pubResults, setPubResults] = useState<{ pid: string; ok: boolean }[]>([])
+  const [pubResults, setPubResults] = useState<{ pid: string; ok: boolean; error?: string }[]>([])
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -215,7 +215,7 @@ function BulkAIModal({
   async function handlePublish() {
     setPublishing(true); setPubProgress(0)
     const toPublish = preview.filter(e => e.enabled)
-    const results: { pid: string; ok: boolean }[] = []
+    const results: { pid: string; ok: boolean; error?: string }[] = []
     for (let i = 0; i < toPublish.length; i++) {
       const entry = toPublish[i]
       const payload: any = {}
@@ -225,13 +225,20 @@ function BulkAIModal({
       if (entry.metaTitle) payload.metafields_global_title_tag = entry.metaTitle.new
       if (entry.metaDesc) payload.metafields_global_description_tag = entry.metaDesc.new
       let ok = false
+      let errMsg: string | undefined
       try {
         const res = await fetch('/api/shopify/products/' + entry.pid, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
         })
         ok = res.ok
-      } catch {}
-      results.push({ pid: entry.pid, ok })
+        if (!ok) {
+          const errData = await res.json().catch(() => ({}))
+          errMsg = errData.error || 'Erreur ' + res.status
+        }
+      } catch (e: any) {
+        errMsg = e?.message || 'Erreur réseau'
+      }
+      results.push({ pid: entry.pid, ok, error: errMsg })
       setPubProgress(Math.round((i + 1) / toPublish.length * 100))
       await new Promise(r => setTimeout(r, 200))
     }
@@ -435,22 +442,44 @@ function BulkAIModal({
 
         {/* ── Step 3: Done ── */}
         {step === 'done' && (
-          <div className="aiBody" style={{ textAlign: 'center', padding: '40px 24px 32px' }}>
-            <div style={{ fontSize: 56, marginBottom: 14 }}>🎉</div>
-            <h3 style={{ color: '#111827', fontSize: 22, fontWeight: 700, margin: '0 0 8px' }}>
-              {successCount} produit{successCount > 1 ? 's' : ''} publié{successCount > 1 ? 's' : ''} !
-            </h3>
+          <div className="aiBody" style={{ padding: '32px 24px 28px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 52, marginBottom: 12 }}>{successCount > 0 ? '🎉' : '⚠️'}</div>
+              <h3 style={{ color: '#111827', fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>
+                {successCount > 0
+                  ? successCount + ' produit' + (successCount > 1 ? 's' : '') + ' publié' + (successCount > 1 ? 's' : '') + ' !'
+                  : 'Publication échouée'}
+              </h3>
+              {successCount > 0 && (
+                <p style={{ color: '#374151', fontSize: 14, margin: '0 0 16px' }}>
+                  Le contenu IA a été synchronisé sur votre boutique Shopify.
+                </p>
+              )}
+            </div>
             {failCount > 0 && (
-              <p style={{ color: '#dc2626', fontSize: 13, fontWeight: 600, margin: '0 0 8px' }}>
-                {failCount} échec{failCount > 1 ? 's' : ''}
-              </p>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 14px', marginTop: 4 }}>
+                <p style={{ color: '#dc2626', fontSize: 13, fontWeight: 700, margin: '0 0 8px' }}>
+                  {failCount} échec{failCount > 1 ? 's' : ''}
+                </p>
+                {pubResults.filter(r => !r.ok).map(r => {
+                  const prod = preview.find(e => e.pid === r.pid)
+                  return (
+                    <p key={r.pid} style={{ color: '#b91c1c', fontSize: 12, margin: '3px 0 0' }}>
+                      • {prod?.product.title || r.pid}: {r.error || 'Erreur inconnue'}
+                    </p>
+                  )
+                })}
+              </div>
             )}
-            <p style={{ color: '#374151', fontSize: 14, margin: '12px 0 28px' }}>
-              Le contenu IA a été synchronisé sur votre boutique Shopify.
-            </p>
-            <button className="aiPrimaryBtn" onClick={() => { onPublishDone(); onClose() }}>
-              Fermer et rafraîchir
-            </button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
+              {successCount > 0
+                ? <button className="aiPrimaryBtn" onClick={() => { onPublishDone(); onClose() }}>Fermer et rafraîchir</button>
+                : <>
+                    <button className="aiPrimaryBtn" onClick={() => setStep('preview')} style={{ background: '#374151' }}>← Réessayer</button>
+                    <button className="aiGhostBtn" onClick={onClose}>Fermer</button>
+                  </>
+              }
+            </div>
           </div>
         )}
       </div>
