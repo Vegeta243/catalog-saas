@@ -176,9 +176,9 @@ export default function AutomationPage() {
           ruleName: rule.name,
           status: "success",
           timestamp: new Date().toLocaleString("fr-FR"),
-          details: `Action: ${ACTION_LABELS[rule.action_type]} (${rule.action_value}%)`,
+          details: data.message || `Action: ${ACTION_LABELS[rule.action_type]} (${rule.action_value})`,
         }, ...prev]);
-        addToast(`Règle "${rule.name}" exécutée`, "success");
+        addToast(`"${rule.name}" — ${data.message || "exécutée"}`, "success");
       }
     } catch {
       setLogs((prev) => [{
@@ -326,14 +326,13 @@ export default function AutomationPage() {
           </div>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {logs.map((log) => (
-              <div key={log.id} className="flex items-center gap-3 text-xs py-1.5 border-b border-gray-100">
+              <div key={log.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs py-1.5 border-b border-gray-100">
                 {log.status === "success"
-                  ? <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#059669" }} />
-                  : <XCircle className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />}
+                  ? <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#059669" }} />
+                  : <XCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#ef4444" }} />}
                 <span className="font-medium" style={{ color: "#0f172a" }}>{log.ruleName}</span>
-                <span style={{ color: "#94a3b8" }}>—</span>
-                <span style={{ color: "#64748b" }}>{log.details}</span>
-                <span className="ml-auto" style={{ color: "#94a3b8" }}>{log.timestamp}</span>
+                <span className="flex-1 min-w-0 truncate" style={{ color: "#64748b" }}>{log.details}</span>
+                <span className="flex-shrink-0" style={{ color: "#94a3b8" }}>{log.timestamp}</span>
               </div>
             ))}
           </div>
@@ -347,8 +346,8 @@ export default function AutomationPage() {
             <Zap className="w-4 h-4" style={{ color: "#2563eb" }} />
             Créer une règle d&apos;automatisation
           </h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="col-span-1 sm:col-span-2">
               <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>
                 Nom de la règle
               </label>
@@ -473,23 +472,23 @@ export default function AutomationPage() {
                 </button>
 
                 <button onClick={() => setExpandedRule(expandedRule === rule.id ? null : rule.id)}
-                  className="flex-1 text-left">
-                  <div className="flex items-center gap-2">
+                  className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     {getConditionIcon(rule.condition_type)}
-                    <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>{rule.name}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{rule.name}</p>
                     {rule.enabled && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 bg-emerald-100 rounded"
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 bg-emerald-100 rounded flex-shrink-0"
                         style={{ color: "#059669" }}>ACTIVE</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <span className="text-xs px-2 py-0.5 bg-blue-50 rounded flex items-center gap-1"
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                    <span className="text-xs px-2 py-0.5 bg-blue-50 rounded"
                       style={{ color: "#2563eb" }}>
                       SI: {CONDITION_LABELS[rule.condition_type] || rule.condition_type}
                       {rule.condition_value && ` (${rule.condition_value})`}
                     </span>
                     <span style={{ color: "#d1d5db" }}>→</span>
-                    <span className="text-xs px-2 py-0.5 bg-emerald-50 rounded flex items-center gap-1"
+                    <span className="text-xs px-2 py-0.5 bg-emerald-50 rounded"
                       style={{ color: "#059669" }}>
                       ALORS: {ACTION_LABELS[rule.action_type] || rule.action_type}
                       {rule.action_value && ` (${rule.action_value})`}
@@ -497,19 +496,19 @@ export default function AutomationPage() {
                   </div>
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   {rule.run_count > 0 && (
-                    <span className="flex items-center gap-1 text-xs px-2 py-1 bg-gray-100 rounded"
+                    <span className="hidden sm:flex items-center gap-1 text-xs px-2 py-1 bg-gray-100 rounded"
                       style={{ color: "#64748b" }}>
                       <BarChart3 className="w-3 h-3" /> {rule.run_count}
                     </span>
                   )}
                   <button onClick={() => executeRule(rule)} disabled={executing === rule.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-xs font-medium transition-colors">
+                    className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-xs font-medium transition-colors">
                     {executing === rule.id
                       ? <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ color: "#059669" }} />
                       : <Play className="w-3.5 h-3.5" style={{ color: "#059669" }} />}
-                    <span style={{ color: "#065f46" }}>Exécuter</span>
+                    <span className="hidden sm:inline" style={{ color: "#065f46" }}>Exécuter</span>
                   </button>
                   <button onClick={() => deleteRule(rule.id)} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors">
                     <Trash2 className="w-4 h-4" style={{ color: "#ef4444" }} />
@@ -525,8 +524,8 @@ export default function AutomationPage() {
 
               {/* Expanded details */}
               {expandedRule === rule.id && (
-                <div className="border-t border-gray-100 px-5 py-4 bg-gray-50/50">
-                  <div className="grid grid-cols-3 gap-4 text-xs">
+                <div className="border-t border-gray-100 px-3 sm:px-5 py-4 bg-gray-50/50">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                     <div>
                       <p className="font-medium mb-1" style={{ color: "#64748b" }}>Condition</p>
                       <p style={{ color: "#0f172a" }}>

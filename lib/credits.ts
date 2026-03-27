@@ -20,7 +20,7 @@ export const PLAN_FEATURES = {
     bulk_edit: true,
     image_editor: true,
     import_aliexpress: false,
-    automations: false,
+    automations: true,
     calendar: true,
     competitor_analysis: false,
     api_access: false,
