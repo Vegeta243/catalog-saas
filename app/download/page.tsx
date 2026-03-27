@@ -158,7 +158,7 @@ export default function DownloadPage() {
 
             <div style={{
               backgroundColor: '#1e293b',
-              border: '1px solid #334155',
+              border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '16px',
               padding: '20px'
             }}>
@@ -190,7 +190,7 @@ export default function DownloadPage() {
 
             <div style={{
               backgroundColor: '#1e293b',
-              border: '1px solid #334155',
+              border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '12px',
               padding: '14px 16px'
             }}>
@@ -224,7 +224,7 @@ export default function DownloadPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{
               backgroundColor: '#1e293b',
-              border: '1px solid #334155',
+              border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '16px',
               padding: '24px',
               textAlign: 'center'

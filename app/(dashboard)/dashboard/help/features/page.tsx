@@ -105,7 +105,7 @@ export default function FeaturesHelpPage() {
             }}
           >
             {/* Header */}
-            <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #1a2234' }}>
+            <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{
@@ -143,8 +143,8 @@ export default function FeaturesHelpPage() {
                   <div
                     key={s.step}
                     style={{
-                      background: '#0a0f1e',
-                      border: '1px solid #1a2234',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 14,
                       padding: '14px 16px',
                       display: 'flex',
