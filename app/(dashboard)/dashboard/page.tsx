@@ -58,7 +58,7 @@ export default function DashboardPage() {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([
     { label: 'Connecter Shopify', done: false, href: '/dashboard/shops', desc: 'Reliez votre boutique' },
     { label: 'Synchroniser les produits', done: false, href: '/dashboard/products', desc: 'Importez vos produits' },
-    { label: 'Lancer une optimisation IA', done: false, href: '/dashboard/ai', desc: 'Premiere fiche optimisee' },
+    { label: 'Lancer une optimisation IA', done: false, href: '/dashboard/ai', desc: 'Première fiche optimisée' },
   ])
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       setChecklist([
         { label: 'Connecter Shopify', done: shopCount > 0, href: '/dashboard/shops', desc: 'Reliez votre boutique' },
         { label: 'Synchroniser les produits', done: productCount > 0, href: '/dashboard/products', desc: 'Importez vos produits' },
-        { label: 'Premiere optimisation IA', done: actionsUsed > 0, href: '/dashboard/ai', desc: 'Generez votre premiere fiche' },
+        { label: 'Première optimisation IA', done: actionsUsed > 0, href: '/dashboard/ai', desc: 'Générez votre première fiche' },
       ])
     })()
   }, [])
@@ -179,7 +179,7 @@ export default function DashboardPage() {
       <div className="dash-bottom-grid">
         {!allDone && (
           <div style={S.card}>
-            <p style={S.sectionTitle}>Demarrer</p>
+            <p style={S.sectionTitle}>Démarrer</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {checklist.map((s, i) => (
                 <a key={s.label} href={s.href} style={{ textDecoration: 'none' }}>

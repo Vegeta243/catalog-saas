@@ -119,7 +119,7 @@ export default function ImagesPage() {
       if ((data.products || []).length === 0)
         addToast("Aucune image produit - connectez votre boutique Shopify", "error");
     } catch {
-      addToast("Impossible de charger les images - boutique non connectee", "error");
+      addToast("Impossible de charger les images — boutique non connectée", "error");
       setShopifyLoaded(true);
     }
     setLoadingShopify(false);
