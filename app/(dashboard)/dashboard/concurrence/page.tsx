@@ -580,8 +580,8 @@ export default function ConcurrencePage() {
                       {[
                         { label: 'Produits détectés', value: String(selected.snapshot.products_found || 0), icon: <Package className="w-4 h-4" style={{ color: '#2563eb' }} /> },
                         { label: 'Prix moyen', value: selected.snapshot.avg_price ? `${selected.snapshot.avg_price.toFixed(2)}€` : 'N/A', icon: <Tag className="w-4 h-4" style={{ color: '#7c3aed' }} /> },
-                        { label: 'Note', value: selected.snapshot.avg_rating ? `${selected.snapshot.avg_rating}/5 ⭐` : 'N/A', icon: <Star className="w-4 h-4" style={{ color: '#f59e0b' }} /> },
-                        { label: 'Promotions', value: selected.snapshot.promo_detected ? '🔥 Actives' : 'Aucune', icon: <Bell className="w-4 h-4" style={{ color: '#ef4444' }} /> },
+                        { label: 'Note', value: selected.snapshot.avg_rating ? `${selected.snapshot.avg_rating}/5` : 'N/A', icon: <Star className="w-4 h-4" style={{ color: '#f59e0b' }} /> },
+                        { label: 'Promotions', value: selected.snapshot.promo_detected ? ' Actives' : 'Aucune', icon: <Bell className="w-4 h-4" style={{ color: '#ef4444' }} /> },
                       ].map((kpi, i) => (
                         <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
                           <div className="flex items-center gap-2 mb-1">{kpi.icon}<span className="text-xs" style={{ color: '#94a3b8' }}>{kpi.label}</span></div>
@@ -610,13 +610,13 @@ export default function ConcurrencePage() {
                           ))}
                           {selected.snapshot.new_products?.map((p, i) => (
                             <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg text-sm bg-green-50">
-                              <span style={{ color: '#059669', fontWeight: 700 }}>🆕</span>
+                              <span style={{ color: '#059669', fontWeight: 700 }}>NEW</span>
                               <span style={{ color: '#374151' }}>Nouveau : <strong>{p}</strong></span>
                             </div>
                           ))}
                           {selected.snapshot.removed_products?.map((p, i) => (
                             <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg text-sm bg-red-50">
-                              <span style={{ color: '#ef4444', fontWeight: 700 }}>❌</span>
+                              <span style={{ color: '#ef4444', fontWeight: 700 }}></span>
                               <span style={{ color: '#374151' }}>Retiré : <strong>{p}</strong></span>
                             </div>
                           ))}
@@ -625,7 +625,7 @@ export default function ConcurrencePage() {
                     )}
                     {selected.snapshot.insights?.length > 0 && (
                       <div className="rounded-xl p-5 border" style={{ background: 'linear-gradient(135deg,#eff6ff,#eef2ff)', borderColor: '#bfdbfe' }}>
-                        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: '#1e40af' }}>✨ Recommandations IA</h3>
+                        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: '#1e40af' }}> Recommandations IA</h3>
                         <div className="space-y-2">
                           {selected.snapshot.insights.map((insight, i) => (
                             <div key={i} className="flex gap-3 p-3 bg-white rounded-lg text-sm" style={{ color: '#374151' }}>
@@ -640,22 +640,22 @@ export default function ConcurrencePage() {
                       <div className="grid grid-cols-2 gap-4">
                         {selected.snapshot.social && (
                           <div className="bg-white border border-gray-200 rounded-xl p-4">
-                            <h4 className="text-sm font-semibold mb-3" style={{ color: '#0f172a' }}>📱 Réseaux sociaux</h4>
+                            <h4 className="text-sm font-semibold mb-3" style={{ color: '#0f172a' }}> Réseaux sociaux</h4>
                             {[{ label: 'Facebook', val: selected.snapshot.social.facebook }, { label: 'Instagram', val: selected.snapshot.social.instagram }, { label: 'TikTok', val: selected.snapshot.social.tiktok }].map(s => (
                               <div key={s.label} className="flex items-center justify-between text-xs py-0.5">
                                 <span style={{ color: '#64748b' }}>{s.label}</span>
-                                <span style={{ color: s.val ? '#059669' : '#d1d5db' }}>{s.val ? '✓' : '✗'}</span>
+                                <span style={{ color: s.val ? '#059669' : '#d1d5db' }}>{s.val ? '' : ''}</span>
                               </div>
                             ))}
                           </div>
                         )}
                         {selected.snapshot.payment && (
                           <div className="bg-white border border-gray-200 rounded-xl p-4">
-                            <h4 className="text-sm font-semibold mb-3" style={{ color: '#0f172a' }}>💳 Paiement</h4>
+                            <h4 className="text-sm font-semibold mb-3" style={{ color: '#0f172a' }}> Paiement</h4>
                             {[{ label: 'PayPal', val: selected.snapshot.payment.paypal }, { label: 'Stripe', val: selected.snapshot.payment.stripe }, { label: 'Klarna', val: selected.snapshot.payment.klarna }].map(p => (
                               <div key={p.label} className="flex items-center justify-between text-xs py-0.5">
                                 <span style={{ color: '#64748b' }}>{p.label}</span>
-                                <span style={{ color: p.val ? '#059669' : '#d1d5db' }}>{p.val ? '✓' : '✗'}</span>
+                                <span style={{ color: p.val ? '#059669' : '#d1d5db' }}>{p.val ? '' : ''}</span>
                               </div>
                             ))}
                           </div>
@@ -664,7 +664,7 @@ export default function ConcurrencePage() {
                     )}
                     {selected.snapshot.shipping_info && selected.snapshot.shipping_info !== 'Non détecté' && (
                       <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}>🚚 Livraison</h3>
+                        <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Livraison</h3>
                         <p className="text-sm" style={{ color: '#64748b' }}>{selected.snapshot.shipping_info}</p>
                       </div>
                     )}
@@ -675,7 +675,7 @@ export default function ConcurrencePage() {
                 {activeTab === 'prices' && (
                   <div className="p-4 md:p-6 space-y-5">
                     <div className="bg-white border border-gray-200 rounded-xl p-5">
-                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}>📈 Suivi des prix</h3>
+                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Suivi des prix</h3>
                       <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Historique des prix enregistrés automatiquement à chaque analyse.</p>
                       {isPriceLoading ? (
                         <div className="text-center py-8 text-sm text-gray-400">Chargement...</div>
@@ -764,7 +764,7 @@ export default function ConcurrencePage() {
                   <div className="p-4 md:p-6 space-y-5">
                     {selected.snapshot.seo && (
                       <div className="bg-white border border-gray-200 rounded-xl p-5">
-                        <h3 className="font-semibold mb-3 text-sm" style={{ color: '#0f172a' }}>🔍 Données SEO détectées</h3>
+                        <h3 className="font-semibold mb-3 text-sm" style={{ color: '#0f172a' }}> Données SEO détectées</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="bg-gray-50 rounded-lg p-3">
                             <div className="text-xs font-medium mb-1" style={{ color: '#64748b' }}>Title tag</div>
@@ -773,7 +773,7 @@ export default function ConcurrencePage() {
                           <div className="bg-gray-50 rounded-lg p-3">
                             <div className="text-xs font-medium mb-1" style={{ color: '#64748b' }}>Meta description</div>
                             <div className="text-sm font-semibold" style={{ color: selected.snapshot.seo.has_meta_description ? '#059669' : '#ef4444' }}>
-                              {selected.snapshot.seo.has_meta_description ? '✓ Présente' : '✗ Absente'}
+                              {selected.snapshot.seo.has_meta_description ? ' Présente' : ' Absente'}
                             </div>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3">
@@ -784,7 +784,7 @@ export default function ConcurrencePage() {
                       </div>
                     )}
                     <div className="bg-white border border-gray-200 rounded-xl p-5">
-                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}>✨ Comparaison SEO par IA</h3>
+                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Comparaison SEO par IA</h3>
                       <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Entrez vos mots-clés pour obtenir une analyse comparative.</p>
                       <textarea value={myKeywords} onChange={e => setMyKeywords(e.target.value)}
                         placeholder="Entrez vos mots-clés..."
@@ -813,10 +813,10 @@ export default function ConcurrencePage() {
                           </div>
                         )}
                         {([
-                          { title: '💪 Points forts du concurrent', items: seoResult.competitor_strengths, color: '#fef3c7', border: '#fde68a' },
-                          { title: '🚀 Mes opportunités SEO', items: seoResult.my_opportunities, color: '#f0fdf4', border: '#bbf7d0' },
-                          { title: '🔑 Mots-clés manquants', items: seoResult.keyword_gaps, color: '#eff6ff', border: '#bfdbfe' },
-                          { title: '⚡ Actions rapides', items: seoResult.quick_wins, color: '#faf5ff', border: '#e9d5ff' },
+                          { title: ' Points forts du concurrent', items: seoResult.competitor_strengths, color: '#fef3c7', border: '#fde68a' },
+                          { title: ' Mes opportunités SEO', items: seoResult.my_opportunities, color: '#f0fdf4', border: '#bbf7d0' },
+                          { title: ' Mots-clés manquants', items: seoResult.keyword_gaps, color: '#eff6ff', border: '#bfdbfe' },
+                          { title: ' Actions rapides', items: seoResult.quick_wins, color: '#faf5ff', border: '#e9d5ff' },
                         ] as { title: string; items: string[]; color: string; border: string }[]).map(({ title, items, color, border }) => items?.length > 0 && (
                           <div key={title} className="rounded-xl p-4 border" style={{ backgroundColor: color, borderColor: border }}>
                             <h4 className="font-semibold mb-2 text-sm" style={{ color: '#0f172a' }}>{title}</h4>
@@ -832,7 +832,7 @@ export default function ConcurrencePage() {
                 {activeTab === 'catalog' && (
                   <div className="p-4 md:p-6 space-y-5">
                     <div className="bg-white border border-gray-200 rounded-xl p-5">
-                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}>📦 Analyse des gaps catalogue</h3>
+                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Analyse des gaps catalogue</h3>
                       <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Comparez vos catalogues pour identifier les opportunités manquées.</p>
                       <label className="text-xs font-medium block mb-1" style={{ color: '#374151' }}>Mes produits (un par ligne)</label>
                       <textarea value={myProducts} onChange={e => setMyProducts(e.target.value)}
@@ -860,9 +860,9 @@ export default function ConcurrencePage() {
                           <div className="text-3xl font-black text-blue-600">{catalogResult.opportunity_score}</div>
                         </div>
                         {([
-                          { title: '❌ Catégories manquantes', items: catalogResult.missing_categories, color: '#fef2f2', border: '#fecaca' },
-                          { title: '✅ Mes exclusivités', items: catalogResult.unique_to_me, color: '#f0fdf4', border: '#bbf7d0' },
-                          { title: '🎯 Recommandations', items: catalogResult.recommendations, color: '#eff6ff', border: '#bfdbfe' },
+                          { title: ' Catégories manquantes', items: catalogResult.missing_categories, color: '#fef2f2', border: '#fecaca' },
+                          { title: ' Mes exclusivités', items: catalogResult.unique_to_me, color: '#f0fdf4', border: '#bbf7d0' },
+                          { title: ' Recommandations', items: catalogResult.recommendations, color: '#eff6ff', border: '#bfdbfe' },
                         ] as { title: string; items: string[]; color: string; border: string }[]).map(({ title, items, color, border }) => items?.length > 0 && (
                           <div key={title} className="rounded-xl p-4 border" style={{ backgroundColor: color, borderColor: border }}>
                             <h4 className="font-semibold mb-2 text-sm" style={{ color: '#0f172a' }}>{title}</h4>
@@ -880,7 +880,7 @@ export default function ConcurrencePage() {
             {activeTab === 'alerts' && (
               <div className="p-4 md:p-6 space-y-5">
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}>🔔 Configurer une alerte</h3>
+                  <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Configurer une alerte</h3>
                   <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Soyez notifié des changements de ce concurrent.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -936,7 +936,7 @@ export default function ConcurrencePage() {
                   ) : (
                     <div className="space-y-2">
                       {alerts.map(alert => {
-                        const typeLabels: Record<string, string> = { price_drop: '📉 Baisse prix', price_increase: '📈 Hausse prix', new_product: '🆕 Nouveau produit', out_of_stock: '❌ Rupture stock', seo_change: '🔍 Changement SEO' }
+                        const typeLabels: Record<string, string> = { price_drop: 'Baisse prix', price_increase: 'Hausse prix', new_product: 'Nouveau produit', out_of_stock: 'Rupture stock', seo_change: 'Changement SEO' }
                         const freqLabels: Record<string, string> = { immediate: 'Immédiat', daily: 'Quotidien', weekly: 'Hebdomadaire' }
                         return (
                           <div key={alert.id} className={`flex items-center justify-between p-3 rounded-lg border ${alert.is_active ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>

@@ -740,7 +740,7 @@ export default function ImagesPage() {
                                 isSelected ? "bg-blue-500 border-blue-500" : "bg-white border-gray-400 hover:border-blue-400"
                               }`}
                             >
-                              {isSelected && <span className="text-white text-[8px] font-bold">✓</span>}
+                              {isSelected && <span className="text-white text-[8px] font-bold"></span>}
                             </button>
                             <span className="text-[10px] truncate font-medium" style={{ color: "#374151" }}>
                               {img.productTitle || img.name}
@@ -780,7 +780,7 @@ export default function ImagesPage() {
                       {activeItem.productTitle || activeItem.name}
                     </span>
                     {processedImages[activeItem.idx] !== undefined && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 rounded font-medium flex-shrink-0" style={{ color: "#059669" }}>✏ éditée</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 rounded font-medium flex-shrink-0" style={{ color: "#059669" }}> éditée</span>
                     )}
                   </>
                 )}
@@ -831,11 +831,11 @@ export default function ImagesPage() {
                 <button
                   onClick={() => { setProcessedImages((prev) => ({ ...prev, [activeIndex]: pendingPreview })); setPendingPreview(null); addToast("Modification appliquée", "success"); }}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg text-xs font-medium">
-                  ✅ Appliquer
+                   Appliquer
                 </button>
                 <button onClick={() => setPendingPreview(null)}
                   className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-white" style={{ color: "#374151" }}>
-                  ✗
+                  
                 </button>
               </div>
             )}

@@ -8,12 +8,12 @@ function proxyImg(src: string): string {
 
 function detectPlatform(url: string) {
   const u = url.toLowerCase()
-  if (u.includes('aliexpress')) return { name: 'AliExpress', emoji: '🛒', color: '#fca5a5', bg: '#2d0a0a', border: '#7f1d1d' }
-  if (u.includes('cjdropshipping')) return { name: 'CJDropshipping', emoji: '📦', color: '#93c5fd', bg: '#0a122d', border: '#1d3a7f' }
-  if (u.includes('dhgate')) return { name: 'DHgate', emoji: '🏭', color: '#86efac', bg: '#0a1f0d', border: '#166534' }
-  if (u.includes('alibaba')) return { name: 'Alibaba', emoji: '🌐', color: '#fcd34d', bg: '#1f1500', border: '#854d0e' }
-  if (u.includes('banggood')) return { name: 'Banggood', emoji: '⚡', color: '#c4b5fd', bg: '#150a2d', border: '#6b21a8' }
-  if (url.startsWith('http')) return { name: 'Site web', emoji: '🔗', color: '#94a3b8', bg: '#111827', border: '#334155' }
+  if (u.includes('aliexpress')) return { name: 'AliExpress', emoji: '', color: '#fca5a5', bg: '#2d0a0a', border: '#7f1d1d' }
+  if (u.includes('cjdropshipping')) return { name: 'CJDropshipping', emoji: '', color: '#93c5fd', bg: '#0a122d', border: '#1d3a7f' }
+  if (u.includes('dhgate')) return { name: 'DHgate', emoji: '', color: '#86efac', bg: '#0a1f0d', border: '#166534' }
+  if (u.includes('alibaba')) return { name: 'Alibaba', emoji: '', color: '#fcd34d', bg: '#1f1500', border: '#854d0e' }
+  if (u.includes('banggood')) return { name: 'Banggood', emoji: '', color: '#c4b5fd', bg: '#150a2d', border: '#6b21a8' }
+  if (url.startsWith('http')) return { name: 'Site web', emoji: '', color: '#94a3b8', bg: '#111827', border: '#334155' }
   return null
 }
 
@@ -135,7 +135,7 @@ export default function ImportPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #1e2d45', marginBottom: '20px' }}>
-        {([['import', '📥 Importer'], ['history', '🕐 Historique']] as const).map(([id, label]) => (
+        {([['import', ' Importer'], ['history', ' Historique']] as const).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{
             padding: '10px 20px', border: 'none', background: 'transparent',
             cursor: 'pointer', fontWeight: 700, fontSize: '14px',
@@ -242,10 +242,10 @@ export default function ImportPage() {
                 Synchroniser avec Shopify
               </p>
               {shopifyOk ? (
-                <p style={{ ...lbl, margin: 0, color: '#86efac' }}>✓ Boutique connectée</p>
+                <p style={{ ...lbl, margin: 0, color: '#86efac' }}> Boutique connectée</p>
               ) : (
                 <p style={{ ...lbl, margin: 0, color: '#ef4444' }}>
-                  ⚠ Aucune boutique —{' '}
+                   Aucune boutique —{' '}
                   <a href="/dashboard/shops" style={{ color: '#4f8ef7', textDecoration: 'none' }}>Connecter</a>
                 </p>
               )}
@@ -256,7 +256,7 @@ export default function ImportPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px', marginBottom: '20px' }}>
             <button onClick={doPreview} disabled={previewing || urls.length === 0}
               style={{ ...btnSec, opacity: urls.length === 0 ? 0.4 : 1 }}>
-              {previewing ? '⏳ ...' : '👁 Aperçu'}
+              {previewing ? '⏳ ...' : ' Aperçu'}
             </button>
             <button onClick={doImport} disabled={importing || urls.length === 0}
               style={{ ...btnPri, opacity: urls.length === 0 ? 0.4 : 1 }}>
@@ -307,7 +307,7 @@ export default function ImportPage() {
                         display: 'flex', alignItems: 'center',
                         justifyContent: 'center', fontSize: '24px',
                       }}>
-                        {r.success ? '📦' : '❌'}
+                        {r.success ? '' : ''}
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -334,7 +334,7 @@ export default function ImportPage() {
                         background: 'rgba(34,197,94,0.15)', color: '#86efac',
                         fontSize: '12px', fontWeight: 700,
                         padding: '4px 10px', borderRadius: '8px', flexShrink: 0,
-                      }}>✓ Shopify</span>
+                      }}> Shopify</span>
                     )}
                   </div>
                 ))}
@@ -350,12 +350,12 @@ export default function ImportPage() {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 {([
-                  ['🛒', 'AliExpress', 'aliexpress.com/item/...', '#fca5a5'],
-                  ['📦', 'CJDropshipping', 'cjdropshipping.com/...', '#93c5fd'],
-                  ['🏭', 'DHgate', 'dhgate.com/product/...', '#86efac'],
-                  ['🌐', 'Alibaba', 'alibaba.com/...', '#fcd34d'],
-                  ['⚡', 'Banggood', 'banggood.com/...', '#c4b5fd'],
-                  ['🔗', 'Tout site', "N'importe quelle URL", '#94a3b8'],
+                  ['', 'AliExpress', 'aliexpress.com/item/...', '#fca5a5'],
+                  ['', 'CJDropshipping', 'cjdropshipping.com/...', '#93c5fd'],
+                  ['', 'DHgate', 'dhgate.com/product/...', '#86efac'],
+                  ['', 'Alibaba', 'alibaba.com/...', '#fcd34d'],
+                  ['', 'Banggood', 'banggood.com/...', '#c4b5fd'],
+                  ['', 'Tout site', "N'importe quelle URL", '#94a3b8'],
                 ] as const).map(([emoji, name, url, color]) => (
                   <div key={name} style={{
                     display: 'flex', alignItems: 'center', gap: '10px',
@@ -380,7 +380,7 @@ export default function ImportPage() {
         <>
           {history.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ fontSize: '40px', margin: '0 0 12px' }}>📋</p>
+              <p style={{ fontSize: '40px', margin: '0 0 12px' }}></p>
               <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: '16px', margin: '0 0 6px' }}>
                 Aucun import pour l&apos;instant
               </p>
@@ -400,7 +400,7 @@ export default function ImportPage() {
                             ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
                           color: job.status === 'completed' ? '#86efac' : '#fca5a5',
                         }}>
-                          {job.status === 'completed' ? '✓ Terminé' : '✗ Échoué'}
+                          {job.status === 'completed' ? ' Terminé' : ' Échoué'}
                         </span>
                         <span style={{ ...lbl, textTransform: 'capitalize' }}>{job.platform}</span>
                       </div>

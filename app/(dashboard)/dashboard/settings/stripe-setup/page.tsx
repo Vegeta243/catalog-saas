@@ -97,7 +97,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE`}
           </p>
           <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
             <p className="text-xs font-medium" style={{ color: "#92400e" }}>
-              ⚠️ Assurez-vous d&apos;avoir configuré <code>STRIPE_SECRET_KEY</code> dans .env.local et redémarré le serveur avant de continuer.
+              ️ Assurez-vous d&apos;avoir configuré <code>STRIPE_SECRET_KEY</code> dans .env.local et redémarré le serveur avant de continuer.
             </p>
           </div>
           <button
@@ -125,7 +125,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE`}
           {autoSetupStatus === "success" && priceIds && envSnippet && (
             <div className="space-y-3">
               <p className="text-sm font-medium" style={{ color: "#065f46" }}>
-                ✅ Copiez ces Price IDs dans votre .env.local :
+                 Copiez ces Price IDs dans votre .env.local :
               </p>
               <div className="rounded-xl overflow-hidden border border-gray-200">
                 <div className="flex items-center justify-between px-4 py-2 bg-gray-900">
@@ -224,7 +224,7 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook`}
           </div>
           <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50">
             <p className="text-xs font-medium" style={{ color: "#065f46" }}>
-              ✅ Le flux OAuth est complet : <code>/api/auth/shopify</code> → Shopify → <code>/api/auth/shopify/callback</code> → Supabase <code>shops</code> table.
+               Le flux OAuth est complet : <code>/api/auth/shopify</code> → Shopify → <code>/api/auth/shopify/callback</code> → Supabase <code>shops</code> table.
             </p>
           </div>
           <p className="text-sm" style={{ color: "#64748b" }}>

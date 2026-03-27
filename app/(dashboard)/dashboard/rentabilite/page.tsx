@@ -101,31 +101,31 @@ function computeProfit(
   const pct = (v: number) => ((v / sellingPrice) * 100);
 
   const breakdown: BreakdownLine[] = [
-    { icon: "💰", label: "Prix de vente", amount: sellingPrice, pct: 100, isPositive: true },
+    { icon: "", label: "Prix de vente", amount: sellingPrice, pct: 100, isPositive: true },
     { icon: "——", label: "", amount: 0, pct: 0, isSeparator: true },
-    { icon: "📦", label: "Coût produit", amount: -costPrice, pct: -pct(costPrice) },
-    { icon: "🏪", label: `Frais Shopify (répartis sur ${monthlyOrders} cmd/mois)`, amount: -shopifyPerOrder, pct: -pct(shopifyPerOrder) },
-    { icon: "💳", label: `Frais paiement (${s.payment_processing_fee_pct}% + ${s.payment_processing_fixed}€)`, amount: -paymentFee, pct: -pct(paymentFee) },
-    ...(s.shopify_transaction_fee_pct > 0 ? [{ icon: "🏦", label: `Frais transaction Shopify (${s.shopify_transaction_fee_pct}%)`, amount: -shopifyTxFee, pct: -pct(shopifyTxFee) }] : []),
-    { icon: "📣", label: `Publicité estimée (${s.avg_ad_spend_pct}% du CA)`, amount: -adSpend, pct: -pct(adSpend) },
-    { icon: "🚚", label: "Expédition", amount: -s.avg_shipping_cost, pct: -pct(s.avg_shipping_cost) },
-    { icon: "🔄", label: `Retours — provision (${s.avg_return_rate_pct}%)`, amount: -returnProvision, pct: -pct(returnProvision) },
-    { icon: "🛠️", label: "Outils SaaS (répartis)", amount: -toolsPerOrder, pct: -pct(toolsPerOrder) },
-    ...(fixedPerOrder > 0 ? [{ icon: "📋", label: "Charges fixes (réparties)", amount: -fixedPerOrder, pct: -pct(fixedPerOrder) }] : []),
+    { icon: "", label: "Coût produit", amount: -costPrice, pct: -pct(costPrice) },
+    { icon: "", label: `Frais Shopify (répartis sur ${monthlyOrders} cmd/mois)`, amount: -shopifyPerOrder, pct: -pct(shopifyPerOrder) },
+    { icon: "", label: `Frais paiement (${s.payment_processing_fee_pct}% + ${s.payment_processing_fixed}€)`, amount: -paymentFee, pct: -pct(paymentFee) },
+    ...(s.shopify_transaction_fee_pct > 0 ? [{ icon: "", label: `Frais transaction Shopify (${s.shopify_transaction_fee_pct}%)`, amount: -shopifyTxFee, pct: -pct(shopifyTxFee) }] : []),
+    { icon: "", label: `Publicité estimée (${s.avg_ad_spend_pct}% du CA)`, amount: -adSpend, pct: -pct(adSpend) },
+    { icon: "", label: "Expédition", amount: -s.avg_shipping_cost, pct: -pct(s.avg_shipping_cost) },
+    { icon: "", label: `Retours — provision (${s.avg_return_rate_pct}%)`, amount: -returnProvision, pct: -pct(returnProvision) },
+    { icon: "️", label: "Outils SaaS (répartis)", amount: -toolsPerOrder, pct: -pct(toolsPerOrder) },
+    ...(fixedPerOrder > 0 ? [{ icon: "", label: "Charges fixes (réparties)", amount: -fixedPerOrder, pct: -pct(fixedPerOrder) }] : []),
     { icon: "——", label: "", amount: 0, pct: 0, isSeparator: true },
     {
-      icon: "📊", label: "Résultat avant impôt", amount: preтaxProfit, pct: pct(preтaxProfit),
+      icon: "", label: "Résultat avant impôt", amount: preтaxProfit, pct: pct(preтaxProfit),
       isPositive: preтaxProfit >= 0,
     },
     {
-      icon: "🏛️", label: `TVA (${s.vat_rate_pct}%) — collectée, non incluse dans le coût`,
+      icon: "️", label: `TVA (${s.vat_rate_pct}%) — collectée, non incluse dans le coût`,
       amount: sellingPrice * (s.vat_rate_pct / 100),
       pct: s.vat_rate_pct, isInfo: true,
     },
-    { icon: "💼", label: `Impôt estimé (${s.income_tax_rate_pct}%)`, amount: -taxAmount, pct: -pct(taxAmount) },
+    { icon: "", label: `Impôt estimé (${s.income_tax_rate_pct}%)`, amount: -taxAmount, pct: -pct(taxAmount) },
     { icon: "——", label: "", amount: 0, pct: 0, isSeparator: true },
     {
-      icon: "✅", label: "BÉNÉFICE NET", amount: netProfit, pct: netMarginPct,
+      icon: "", label: "BÉNÉFICE NET", amount: netProfit, pct: netMarginPct,
       isPositive: netProfit >= 0,
     },
   ];
@@ -263,7 +263,7 @@ export default function RentabilitePage() {
 
   const marginColor = netMarginPct >= 30 ? "#059669" : netMarginPct >= 15 ? "#d97706" : "#dc2626";
   const marginBg = netMarginPct >= 30 ? "#ecfdf5" : netMarginPct >= 15 ? "#fffbeb" : "#fef2f2";
-  const marginLabel = netMarginPct >= 30 ? "Excellente marge ✓" : netMarginPct >= 15 ? "Marge correcte" : "Marge insuffisante ⚠️";
+  const marginLabel = netMarginPct >= 30 ? "Excellente marge " : netMarginPct >= 15 ? "Marge correcte" : "Marge insuffisante ️";
 
   const targetMargin15Price = sellingPrice > 0
     ? (() => {
@@ -551,7 +551,7 @@ export default function RentabilitePage() {
               {sellingPrice > 0 && netProfit !== 0 && (
                 <div className="bg-white border border-gray-200 rounded-2xl p-5">
                   <h3 className="text-sm font-bold mb-3" style={{ color: "#0f172a" }}>
-                    📈 Simulation mensuelle
+                     Simulation mensuelle
                   </h3>
                   <div className="flex items-center gap-3 mb-4">
                     <label className="text-sm font-medium" style={{ color: "#374151" }}>

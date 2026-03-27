@@ -268,7 +268,7 @@ export default function HelpPage() {
 
           {sent && (
             <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center gap-3 mb-4">
-              <span className="text-2xl">✅</span>
+              <span className="text-2xl"></span>
               <div>
                 <p className="font-semibold text-green-800 dark:text-green-200">Message envoyé !</p>
                 <p className="text-sm text-green-600 dark:text-green-400">Vous recevrez une confirmation par email sous peu.</p>

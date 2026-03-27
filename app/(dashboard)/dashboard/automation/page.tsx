@@ -116,7 +116,7 @@ export default function AutomationPage() {
   if (userPlan !== null && !hasFeature(userPlan, 'automations')) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8" style={{ minHeight: '60vh' }}>
-        <div className="text-5xl mb-4">⚡</div>
+        <div className="text-5xl mb-4"></div>
         <h2 className="text-2xl font-bold mb-2">Automatisations</h2>
         <p className="text-gray-500 mb-6 max-w-md">
           Les automatisations sont disponibles à partir du plan <strong>Starter</strong>.

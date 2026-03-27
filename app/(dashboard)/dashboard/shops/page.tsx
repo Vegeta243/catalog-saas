@@ -50,7 +50,7 @@ function ShopsContent() {
     const connected = searchParams.get("connected");
     const error = searchParams.get("error");
     if (connected === "1") {
-      addToast("✅ Boutique Shopify connectée avec succès ! Vos produits sont maintenant accessibles.", "success");
+      addToast(" Boutique Shopify connectée avec succès ! Vos produits sont maintenant accessibles.", "success");
       // Clean URL
       router.replace("/dashboard/shops");
     } else if (error) {
@@ -64,7 +64,7 @@ function ShopsContent() {
         token_exchange: "Échange de token Shopify échoué. Réessayez.",
         no_token: "Aucun token reçu de Shopify. Réessayez.",
         config_missing: "Configuration serveur incomplète (clés Shopify). Contactez le support.",
-        already_connected: `⚠️ La boutique ${searchParams.get('shop') || ''} est déjà connectée à un autre compte EcomPilot. Chaque boutique ne peut être liée qu'à un seul compte.`,
+        already_connected: `️ La boutique ${searchParams.get('shop') || ''} est déjà connectée à un autre compte EcomPilot. Chaque boutique ne peut être liée qu'à un seul compte.`,
       };
       addToast(errorMessages[error] ?? `Erreur OAuth : ${error}`, "error");
       router.replace("/dashboard/shops");
@@ -152,7 +152,7 @@ function ShopsContent() {
       if (error) {
         setConnectError("Erreur lors de l'ajout. Réessayez.");
       } else {
-        setConnectSuccess(`✅ Boutique "${upserted.shop_name}" ajoutée !`);
+        setConnectSuccess(` Boutique "${upserted.shop_name}" ajoutée !`);
         setNewShopUrl("");
         await fetchShops();
         setTimeout(() => { setShowAddModal(false); setConnectSuccess(""); }, 1500);
@@ -226,9 +226,9 @@ function ShopsContent() {
           </button>
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
             {[
-              { icon: "⚡", title: "30 secondes", desc: "pour connecter votre boutique" },
-              { icon: "🔒", title: "Sécurisé", desc: "OAuth officiel Shopify · RGPD" },
-              { icon: "🤖", title: "IA incluse", desc: "descriptions + SEO dès la connexion" },
+              { icon: "", title: "30 secondes", desc: "pour connecter votre boutique" },
+              { icon: "", title: "Sécurisé", desc: "OAuth officiel Shopify · RGPD" },
+              { icon: "", title: "IA incluse", desc: "descriptions + SEO dès la connexion" },
             ].map((item) => (
               <div key={item.title} className="p-4 rounded-xl" style={{ backgroundColor: "#f8fafc" }}>
                 <span className="text-2xl mb-2 block">{item.icon}</span>
@@ -302,7 +302,7 @@ function ShopsContent() {
                     {/* Token warning */}
                     {!hasToken && (
                       <div className="mb-3 flex items-center justify-between p-2.5 rounded-lg" style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a" }}>
-                        <span className="text-xs font-medium" style={{ color: "#92400e" }}>⚠️ Connexion incomplète — produits non accessibles</span>
+                        <span className="text-xs font-medium" style={{ color: "#92400e" }}>️ Connexion incomplète — produits non accessibles</span>
                         <a
                           href={`/api/auth/shopify?shop=${shop.shop_domain}`}
                           className="text-xs font-bold px-2 py-1 rounded" style={{ backgroundColor: "#f59e0b", color: "#fff" }}

@@ -202,7 +202,7 @@ export default function RechercheIAPage() {
           <div>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "#374151" }}>Tendance</label>
             <div className="flex gap-1.5">
-              {([["trending", "🔥 Trending"], ["bestsellers", "⭐ Best sellers"], ["new", "🆕 Nouveautés"]] as const).map(([val, label]) => (
+              {([["trending", "Trending"], ["bestsellers", "Best sellers"], ["new", "Nouveautes"]] as const).map(([val, label]) => (
                 <button
                   key={val}
                   onClick={() => setTrend(val)}

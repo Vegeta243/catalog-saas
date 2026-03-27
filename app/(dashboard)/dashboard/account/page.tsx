@@ -166,7 +166,7 @@ export default function AccountPage() {
     setPasswordLoading(true);
     try {
       await updateUserPassword(newPassword);
-      addToast("✅ Mot de passe mis à jour avec succès", "success");
+      addToast(" Mot de passe mis à jour avec succès", "success");
       setNewPassword(""); setConfirmPassword("");
     } catch { addToast("Erreur lors du changement", "error"); }
     setPasswordLoading(false);

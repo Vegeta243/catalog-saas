@@ -22,10 +22,10 @@ interface DesignConfig {
 }
 
 const AMBIANCES = [
-  { id: "minimaliste", label: "Minimaliste", emoji: "✨", desc: "Épuré, espaces blancs, typographie sobre" },
-  { id: "luxe", label: "Luxe", emoji: "💎", desc: "Élégant, noir & or, premium" },
-  { id: "dynamique", label: "Dynamique", emoji: "⚡", desc: "Coloré, jeune, énergique" },
-  { id: "nature", label: "Nature", emoji: "🌿", desc: "Bio, vert, matériaux naturels" },
+  { id: "minimaliste", label: "Minimaliste", emoji: "", desc: "Épuré, espaces blancs, typographie sobre" },
+  { id: "luxe", label: "Luxe", emoji: "", desc: "Élégant, noir & or, premium" },
+  { id: "dynamique", label: "Dynamique", emoji: "", desc: "Coloré, jeune, énergique" },
+  { id: "nature", label: "Nature", emoji: "", desc: "Bio, vert, matériaux naturels" },
 ];
 
 const COLOR_PALETTES = [
@@ -176,7 +176,7 @@ export default function CreationBoutiquePage() {
         <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 className="w-10 h-10 text-emerald-600" />
         </div>
-        <h2 className="text-2xl font-bold mb-2" style={{ color: "#0f172a" }}>🎉 Design appliqué !</h2>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: "#0f172a" }}> Design appliqué !</h2>
         <p className="text-sm mb-6" style={{ color: "#64748b" }}>
           Votre boutique <strong>{shop?.shop_name}</strong> a été mise à jour avec le design <strong>{config.ambiance}</strong>.
         </p>
@@ -190,10 +190,10 @@ export default function CreationBoutiquePage() {
 
   if (applying) {
     const APPLY_STEPS = [
-      { label: "Connexion à Shopify…", icon: "🔗" },
-      { label: "Génération du contenu IA…", icon: "🤖" },
-      { label: "Application du design…", icon: "🎨" },
-      { label: "Design appliqué !", icon: "✅" },
+      { label: "Connexion à Shopify…", icon: "" },
+      { label: "Génération du contenu IA…", icon: "" },
+      { label: "Application du design…", icon: "" },
+      { label: "Design appliqué !", icon: "" },
     ];
     return (
       <div className="max-w-xl mx-auto pt-12">
@@ -214,7 +214,7 @@ export default function CreationBoutiquePage() {
                     isActive ? "bg-blue-50 border border-blue-200" : isDone ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-100"
                   }`}
                 >
-                  <span className="text-lg">{isDone ? "✅" : s.icon}</span>
+                  <span className="text-lg">{isDone ? "" : s.icon}</span>
                   <span className={`text-sm font-medium ${isActive ? "text-blue-700" : isDone ? "text-emerald-700" : "text-gray-400"}`}>
                     {s.label}
                   </span>
@@ -253,7 +253,7 @@ export default function CreationBoutiquePage() {
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                   step === s ? "bg-blue-600 text-white" : step > s ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-400"
                 }`}>
-                  {step > s ? "✓" : s}
+                  {step > s ? "" : s}
                 </div>
                 <span className={`text-xs font-medium hidden sm:block ${step === s ? "text-blue-600" : step > s ? "text-emerald-600" : "text-gray-400"}`}>{label}</span>
               </div>
@@ -335,7 +335,7 @@ export default function CreationBoutiquePage() {
                     <div className={`w-4 h-4 rounded flex-shrink-0 mt-0.5 border-2 flex items-center justify-center ${
                       active ? "bg-blue-600 border-blue-600 text-white" : "border-gray-300"
                     }`}>
-                      {active && <span className="text-xs leading-none">✓</span>}
+                      {active && <span className="text-xs leading-none"></span>}
                     </div>
                     <div>
                       <p className="text-xs font-semibold" style={{ color: "#0f172a" }}>{s.label}</p>

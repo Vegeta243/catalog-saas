@@ -56,7 +56,7 @@ export default function ParrainagePage() {
 
   const shareWhatsApp = () => {
     if (!stats?.referralUrl) return;
-    const text = `🚀 Essaie EcomPilot Elite pour ton dropshipping ! Gère tes produits, imports AliExpress et descriptions IA en 1 clic. Utilise mon lien de parrainage → ${stats.referralUrl}`;
+    const text = ` Essaie EcomPilot Elite pour ton dropshipping ! Gère tes produits, imports AliExpress et descriptions IA en 1 clic. Utilise mon lien de parrainage → ${stats.referralUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -112,9 +112,9 @@ export default function ParrainagePage() {
       {/* How it works */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { step: 1, icon: "🔗", title: "Partagez votre lien", desc: "Envoyez votre lien unique à vos amis" },
-          { step: 2, icon: "✅", title: "Ils s'inscrivent", desc: "Votre filleul crée son compte avec votre lien" },
-          { step: 3, icon: "🎁", title: "Vous gagnez -20%", desc: "Dès qu'il souscrit : -20%/mois sur votre abonnement (cumulable x3)" },
+          { step: 1, icon: "", title: "Partagez votre lien", desc: "Envoyez votre lien unique à vos amis" },
+          { step: 2, icon: "", title: "Ils s'inscrivent", desc: "Votre filleul crée son compte avec votre lien" },
+          { step: 3, icon: "", title: "Vous gagnez -20%", desc: "Dès qu'il souscrit : -20%/mois sur votre abonnement (cumulable x3)" },
         ].map(({ step, icon, title, desc }) => (
           <div key={step} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <div className="text-2xl mb-2">{icon}</div>
@@ -204,7 +204,7 @@ export default function ParrainagePage() {
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-700"
                 }`}>
-                  {r.status === "converted" ? "✅ Converti" : "⏳ En attente"}
+                  {r.status === "converted" ? " Converti" : "⏳ En attente"}
                 </span>
               </div>
             ))}

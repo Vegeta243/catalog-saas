@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 
 const FEATURES = [
   {
-    emoji: '🛒',
+    emoji: '',
     title: 'Import de produits',
     subtitle: 'Importez depuis AliExpress, CJDropshipping, DHgate, Alibaba, Banggood et plus encore.',
     href: '/dashboard/import',
@@ -19,7 +19,7 @@ const FEATURES = [
     ],
   },
   {
-    emoji: '✨',
+    emoji: '',
     title: 'Optimisation IA',
     subtitle: 'Générez des titres et descriptions SEO optimisés pour vos produits en 1 clic.',
     href: '/dashboard/ai',
@@ -32,7 +32,7 @@ const FEATURES = [
     ],
   },
   {
-    emoji: '📦',
+    emoji: '',
     title: 'Modification en masse',
     subtitle: 'Modifiez les prix, titres et descriptions de centaines de produits en une seule action.',
     href: '/dashboard/products',
@@ -45,7 +45,7 @@ const FEATURES = [
     ],
   },
   {
-    emoji: '🏪',
+    emoji: '',
     title: 'Connexion boutique Shopify',
     subtitle: 'Synchronisez votre boutique Shopify pour accéder à toutes les fonctionnalités.',
     href: '/dashboard/shops',
@@ -58,7 +58,7 @@ const FEATURES = [
     ],
   },
   {
-    emoji: '💳',
+    emoji: '',
     title: 'Forfaits et crédits',
     subtitle: 'Comprenez votre quota d\'actions IA et comment upgrader votre forfait.',
     href: '/dashboard/credits',

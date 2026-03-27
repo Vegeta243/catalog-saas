@@ -135,7 +135,7 @@ export default function AIPage() {
       const data = await res.json();
       setGeneratedContent((prev) => ({ ...prev, [product.id]: { ...prev[product.id], ...data } }));
       setExpandedId(product.id); // auto-expand pour accès immédiat
-      addToast("✅ Contenu IA prêt — cliquez \"Tout appliquer\" ci-dessous", "success");
+      addToast(" Contenu IA prêt — cliquez \"Tout appliquer\" ci-dessous", "success");
     } catch { addToast("Erreur IA — vérifiez votre clé OpenAI", "error"); }
     setGenerating(null);
   };
@@ -170,7 +170,7 @@ export default function AIPage() {
           ...((data.keywords || data.tags) ? { tags: data.keywords || data.tags } : {}),
         };
       }));
-      addToast("⚡ Appliqué ! Score SEO mis à jour.", "success");
+      addToast(" Appliqué ! Score SEO mis à jour.", "success");
       // Écriture historique (fire-and-forget)
       try {
         const supabase = createClient();
@@ -213,7 +213,7 @@ export default function AIPage() {
           ...((toApply.includes("tags") && (content.keywords || content.tags)) ? { tags: content.keywords || content.tags } : {}),
         };
       }));
-      addToast("✅ Appliqué ! Score SEO mis à jour.", "success");
+      addToast(" Appliqué ! Score SEO mis à jour.", "success");
       // Écriture historique (fire-and-forget)
       try {
         const supabase = createClient();

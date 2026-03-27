@@ -20,7 +20,7 @@ export default function ImportTestPage() {
       color: '#f1f5f9',
     }}>
       <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '20px' }}>
-        🧪 Test Import en Masse
+         Test Import en Masse
       </h1>
 
       <div style={{ 
@@ -54,7 +54,7 @@ export default function ImportTestPage() {
             boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
           }}
         >
-          📦 Ouvrir le Modal d'Import
+           Ouvrir le Modal d'Import
         </button>
 
         {lastImport !== null && (
@@ -66,7 +66,7 @@ export default function ImportTestPage() {
             borderRadius: '8px',
           }}>
             <p style={{ margin: 0, color: '#4ade80', fontWeight: '600' }}>
-              ✓ Dernier import : {lastImport} produit(s) importé(s)
+               Dernier import : {lastImport} produit(s) importé(s)
             </p>
           </div>
         )}

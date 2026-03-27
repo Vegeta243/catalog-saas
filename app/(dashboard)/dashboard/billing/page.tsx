@@ -36,8 +36,8 @@ function BillingContent() {
       const isDemo = searchParams.get("demo") === "true";
       addToast(
         isDemo
-          ? "✅ [DÉMO] Abonnement simulé activé — Ajoutez STRIPE_SECRET_KEY pour activer les vrais paiements"
-          : "Abonnement activé avec succès ! Bienvenue 🎉",
+          ? " [DÉMO] Abonnement simulé activé — Ajoutez STRIPE_SECRET_KEY pour activer les vrais paiements"
+          : "Abonnement activé avec succès ! Bienvenue ",
         "success"
       );
     }

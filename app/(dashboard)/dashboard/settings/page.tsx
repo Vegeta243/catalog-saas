@@ -750,7 +750,7 @@ export default function SettingsPage() {
 
                   {/* Publicité */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>📣 Publicité</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}> Publicité</h2>
                     <div>
                       <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>
                         % du CA dépensé en publicité
@@ -772,7 +772,7 @@ export default function SettingsPage() {
 
                   {/* Logistique */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>🚚 Logistique & Retours</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}> Logistique & Retours</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
                         { key: "avg_shipping_cost" as const, label: "Coût moyen expédition (€/commande)", placeholder: "5" },
@@ -798,7 +798,7 @@ export default function SettingsPage() {
 
                   {/* Taxes */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>🏛️ Taxes & Légal</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>️ Taxes & Légal</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>TVA applicable (%)</label>
@@ -833,7 +833,7 @@ export default function SettingsPage() {
 
                   {/* Outils & Fixes */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>🛠️ Outils & Charges fixes</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>️ Outils & Charges fixes</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Abonnement EcomPilot (€/mois)</label>
