@@ -15,13 +15,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const { data: shop, error: shopError } = await supabase
+    const { data: shopRows, error: shopError } = await supabase
       .from('shops')
       .select('shop_domain, access_token')
       .eq('user_id', user.id)
       .eq('is_active', true)
-      .single()
+      .limit(1)
 
+    const shop = shopRows?.[0]
     if (shopError || !shop) {
       return NextResponse.json({ error: 'Aucune boutique connectée' }, { status: 404 })
     }
@@ -113,13 +114,14 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const { data: shop, error: shopError } = await supabase
+    const { data: shopRows2, error: shopError } = await supabase
       .from('shops')
       .select('shop_domain, access_token')
       .eq('user_id', user.id)
       .eq('is_active', true)
-      .single()
+      .limit(1)
 
+    const shop = shopRows2?.[0]
     if (shopError || !shop) {
       return NextResponse.json({ error: 'Aucune boutique connectée' }, { status: 404 })
     }
