@@ -26,7 +26,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Aucune boutique connectée' }, { status: 404 })
     }
 
-    const { title, body_html, vendor, tags, status, variants, images } = body
+    const { title, body_html, vendor, tags, status, variants, images, metafields_global_title_tag, metafields_global_description_tag } = body
 
     const productPayload: Record<string, unknown> = { id: parseInt(id) }
     if (title !== undefined) productPayload.title = title
@@ -36,6 +36,8 @@ export async function PUT(
     if (status !== undefined) productPayload.status = status
     if (variants !== undefined) productPayload.variants = variants
     if (images !== undefined) productPayload.images = images
+    if (metafields_global_title_tag !== undefined) productPayload.metafields_global_title_tag = metafields_global_title_tag
+    if (metafields_global_description_tag !== undefined) productPayload.metafields_global_description_tag = metafields_global_description_tag
 
     const shopifyUrl = `https://${shop.shop_domain}/admin/api/2024-01/products/${id}.json`
     const shopifyRes = await fetch(shopifyUrl, {
