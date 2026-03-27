@@ -527,11 +527,11 @@ export default function AccountPage() {
                         {currentPlan === "free" && (
                           <div className="mt-3 mb-4 p-3 rounded-xl" style={{ backgroundColor: bgAccent }}>
                             <p className="text-[10px] font-semibold mb-1.5" style={{ color: textAccent }}>
-                              🚀 Ce que vous gagnez vs Gratuit :
+                              Ce que vous gagnez vs Gratuit :
                             </p>
                             {p.newVsFree.map((item, i) => (
                               <div key={i} className="flex items-start gap-1.5 text-[11px] mb-1" style={{ color: textAccent }}>
-                                <span className="mt-0.5 flex-shrink-0" style={{ color: accentColor }}>✓</span>
+                                <span className="mt-0.5 flex-shrink-0" style={{ color: accentColor }}>+</span>
                                 {item}
                               </div>
                             ))}
@@ -549,7 +549,7 @@ export default function AccountPage() {
                         </ul>
 
                         {isCurrent ? (
-                          <div className="w-full mt-4 py-2 rounded-xl text-xs font-semibold text-center" style={{ backgroundColor: "#2563eb", color: "#fff" }}>Plan actuel ✓</div>
+                          <div className="w-full mt-4 py-2 rounded-xl text-xs font-semibold text-center" style={{ backgroundColor: "#2563eb", color: "#fff" }}>Plan actuel</div>
                         ) : (
                           <Link
                             href="/dashboard/upgrade"
