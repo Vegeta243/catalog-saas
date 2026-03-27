@@ -389,3 +389,55 @@ a:hover {
 .mt-2 { margin-top: 8px; }
 .mt-4 { margin-top: 16px; }
 .mt-6 { margin-top: 24px; }
+
+/* ═══════════════════════════════════════════════════════════
+   APPLE DESIGN TOKENS (used by dashboard layout)
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --apple-white: #ffffff;
+  --apple-black: #000000;
+  --apple-gray-50: #f5f5f7;
+  --apple-gray-100: #e8e8ed;
+  --apple-gray-200: #d2d2d7;
+  --apple-gray-300: #86868b;
+  --apple-gray-400: #6e6e73;
+  --apple-gray-500: #424245;
+  --apple-gray-600: #1d1d1f;
+  --apple-blue: #0066cc;
+  --apple-blue-hover: #0077ed;
+  --apple-blue-light: #2997ff;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f5f5f7;
+  --surface-tertiary: #e8e8ed;
+  --text-primary: #1d1d1f;
+  --text-secondary: #424245;
+  --text-tertiary: #6e6e73;
+  --text-link: #0066cc;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+}
+
+.dark {
+  --apple-white: #1d1d1f;
+  --apple-gray-50: #2d2d2f;
+  --apple-gray-100: #3a3a3c;
+  --apple-gray-200: #48484a;
+  --apple-gray-300: #636366;
+  --apple-gray-400: #86868b;
+  --apple-gray-500: #a1a1a6;
+  --apple-gray-600: #f5f5f7;
+  --apple-blue: #2997ff;
+  --apple-blue-hover: #40a9ff;
+  --apple-blue-light: #0a84ff;
+  --surface-primary: #000000;
+  --surface-secondary: #1d1d1f;
+  --surface-tertiary: #2d2d2f;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-tertiary: #86868b;
+  --text-link: #2997ff;
+}

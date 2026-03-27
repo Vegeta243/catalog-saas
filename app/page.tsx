@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Zap, PackageSearch, Sparkles, BarChart3,
   ArrowRight, Check, Import, TrendingUp,
-  ChevronDown, Star, Shield, Clock,
+  ChevronDown, Star, Shield, Clock, Menu, X,
 } from "lucide-react";
 
 const FEATURES = [
@@ -52,6 +52,7 @@ export default function HomePage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -75,17 +76,18 @@ export default function HomePage() {
           <Link href="/" className="text-xl font-bold text-primary">
             EcomPilot
           </Link>
+          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground">Fonctionnalités</Link>
             <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">Tarifs</Link>
             <Link href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground">Avis</Link>
             <Link href="/login" className="text-sm font-medium text-primary">Connexion</Link>
-            <button 
-              onClick={() => router.push('/signup')}
-              className="btn btn-primary btn-sm"
-            >
-              Essai gratuit
-            </button>
+            <button onClick={() => router.push('/signup')} className="btn btn-primary btn-sm">Essai gratuit</button>
+          </div>
+          {/* Mobile nav — always show login + signup */}
+          <div className="flex md:hidden items-center gap-2">
+            <Link href="/login" className="text-sm font-medium text-primary px-3 py-1.5">Connexion</Link>
+            <button onClick={() => router.push('/signup')} className="btn btn-primary btn-sm">Essai gratuit</button>
           </div>
         </div>
       </nav>
@@ -313,8 +315,8 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold mb-4 text-sm">Entreprise</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/about" className="hover:text-foreground">À propos</Link></li>
-                <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
+                <li><Link href="/politique-confidentialite" className="hover:text-foreground">Politique de confidentialité</Link></li>
+                <li><a href="mailto:contact@ecompilotelite.com" className="hover:text-foreground">Contact</a></li>
               </ul>
             </div>
             <div>
@@ -336,8 +338,9 @@ export default function HomePage() {
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">© 2026 EcomPilot Elite. Tous droits réservés.</p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <Link href="/privacy" className="hover:text-foreground">Confidentialité</Link>
-              <Link href="/terms" className="hover:text-foreground">Conditions</Link>
+              <Link href="/politique-confidentialite" className="hover:text-foreground">Confidentialité</Link>
+              <Link href="/cgu" className="hover:text-foreground">CGU</Link>
+              <Link href="/cgv" className="hover:text-foreground">CGV</Link>
             </div>
           </div>
         </div>
