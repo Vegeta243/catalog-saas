@@ -1,78 +1,74 @@
-'use client'
+﻿'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { Search, RefreshCw, Save, Check, X } from 'lucide-react'
-
-type Variant = {
-  id: string | number
-  price?: string
-  compare_at_price?: string | null
-  sku?: string
-}
 
 type Product = {
   id: string
+  shopify_product_id?: string
   title: string
   body_html?: string
+  description?: string
   vendor?: string
+  price?: number
+  compare_at_price?: number | null
+  images?: unknown
+  variants?: any[]
   tags?: string
   status?: string
-  images?: Array<{ src: string }>
-  variants?: Variant[]
-  price?: string
 }
 
-const colors = {
-  page: '#080d1a',
-  card: '#0f1629',
-  subtle: 'rgba(255,255,255,0.03)',
-  border: 'rgba(255,255,255,0.06)',
-  subtleBorder: 'rgba(255,255,255,0.04)',
+type EditState = {
+  title: string
+  description: string
+  price: string
+  compareAtPrice: string
+  tags: string
+  vendor: string
+}
+
+const PER_PAGE = 24
+
+const palette = {
   text: '#e8ecf4',
-  secondary: '#6b7a99',
-  muted: '#3d4d6b',
-  blue: '#4f8ef7',
-  success: '#10b981',
-  danger: '#ef4444',
+  sub: '#6b7a99',
+  accent: '#4f8ef7',
+  ok: '#10b981',
+  err: '#f87171',
+  card: 'rgba(255,255,255,0.03)',
+  cardAlt: 'rgba(255,255,255,0.04)',
+  border: 'rgba(255,255,255,0.07)',
+  borderStrong: 'rgba(255,255,255,0.1)',
 }
 
-const S = {
-  page: { padding: '32px', maxWidth: '1200px', margin: '0 auto', background: colors.page, borderRadius: '14px' } as CSSProperties,
-  card: { background: colors.card, border: `1px solid ${colors.border}`, borderRadius: '14px', padding: '20px' } as CSSProperties,
-  subtleCard: { background: colors.subtle, border: `1px solid ${colors.subtleBorder}`, borderRadius: '10px', padding: '12px 16px' } as CSSProperties,
-  title: { color: colors.text, fontSize: '22px', fontWeight: 600, margin: 0 } as CSSProperties,
-  subtitle: { color: colors.secondary, fontSize: '14px', fontWeight: 400, margin: '4px 0 0 0' } as CSSProperties,
-  label: { color: colors.secondary, fontSize: '12px', fontWeight: 500, letterSpacing: '0.02em' } as CSSProperties,
-}
-
-function getPlainText(html?: string) {
-  if (!html) return ''
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}
-
-function scoreSeo(p: Product) {
-  const titleLen = (p.title || '').length
-  const descWords = getPlainText(p.body_html).split(' ').filter(Boolean).length
-  const tagsCount = (p.tags || '').split(',').map((x) => x.trim()).filter(Boolean).length
-  let s = 0
-  if (titleLen >= 50 && titleLen <= 70) s += 40
-  else if (titleLen >= 35) s += 22
-  else if (titleLen >= 10) s += 10
-  if (descWords >= 180) s += 35
-  else if (descWords >= 80) s += 22
-  else if (descWords >= 20) s += 12
-  if (tagsCount >= 8) s += 25
-  else if (tagsCount >= 4) s += 16
-  else if (tagsCount >= 1) s += 8
-  return Math.min(100, s)
-}
-
-function parseVariants(raw: any): Variant[] {
-  if (Array.isArray(raw)) return raw
-  if (typeof raw === 'string') {
+function asImageUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((img) => {
+        if (typeof img === 'string') return img
+        if (img && typeof img === 'object' && 'src' in img) {
+          const src = (img as { src?: unknown }).src
+          return typeof src === 'string' ? src : ''
+        }
+        return ''
+      })
+      .filter(Boolean)
+  }
+  if (typeof value === 'string') {
     try {
-      const parsed = JSON.parse(raw)
+      return asImageUrls(JSON.parse(value))
+    } catch {
+      return []
+    }
+  }
+  return []
+}
+
+function asVariants(value: unknown): any[] {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
       return Array.isArray(parsed) ? parsed : []
     } catch {
       return []
@@ -81,627 +77,695 @@ function parseVariants(raw: any): Variant[] {
   return []
 }
 
-function parseImages(raw: any): Array<{ src: string }> {
-  if (Array.isArray(raw)) {
-    if (raw.length === 0) return []
-    if (typeof raw[0] === 'string') return raw.map((src: string) => ({ src }))
-    return raw
-  }
-  if (typeof raw === 'string') {
-    try {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) {
-        if (parsed.length === 0) return []
-        if (typeof parsed[0] === 'string') return parsed.map((src: string) => ({ src }))
-        return parsed
-      }
-      return []
-    } catch {
-      return []
-    }
-  }
-  return []
+function parsePrice(v: string): number | null {
+  if (!v.trim()) return null
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
 }
 
-function inputStyle(): CSSProperties {
-  return {
-    width: '100%',
-    height: '36px',
-    boxSizing: 'border-box',
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '10px',
-    color: '#e8ecf4',
-    fontSize: '14px',
-    fontWeight: 400,
-    padding: '0 12px',
-    outline: 'none',
-  }
+const inputStyle: CSSProperties = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.04)',
+  border: `1px solid ${palette.borderStrong}`,
+  borderRadius: 10,
+  color: palette.text,
+  fontSize: 14,
+  fontWeight: 400,
+  padding: '10px 12px',
+  boxSizing: 'border-box',
+  outline: 'none',
 }
 
-function textareaStyle(): CSSProperties {
-  return {
-    width: '100%',
-    boxSizing: 'border-box',
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '10px',
-    color: '#e8ecf4',
-    fontSize: '14px',
-    fontWeight: 400,
-    padding: '10px 12px',
-    outline: 'none',
-    resize: 'vertical',
-    minHeight: '110px',
-  }
+const cardStyle: CSSProperties = {
+  background: palette.card,
+  border: `1px solid ${palette.border}`,
+  borderRadius: 12,
 }
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all')
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
+  const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
-  const [syncMsg, setSyncMsg] = useState('')
-
-  const [bulkPrice, setBulkPrice] = useState('')
-  const [bulkTags, setBulkTags] = useState('')
-  const [bulkStatus, setBulkStatus] = useState<'active' | 'draft' | 'archived'>('active')
-  const [bulkLoading, setBulkLoading] = useState(false)
-
-  const [editing, setEditing] = useState<Product | null>(null)
-  const [editTitle, setEditTitle] = useState('')
-  const [editDesc, setEditDesc] = useState('')
-  const [editVendor, setEditVendor] = useState('')
-  const [editTags, setEditTags] = useState('')
-  const [editStatus, setEditStatus] = useState<'active' | 'draft' | 'archived'>('active')
-  const [editPrice, setEditPrice] = useState('')
-  const [saveMsg, setSaveMsg] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    document.title = 'Produits - EcomPilot Elite'
-    fetchProducts()
-  }, [])
+  const [syncMsg, setSyncMsg] = useState('')
+  const [syncOk, setSyncOk] = useState(true)
+  const [saveMsg, setSaveMsg] = useState('')
 
-  async function fetchProducts() {
+  const [selected, setSelected] = useState<Product | null>(null)
+  const [edit, setEdit] = useState<EditState | null>(null)
+  const [hasShop, setHasShop] = useState<boolean | null>(null)
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PER_PAGE)), [total])
+
+  const fetchProducts = useCallback(async (nextPage = 1, nextSearch = '') => {
     setLoading(true)
-    setError('')
     try {
-      const r = await fetch('/api/shopify/products')
-      const d = await r.json().catch(() => ({}))
-      if (!r.ok) {
-        setError(d.error || 'Impossible de charger les produits')
-      } else {
-        const normalized = (d.products || []).map((p: any) => ({
-          ...p,
-          id: String(p.id ?? p.shopify_product_id ?? ''),
-          price: p.variants?.[0]?.price || String(p.price ?? '0'),
-          variants: parseVariants(p.variants),
-          images: parseImages(p.images),
-        }))
-        setProducts(normalized)
-      }
-    } catch {
-      setError('Erreur reseau')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function doSync() {
-    setSyncing(true)
-    setSyncMsg('Synchronisation...')
-    try {
-      const r = await fetch('/api/shopify/sync', { method: 'POST' })
-      const d = await r.json().catch(() => ({}))
-      if (r.ok) {
-        setSyncMsg(`${d.synced ?? d.total ?? 0} produits synchronises`)
-        await fetchProducts()
-      } else {
-        setSyncMsg('Erreur: ' + (d.error || 'inconnue'))
-      }
-    } catch {
-      setSyncMsg('Erreur reseau')
-    }
-    setSyncing(false)
-    setTimeout(() => setSyncMsg(''), 4000)
-  }
-
-  function openEditor(p: Product) {
-    setEditing(p)
-    setEditTitle(p.title || '')
-    setEditDesc(getPlainText(p.body_html || ''))
-    setEditVendor(p.vendor || '')
-    setEditTags(p.tags || '')
-    setEditStatus((p.status as any) || 'active')
-    setEditPrice(p.variants?.[0]?.price || p.price || '')
-    setSaveMsg('')
-  }
-
-  async function saveProduct() {
-    if (!editing) return
-    setSaving(true)
-    setSaveMsg('')
-    try {
-      const payload: any = {
-        title: editTitle,
-        body_html: editDesc,
-        vendor: editVendor,
-        tags: editTags,
-        status: editStatus,
-      }
-      if (editPrice && editing.variants?.length) {
-        payload.variants = editing.variants.map((v, i) => (i === 0 ? { ...v, price: editPrice } : v))
-      }
-
-      const r = await fetch(`/api/shopify/products/${editing.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const params = new URLSearchParams({
+        limit: String(PER_PAGE),
+        page: String(nextPage),
       })
-      const d = await r.json().catch(() => ({}))
-      if (!r.ok) {
-        setSaveMsg('Erreur: ' + (d.error || r.statusText))
-        setSaving(false)
+      if (nextSearch.trim()) params.set('search', nextSearch.trim())
+
+      const res = await fetch(`/api/shopify/products?${params.toString()}`, { cache: 'no-store' })
+      const body = await res.json().catch(() => ({}))
+
+      if (res.ok) {
+        setProducts(Array.isArray(body.products) ? body.products : [])
+        setTotal(typeof body.total === 'number' ? body.total : 0)
+        setHasShop(true)
         return
       }
 
-      const prod = d.product
-      const updated: Product = {
-        ...editing,
-        id: String(prod?.id || editing.id),
-        title: prod?.title ?? editTitle,
-        body_html: prod?.body_html ?? editDesc,
-        vendor: prod?.vendor ?? editVendor,
-        tags: prod?.tags ?? editTags,
-        status: prod?.status ?? editStatus,
-        variants: prod?.variants ?? editing.variants,
-        price: prod?.variants?.[0]?.price || editPrice,
+      if (res.status === 400) {
+        setHasShop(false)
       }
 
-      setProducts((prev) => prev.map((p) => (p.id === editing.id ? updated : p)))
-      setEditing(updated)
-      setSaveMsg('Enregistre sur Shopify')
+      setProducts([])
+      setTotal(0)
+      setSyncMsg(body.error || `Erreur API ${res.status}`)
+      setSyncOk(false)
     } catch {
-      setSaveMsg('Erreur reseau')
+      setProducts([])
+      setTotal(0)
+      setSyncMsg('Erreur reseau')
+      setSyncOk(false)
+    } finally {
+      setLoading(false)
     }
-    setSaving(false)
+  }, [])
+
+  useEffect(() => {
+    document.title = 'Produits - EcomPilot Elite'
+    fetchProducts(1, '')
+  }, [fetchProducts])
+
+  async function doSync() {
+    setSyncing(true)
+    setSyncMsg('Synchronisation en cours...')
+    setSyncOk(true)
+    try {
+      const res = await fetch('/api/shopify/sync', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.success) {
+        setSyncMsg(`${data.synced || 0} produits synchronises depuis ${data.shop || 'la boutique'}`)
+        setSyncOk(true)
+        setPage(1)
+        await fetchProducts(1, search)
+      } else {
+        setSyncMsg(data.error || 'Erreur de synchronisation')
+        setSyncOk(false)
+      }
+    } catch {
+      setSyncMsg('Erreur reseau')
+      setSyncOk(false)
+    } finally {
+      setSyncing(false)
+      setTimeout(() => setSyncMsg(''), 6000)
+    }
   }
 
-  async function applyBulk() {
-    if (selectedIds.length === 0) return
-    setBulkLoading(true)
+  function openEdit(p: Product) {
+    setSelected(p)
+    setSaveMsg('')
+    const variants = asVariants(p.variants)
+    const firstVariant = variants[0] || {}
+    const pPrice = typeof p.price === 'number' ? p.price : Number(firstVariant.price || 0)
+
+    setEdit({
+      title: p.title || '',
+      description: p.body_html || p.description || '',
+      price: Number.isFinite(pPrice) ? String(pPrice) : '',
+      compareAtPrice:
+        p.compare_at_price === null || p.compare_at_price === undefined
+          ? ''
+          : String(p.compare_at_price),
+      tags: p.tags || '',
+      vendor: p.vendor || '',
+    })
+  }
+
+  async function doSave() {
+    if (!selected || !edit) return
+
+    const pid = selected.shopify_product_id || selected.id
+    if (!pid) return
+
+    setSaving(true)
+    setSaveMsg('')
 
     try {
-      for (const id of selectedIds) {
-        const p = products.find((x) => x.id === id)
-        if (!p) continue
+      const variants = asVariants(selected.variants)
+      const updatedVariants = variants.length
+        ? variants.map((v, idx) =>
+            idx === 0
+              ? {
+                  ...v,
+                  price: edit.price,
+                  compare_at_price: edit.compareAtPrice.trim() ? edit.compareAtPrice : null,
+                }
+              : v
+          )
+        : [
+            {
+              price: edit.price,
+              compare_at_price: edit.compareAtPrice.trim() ? edit.compareAtPrice : null,
+            },
+          ]
 
-        const payload: any = {
-          status: bulkStatus,
-        }
+      const res = await fetch(`/api/shopify/products/${pid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: edit.title,
+          body_html: edit.description,
+          vendor: edit.vendor,
+          tags: edit.tags,
+          variants: updatedVariants,
+        }),
+      })
 
-        if (bulkTags) payload.tags = bulkTags
-
-        if (bulkPrice) {
-          payload.variants = (p.variants || []).length
-            ? (p.variants || []).map((v, i) => (i === 0 ? { ...v, price: bulkPrice } : v))
-            : [{ price: bulkPrice }]
-        }
-
-        await fetch(`/api/shopify/products/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setSaveMsg(data.error || 'Erreur de sauvegarde')
+        return
       }
+
+      setSaveMsg('Mis a jour sur Shopify')
+      const nextPrice = parsePrice(edit.price)
+      const nextCompareAt = parsePrice(edit.compareAtPrice)
 
       setProducts((prev) =>
         prev.map((p) => {
-          if (!selectedIds.includes(p.id)) return p
+          const id = p.shopify_product_id || p.id
+          if (id !== pid) return p
           return {
             ...p,
-            status: bulkStatus,
-            tags: bulkTags || p.tags,
-            variants: bulkPrice
-              ? ((p.variants || []).length
-                ? (p.variants || []).map((v, i) => (i === 0 ? { ...v, price: bulkPrice } : v))
-                : [{ id: 'temp', price: bulkPrice }])
-              : p.variants,
-            price: bulkPrice || p.price,
+            title: edit.title,
+            body_html: edit.description,
+            vendor: edit.vendor,
+            tags: edit.tags,
+            price: nextPrice ?? p.price,
+            compare_at_price: nextCompareAt,
           }
         })
       )
-
-      setSelectedIds([])
-      setSyncMsg('Mise a jour en masse terminee')
-      setTimeout(() => setSyncMsg(''), 3000)
     } catch {
-      setSyncMsg('Erreur pendant la mise a jour en masse')
-      setTimeout(() => setSyncMsg(''), 3000)
+      setSaveMsg('Erreur reseau')
+    } finally {
+      setSaving(false)
     }
-
-    setBulkLoading(false)
   }
 
-  const filtered = useMemo(() => {
-    return products.filter((p) => {
-      const bySearch = (p.title || '').toLowerCase().includes(search.toLowerCase())
-      const byStatus = statusFilter === 'all' || (p.status || 'draft') === statusFilter
-      return bySearch && byStatus
-    })
-  }, [products, search, statusFilter])
+  const onSearchChange = (value: string) => {
+    setSearch(value)
+    setPage(1)
+    fetchProducts(1, value)
+  }
 
-  const avgSeo = useMemo(() => {
-    if (!filtered.length) return 0
-    return Math.round(filtered.reduce((sum, p) => sum + scoreSeo(p), 0) / filtered.length)
-  }, [filtered])
+  const onPageChange = (nextPage: number) => {
+    const safePage = Math.max(1, Math.min(totalPages, nextPage))
+    setPage(safePage)
+    fetchProducts(safePage, search)
+  }
 
   return (
-    <div style={S.page}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
+    <div className="productsPage">
+      <div className="headerRow">
         <div>
-          <h1 style={S.title}>Produits Shopify</h1>
-          <p style={S.subtitle}>{loading ? 'Chargement...' : `${filtered.length} produits · SEO moyen ${avgSeo}/100`}</p>
+          <h1 className="title">Produits Shopify</h1>
+          <p className="subtitle">
+            {total > 0 ? `${total} produit${total > 1 ? 's' : ''}` : 'Synchronisez pour voir vos produits'}
+          </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            onClick={doSync}
-            disabled={syncing}
-            style={{
-              height: '38px',
-              padding: '0 14px',
-              borderRadius: '10px',
-              border: `1px solid ${syncing ? 'rgba(79,142,247,0.2)' : 'rgba(79,142,247,0.35)'}`,
-              background: syncing ? 'rgba(79,142,247,0.15)' : 'rgba(79,142,247,0.12)',
-              color: colors.text,
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: syncing ? 'not-allowed' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-            Synchroniser
+
+        <div className="headerActions">
+          {syncMsg && (
+            <span style={{ color: syncOk ? palette.ok : palette.err, fontSize: 13, fontWeight: 500 }}>
+              {syncMsg}
+            </span>
+          )}
+          <button className="primaryBtn" onClick={doSync} disabled={syncing}>
+            {syncing ? 'Synchronisation...' : 'Synchroniser Shopify'}
           </button>
-          <a
-            href="/dashboard/import"
-            style={{
-              height: '38px',
-              padding: '0 14px',
-              borderRadius: '10px',
-              border: `1px solid ${colors.border}`,
-              background: colors.card,
-              color: colors.text,
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-            }}
-          >
-            Importer
+        </div>
+      </div>
+
+      {hasShop === false && (
+        <div style={{ ...cardStyle, padding: '48px 24px', textAlign: 'center' }}>
+          <p style={{ color: palette.text, fontSize: 18, fontWeight: 600, margin: '0 0 8px 0' }}>
+            Aucune boutique connectee
+          </p>
+          <p style={{ color: palette.sub, fontSize: 14, fontWeight: 400, margin: '0 0 20px 0' }}>
+            Connectez votre boutique Shopify pour voir et modifier vos produits.
+          </p>
+          <a className="primaryLink" href="/dashboard/shops">
+            Connecter une boutique
           </a>
         </div>
-      </div>
-
-      {syncMsg && (
-        <div
-          style={{
-            ...S.subtleCard,
-            marginBottom: '16px',
-            border: `1px solid ${syncMsg.startsWith('Erreur') ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`,
-            color: syncMsg.startsWith('Erreur') ? '#fca5a5' : '#86efac',
-            fontSize: '13px',
-            fontWeight: 500,
-          }}
-        >
-          {syncMsg}
-        </div>
       )}
 
-      {error && (
-        <div style={{ ...S.subtleCard, marginBottom: '16px', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: '13px', fontWeight: 500 }}>
-          {error}
-        </div>
-      )}
-
-      <div style={{ ...S.card, marginBottom: '16px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
-          <div style={{ ...S.subtleCard, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Search className="w-4 h-4" style={{ color: colors.muted }} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un produit"
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                color: colors.text,
-                fontSize: '14px',
-                fontWeight: 400,
-                outline: 'none',
-              }}
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            style={{
-              ...S.subtleCard,
-              width: '100%',
-              color: colors.text,
-              fontSize: '14px',
-              fontWeight: 400,
-              outline: 'none',
-              appearance: 'none',
-            }}
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="active">Actifs</option>
-            <option value="draft">Brouillons</option>
-            <option value="archived">Archives</option>
-          </select>
-        </div>
-      </div>
-
-      <div style={{ ...S.card, marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '8px', flexWrap: 'wrap' }}>
-          <p style={{ color: colors.text, fontSize: '15px', fontWeight: 600, margin: 0 }}>Modifier en masse</p>
-          <p style={{ color: colors.secondary, fontSize: '12px', fontWeight: 500, margin: 0 }}>{selectedIds.length} selectionnes</p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '10px', alignItems: 'end' }}>
-          <div>
-            <p style={{ ...S.label, margin: '0 0 6px 0' }}>Prix</p>
-            <input value={bulkPrice} onChange={(e) => setBulkPrice(e.target.value)} placeholder="29.99" style={inputStyle()} />
-          </div>
-
-          <div>
-            <p style={{ ...S.label, margin: '0 0 6px 0' }}>Tags</p>
-            <input value={bulkTags} onChange={(e) => setBulkTags(e.target.value)} placeholder="tag1, tag2" style={inputStyle()} />
-          </div>
-
-          <div>
-            <p style={{ ...S.label, margin: '0 0 6px 0' }}>Statut</p>
-            <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value as any)} style={inputStyle()}>
-              <option value="active">Actif</option>
-              <option value="draft">Brouillon</option>
-              <option value="archived">Archive</option>
-            </select>
-          </div>
-
-          <button
-            onClick={applyBulk}
-            disabled={bulkLoading || selectedIds.length === 0}
-            style={{
-              height: '36px',
-              padding: '0 14px',
-              borderRadius: '10px',
-              border: '1px solid rgba(79,142,247,0.2)',
-              background: bulkLoading || selectedIds.length === 0 ? 'rgba(79,142,247,0.1)' : 'rgba(79,142,247,0.2)',
-              color: colors.text,
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: bulkLoading || selectedIds.length === 0 ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {bulkLoading ? 'Application...' : 'Appliquer'}
-          </button>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: editing ? '1fr 360px' : '1fr', gap: '16px', alignItems: 'start' }}>
-        <div style={{ ...S.card, padding: '12px' }}>
-          {loading ? (
-            <div style={{ padding: '24px', color: colors.secondary, fontSize: '14px', fontWeight: 400 }}>Chargement des produits...</div>
-          ) : filtered.length === 0 ? (
-            <div style={{ padding: '24px', color: colors.secondary, fontSize: '14px', fontWeight: 400 }}>Aucun produit a afficher</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {filtered.map((p) => {
-                const selected = selectedIds.includes(p.id)
-                const active = editing?.id === p.id
-                const seo = scoreSeo(p)
-                const price = p.variants?.[0]?.price || p.price || '0'
-                return (
-                  <div
-                    key={p.id}
-                    style={{
-                      ...S.subtleCard,
-                      background: active ? 'rgba(79,142,247,0.05)' : selected ? 'rgba(79,142,247,0.06)' : colors.subtle,
-                      border: active
-                        ? '1px solid rgba(79,142,247,0.15)'
-                        : selected
-                          ? '1px solid rgba(79,142,247,0.2)'
-                          : `1px solid ${colors.subtleBorder}`,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => openEditor(p)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedIds((prev) => (prev.includes(p.id) ? prev.filter((x) => x !== p.id) : [...prev, p.id]))
-                        }}
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '5px',
-                          border: `1px solid ${selected ? 'rgba(79,142,247,0.7)' : 'rgba(255,255,255,0.2)'}`,
-                          background: selected ? 'rgba(79,142,247,0.2)' : 'transparent',
-                          color: colors.text,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {selected ? <Check className="w-3 h-3" /> : null}
-                      </button>
-
-                      <div
-                        style={{
-                          width: '52px',
-                          height: '52px',
-                          borderRadius: '10px',
-                          overflow: 'hidden',
-                          border: `1px solid ${colors.subtleBorder}`,
-                          background: 'rgba(255,255,255,0.02)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {p.images?.[0]?.src ? (
-                          <img src={p.images[0].src} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : null}
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ color: colors.text, fontSize: '14px', fontWeight: 500, margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {p.title}
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <span style={{ color: colors.blue, fontSize: '12px', fontWeight: 500 }}>{price} EUR</span>
-                          <span style={{ color: colors.secondary, fontSize: '12px', fontWeight: 500 }}>{(p.status || 'draft').toUpperCase()}</span>
-                          <span style={{ color: seo >= 70 ? colors.success : colors.secondary, fontSize: '12px', fontWeight: 500 }}>SEO {seo}</span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openEditor(p)
-                        }}
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '8px',
-                          border: `1px solid ${colors.subtleBorder}`,
-                          background: 'transparent',
-                          color: colors.secondary,
-                          cursor: 'pointer',
-                          flexShrink: 0,
-                        }}
-                      >
-                        ›
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {editing && (
-          <div style={{ ...S.card, position: 'sticky', top: '80px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <p style={{ color: colors.text, fontSize: '15px', fontWeight: 600, margin: 0 }}>Edition produit</p>
-              <button
-                onClick={() => setEditing(null)}
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '8px',
-                  border: `1px solid ${colors.subtleBorder}`,
-                  background: 'transparent',
-                  color: colors.secondary,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {hasShop !== false && (
+        <div className={`mainGrid ${selected && edit ? 'withEditor' : ''}`}>
+          <section>
+            <div style={{ marginBottom: 12 }}>
+              <input
+                type="text"
+                placeholder="Rechercher un produit..."
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                style={inputStyle}
+              />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div>
-                <p style={{ ...S.label, margin: '0 0 6px 0' }}>Titre</p>
-                <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} style={inputStyle()} />
+            {loading && (
+              <div style={{ ...cardStyle, padding: '42px 16px', textAlign: 'center' }}>
+                <p style={{ color: palette.sub, fontSize: 14, fontWeight: 400, margin: 0 }}>Chargement...</p>
               </div>
+            )}
 
-              <div>
-                <p style={{ ...S.label, margin: '0 0 6px 0' }}>Description</p>
-                <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} rows={5} style={textareaStyle()} />
+            {!loading && products.length === 0 && (
+              <div style={{ ...cardStyle, padding: '42px 16px', textAlign: 'center' }}>
+                <p style={{ color: palette.text, fontSize: 16, fontWeight: 500, margin: '0 0 8px 0' }}>
+                  Aucun produit
+                </p>
+                <p style={{ color: palette.sub, fontSize: 14, fontWeight: 400, margin: '0 0 14px 0' }}>
+                  Cliquez sur Synchroniser Shopify pour importer vos produits.
+                </p>
+                <button className="primaryBtn" onClick={doSync} disabled={syncing}>
+                  {syncing ? 'Synchronisation...' : 'Synchroniser maintenant'}
+                </button>
               </div>
+            )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div>
-                  <p style={{ ...S.label, margin: '0 0 6px 0' }}>Fournisseur</p>
-                  <input value={editVendor} onChange={(e) => setEditVendor(e.target.value)} style={inputStyle()} />
-                </div>
-                <div>
-                  <p style={{ ...S.label, margin: '0 0 6px 0' }}>Prix</p>
-                  <input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} style={inputStyle()} />
-                </div>
+            {!loading && products.length > 0 && (
+              <div className="productGrid">
+                {products.map((p) => {
+                  const id = p.shopify_product_id || p.id
+                  const isSelected = (selected?.shopify_product_id || selected?.id) === id
+                  const image = asImageUrls(p.images)[0]
+                  const priceNum = typeof p.price === 'number' ? p.price : Number(p.price || 0)
+
+                  return (
+                    <button
+                      type="button"
+                      key={id}
+                      className={`productCard ${isSelected ? 'selected' : ''}`}
+                      onClick={() => openEdit(p)}
+                    >
+                      <div className="thumbWrap">
+                        {image ? <img src={image} alt={p.title} className="thumb" /> : <div className="thumbEmpty">Image indisponible</div>}
+                      </div>
+                      <div className="cardInfo">
+                        <p className="prodTitle">{p.title}</p>
+                        <p className="prodPrice">{Number.isFinite(priceNum) && priceNum > 0 ? `${priceNum.toFixed(2)} EUR` : '--'}</p>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
+            )}
 
-              <div>
-                <p style={{ ...S.label, margin: '0 0 6px 0' }}>Tags</p>
-                <input value={editTags} onChange={(e) => setEditTags(e.target.value)} style={inputStyle()} />
-              </div>
-
-              <div>
-                <p style={{ ...S.label, margin: '0 0 6px 0' }}>Statut</p>
-                <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as any)} style={inputStyle()}>
-                  <option value="active">Actif</option>
-                  <option value="draft">Brouillon</option>
-                  <option value="archived">Archive</option>
-                </select>
-              </div>
-
-              {saveMsg && (
-                <div
-                  style={{
-                    ...S.subtleCard,
-                    border: `1px solid ${saveMsg.startsWith('Erreur') ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`,
-                    color: saveMsg.startsWith('Erreur') ? '#fca5a5' : '#86efac',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                  }}
+            {totalPages > 1 && (
+              <div className="pager">
+                <button type="button" onClick={() => onPageChange(page - 1)} disabled={page === 1} className="ghostBtn">
+                  Prev
+                </button>
+                <span className="pagerText">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onPageChange(page + 1)}
+                  disabled={page === totalPages}
+                  className="ghostBtn"
                 >
-                  {saveMsg}
+                  Next
+                </button>
+              </div>
+            )}
+          </section>
+
+          {selected && edit && (
+            <aside className="editorPanel">
+              <div className="panelHeader">
+                <p style={{ color: palette.text, margin: 0, fontSize: 15, fontWeight: 600 }}>Modifier le produit</p>
+                <button type="button" className="closeBtn" onClick={() => { setSelected(null); setEdit(null) }}>
+                  x
+                </button>
+              </div>
+
+              {asImageUrls(selected.images)[0] && (
+                <div className="editorImageWrap">
+                  <img src={asImageUrls(selected.images)[0]} alt={selected.title} className="editorImage" />
                 </div>
               )}
 
-              <button
-                onClick={saveProduct}
-                disabled={saving}
-                style={{
-                  height: '38px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(79,142,247,0.3)',
-                  background: 'rgba(79,142,247,0.2)',
-                  color: colors.text,
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Save className="w-4 h-4" />
-                {saving ? 'Enregistrement...' : 'Sauvegarder sur Shopify'}
+              <div className="fieldStack">
+                <label className="fieldLabel">Titre</label>
+                <input
+                  style={inputStyle}
+                  value={edit.title}
+                  onChange={(e) => setEdit({ ...edit, title: e.target.value })}
+                />
+
+                <label className="fieldLabel">Description</label>
+                <textarea
+                  style={{ ...inputStyle, minHeight: 96, resize: 'vertical' }}
+                  value={edit.description}
+                  onChange={(e) => setEdit({ ...edit, description: e.target.value })}
+                />
+
+                <div className="twoCols">
+                  <div>
+                    <label className="fieldLabel">Prix</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      style={inputStyle}
+                      value={edit.price}
+                      onChange={(e) => setEdit({ ...edit, price: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="fieldLabel">Prix barre</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      style={inputStyle}
+                      value={edit.compareAtPrice}
+                      onChange={(e) => setEdit({ ...edit, compareAtPrice: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <label className="fieldLabel">Fournisseur</label>
+                <input
+                  style={inputStyle}
+                  value={edit.vendor}
+                  onChange={(e) => setEdit({ ...edit, vendor: e.target.value })}
+                />
+
+                <label className="fieldLabel">Tags</label>
+                <input
+                  style={inputStyle}
+                  value={edit.tags}
+                  onChange={(e) => setEdit({ ...edit, tags: e.target.value })}
+                  placeholder="tag1, tag2"
+                />
+              </div>
+
+              <button className="primaryBtn fullWidth" onClick={doSave} disabled={saving}>
+                {saving ? 'Enregistrement...' : 'Enregistrer sur Shopify'}
               </button>
-            </div>
-          </div>
-        )}
-      </div>
+
+              {saveMsg && (
+                <p style={{ textAlign: 'center', color: saveMsg.toLowerCase().includes('erreur') ? palette.err : palette.ok, fontSize: 13, fontWeight: 500, marginTop: 10 }}>
+                  {saveMsg}
+                </p>
+              )}
+
+              <p style={{ textAlign: 'center', marginTop: 12 }}>
+                <a
+                  href={`https://admin.shopify.com/products/${selected.shopify_product_id || selected.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: palette.accent, textDecoration: 'none', fontSize: 12, fontWeight: 400 }}
+                >
+                  Ouvrir dans Shopify Admin
+                </a>
+              </p>
+            </aside>
+          )}
+        </div>
+      )}
+
+      <style jsx>{`
+        .productsPage {
+          max-width: 1240px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+
+        .headerRow {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 14px;
+          margin-bottom: 18px;
+          flex-wrap: wrap;
+        }
+
+        .title {
+          margin: 0;
+          color: ${palette.text};
+          font-size: 22px;
+          line-height: 1.25;
+          font-weight: 600;
+          letter-spacing: -0.01em;
+        }
+
+        .subtitle {
+          margin: 6px 0 0 0;
+          color: ${palette.sub};
+          font-size: 14px;
+          line-height: 1.4;
+          font-weight: 400;
+        }
+
+        .headerActions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .mainGrid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 16px;
+        }
+
+        .productGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 12px;
+        }
+
+        .productCard {
+          width: 100%;
+          text-align: left;
+          background: ${palette.card};
+          border: 1px solid ${palette.border};
+          border-radius: 12px;
+          overflow: hidden;
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .productCard.selected {
+          background: rgba(79, 142, 247, 0.09);
+          border-color: rgba(79, 142, 247, 0.34);
+        }
+
+        .thumbWrap {
+          width: 100%;
+          padding-top: 72%;
+          position: relative;
+          background: ${palette.cardAlt};
+        }
+
+        .thumb {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .thumbEmpty {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: ${palette.sub};
+          font-size: 12px;
+          font-weight: 400;
+          padding: 6px;
+          text-align: center;
+        }
+
+        .cardInfo {
+          padding: 10px 12px 12px;
+        }
+
+        .prodTitle {
+          margin: 0 0 4px 0;
+          color: ${palette.text};
+          font-size: 13px;
+          line-height: 1.35;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .prodPrice {
+          margin: 0;
+          color: ${palette.accent};
+          font-size: 14px;
+          line-height: 1.3;
+          font-weight: 600;
+        }
+
+        .editorPanel {
+          background: ${palette.card};
+          border: 1px solid ${palette.borderStrong};
+          border-radius: 14px;
+          padding: 16px;
+          align-self: start;
+        }
+
+        .panelHeader {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+        }
+
+        .closeBtn {
+          border: 0;
+          background: transparent;
+          color: ${palette.sub};
+          font-size: 16px;
+          line-height: 1;
+          font-weight: 500;
+          cursor: pointer;
+          padding: 4px;
+        }
+
+        .editorImageWrap {
+          width: 100%;
+          height: 140px;
+          border-radius: 10px;
+          overflow: hidden;
+          background: ${palette.cardAlt};
+          margin-bottom: 12px;
+        }
+
+        .editorImage {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .fieldStack {
+          display: grid;
+          gap: 8px;
+        }
+
+        .fieldLabel {
+          color: ${palette.sub};
+          font-size: 12px;
+          font-weight: 500;
+          margin-top: 2px;
+        }
+
+        .twoCols {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .primaryBtn {
+          border: 1px solid rgba(79, 142, 247, 0.35);
+          background: ${palette.accent};
+          color: white;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 500;
+          padding: 10px 16px;
+          cursor: pointer;
+        }
+
+        .primaryBtn:disabled {
+          opacity: 0.65;
+          cursor: wait;
+        }
+
+        .primaryLink {
+          display: inline-block;
+          border: 1px solid rgba(79, 142, 247, 0.35);
+          background: ${palette.accent};
+          color: white;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 500;
+          padding: 10px 16px;
+          text-decoration: none;
+        }
+
+        .fullWidth {
+          width: 100%;
+          margin-top: 14px;
+        }
+
+        .pager {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .pagerText {
+          color: ${palette.sub};
+          font-size: 13px;
+          font-weight: 500;
+        }
+
+        .ghostBtn {
+          border: 1px solid ${palette.borderStrong};
+          background: rgba(255, 255, 255, 0.04);
+          color: ${palette.text};
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          padding: 7px 14px;
+          cursor: pointer;
+        }
+
+        .ghostBtn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        @media (min-width: 700px) {
+          .twoCols {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (min-width: 1100px) {
+          .mainGrid.withEditor {
+            grid-template-columns: minmax(0, 1fr) 360px;
+          }
+
+          .editorPanel {
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 64px);
+            overflow: auto;
+          }
+        }
+      `}</style>
     </div>
   )
 }

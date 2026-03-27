@@ -27,7 +27,7 @@ export default function ImportTestPage() {
         padding: '24px', 
         backgroundColor: '#1e293b', 
         borderRadius: '12px',
-        border: '1px solid #334155',
+        border: '1px solid rgba(255,255,255,0.08)',
         marginBottom: '24px',
       }}>
         <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>
@@ -76,7 +76,7 @@ export default function ImportTestPage() {
         padding: '24px', 
         backgroundColor: '#1e293b', 
         borderRadius: '12px',
-        border: '1px solid #334155',
+        border: '1px solid rgba(255,255,255,0.08)',
       }}>
         <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>
           Instructions de Test

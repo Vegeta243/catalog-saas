@@ -98,8 +98,8 @@ export default function FeaturesHelpPage() {
           <div
             key={feature.title}
             style={{
-              background: '#111827',
-              border: '1px solid #1e2d45',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.07)',
               borderRadius: 20,
               overflow: 'hidden',
             }}

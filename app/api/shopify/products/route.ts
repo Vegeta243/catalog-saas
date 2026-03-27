@@ -1,157 +1,136 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export const maxDuration = 30
 
-type ShopRecord = {
-  shop_domain: string
-  access_token: string
-}
+export async function GET(request: NextRequest) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser()
 
-function normalizeCachedRow(row: any) {
-  const parsedImages = Array.isArray(row.images)
-    ? row.images
-    : typeof row.images === 'string'
-      ? JSON.parse(row.images || '[]')
-      : []
-  const parsedVariants = Array.isArray(row.variants)
-    ? row.variants
-    : typeof row.variants === 'string'
-      ? JSON.parse(row.variants || '[]')
-      : []
-
-  return {
-    ...row,
-    id: String(row.shopify_product_id || row.id || ''),
-    body_html: row.body_html || row.description || '',
-    images: parsedImages.map((src: string) => ({ src })),
-    variants: parsedVariants,
-    price: parsedVariants?.[0]?.price || String(row.price ?? '0'),
+  if (authErr || !user) {
+    return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
   }
-}
 
-function normalizeShopifyProduct(p: any, userId: string, shopDomain: string) {
-  return {
+  const { searchParams } = new URL(request.url)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 250)
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+  const search = (searchParams.get('search') || '').trim()
+  const offset = (page - 1) * limit
+
+  try {
+    let q = supabase
+      .from('shopify_products')
+      .select('*', { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (search) {
+      q = q.ilike('title', `%${search}%`)
+    }
+
+    const { data, count, error } = await q
+    if (!error && data !== null) {
+      const products = (data || []).map((p: any) => ({
+        ...p,
+        images: Array.isArray(p.images) ? p.images : [],
+        variants: Array.isArray(p.variants) ? p.variants : [],
+      }))
+
+      return NextResponse.json({
+        products,
+        total: count ?? products.length,
+        source: 'cache',
+      })
+    }
+  } catch (cacheErr: any) {
+    console.warn('[products] cache error:', cacheErr.message)
+  }
+
+  const { data: shops } = await supabase
+    .from('shops')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .limit(1)
+
+  const shop = shops?.[0] as Record<string, unknown> | undefined
+  if (!shop) {
+    return NextResponse.json({ products: [], total: 0, source: 'none' })
+  }
+
+  const shopDomain =
+    (typeof shop.shop_domain === 'string' && shop.shop_domain) ||
+    (typeof shop.domain === 'string' && shop.domain) ||
+    (typeof shop.shopify_domain === 'string' && shop.shopify_domain) ||
+    ''
+
+  const accessToken =
+    (typeof shop.access_token === 'string' && shop.access_token) ||
+    (typeof shop.token === 'string' && shop.token) ||
+    (typeof shop.shopify_token === 'string' && shop.shopify_token) ||
+    ''
+
+  if (!shopDomain || !accessToken) {
+    return NextResponse.json({ products: [], total: 0, source: 'none' })
+  }
+
+  const params = new URLSearchParams({
+    limit: String(limit),
+    fields: 'id,title,body_html,vendor,tags,status,variants,images,created_at',
+  })
+  if (search) {
+    params.set('title', search)
+  }
+
+  const res = await fetch(`https://${shopDomain}/admin/api/2024-01/products.json?${params}`, {
+    headers: { 'X-Shopify-Access-Token': accessToken },
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    return NextResponse.json({ error: `Shopify ${res.status}` }, { status: 502 })
+  }
+
+  const json = await res.json()
+  const products = (json.products || []).map((p: any) => ({
     id: String(p.id),
     shopify_product_id: String(p.id),
-    user_id: userId,
-    shop_domain: shopDomain,
     title: p.title || '',
     body_html: p.body_html || '',
     description: p.body_html || '',
     vendor: p.vendor || '',
-    product_type: p.product_type || '',
     tags: p.tags || '',
     status: p.status || 'active',
     price: parseFloat(p.variants?.[0]?.price || '0') || 0,
-    compare_at_price: parseFloat(p.variants?.[0]?.compare_at_price || '0') || null,
-    images: (p.images || []).map((img: any) => ({ src: img.src })),
+    compare_at_price:
+      p.variants?.[0]?.compare_at_price === null ||
+      p.variants?.[0]?.compare_at_price === undefined ||
+      p.variants?.[0]?.compare_at_price === ''
+        ? null
+        : parseFloat(p.variants?.[0]?.compare_at_price || '0') || null,
+    images: (p.images || [])
+      .map((img: any) => (typeof img === 'string' ? img : img?.src))
+      .filter(Boolean),
     variants: p.variants || [],
     created_at: p.created_at,
-    updated_at: p.updated_at,
-  }
-}
+  }))
 
-async function getActiveShop(supabase: any, userId: string): Promise<ShopRecord | null> {
-  const { data } = await supabase
-    .from('shops')
-    .select('shop_domain, access_token')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .single()
-
-  if (!data?.shop_domain || !data?.access_token) {
-    return null
-  }
-  return data
-}
-
-export async function GET(request: NextRequest) {
+  let total = products.length
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-    }
-
-    const { searchParams } = new URL(request.url)
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 250)
-    const search = (searchParams.get('search') || '').trim()
-    const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1)
-
-    // Try cache table first. If table does not exist, Supabase returns an error and we fallback.
-    try {
-      let query = supabase
-        .from('shopify_products')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1)
-
-      if (search) {
-        query = query.ilike('title', `%${search}%`)
-      }
-
-      const { data: cached, count, error } = await query
-      if (!error && cached && cached.length > 0) {
-        return NextResponse.json({
-          products: cached.map(normalizeCachedRow),
-          total: count || cached.length,
-          source: 'cache',
-        })
-      }
-    } catch {
-      // continue with live Shopify fallback
-    }
-
-    const shop = await getActiveShop(supabase, user.id)
-    if (!shop) {
-      return NextResponse.json({ products: [], total: 0, source: 'none' })
-    }
-
-    const params = new URLSearchParams({
-      limit: String(limit),
-      fields: 'id,title,body_html,vendor,product_type,tags,status,variants,images,created_at,updated_at',
+    const cr = await fetch(`https://${shopDomain}/admin/api/2024-01/products/count.json`, {
+      headers: { 'X-Shopify-Access-Token': accessToken },
+      cache: 'no-store',
     })
-    if (search) {
-      params.set('title', search)
+    if (cr.ok) {
+      total = (await cr.json()).count || total
     }
-
-    const res = await fetch(
-      `https://${shop.shop_domain}/admin/api/2024-01/products.json?${params.toString()}`,
-      {
-        headers: { 'X-Shopify-Access-Token': shop.access_token },
-      }
-    )
-
-    if (!res.ok) {
-      const err = await res.text()
-      console.error('[products] Shopify error:', res.status, err)
-      return NextResponse.json({ error: `Erreur Shopify: ${res.status}` }, { status: 502 })
-    }
-
-    const data = await res.json()
-    const products = (data.products || []).map((p: any) => normalizeShopifyProduct(p, user.id, shop.shop_domain))
-
-    let total = products.length
-    try {
-      const countRes = await fetch(`https://${shop.shop_domain}/admin/api/2024-01/products/count.json`, {
-        headers: { 'X-Shopify-Access-Token': shop.access_token },
-      })
-      if (countRes.ok) {
-        const countData = await countRes.json()
-        total = countData.count || total
-      }
-    } catch {
-      // keep current total fallback
-    }
-
-    return NextResponse.json({ products, total, source: 'shopify' })
-  } catch (e: any) {
-    console.error('[products GET]', e?.message || e)
-    return NextResponse.json({ error: e?.message || 'Erreur serveur' }, { status: 500 })
+  } catch {
+    // Keep fallback total if count request fails.
   }
+
+  return NextResponse.json({ products, total, source: 'live' })
 }

@@ -26,7 +26,7 @@ const S = {
     fontWeight: 400,
   } as CSSProperties,
   card: {
-    background: '#0f1629',
+    background: 'rgba(255,255,255,0.03)',
     border: '1px solid rgba(255,255,255,0.06)',
     borderRadius: '14px',
     padding: '20px',
@@ -130,7 +130,7 @@ export default function DashboardPage() {
           { label: 'Plan actuel', value: loading ? '-' : plan.charAt(0).toUpperCase() + plan.slice(1), color: '#6b7a99', href: '/dashboard/billing' },
         ].map((k) => (
           <a key={k.label} href={k.href} style={{ textDecoration: 'none' }}>
-            <div style={{ background: '#0f1629', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '18px 16px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '18px 16px' }}>
               <p
                 style={{
                   color: '#6b7a99',

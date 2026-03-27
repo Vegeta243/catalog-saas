@@ -68,7 +68,7 @@ export default function OnboardingPage() {
           <img src="/logo.svg" alt="EcomPilot Elite" className="h-10 w-auto dark:hidden" />
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700/50 p-8">
+        <div className="bg-white dark:bg-[#0f172a] rounded-2xl shadow-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)]/50 p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 mb-4">
@@ -114,7 +114,7 @@ export default function OnboardingPage() {
           </form>
 
           {/* Free plan summary */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 mb-6 border border-slate-200 dark:border-slate-700">
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 mb-6 border border-slate-200 dark:border-[rgba(255,255,255,0.07)]">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                 Votre forfait actuel

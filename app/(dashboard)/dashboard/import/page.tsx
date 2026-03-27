@@ -104,7 +104,7 @@ export default function ImportPage() {
   }
 
   const card: React.CSSProperties = {
-    background: '#111827', border: '1px solid #1e2d45',
+    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
     borderRadius: '20px', padding: '20px', marginBottom: '16px',
   }
   const lbl: React.CSSProperties = {
@@ -118,8 +118,8 @@ export default function ImportPage() {
     width: '100%',
   }
   const btnSec: React.CSSProperties = {
-    padding: '14px 20px', background: '#1a2234',
-    border: '1px solid #1e2d45', color: '#8b9fc4',
+    padding: '14px 20px', background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.07)', color: '#8b9fc4',
     borderRadius: '12px', fontSize: '14px',
     fontWeight: 700, cursor: 'pointer',
   }
@@ -134,7 +134,7 @@ export default function ImportPage() {
       </p>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #1e2d45', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: '20px' }}>
         {([['import', ' Importer'], ['history', ' Historique']] as const).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{
             padding: '10px 20px', border: 'none', background: 'transparent',
@@ -169,7 +169,7 @@ export default function ImportPage() {
               onChange={e => setText(e.target.value)}
               style={{
                 width: '100%', background: '#0a0f1e',
-                border: '1px solid #1e2d45', borderRadius: '14px',
+                border: '1px solid rgba(255,255,255,0.07)', borderRadius: '14px',
                 color: '#f0f4ff', fontSize: '15px', padding: '16px',
                 boxSizing: 'border-box', resize: 'vertical',
                 minHeight: '150px', outline: 'none',
@@ -195,7 +195,7 @@ export default function ImportPage() {
                     <div key={i} style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '8px 12px', borderRadius: '10px',
-                      background: '#0a0f1e', border: '1px solid #1e2d45',
+                      background: '#0a0f1e', border: '1px solid rgba(255,255,255,0.07)',
                     }}>
                       {p && (
                         <div style={{
@@ -272,7 +272,7 @@ export default function ImportPage() {
                 <span>Importation en cours...</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              <div style={{ height: '8px', background: '#1a2234', borderRadius: '4px' }}>
+              <div style={{ height: '8px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px' }}>
                 <div style={{
                   height: '100%', borderRadius: '4px',
                   background: 'linear-gradient(90deg, #4f8ef7, #06b6d4)',
@@ -303,7 +303,7 @@ export default function ImportPage() {
                     ) : (
                       <div style={{
                         width: '56px', height: '56px', borderRadius: '10px',
-                        background: '#1a2234', flexShrink: 0,
+                        background: 'rgba(255,255,255,0.04)', flexShrink: 0,
                         display: 'flex', alignItems: 'center',
                         justifyContent: 'center', fontSize: '24px',
                       }}>
@@ -360,7 +360,7 @@ export default function ImportPage() {
                   <div key={name} style={{
                     display: 'flex', alignItems: 'center', gap: '10px',
                     padding: '10px 12px', borderRadius: '12px',
-                    background: '#0a0f1e', border: '1px solid #1e2d45',
+                    background: '#0a0f1e', border: '1px solid rgba(255,255,255,0.07)',
                   }}>
                     <span style={{ fontSize: '20px', flexShrink: 0 }}>{emoji}</span>
                     <div style={{ minWidth: 0 }}>
