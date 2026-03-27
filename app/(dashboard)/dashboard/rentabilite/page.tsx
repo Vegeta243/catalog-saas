@@ -9,11 +9,28 @@ import { useToast } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
+function asImageUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((img) => {
+      if (typeof img === 'string') return img;
+      if (img && typeof img === 'object' && 'src' in img) {
+        const src = (img as { src?: unknown }).src;
+        return typeof src === 'string' ? src : '';
+      }
+      return '';
+    }).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    try { return asImageUrls(JSON.parse(value)); } catch { return []; }
+  }
+  return [];
+}
+
 interface Product {
   id: string;
   title: string;
   price: string;
-  images?: { src: string }[];
+  images?: unknown;
   variants?: { price: string }[];
 }
 
@@ -340,8 +357,8 @@ export default function RentabilitePage() {
                         isSelected ? "bg-blue-50" : "hover:bg-gray-50"
                       }`}
                     >
-                      {product.images?.[0]?.src ? (
-                        <img src={product.images[0].src} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      {asImageUrls(product.images)[0] ? (
+                        <img src={asImageUrls(product.images)[0]} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center">
                           <Package className="w-5 h-5" style={{ color: "#cbd5e1" }} />
@@ -381,8 +398,8 @@ export default function RentabilitePage() {
               {/* Product header + cost input */}
               <div className="bg-white border border-gray-200 rounded-2xl p-5">
                 <div className="flex items-center gap-4 mb-4">
-                  {selectedProduct.images?.[0]?.src ? (
-                    <img src={selectedProduct.images[0].src} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                  {asImageUrls(selectedProduct.images)[0] ? (
+                    <img src={asImageUrls(selectedProduct.images)[0]} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-14 h-14 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center">
                       <Package className="w-7 h-7" style={{ color: "#cbd5e1" }} />

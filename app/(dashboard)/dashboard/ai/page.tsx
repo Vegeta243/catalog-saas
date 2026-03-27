@@ -18,7 +18,7 @@ interface Product {
   body_html?: string;
   tags?: string;
   price: string;
-  images?: { src: string }[];
+  images?: unknown;
   variants?: { price: string }[];
 }
 
@@ -49,10 +49,27 @@ function seoScore(p: Product): number {
   else if (tagCount >= 3) s += 8;
   else if (tagCount >= 1) s += 3;
   // Images : 15 pts
-  const imgCount = p.images?.length || 0;
+  const imgCount = asImageUrls(p.images).length;
   if (imgCount >= 3) s += 15;
   else if (imgCount >= 1) s += 10;
   return s;
+}
+
+function asImageUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((img) => {
+      if (typeof img === 'string') return img;
+      if (img && typeof img === 'object' && 'src' in img) {
+        const src = (img as { src?: unknown }).src;
+        return typeof src === 'string' ? src : '';
+      }
+      return '';
+    }).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    try { return asImageUrls(JSON.parse(value)); } catch { return []; }
+  }
+  return [];
 }
 
 function ScoreBadge({ score, size = "sm" }: { score: number; size?: "sm" | "lg" }) {
@@ -271,7 +288,7 @@ export default function AIPage() {
       return {
         id: Number(id) || parseInt(id),
         productTitle: product?.title || "Produit",
-        productImage: product?.images?.[0]?.src,
+        productImage: asImageUrls(product?.images)[0],
         original: {
           title: product?.title,
           description: product?.body_html,
@@ -540,7 +557,7 @@ export default function AIPage() {
                     {isSelected && <CheckCircle2 className="w-3 h-3" style={{ color: "#fff" }} />}
                   </button>
                   <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                    {product.images?.[0]?.src ? <img src={product.images[0].src} alt="" className="w-full h-full object-cover" /> : null}
+                    {asImageUrls(product.images)[0] ? <img src={asImageUrls(product.images)[0]} alt="" className="w-full h-full object-cover" /> : null}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{product.title}</p>
