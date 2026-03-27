@@ -29,19 +29,6 @@ type EditState = {
 
 const PER_PAGE = 24
 
-const P = {
-  text:    '#e8ecf4',
-  sub:     '#8a95b0',
-  muted:   '#555f7a',
-  accent:  '#4f8ef7',
-  ok:      '#10b981',
-  err:     '#f87171',
-  card:    'rgba(255,255,255,0.04)',
-  cardAlt: 'rgba(255,255,255,0.02)',
-  border:  'rgba(255,255,255,0.08)',
-  borderHi:'rgba(255,255,255,0.14)',
-}
-
 function asImageUrls(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.map((img) => {
@@ -78,10 +65,10 @@ function parsePrice(v: string): number | null {
 
 const inputStyle: CSSProperties = {
   width: '100%',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: '#f9fafb',
+  border: '1px solid #d1d5db',
   borderRadius: 10,
-  color: '#e8ecf4',
+  color: '#111827',
   fontSize: 14,
   fontWeight: 400,
   padding: '10px 12px',
@@ -90,12 +77,12 @@ const inputStyle: CSSProperties = {
 }
 
 const cardStyle: CSSProperties = {
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: '#ffffff',
+  border: '1px solid #e5e7eb',
   borderRadius: 12,
 }
 
-// ─── BULK EDIT TAB ───────────────────────────────────────────
+// ─── BULK EDIT TAB ────────────────────────────────────────────────────────────
 function BulkEditTab({ products }: { products: Product[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [action, setAction] = useState<'price' | 'tags_add' | 'status' | 'title_suffix'>('price')
@@ -165,7 +152,7 @@ function BulkEditTab({ products }: { products: Product[] }) {
       await new Promise(r => setTimeout(r, 150))
     }
 
-    setMsg(success + ' produit(s) mis à jour' + (fail > 0 ? ', ' + fail + ' échec(s)' : ''))
+    setMsg(success + ' produit(s) mis \u00e0 jour' + (fail > 0 ? ', ' + fail + ' \u00e9chec(s)' : ''))
     setMsgOk(fail === 0)
     setApplying(false)
     setTimeout(() => setMsg(''), 6000)
@@ -176,20 +163,20 @@ function BulkEditTab({ products }: { products: Product[] }) {
     padding: '10px 14px', borderRadius: '10px',
     cursor: 'pointer', marginBottom: '6px',
     transition: 'background 0.1s',
-    background: 'rgba(255,255,255,0.02)',
-    border: '1px solid rgba(255,255,255,0.05)',
+    background: '#f9fafb',
+    border: '1px solid #e5e7eb',
   }
   const rowSel: CSSProperties = {
     ...rowBase,
-    background: 'rgba(79,142,247,0.06)',
-    border: '1px solid rgba(79,142,247,0.2)',
+    background: 'rgba(37,99,235,0.06)',
+    border: '1px solid rgba(37,99,235,0.3)',
   }
   const selStyle: CSSProperties = {
     width: '100%',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: '#f9fafb',
+    border: '1px solid #d1d5db',
     borderRadius: '10px',
-    color: '#e8ecf4',
+    color: '#111827',
     fontSize: '14px',
     padding: '10px 14px',
     outline: 'none',
@@ -202,8 +189,8 @@ function BulkEditTab({ products }: { products: Product[] }) {
     return (
       <div style={{
         width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-        border: '1.5px solid ' + (checked ? '#4f8ef7' : 'rgba(255,255,255,0.2)'),
-        background: checked ? '#4f8ef7' : 'transparent',
+        border: '1.5px solid ' + (checked ? '#2563eb' : '#d1d5db'),
+        background: checked ? '#2563eb' : '#ffffff',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {checked && (
@@ -217,30 +204,27 @@ function BulkEditTab({ products }: { products: Product[] }) {
 
   return (
     <div className="bulkGrid">
-      {/* ── LEFT: product list ── */}
+      {/* LEFT: product list */}
       <div>
-        {/* Select all header */}
         <div onClick={toggleAll} style={{
-          ...rowBase,
-          marginBottom: 12,
-          background: allSelected ? 'rgba(79,142,247,0.08)' : 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          ...rowBase, marginBottom: 12,
+          background: allSelected ? 'rgba(37,99,235,0.06)' : '#f3f4f6',
+          border: allSelected ? '1px solid rgba(37,99,235,0.3)' : '1px solid #e5e7eb',
         }}>
           <Checkbox checked={allSelected} />
-          <span style={{ color: '#e8ecf4', fontSize: 14, fontWeight: 500 }}>
-            {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
+          <span style={{ color: '#111827', fontSize: 14, fontWeight: 600 }}>
+            {allSelected ? 'Tout d\u00e9s\u00e9lectionner' : 'Tout s\u00e9lectionner'}
           </span>
           {selected.size > 0 && (
-            <span style={{ marginLeft: 'auto', color: '#4f8ef7', fontSize: 13, fontWeight: 500 }}>
-              {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
+            <span style={{ marginLeft: 'auto', color: '#2563eb', fontSize: 13, fontWeight: 600 }}>
+              {selected.size} s\u00e9lectionn\u00e9{selected.size > 1 ? 's' : ''}
             </span>
           )}
         </div>
 
-        {/* Products list */}
-        <div style={{ maxHeight: 520, overflowY: 'auto' }}>
+        <div style={{ maxHeight: 540, overflowY: 'auto' }}>
           {products.length === 0 ? (
-            <p style={{ color: '#8a95b0', fontSize: 14, textAlign: 'center', padding: '40px 0', fontWeight: 400 }}>
+            <p style={{ color: '#6b7280', fontSize: 14, textAlign: 'center', padding: '40px 0' }}>
               Synchronisez vos produits Shopify pour commencer
             </p>
           ) : products.map(p => {
@@ -253,21 +237,25 @@ function BulkEditTab({ products }: { products: Product[] }) {
                 <Checkbox checked={isSel} />
                 {img ? (
                   <img src={img} alt={p.title}
-                    style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
-                    onError={e => { e.currentTarget.style.display = 'none' }} />
+                    style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid #e5e7eb' }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 ) : (
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
+                  <div style={{
+                    width: 44, height: 44, borderRadius: 8, flexShrink: 0,
+                    background: '#f3f4f6', border: '1px solid #e5e7eb',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                  }}>📦</div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: '#e8ecf4', fontSize: 13, fontWeight: 500, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ color: '#111827', fontSize: 13, fontWeight: 600, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.title}
                   </p>
-                  <p style={{ color: '#8a95b0', fontSize: 12, margin: 0, fontWeight: 400 }}>
+                  <p style={{ color: '#6b7280', fontSize: 12, margin: 0 }}>
                     {p.vendor || 'Sans fournisseur'}
                   </p>
                 </div>
-                <span style={{ color: '#4f8ef7', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
-                  {price > 0 ? price.toFixed(2) + '€' : '—'}
+                <span style={{ color: '#2563eb', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                  {price > 0 ? price.toFixed(2) + '\u20ac' : '\u2014'}
                 </span>
               </div>
             )
@@ -275,22 +263,21 @@ function BulkEditTab({ products }: { products: Product[] }) {
         </div>
       </div>
 
-      {/* ── RIGHT: action panel ── */}
+      {/* RIGHT: action panel */}
       <div style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: '#ffffff', border: '1px solid #e5e7eb',
         borderRadius: 14, padding: 20,
         position: 'sticky', top: 24, alignSelf: 'start',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
-        <p style={{ color: '#e8ecf4', fontSize: 15, fontWeight: 600, margin: '0 0 20px' }}>
+        <p style={{ color: '#111827', fontSize: 15, fontWeight: 700, margin: '0 0 20px' }}>
           Action en masse
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Action type */}
           <div>
-            <label style={{ color: '#8a95b0', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6, letterSpacing: '0.02em' }}>
-              TYPE D&apos;ACTION
+            <label style={{ color: '#374151', fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Type d&apos;action
             </label>
             <select value={action} onChange={e => setAction(e.target.value as any)} style={selStyle}>
               <option value="price">Modifier le prix</option>
@@ -300,34 +287,32 @@ function BulkEditTab({ products }: { products: Product[] }) {
             </select>
           </div>
 
-          {/* Price sub-option */}
           {action === 'price' && (
             <div>
-              <label style={{ color: '#8a95b0', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>
-                MÉTHODE
+              <label style={{ color: '#374151', fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                M\u00e9thode
               </label>
               <select value={priceType} onChange={e => setPriceType(e.target.value as any)} style={selStyle}>
-                <option value="set">Fixer à (€)</option>
+                <option value="set">Fixer \u00e0 (\u20ac)</option>
                 <option value="increase_pct">Augmenter de (%)</option>
-                <option value="decrease_pct">Réduire de (%)</option>
+                <option value="decrease_pct">R\u00e9duire de (%)</option>
               </select>
             </div>
           )}
 
-          {/* Value */}
           <div>
-            <label style={{ color: '#8a95b0', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>
-              {action === 'price' ? (priceType === 'set' ? 'NOUVEAU PRIX (€)' : 'POURCENTAGE (%)')
-                : action === 'tags_add' ? 'TAGS À AJOUTER'
-                : action === 'status' ? 'STATUT'
-                : 'TEXTE À AJOUTER'}
+            <label style={{ color: '#374151', fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              {action === 'price' ? (priceType === 'set' ? 'Nouveau prix (\u20ac)' : 'Pourcentage (%)')
+                : action === 'tags_add' ? 'Tags \u00e0 ajouter'
+                : action === 'status' ? 'Statut'
+                : 'Texte \u00e0 ajouter'}
             </label>
             {action === 'status' ? (
               <select value={value} onChange={e => setValue(e.target.value)} style={selStyle}>
                 <option value="">Choisir...</option>
                 <option value="active">Actif</option>
                 <option value="draft">Brouillon</option>
-                <option value="archived">Archivé</option>
+                <option value="archived">Archiv\u00e9</option>
               </select>
             ) : (
               <input
@@ -337,7 +322,7 @@ function BulkEditTab({ products }: { products: Product[] }) {
                 placeholder={
                   action === 'price' ? (priceType === 'set' ? 'ex: 29.99' : 'ex: 20')
                     : action === 'tags_add' ? 'ex: promo, soldes'
-                    : 'ex: - Édition limitée'
+                    : 'ex: - \u00c9dition limit\u00e9e'
                 }
                 style={selStyle}
                 min={action === 'price' ? '0' : undefined}
@@ -346,33 +331,32 @@ function BulkEditTab({ products }: { products: Product[] }) {
             )}
           </div>
 
-          {/* Apply button */}
           <button
             onClick={applyBulk}
             disabled={applying || !selected.size || !value.trim()}
             style={{
-              width: '100%', padding: 12,
-              background: applying || !selected.size || !value.trim()
-                ? 'rgba(79,142,247,0.15)' : '#4f8ef7',
-              color: applying || !selected.size || !value.trim() ? '#4f8ef7' : '#fff',
-              border: '1px solid rgba(79,142,247,0.3)',
-              borderRadius: 10, fontSize: 14, fontWeight: 500,
+              width: '100%', padding: '12px',
+              background: applying || !selected.size || !value.trim() ? '#f3f4f6' : '#2563eb',
+              color: applying || !selected.size || !value.trim() ? '#9ca3af' : '#ffffff',
+              border: '1px solid ' + (applying || !selected.size || !value.trim() ? '#e5e7eb' : '#2563eb'),
+              borderRadius: 10, fontSize: 14, fontWeight: 600,
               cursor: applying || !selected.size ? 'not-allowed' : 'pointer',
+              transition: 'background 0.15s',
             }}>
-            {applying ? 'Application...'
+            {applying ? 'Application en cours...'
               : selected.size > 0
                 ? 'Appliquer aux ' + selected.size + ' produit(s)'
-                : 'Sélectionnez des produits'}
+                : 'S\u00e9lectionnez des produits'}
           </button>
 
           {msg && (
-            <p style={{ textAlign: 'center', fontSize: 13, fontWeight: 500, color: msgOk ? '#10b981' : '#f87171', margin: 0 }}>
+            <p style={{ textAlign: 'center', fontSize: 13, fontWeight: 600, color: msgOk ? '#059669' : '#dc2626', margin: 0 }}>
               {msg}
             </p>
           )}
 
-          {selected.size === 0 && (
-            <p style={{ color: '#555f7a', fontSize: 12, textAlign: 'center', margin: 0, fontWeight: 400 }}>
+          {selected.size === 0 && !msg && (
+            <p style={{ color: '#9ca3af', fontSize: 12, textAlign: 'center', margin: 0 }}>
               Cochez des produits dans la liste de gauche
             </p>
           )}
@@ -382,21 +366,18 @@ function BulkEditTab({ products }: { products: Product[] }) {
   )
 }
 
-// ─── MAIN PAGE ───────────────────────────────────────────────
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-
   const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [saving, setSaving] = useState(false)
-
   const [syncMsg, setSyncMsg] = useState('')
   const [syncOk, setSyncOk] = useState(true)
   const [saveMsg, setSaveMsg] = useState('')
-
   const [selected, setSelected] = useState<Product | null>(null)
   const [edit, setEdit] = useState<EditState | null>(null)
   const [hasShop, setHasShop] = useState<boolean | null>(null)
@@ -422,7 +403,7 @@ export default function ProductsPage() {
       setSyncMsg(body.error || 'Erreur API ' + res.status); setSyncOk(false)
     } catch {
       setProducts([]); setTotal(0)
-      setSyncMsg('Erreur reseau'); setSyncOk(false)
+      setSyncMsg('Erreur r\u00e9seau'); setSyncOk(false)
     } finally {
       setLoading(false)
     }
@@ -439,12 +420,12 @@ export default function ProductsPage() {
       const res = await fetch('/api/shopify/sync', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
       if (res.ok && data.success) {
-        setSyncMsg(data.synced + ' produits synchronises depuis ' + (data.shop || 'la boutique'))
+        setSyncMsg(data.synced + ' produits synchronis\u00e9s depuis ' + (data.shop || 'la boutique'))
         setSyncOk(true); setPage(1); await fetchProducts(1, search)
       } else {
         setSyncMsg(data.error || 'Erreur de synchronisation'); setSyncOk(false)
       }
-    } catch { setSyncMsg('Erreur reseau'); setSyncOk(false) }
+    } catch { setSyncMsg('Erreur r\u00e9seau'); setSyncOk(false) }
     finally { setSyncing(false); setTimeout(() => setSyncMsg(''), 6000) }
   }
 
@@ -485,7 +466,7 @@ export default function ProductsPage() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setSaveMsg(data.error || 'Erreur de sauvegarde'); return }
-      setSaveMsg('Mis a jour sur Shopify')
+      setSaveMsg('Mis \u00e0 jour sur Shopify \u2713')
       const nextPrice = parsePrice(edit.price)
       const nextCompareAt = parsePrice(edit.compareAtPrice)
       setProducts(prev => prev.map(p => {
@@ -493,7 +474,7 @@ export default function ProductsPage() {
         if (id !== pid) return p
         return { ...p, title: edit.title, body_html: edit.description, vendor: edit.vendor, tags: edit.tags, price: nextPrice ?? p.price, compare_at_price: nextCompareAt }
       }))
-    } catch { setSaveMsg('Erreur reseau') }
+    } catch { setSaveMsg('Erreur r\u00e9seau') }
     finally { setSaving(false) }
   }
 
@@ -505,32 +486,32 @@ export default function ProductsPage() {
 
   return (
     <div className="productsPage">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="headerRow">
         <div>
-          <h1 className="title">Produits Shopify</h1>
-          <p className="subtitle">
-            {total > 0 ? total + ' produit' + (total > 1 ? 's' : '') : 'Synchronisez pour voir vos produits'}
+          <h1 className="pageTitle">Produits Shopify</h1>
+          <p className="pageSubtitle">
+            {total > 0 ? total + ' produit' + (total > 1 ? 's' : '') + ' synchronis\u00e9' + (total > 1 ? 's' : '') : 'Synchronisez pour voir vos produits'}
           </p>
         </div>
         <div className="headerActions">
           {syncMsg && (
-            <span style={{ color: syncOk ? '#10b981' : '#f87171', fontSize: 13, fontWeight: 500 }}>
+            <span style={{ color: syncOk ? '#059669' : '#dc2626', fontSize: 13, fontWeight: 600 }}>
               {syncMsg}
             </span>
           )}
           <button className="primaryBtn" onClick={doSync} disabled={syncing}>
-            {syncing ? 'Synchronisation...' : 'Synchroniser Shopify'}
+            {syncing ? 'Synchronisation...' : '\u21ba Synchroniser Shopify'}
           </button>
         </div>
       </div>
 
       {hasShop === false && (
         <div style={{ ...cardStyle, padding: '48px 24px', textAlign: 'center' }}>
-          <p style={{ color: '#e8ecf4', fontSize: 18, fontWeight: 600, margin: '0 0 8px' }}>
-            Aucune boutique connectee
+          <p style={{ color: '#111827', fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>
+            Aucune boutique connect\u00e9e
           </p>
-          <p style={{ color: '#8a95b0', fontSize: 14, fontWeight: 400, margin: '0 0 20px' }}>
+          <p style={{ color: '#374151', fontSize: 14, margin: '0 0 20px' }}>
             Connectez votre boutique Shopify pour voir et modifier vos produits.
           </p>
           <a href="/dashboard/shops" className="primaryBtn" style={{ display: 'inline-block', textDecoration: 'none' }}>
@@ -541,40 +522,42 @@ export default function ProductsPage() {
 
       {hasShop !== false && (
         <>
-          {/* ── Tab switcher ── */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
+          {/* Tab switcher */}
+          <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', marginBottom: 20 }}>
             {([['products', 'Produits'], ['bulk', 'Modifier en masse']] as const).map(([id, label]) => (
               <button key={id} onClick={() => setActiveTab(id)} style={{
                 padding: '10px 20px', border: 'none', background: 'transparent',
-                cursor: 'pointer', fontSize: 14, fontWeight: 500,
-                color: activeTab === id ? '#e8ecf4' : '#555f7a',
-                borderBottom: '2px solid ' + (activeTab === id ? '#4f8ef7' : 'transparent'),
+                cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                color: activeTab === id ? '#111827' : '#6b7280',
+                borderBottom: '2px solid ' + (activeTab === id ? '#2563eb' : 'transparent'),
+                marginBottom: '-2px',
               }}>{label}</button>
             ))}
           </div>
 
-          {/* ── Products tab ── */}
+          {/* Products tab */}
           {activeTab === 'products' && (
             <div className={'mainGrid' + (selected && edit ? ' withEditor' : '')}>
               <section>
-                <div style={{ marginBottom: 12 }}>
+                <div style={{ marginBottom: 14 }}>
                   <input
-                    type="text" placeholder="Rechercher un produit..."
+                    type="text" placeholder="\ud83d\udd0d  Rechercher un produit..."
                     value={search} onChange={e => onSearchChange(e.target.value)}
                     style={inputStyle}
                   />
                 </div>
 
                 {loading && (
-                  <div style={{ ...cardStyle, padding: '42px 16px', textAlign: 'center' }}>
-                    <p style={{ color: '#8a95b0', fontSize: 14, fontWeight: 400, margin: 0 }}>Chargement...</p>
+                  <div style={{ textAlign: 'center', padding: '60px 16px' }}>
+                    <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des produits...</p>
                   </div>
                 )}
 
                 {!loading && products.length === 0 && (
-                  <div style={{ ...cardStyle, padding: '42px 16px', textAlign: 'center' }}>
-                    <p style={{ color: '#e8ecf4', fontSize: 16, fontWeight: 500, margin: '0 0 8px' }}>Aucun produit</p>
-                    <p style={{ color: '#8a95b0', fontSize: 14, fontWeight: 400, margin: '0 0 14px' }}>
+                  <div style={{ ...cardStyle, padding: '48px 24px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>📦</div>
+                    <p style={{ color: '#111827', fontSize: 16, fontWeight: 700, margin: '0 0 8px' }}>Aucun produit</p>
+                    <p style={{ color: '#374151', fontSize: 14, margin: '0 0 20px' }}>
                       Cliquez sur Synchroniser Shopify pour importer vos produits.
                     </p>
                     <button className="primaryBtn" onClick={doSync} disabled={syncing}>
@@ -596,13 +579,15 @@ export default function ProductsPage() {
                           onClick={() => openEdit(p)}>
                           <div className="thumbWrap">
                             {image
-                              ? <img src={image} alt={p.title} className="thumb" />
-                              : <div className="thumbEmpty">Image indisponible</div>}
+                              ? <img src={image} alt={p.title} className="thumb"
+                                  onError={e => { (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class=\"thumbEmpty\">\ud83d\udce6</div>' }} />
+                              : <div className="thumbEmpty">\ud83d\udce6</div>}
                           </div>
                           <div className="cardInfo">
                             <p className="prodTitle">{p.title}</p>
+                            {p.vendor && <p className="prodVendor">{p.vendor}</p>}
                             <p className="prodPrice">
-                              {Number.isFinite(priceNum) && priceNum > 0 ? priceNum.toFixed(2) + ' EUR' : '--'}
+                              {Number.isFinite(priceNum) && priceNum > 0 ? priceNum.toFixed(2) + ' \u20ac' : '--'}
                             </p>
                           </div>
                         </button>
@@ -613,9 +598,9 @@ export default function ProductsPage() {
 
                 {totalPages > 1 && (
                   <div className="pager">
-                    <button type="button" className="ghostBtn" onClick={() => onPageChange(page - 1)} disabled={page === 1}>Prev</button>
-                    <span className="pagerText">{page} / {totalPages}</span>
-                    <button type="button" className="ghostBtn" onClick={() => onPageChange(page + 1)} disabled={page === totalPages}>Next</button>
+                    <button type="button" className="ghostBtn" onClick={() => onPageChange(page - 1)} disabled={page === 1}>\u2190 Pr\u00e9c.</button>
+                    <span className="pagerText">Page {page} / {totalPages}</span>
+                    <button type="button" className="ghostBtn" onClick={() => onPageChange(page + 1)} disabled={page === totalPages}>Suiv. \u2192</button>
                   </div>
                 )}
               </section>
@@ -623,32 +608,33 @@ export default function ProductsPage() {
               {selected && edit && (
                 <aside className="editorPanel">
                   <div className="panelHeader">
-                    <p style={{ color: '#e8ecf4', margin: 0, fontSize: 15, fontWeight: 600 }}>Modifier le produit</p>
-                    <button type="button" className="closeBtn" onClick={() => { setSelected(null); setEdit(null) }}>✕</button>
+                    <p style={{ color: '#111827', margin: 0, fontSize: 15, fontWeight: 700 }}>Modifier le produit</p>
+                    <button type="button" className="closeBtn" onClick={() => { setSelected(null); setEdit(null) }}>\u2715</button>
                   </div>
 
-                  {asImageUrls(selected.images)[0] && (
-                    <div className="editorImageWrap">
-                      <img src={asImageUrls(selected.images)[0]} alt={selected.title} className="editorImage" />
-                    </div>
-                  )}
+                  <div className="editorImageWrap">
+                    {asImageUrls(selected.images)[0]
+                      ? <img src={asImageUrls(selected.images)[0]} alt={selected.title} className="editorImage" />
+                      : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 40 }}>\ud83d\udce6</div>
+                    }
+                  </div>
 
                   <div className="fieldStack">
                     <label className="fieldLabel">Titre</label>
                     <input style={inputStyle} value={edit.title} onChange={e => setEdit({ ...edit, title: e.target.value })} />
 
                     <label className="fieldLabel">Description</label>
-                    <textarea style={{ ...inputStyle, minHeight: 96, resize: 'vertical' }}
+                    <textarea style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }}
                       value={edit.description} onChange={e => setEdit({ ...edit, description: e.target.value })} />
 
                     <div className="twoCols">
                       <div>
-                        <label className="fieldLabel">Prix</label>
+                        <label className="fieldLabel">Prix (\u20ac)</label>
                         <input type="number" step="0.01" min="0" style={inputStyle}
                           value={edit.price} onChange={e => setEdit({ ...edit, price: e.target.value })} />
                       </div>
                       <div>
-                        <label className="fieldLabel">Prix barre</label>
+                        <label className="fieldLabel">Prix barr\u00e9</label>
                         <input type="number" step="0.01" min="0" style={inputStyle}
                           value={edit.compareAtPrice} onChange={e => setEdit({ ...edit, compareAtPrice: e.target.value })} />
                       </div>
@@ -657,8 +643,8 @@ export default function ProductsPage() {
                     <label className="fieldLabel">Fournisseur</label>
                     <input style={inputStyle} value={edit.vendor} onChange={e => setEdit({ ...edit, vendor: e.target.value })} />
 
-                    <label className="fieldLabel">Tags</label>
-                    <input style={inputStyle} value={edit.tags} onChange={e => setEdit({ ...edit, tags: e.target.value })} placeholder="tag1, tag2" />
+                    <label className="fieldLabel">Tags (s\u00e9par\u00e9s par des virgules)</label>
+                    <input style={inputStyle} value={edit.tags} onChange={e => setEdit({ ...edit, tags: e.target.value })} placeholder="tag1, tag2, promo" />
                   </div>
 
                   <button className="primaryBtn fullWidth" onClick={doSave} disabled={saving}>
@@ -666,16 +652,16 @@ export default function ProductsPage() {
                   </button>
 
                   {saveMsg && (
-                    <p style={{ textAlign: 'center', color: saveMsg.toLowerCase().includes('erreur') ? '#f87171' : '#10b981', fontSize: 13, fontWeight: 500, marginTop: 10 }}>
+                    <p style={{ textAlign: 'center', color: saveMsg.includes('rreur') ? '#dc2626' : '#059669', fontSize: 13, fontWeight: 600, marginTop: 10 }}>
                       {saveMsg}
                     </p>
                   )}
 
-                  <p style={{ textAlign: 'center', marginTop: 12 }}>
+                  <p style={{ textAlign: 'center', marginTop: 14 }}>
                     <a href={'https://admin.shopify.com/products/' + (selected.shopify_product_id || selected.id)}
                       target="_blank" rel="noopener noreferrer"
-                      style={{ color: '#4f8ef7', textDecoration: 'none', fontSize: 12, fontWeight: 400 }}>
-                      Ouvrir dans Shopify Admin
+                      style={{ color: '#2563eb', textDecoration: 'none', fontSize: 12 }}>
+                      Ouvrir dans Shopify Admin \u2197
                     </a>
                   </p>
                 </aside>
@@ -683,7 +669,7 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {/* ── Bulk tab ── */}
+          {/* Bulk tab */}
           {activeTab === 'bulk' && <BulkEditTab products={products} />}
         </>
       )}
@@ -699,20 +685,19 @@ export default function ProductsPage() {
           align-items: flex-start;
           justify-content: space-between;
           gap: 12px;
-          margin-bottom: 16px;
+          margin-bottom: 20px;
           flex-wrap: wrap;
         }
-        .title {
-          margin: 0;
-          color: #e8ecf4;
-          font-size: 20px;
-          line-height: 1.25;
+        .pageTitle {
+          margin: 0 0 4px;
+          color: #111827;
+          font-size: 22px;
           font-weight: 700;
           letter-spacing: -0.01em;
         }
-        .subtitle {
-          margin: 4px 0 0;
-          color: #8a95b0;
+        .pageSubtitle {
+          margin: 0;
+          color: #374151;
           font-size: 14px;
           font-weight: 400;
         }
@@ -729,14 +714,12 @@ export default function ProductsPage() {
         }
         .bulkGrid {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 300px;
+          grid-template-columns: minmax(0, 1fr) 310px;
           gap: 20px;
           align-items: start;
         }
         @media (max-width: 760px) {
-          .bulkGrid {
-            grid-template-columns: 1fr;
-          }
+          .bulkGrid { grid-template-columns: 1fr; }
         }
         .productGrid {
           display: grid;
@@ -746,28 +729,30 @@ export default function ProductsPage() {
         .productCard {
           width: 100%;
           text-align: left;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
           border-radius: 12px;
           overflow: hidden;
           cursor: pointer;
           padding: 0;
           transition: box-shadow 0.15s, border-color 0.15s;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .productCard:hover {
-          border-color: rgba(255,255,255,0.15);
-          box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+          border-color: #93c5fd;
+          box-shadow: 0 4px 12px rgba(37,99,235,0.1);
         }
         .productCard.selected {
-          background: rgba(79,142,247,0.08);
-          border-color: rgba(79,142,247,0.4);
-          box-shadow: 0 0 0 2px rgba(79,142,247,0.15);
+          background: #eff6ff;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
         }
         .thumbWrap {
           width: 100%;
-          padding-top: 72%;
+          padding-top: 75%;
           position: relative;
-          background: rgba(255,255,255,0.03);
+          background: #f3f4f6;
+          border-bottom: 1px solid #e5e7eb;
         }
         .thumb {
           position: absolute;
@@ -782,84 +767,94 @@ export default function ProductsPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #555f7a;
-          font-size: 11px;
-          font-weight: 400;
-          padding: 6px;
-          text-align: center;
+          font-size: 28px;
         }
         .cardInfo { padding: 8px 10px 10px; }
         .prodTitle {
+          margin: 0 0 2px;
+          color: #111827;
+          font-size: 12px;
+          font-weight: 600;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.4;
+        }
+        .prodVendor {
           margin: 0 0 3px;
-          color: #e8ecf4;
-          font-size: 13px;
-          font-weight: 500;
+          color: #6b7280;
+          font-size: 11px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
         .prodPrice {
           margin: 0;
-          color: #4f8ef7;
-          font-size: 14px;
-          font-weight: 600;
+          color: #2563eb;
+          font-size: 13px;
+          font-weight: 700;
         }
         .editorPanel {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
           border-radius: 14px;
           padding: 16px;
           align-self: start;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
         .panelHeader {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid #f3f4f6;
         }
         .closeBtn {
           border: 0;
           background: transparent;
-          color: #8a95b0;
+          color: #9ca3af;
           font-size: 16px;
           cursor: pointer;
           padding: 4px 8px;
           border-radius: 6px;
+          line-height: 1;
         }
-        .closeBtn:hover { background: rgba(255,255,255,0.06); }
+        .closeBtn:hover { background: #f3f4f6; color: #374151; }
         .editorImageWrap {
           width: 100%;
-          height: 140px;
+          height: 160px;
           border-radius: 10px;
           overflow: hidden;
-          background: rgba(255,255,255,0.03);
-          margin-bottom: 12px;
+          background: #f3f4f6;
+          margin-bottom: 14px;
+          border: 1px solid #e5e7eb;
         }
         .editorImage { width: 100%; height: 100%; object-fit: contain; }
-        .fieldStack { display: grid; gap: 8px; }
-        .fieldLabel { color: #8a95b0; font-size: 12px; font-weight: 500; margin-top: 2px; }
+        .fieldStack { display: grid; gap: 10px; margin-bottom: 16px; }
+        .fieldLabel { color: #374151; font-size: 12px; font-weight: 600; margin-top: 2px; display: block; }
         .twoCols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .primaryBtn {
           border: none;
-          background: #4f8ef7;
+          background: #2563eb;
           color: white;
           border-radius: 10px;
           font-size: 14px;
-          font-weight: 500;
-          padding: 10px 16px;
+          font-weight: 600;
+          padding: 10px 18px;
           cursor: pointer;
           transition: background 0.15s;
           white-space: nowrap;
         }
-        .primaryBtn:hover { background: #3b7de0; }
-        .primaryBtn:disabled { opacity: 0.55; cursor: wait; }
-        .fullWidth { width: 100%; margin-top: 14px; }
-        .pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; }
-        .pagerText { color: #8a95b0; font-size: 13px; font-weight: 500; }
+        .primaryBtn:hover { background: #1d4ed8; }
+        .primaryBtn:disabled { opacity: 0.5; cursor: wait; }
+        .fullWidth { width: 100%; }
+        .pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; }
+        .pagerText { color: #374151; font-size: 13px; font-weight: 600; }
         .ghostBtn {
-          border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.04);
-          color: #e8ecf4;
+          border: 1px solid #d1d5db;
+          background: #ffffff;
+          color: #374151;
           border-radius: 8px;
           font-size: 13px;
           font-weight: 500;
@@ -867,18 +862,18 @@ export default function ProductsPage() {
           cursor: pointer;
           transition: background 0.15s;
         }
-        .ghostBtn:hover { background: rgba(255,255,255,0.08); }
-        .ghostBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .ghostBtn:hover { background: #f9fafb; }
+        .ghostBtn:disabled { opacity: 0.4; cursor: not-allowed; }
         @media (min-width: 480px) {
           .productGrid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
         }
         @media (min-width: 700px) {
           .productsPage { padding: 20px; }
-          .productGrid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+          .productGrid { grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 12px; }
         }
         @media (min-width: 1100px) {
           .mainGrid.withEditor { grid-template-columns: minmax(0, 1fr) 360px; }
-          .editorPanel { position: sticky; top: 20px; max-height: calc(100vh - 64px); overflow: auto; }
+          .editorPanel { position: sticky; top: 20px; max-height: calc(100vh - 64px); overflow-y: auto; }
         }
       `}</style>
     </div>

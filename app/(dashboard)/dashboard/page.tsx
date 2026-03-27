@@ -18,7 +18,7 @@ const S = {
     letterSpacing: '-0.01em',
   } as CSSProperties,
   sub: {
-    color: '#6b7280',
+    color: '#374151',
     fontSize: '14px',
     margin: '0 0 24px 0',
     fontWeight: 400,
@@ -131,9 +131,9 @@ export default function DashboardPage() {
             <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '14px', padding: '18px 16px' }}>
               <p
                 style={{
-                  color: '#6b7280',
+                  color: '#374151',
                   fontSize: '11px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   margin: '0 0 8px 0',
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                       >
                         {s.label}
                       </p>
-                      <p style={{ color: '#6b7280', fontSize: '12px', margin: 0, fontWeight: 400 }}>{s.desc}</p>
+                      <p style={{ color: '#374151', fontSize: '12px', margin: 0, fontWeight: 400 }}>{s.desc}</p>
                     </div>
                   </div>
                 </a>
@@ -259,10 +259,10 @@ export default function DashboardPage() {
                 }}
               >
                 <div>
-                  <p style={{ color: '#111827', fontSize: '13px', fontWeight: 500, margin: '0 0 1px 0' }}>{a.label}</p>
-                  <p style={{ color: '#6b7280', fontSize: '12px', margin: 0, fontWeight: 400 }}>{a.desc}</p>
+                  <p style={{ color: '#111827', fontSize: '13px', fontWeight: 600, margin: '0 0 1px 0' }}>{a.label}</p>
+                  <p style={{ color: '#374151', fontSize: '12px', margin: 0, fontWeight: 400 }}>{a.desc}</p>
                 </div>
-                <span style={{ color: '#9ca3af', fontSize: '16px' }}>›</span>
+                <span style={{ color: '#6b7280', fontSize: '16px', fontWeight: 600 }}>›</span>
               </a>
             ))}
           </div>
