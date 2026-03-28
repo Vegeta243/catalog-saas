@@ -38,6 +38,8 @@ import AIChatWidget from '@/components/ai-chat-widget';
 import { PreviewBanner } from '@/components/preview-banner';
 import { UserProvider } from '@/lib/contexts/UserContext';
 import { OnboardingTour } from '@/components/onboarding-tour';
+import { OnboardingModal } from '@/components/onboarding-modal';
+import { ActionsCounter } from '@/components/actions-counter';
 
 const NAV_SECTIONS = [
   {
@@ -207,6 +209,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const tasksTotal = tasksTotalOverride ?? (PLAN_TASKS[plan] || PLAN_TASKS.free || 30);
   const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
+  const tasksColor = getTasksColor(tasksRemaining);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -261,7 +264,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-  const tasksColor = getTasksColor(tasksRemaining);
+  const LOCKED_FOR_FREE = ['/dashboard/calendrier', '/dashboard/automation', '/dashboard/concurrence'];
 
   return (
     <UserProvider>
@@ -298,6 +301,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {section.items.map((item) => {
                   const isActive = pathname === item.href;
                   const Icon = item.icon;
+                  const isLocked = plan === 'free' && LOCKED_FOR_FREE.includes(item.href);
+                  if (isLocked) {
+                    return (
+                      <div key={item.href}
+                        title="Disponible à partir du plan Starter"
+                        style={{ ...styles.navItem, opacity: 0.5, cursor: 'not-allowed', userSelect: 'none' as const }}>
+                        <Icon className="w-5 h-5" style={{ flexShrink: 0 }} />
+                        {!sidebarCollapsed && <span style={{ fontSize: '14px', fontWeight: '500', flex: 1 }}>{item.label}</span>}
+                        {!sidebarCollapsed && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#94a3b8">
+                            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4" fill="none" stroke="#94a3b8" strokeWidth="2"/>
+                          </svg>
+                        )}
+                      </div>
+                    );
+                  }
                   return (
                     <Link
                       key={item.href}
@@ -397,6 +416,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              {/* Actions Counter */}
+              <div className="hidden sm:block">
+                <ActionsCounter />
+              </div>
+
               {/* Tasks Progress */}
               <div className="hidden md:block" style={{ minWidth: '200px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
@@ -503,6 +527,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* AI Chat Widget */}
           <AIChatWidget />
+          {/* Onboarding Modal (first login only) */}
+          <OnboardingModal />
         </div>
 
         {/* Mobile Menu */}
@@ -529,27 +555,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {NAV_SECTIONS.map((section) => (
                 <div key={section.label} style={{ marginBottom: '24px' }}>
                   <div style={styles.navLabel}>{section.label}</div>
-                  {section.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      style={{
-                        ...styles.navItem,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '12px',
-                        color: pathname === item.href ? 'var(--apple-blue)' : 'var(--text-secondary)',
-                        background: pathname === item.href ? 'var(--apple-gray-50)' : 'transparent',
-                        borderRadius: '12px',
-                        marginBottom: '4px',
-                      }}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span style={{ fontSize: '14px', fontWeight: '500' }}>{item.label}</span>
-                    </Link>
-                  ))}
+                  {section.items.map((item) => {
+                    const isLocked = plan === 'free' && LOCKED_FOR_FREE.includes(item.href);
+                    if (isLocked) {
+                      return (
+                        <div key={item.href}
+                          title="Disponible à partir du plan Starter"
+                          style={{ ...styles.navItem, display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', opacity: 0.5, cursor: 'not-allowed', userSelect: 'none' as const, borderRadius: '12px', marginBottom: '4px' }}>
+                          <item.icon className="w-5 h-5" />
+                          <span style={{ fontSize: '14px', fontWeight: '500', flex: 1 }}>{item.label}</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#94a3b8">
+                            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4" fill="none" stroke="#94a3b8" strokeWidth="2"/>
+                          </svg>
+                        </div>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        style={{
+                          ...styles.navItem,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '12px',
+                          color: pathname === item.href ? 'var(--apple-blue)' : 'var(--text-secondary)',
+                          background: pathname === item.href ? 'var(--apple-gray-50)' : 'transparent',
+                          borderRadius: '12px',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span style={{ fontSize: '14px', fontWeight: '500' }}>{item.label}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
               ))}
             </div>

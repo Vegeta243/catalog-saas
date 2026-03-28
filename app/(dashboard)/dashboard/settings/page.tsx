@@ -62,7 +62,7 @@ export default function SettingsPage() {
         if (data) {
           setPlanName(data.plan || "free");
           setPlanTasksUsed(data.actions_used || 0);
-          setPlanTasksLimit(data.actions_limit || 50);
+          setPlanTasksLimit(data.actions_limit || 100);
         }
         // Fetch active shop
         const { data: shopData } = await supabase

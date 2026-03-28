@@ -167,7 +167,7 @@ export default function ShopifyAppPage() {
               </div>
               <p className="text-base sm:text-lg leading-relaxed max-w-2xl" style={{ color: "#475569" }}>
                 Générez des descriptions IA, optimisez votre SEO, éditez en masse et automatisez votre
-                catalogue Shopify. <strong style={{ color: "#0f172a" }}>30 actions gratuites, sans carte bancaire.</strong>
+                catalogue Shopify. <strong style={{ color: "#0f172a" }}>100 actions gratuites, sans carte bancaire.</strong>
               </p>
               <div className="flex flex-wrap gap-2 mt-4">
                 {["IA GPT-4o", "SEO intégré", "Import fournisseurs", "Édition en masse", "RGPD"].map((tag) => (
@@ -381,8 +381,8 @@ export default function ShopifyAppPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {[
               { name: "Gratuit", price: "0€", tasks: "30 actions", color: "#64748b", popular: false },
-              { name: "Starter", price: "19€", tasks: "500 actions/mois", color: "#2563eb", popular: false },
-              { name: "Pro", price: "49€", tasks: "5 000 actions/mois", color: "#7c3aed", popular: true },
+              { name: "Starter", price: "19€", tasks: "1 500 actions/mois", color: "#2563eb", popular: false },
+              { name: "Pro", price: "49€", tasks: "10 000 actions/mois", color: "#7c3aed", popular: true },
               { name: "Agency", price: "149€", tasks: "Actions illimitées", color: "#059669", popular: false },
             ].map((p) => (
               <div key={p.name} className={`relative p-5 rounded-xl border-2 text-left transition-all ${p.popular ? "border-violet-400 shadow-lg shadow-violet-500/10" : "border-gray-200"}`}>
@@ -451,7 +451,7 @@ export default function ShopifyAppPage() {
             Prêt à transformer votre catalogue Shopify ?
           </h2>
           <p className="text-base sm:text-lg mb-8" style={{ color: "#94a3b8" }}>
-            30 actions gratuites · Sans carte bancaire · Installation en 1 minute
+            100 actions gratuites · Sans carte bancaire · Installation en 1 minute
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a

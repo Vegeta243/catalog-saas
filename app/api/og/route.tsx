@@ -30,13 +30,13 @@ export async function GET() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '36px', fontWeight: 900, color: 'white',
           }}>E</div>
-          <span style={{ color: '#f0f4ff', fontSize: '32px', fontWeight: 900 }}>
+          <span style={{ color: '#0f172a', fontSize: '32px', fontWeight: 900 }}>
             EcomPilot Elite
           </span>
         </div>
 
         <h1 style={{
-          color: '#f0f4ff',
+          color: '#0f172a',
           fontSize: '56px',
           fontWeight: 900,
           textAlign: 'center',
@@ -49,7 +49,7 @@ export async function GET() {
         </h1>
 
         <p style={{
-          color: '#8b9fc4',
+          color: '#475569',
           fontSize: '28px',
           textAlign: 'center',
           margin: '0 0 40px',
@@ -65,7 +65,7 @@ export async function GET() {
           fontSize: '22px',
           fontWeight: 800,
         }}>
-          30 actions gratuites — Sans CB
+          100 actions gratuites — Sans CB
         </div>
       </div>
     ),

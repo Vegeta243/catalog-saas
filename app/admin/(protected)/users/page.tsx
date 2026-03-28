@@ -60,7 +60,7 @@ export default async function AdminUsersPage({
       email: u.email || "",
       plan: (u.user_metadata?.plan as string) || "free",
       actions_used: 0,
-      actions_limit: 30,
+      actions_limit: 100,
       subscription_status: "inactive",
       created_at: u.created_at,
       deleted_at: null,

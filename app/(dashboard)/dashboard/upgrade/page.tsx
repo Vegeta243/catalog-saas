@@ -10,7 +10,7 @@ const PLANS = [
     id: "starter",
     name: "Starter",
     price: 19,
-    yearlyPrice: 13,
+    yearlyPrice: 20,
     color: "#2563eb",
     bg: "#eff6ff",
     features: ["500 tâches IA / mois", "Jusqu'à 500 produits", "Import : 20/mois", "1 boutique Shopify", "Support email"],
@@ -19,7 +19,7 @@ const PLANS = [
     id: "pro",
     name: "Pro",
     price: 49,
-    yearlyPrice: 34,
+    yearlyPrice: 55,
     color: "#059669",
     bg: "#ecfdf5",
     popular: true,
@@ -29,7 +29,7 @@ const PLANS = [
     id: "agency",
     name: "Agency",
     price: 149,
-    yearlyPrice: 104,
+    yearlyPrice: 139,
     color: "#7c3aed",
     bg: "#faf5ff",
     features: ["Actions illimitées", "Boutiques illimitées", "Automatisations illimitées", "Support dédié 4h", "Accès anticipé nouveautés"],
@@ -120,7 +120,7 @@ function UpgradeContent() {
           <Zap className="w-3 h-3" /> Limite atteinte
         </div>
         <h1 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "var(--text-primary)" }}>
-          Vous avez utilisé vos 30 actions gratuites
+          Vous avez utilisé vos 100 actions gratuites
         </h1>
         <p className="text-lg leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
           Vous avez exploré l&apos;essentiel d&apos;EcomPilot. Choisissez un plan pour continuer à optimiser votre catalogue sans limite.

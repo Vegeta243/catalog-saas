@@ -556,13 +556,14 @@ export default function AIPage() {
                     className={`w-5 h-5 rounded border-2 flex-shrink-0 ${isSelected ? "bg-violet-600 border-violet-600" : "border-gray-300"} flex items-center justify-center`}>
                     {isSelected && <CheckCircle2 className="w-3 h-3" style={{ color: "#fff" }} />}
                   </button>
-                  <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                  <div className="rounded-lg bg-gray-100 overflow-hidden flex-shrink-0" style={{ width: '40px', height: '40px' }}>
                     {asImageUrls(product.images)[0] ? <img src={asImageUrls(product.images)[0]} alt="" className="w-full h-full object-cover" /> : null}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{product.title}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-                      {parseFloat(product.price).toFixed(2)} € · {product.tags?.split(",").length || 0} tags · {product.body_html ? `${product.body_html.length} car.` : "Pas de description"}
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{product.title.length > 40 ? product.title.slice(0, 40) + '…' : product.title}</p>
+                    <p className="text-xs mt-0.5">
+                      <span style={{ color: '#16a34a', fontWeight: 600 }}>{parseFloat(product.price).toFixed(2)} €</span>
+                      <span style={{ color: 'var(--text-tertiary)' }}> · {product.tags?.split(",").length || 0} tags · {product.body_html ? `${product.body_html.length} car.` : "Pas de description"}</span>
                     </p>
                   </div>
                   <ScoreBadge score={score} />
@@ -580,7 +581,7 @@ export default function AIPage() {
                       title="Génère et applique directement sans prévisualisation"
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 rounded-lg text-xs font-semibold disabled:opacity-50">
                       {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#059669" }} /> : <Zap className="w-3.5 h-3.5" style={{ color: "#059669" }} />}
-                      <span className="hidden sm:inline" style={{ color: "#6ee7b7" }}>Appliquer direct</span>
+                      <span className="hidden sm:inline" style={{ color: "#065f46" }}>Appliquer direct</span>
                     </button>
                     {gen && (
                       <button onClick={() => applyGenerated(product.id)} disabled={generating === product.id}
@@ -590,7 +591,7 @@ export default function AIPage() {
                     )}
                     {gen && (
                       <button onClick={() => setPreviewId(product.id)} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-medium">
-                        <Eye className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /><span style={{ color: "#93c5fd" }}>Avant/Après</span>
+                        <Eye className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /><span style={{ color: "#1d4ed8" }}>Avant/Après</span>
                       </button>
                     )}
                     <button onClick={() => setExpandedId(isExpanded ? null : product.id)} className="p-1.5 hover:bg-gray-100 rounded-lg">

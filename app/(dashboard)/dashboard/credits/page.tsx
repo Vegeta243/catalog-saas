@@ -7,9 +7,9 @@ import { getTasksColor, getResetDate, PLAN_TASKS, PLAN_PRICES } from "@/lib/cred
 import { createClient } from "@/lib/supabase/client";
 
 const PLAN_META: Record<string, { name: string; icon: typeof Zap; color: string; bg: string; features: string[] }> = {
-  free:    { name: "Free",    icon: Star,   color: "var(--text-tertiary)", bg: "#f9fafb",  features: ["30 actions gratuites", "1 boutique", "Export CSV basique"] },
-  starter: { name: "Starter", icon: Zap,    color: "#2563eb", bg: "#eff6ff",  features: ["500 actions/mois", "1 boutique", "Modification en masse", "Support email"] },
-  pro:     { name: "Pro",     icon: Crown,  color: "#8b5cf6", bg: "#faf5ff",  features: ["5 000 actions/mois", "3 boutiques", "Éditeur d'images IA", "Automatisations", "Support prioritaire"] },
+  free:    { name: "Free",    icon: Star,   color: "var(--text-tertiary)", bg: "#f9fafb",  features: ["100 actions gratuites", "1 boutique", "Export CSV basique"] },
+  starter: { name: "Starter", icon: Zap,    color: "#2563eb", bg: "#eff6ff",  features: ["1 500 actions/mois", "1 boutique", "Modification en masse", "Support email"] },
+  pro:     { name: "Pro",     icon: Crown,  color: "#8b5cf6", bg: "#faf5ff",  features: ["10 000 actions/mois", "3 boutiques", "Éditeur d'images IA", "Automatisations", "Support prioritaire"] },
   agency:  { name: "Agency",  icon: Rocket, color: "#059669", bg: "#f0fdf4",  features: ["Actions illimitées", "Boutiques illimitées", "Automatisations illimitées", "API access", "Support dédié"] },
   scale:   { name: "Agency",  icon: Rocket, color: "#059669", bg: "#f0fdf4",  features: ["Actions illimitées", "Boutiques illimitées", "Automatisations illimitées", "API access", "Support dédié"] },
 };

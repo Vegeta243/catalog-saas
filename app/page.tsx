@@ -21,30 +21,30 @@ const PLANS = [
   {
     id: "free", name: "Gratuit",
     monthlyPrice: 0, yearlyPrice: 0,
-    features: ["30 actions IA", "1 boutique", "Édition de base", "Score SEO"],
+    features: ["100 actions IA", "1 boutique", "Édition de base", "Score SEO"],
   },
   {
     id: "starter", name: "Starter",
-    monthlyPrice: 19, yearlyPrice: 13,
-    features: ["500 actions IA", "500 produits", "Import AliExpress", "Support email"],
+    monthlyPrice: 29, yearlyPrice: 20,
+    features: ["1\u00a0500 actions IA/mois", "500 produits", "Import AliExpress", "Support email"],
   },
   {
     id: "pro", name: "Pro",
-    monthlyPrice: 49, yearlyPrice: 34,
+    monthlyPrice: 79, yearlyPrice: 55,
     popular: true,
-    features: ["5000 actions IA", "Produits illimités", "3 boutiques", "Automatisations", "Support 24h"],
+    features: ["10\u00a0000 actions IA/mois", "Produits illimités", "3 boutiques", "Automatisations", "Support 24h"],
   },
   {
     id: "agency", name: "Agency",
-    monthlyPrice: 149, yearlyPrice: 104,
-    features: ["Tout illimité", "Boutiques illimitées", "Support dédié", "Accès anticipé"],
+    monthlyPrice: 199, yearlyPrice: 139,
+    features: ["Actions illimitées, Boutiques illimitées", "Boutiques illimitées", "Support dédié", "Accès anticipé"],
   },
 ];
 
 const TESTIMONIALS = [
-  { name: "Gary T.", role: "3 boutiques", quote: "J'optimisais mes fiches à la main, maintenant l'IA fait tout. Vraiment efficace." },
-  { name: "2L", role: "Boutique généraliste", quote: "L'import AliExpress + descriptions IA, mon catalogue de 200 produits optimisé en une après-midi." },
-  { name: "Ghiles A.", role: "Décoration intérieure", quote: "Simple à connecter. Les descriptions sont bien meilleures que ce que j'écrivais." },
+  { name: "Gary T.", role: "3 boutiques", niche: "mode", quote: "J'optimisais mes fiches à la main, maintenant l'IA fait tout. Vraiment efficace." },
+  { name: "2L", role: "Boutique généraliste", niche: "décoration", quote: "L'import AliExpress + descriptions IA, mon catalogue de 200 produits optimisé en une après-midi." },
+  { name: "Ghiles A.", role: "Décoration intérieure", niche: "fitness", quote: "Simple à connecter. Les descriptions sont bien meilleures que ce que j'écrivais." },
 ];
 
 export default function HomePage() {
@@ -53,6 +53,7 @@ export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
+  void mobileMenuOpen;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -91,9 +92,9 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section style={{
+      <section className="hero-section" style={{
         padding: '40px 24px 100px',
-        paddingTop: 'max(40px, env(safe-area-inset-top, 40px))',
+        paddingTop: 'max(80px, calc(env(safe-area-inset-top, 0px) + 60px))',
         textAlign: 'center',
         maxWidth: '800px',
         margin: '0 auto',
@@ -114,12 +115,17 @@ export default function HomePage() {
         <h1 style={{
           fontSize: 'clamp(32px, 5vw, 56px)',
           fontWeight: 900, lineHeight: 1.15,
-          margin: '0 0 20px',
+          margin: '0 0 16px',
         }}>
           L&apos;IA qui transforme ton catalogue
           <span style={{ color: '#4f8ef7' }}> Shopify </span>
           en machine à vendre.
         </h1>
+
+        {/* New subtitle */}
+        <p style={{ color: '#475569', fontSize: 'clamp(16px,3vw,20px)', fontWeight: 400, margin: '0 0 20px', lineHeight: 1.6, maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto' }}>
+          Analyse tes concurrents en temps réel. Optimise titres, descriptions, SEO et rentabilité en 1 clic.
+        </p>
 
         {/* Subtitle */}
         <p style={{
@@ -128,7 +134,7 @@ export default function HomePage() {
           maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto',
         }} className="text-muted-foreground">
           Fiches produits pro en 1 clic • SEO inclus •
-          30 actions gratuites sans carte bancaire.
+          100 actions gratuites sans carte bancaire.
         </p>
 
         {/* Video placeholder */}
@@ -193,11 +199,16 @@ export default function HomePage() {
         </div>
 
         {/* Trust strip */}
+        <div style={{ marginBottom: '12px' }}>
+          <p style={{ color: '#475569', fontSize: '14px', fontWeight: 500 }}>
+            100 actions gratuites sans carte bancaire · Résultats visibles dès le premier produit
+          </p>
+        </div>
         <div style={{
           display: 'flex', justifyContent: 'center',
           gap: '24px', flexWrap: 'wrap',
         }}>
-          {['✓ 30 actions gratuites', '✓ Sans carte bancaire', '✓ Annulation en 1 clic'].map(t => (
+          {['✓ 100 actions gratuites', '✓ Sans carte bancaire', '✓ Annulation en 1 clic'].map(t => (
             <span key={t} className="text-muted-foreground" style={{ fontSize: '13px', fontWeight: 600 }}>
               {t}
             </span>
@@ -234,7 +245,7 @@ export default function HomePage() {
             <h2 className="mb-3">Avant / Après EcomPilot</h2>
             <p className="text-muted-foreground">Vos fiches produits transformées en quelques secondes.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 product: "Montre connectée",
@@ -251,6 +262,11 @@ export default function HomePage() {
                 before: "Lampe LED USB — plusieurs couleurs",
                 after: "Lampe LED USB tactile 3 températures — idéale télétravail et gaming. Design épuré, fixation universelle.",
               },
+              {
+                product: "Analyse concurrentielle",
+                before: "Tu ne sais pas ce que vend ton concurrent ni à quel prix",
+                after: "Score de menace concurrentielle en temps réel, prix et nouveaux produits détectés automatiquement",
+              },
             ].map((item, i) => (
               <div key={i} className="card overflow-hidden p-0">
                 <div className="px-5 py-4 bg-red-50 dark:bg-red-950/20 border-b">
@@ -264,6 +280,23 @@ export default function HomePage() {
                 <div className="px-5 py-3 border-t">
                   <p className="text-xs text-muted-foreground font-medium">{item.product}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Competitive Intelligence */}
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,5vw,40px)', background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{ color: '#0f172a', fontSize: 'clamp(22px,4vw,32px)', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-0.02em' }}>
+            Ce que vous ne voyez pas, vos concurrents l&apos;utilisent déjà
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>
+            {['Détection automatique des nouveaux produits de vos concurrents', 'Suivi des changements de prix en temps réel', 'Score de menace concurrentielle mis à jour à chaque analyse'].map(item => (
+              <div key={item} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <span style={{ color: '#2563eb', fontWeight: 700, flexShrink: 0, marginTop: '1px' }}>✓</span>
+                <p style={{ color: '#334155', fontSize: '16px', margin: 0, fontWeight: 400, lineHeight: 1.5 }}>{item}</p>
               </div>
             ))}
           </div>
@@ -321,7 +354,7 @@ export default function HomePage() {
                   onClick={() => router.push(`/signup?plan=${plan.id}`)}
                   className={`btn w-full ${plan.popular ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  {plan.monthlyPrice === 0 ? 'Commencer' : 'Essai gratuit'}
+                  {plan.monthlyPrice === 0 ? 'Commencer' : plan.id === 'pro' ? 'Essai gratuit' : 'Commencer'}
                 </button>
               </div>
             ))}
@@ -348,8 +381,7 @@ export default function HomePage() {
                 <p className="text-sm mb-4 italic">"{testimonial.quote}"</p>
                 <div>
                   <p className="font-medium text-sm">{testimonial.name}</p>
-                  <p className="text-muted-foreground text-xs">{testimonial.role}</p>
-                </div>
+                  <p className="text-muted-foreground text-xs">{testimonial.role}</p>                  <p style={{ color: '#94a3b8', fontSize: '12px', margin: '2px 0 0' }}>Boutique Shopify vérifiée — {testimonial.niche}</p>                </div>
               </div>
             ))}
           </div>

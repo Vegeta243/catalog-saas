@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     siteName: "EcomPilot Elite",
     title: "EcomPilot Elite — L'IA qui optimise votre boutique Shopify",
     description:
-      "Générez des fiches produits pro en 1 clic, importez depuis AliExpress, éditez 500 prix en masse. 30 actions gratuites sans CB.",
+      "Générez des fiches produits pro en 1 clic, importez depuis AliExpress, éditez 500 prix en masse. 100 actions gratuites sans CB.",
     images: [
       {
         url: "/api/og",

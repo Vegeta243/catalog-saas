@@ -65,7 +65,7 @@ export default function ImportTestPage() {
             border: '1px solid rgba(34, 197, 94, 0.3)',
             borderRadius: '8px',
           }}>
-            <p style={{ margin: 0, color: '#4ade80', fontWeight: '600' }}>
+            <p style={{ margin: 0, color: '#15803d', fontWeight: '600' }}>
                Dernier import : {lastImport} produit(s) importé(s)
             </p>
           </div>

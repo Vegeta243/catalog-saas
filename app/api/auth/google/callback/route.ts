@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
         avatar_url: googleAvatar || null,
         plan: 'free',
         actions_used: 0,
-        actions_limit: 30,
+        actions_limit: 100,
         subscription_status: 'inactive',
       },
       { onConflict: 'id', ignoreDuplicates: true },

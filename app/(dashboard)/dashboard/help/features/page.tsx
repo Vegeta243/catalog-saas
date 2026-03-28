@@ -81,13 +81,13 @@ export default function FeaturesHelpPage() {
       <div style={{ marginBottom: 32 }}>
         <Link
           href="/dashboard/help"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#8b9fc4', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 20 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#475569', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 20 }}
         >
           <ArrowLeft style={{ width: 14, height: 14 }} />
           Retour au centre d&apos;aide
         </Link>
-        <h1 style={{ color: '#f0f4ff', fontWeight: 900, fontSize: 28, marginBottom: 8 }}>Guide des fonctionnalités</h1>
-        <p style={{ color: '#8b9fc4', fontSize: 15, lineHeight: 1.6 }}>
+        <h1 style={{ color: '#0f172a', fontWeight: 900, fontSize: 28, marginBottom: 8 }}>Guide des fonctionnalités</h1>
+        <p style={{ color: '#475569', fontSize: 15, lineHeight: 1.6 }}>
           Découvrez comment utiliser chaque fonctionnalité d&apos;EcomPilot Elite pour maximiser vos ventes.
         </p>
       </div>
@@ -117,8 +117,8 @@ export default function FeaturesHelpPage() {
                     {feature.emoji}
                   </div>
                   <div>
-                    <h2 style={{ color: '#f0f4ff', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>{feature.title}</h2>
-                    <p style={{ color: '#8b9fc4', fontSize: 13, lineHeight: 1.5 }}>{feature.subtitle}</p>
+                    <h2 style={{ color: '#0f172a', fontWeight: 800, fontSize: 18, marginBottom: 4 }}>{feature.title}</h2>
+                    <p style={{ color: '#475569', fontSize: 13, lineHeight: 1.5 }}>{feature.subtitle}</p>
                   </div>
                 </div>
                 <Link
@@ -137,7 +137,7 @@ export default function FeaturesHelpPage() {
 
             {/* Steps */}
             <div style={{ padding: '20px 28px 24px' }}>
-              <p style={{ color: '#4a5878', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>GUIDE ÉTAPE PAR ÉTAPE</p>
+              <p style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>GUIDE ÉTAPE PAR ÉTAPE</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
                 {feature.steps.map(s => (
                   <div
@@ -160,9 +160,9 @@ export default function FeaturesHelpPage() {
                       }}>
                         {s.step}
                       </div>
-                      <p style={{ color: '#f0f4ff', fontWeight: 700, fontSize: 13 }}>{s.title}</p>
+                      <p style={{ color: '#0f172a', fontWeight: 700, fontSize: 13 }}>{s.title}</p>
                     </div>
-                    <p style={{ color: '#8b9fc4', fontSize: 12, lineHeight: 1.6 }}>{s.desc}</p>
+                    <p style={{ color: '#475569', fontSize: 12, lineHeight: 1.6 }}>{s.desc}</p>
                   </div>
                 ))}
               </div>
@@ -178,8 +178,8 @@ export default function FeaturesHelpPage() {
         border: '1px solid rgba(79,142,247,0.20)',
         borderRadius: 20, textAlign: 'center',
       }}>
-        <p style={{ color: '#f0f4ff', fontWeight: 800, fontSize: 16, marginBottom: 8 }}>Besoin d&apos;aide supplémentaire ?</p>
-        <p style={{ color: '#8b9fc4', fontSize: 14, marginBottom: 20 }}>Notre équipe support est disponible pour répondre à toutes vos questions.</p>
+        <p style={{ color: '#0f172a', fontWeight: 800, fontSize: 16, marginBottom: 8 }}>Besoin d&apos;aide supplémentaire ?</p>
+        <p style={{ color: '#475569', fontSize: 14, marginBottom: 20 }}>Notre équipe support est disponible pour répondre à toutes vos questions.</p>
         <Link
           href="/dashboard/help"
           style={{

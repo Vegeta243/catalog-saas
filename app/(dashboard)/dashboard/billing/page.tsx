@@ -10,10 +10,10 @@ import { createClient } from "@/lib/supabase/client";
 
 const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string; cardBg: string; border: string; btnBg: string; btnColor: string; badgeBg: string; badgeColor: string }> = {
   free:    { name: "Free",    icon: Star,   price: 0,   yearlyPrice: 0,   color: "#9ca3af", cardBg: "var(--surface-primary)",   border: "1px solid var(--apple-gray-200)", btnBg: "rgba(255,255,255,0.08)", btnColor: "#d1d5db", badgeBg: "rgba(255,255,255,0.06)",  badgeColor: "#9ca3af" },
-  starter: { name: "Starter", icon: Zap,    price: 19,  yearlyPrice: 13,  color: "#60a5fa", cardBg: "rgba(37,99,235,0.06)",     border: "1px solid rgba(37,99,235,0.25)",  btnBg: "#2563eb",               btnColor: "#ffffff", badgeBg: "rgba(37,99,235,0.15)",   badgeColor: "#93c5fd" },
-  pro:     { name: "Pro",     icon: Crown,  price: 49,  yearlyPrice: 34,  color: "#a78bfa", cardBg: "rgba(124,58,237,0.08)",    border: "2px solid rgba(124,58,237,0.40)", btnBg: "#7c3aed",               btnColor: "#ffffff", badgeBg: "rgba(124,58,237,0.20)",  badgeColor: "#c4b5fd" },
-  agency:  { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#34d399", cardBg: "rgba(5,150,105,0.07)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.15)",   badgeColor: "#6ee7b7" },
-  scale:   { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#34d399", cardBg: "rgba(5,150,105,0.07)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.15)",   badgeColor: "#6ee7b7" },
+  starter: { name: "Starter", icon: Zap,    price: 19,  yearlyPrice: 20,  color: "#60a5fa", cardBg: "rgba(37,99,235,0.06)",     border: "1px solid rgba(37,99,235,0.25)",  btnBg: "#2563eb",               btnColor: "#ffffff", badgeBg: "rgba(37,99,235,0.15)",   badgeColor: "#93c5fd" },
+  pro:     { name: "Pro",     icon: Crown,  price: 49,  yearlyPrice: 55,  color: "#a78bfa", cardBg: "rgba(124,58,237,0.08)",    border: "2px solid rgba(124,58,237,0.40)", btnBg: "#7c3aed",               btnColor: "#ffffff", badgeBg: "rgba(124,58,237,0.20)",  badgeColor: "#c4b5fd" },
+  agency:  { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 139, color: "#34d399", cardBg: "rgba(5,150,105,0.07)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.15)",   badgeColor: "#6ee7b7" },
+  scale:   { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 139, color: "#34d399", cardBg: "rgba(5,150,105,0.07)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.15)",   badgeColor: "#6ee7b7" },
 };
 
 function BillingContent() {

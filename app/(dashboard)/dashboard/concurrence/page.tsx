@@ -533,7 +533,7 @@ export default function ConcurrencePage() {
             {/* No snapshot warning */}
             {!selected.snapshot && activeTab !== 'alerts' && (
               <div className="flex flex-col items-center justify-center flex-1 text-center px-8 py-16">
-                <RefreshCw className="w-12 h-12 mb-4" style={{ color: '#93c5fd' }} />
+                <RefreshCw className="w-12 h-12 mb-4" style={{ color: '#1d4ed8' }} />
                 <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
                   {selected.name} n&apos;a pas encore été analysé
                 </h3>

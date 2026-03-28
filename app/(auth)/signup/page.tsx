@@ -117,7 +117,7 @@ function SignupContent() {
           </h3>
           <div className="space-y-5">
             {[
-              { icon: BarChart3, title: "30 actions gratuites offertes", desc: "Testez la génération IA sans carte bancaire" },
+              { icon: BarChart3, title: "100 actions gratuites offertes", desc: "Testez la génération IA sans carte bancaire" },
               { icon: Sparkles, title: "Configuration en 2 min", desc: "Connectez votre boutique et commencez imm�diatement" },
               { icon: Zap, title: "Passez au plan sup�rieur quand vous voulez", desc: "Choisissez votre abonnement quand la limite est atteinte" },
               { icon: Shield, title: "Paiement s�curis� Stripe", desc: "Chiffrement TLS, PCI-DSS niveau 1, donn�es jamais stock�es" },
@@ -165,7 +165,7 @@ function SignupContent() {
 
           <h1 className="text-2xl font-extrabold mb-1" style={{ color: "#0f172a" }}>Cr�er votre compte</h1>
           <p className="text-sm mb-8" style={{ color: "#64748b" }}>
-            {planInfo ? `Plan ${planInfo.name} � paiement apr�s inscription` : "Commencez avec 30 actions gratuites � aucune carte requise"}
+            {planInfo ? `Plan ${planInfo.name} � paiement apr�s inscription` : "Commencez avec 100 actions gratuites � aucune carte requise"}
           </p>
 
           <button onClick={handleGoogleSignup} disabled={googleLoading || appleLoading}

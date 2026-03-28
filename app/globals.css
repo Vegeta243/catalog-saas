@@ -451,3 +451,24 @@ a:hover {
   --text-tertiary: #86868b;
   --text-link: #2997ff;
 }
+
+/* ── Mobile optimization ── */
+*, *::before, *::after { box-sizing: border-box; max-width: 100%; }
+body { overflow-x: hidden; }
+img, video, canvas, svg { max-width: 100%; height: auto; }
+input, select, textarea, button { max-width: 100%; box-sizing: border-box; }
+
+@media (max-width: 768px) {
+  .hide-mobile { display: none !important; }
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  h1 { font-size: clamp(18px, 5vw, 28px) !important; }
+  h2 { font-size: clamp(16px, 4vw, 22px) !important; }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding-top: max(80px, calc(env(safe-area-inset-top, 0px) + 60px)) !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}

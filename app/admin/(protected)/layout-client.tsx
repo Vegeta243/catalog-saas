@@ -69,7 +69,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-red-950/40 transition-colors border border-transparent hover:border-red-900/40"
               style={{ color: '#fca5a5' }}
             >
-              <Icon className="w-4 h-4 flex-shrink-0" style={{ color: '#f87171' }} />
+              <Icon className="w-4 h-4 flex-shrink-0" style={{ color: '#dc2626' }} />
               {item.label}
             </Link>
           )
@@ -81,7 +81,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           href="/dashboard"
           onClick={onNavigate}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
-          style={{ color: '#93c5fd' }}
+          style={{ color: '#1d4ed8' }}
         >
           <Zap className="w-4 h-4 flex-shrink-0" style={{ color: '#60a5fa' }} />
           ← Dashboard

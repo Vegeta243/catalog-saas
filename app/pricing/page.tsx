@@ -13,7 +13,7 @@ const PLANS = [
     yearlyPrice: 20,
     description: "Pour tester EcomPilot",
     features: [
-      "30 actions gratuites",
+      "100 actions gratuites",
       "1 boutique connectée",
       "Export CSV basique",
       "Support communautaire",
@@ -36,8 +36,8 @@ const PLANS = [
     id: "starter",
     name: "Starter",
     icon: Zap,
-    monthlyPrice: 19,
-    yearlyPrice: 13,
+    monthlyPrice: 29,
+    yearlyPrice: 20,
     description: "Pour débuter",
     features: [
       "1 boutique Shopify",
@@ -67,8 +67,8 @@ const PLANS = [
     id: "pro",
     name: "Pro",
     icon: Crown,
-    monthlyPrice: 49,
-    yearlyPrice: 34,
+    monthlyPrice: 79,
+    yearlyPrice: 55,
     description: "Le plus populaire",
     features: [
       "Jusqu'à 3 boutiques",
@@ -101,8 +101,8 @@ const PLANS = [
     id: "agency",
     name: "Agency",
     icon: Rocket,
-    monthlyPrice: 149,
-    yearlyPrice: 104,
+    monthlyPrice: 199,
+    yearlyPrice: 139,
     description: "Pour les agences",
     features: [
       "Boutiques illimitées",
@@ -155,7 +155,7 @@ export default function PricingPage() {
           Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
         </h1>
         <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "var(--text-tertiary)" }}>
-          30 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
+          100 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
         </p>
 
         {/* Toggle */}

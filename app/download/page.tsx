@@ -111,7 +111,7 @@ export default function DownloadPage() {
                   backgroundColor: '#3b82f6',
                   borderRadius: '50%'
                 }} />
-                <span style={{ color: '#93c5fd', fontSize: '14px', fontWeight: '600' }}>
+                <span style={{ color: '#1d4ed8', fontSize: '14px', fontWeight: '600' }}>
                   Android detecte - pret a installer
                 </span>
               </div>
