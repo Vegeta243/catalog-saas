@@ -199,8 +199,8 @@ export default function AccountPage() {
   const ToggleSwitch = ({ on, onToggle, label, desc }: { on: boolean; onToggle: () => void; label: string; desc?: string }) => (
     <div className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0">
       <div>
-        <span className="text-sm font-medium" style={{ color: "#374151" }}>{label}</span>
-        {desc && <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{desc}</p>}
+        <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
+        {desc && <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{desc}</p>}
       </div>
       <button onClick={onToggle} className="relative w-10 h-6 rounded-full transition-colors"
         style={{ backgroundColor: on ? "#2563eb" : "#d1d5db" }}>
@@ -218,8 +218,8 @@ export default function AccountPage() {
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Mon compte</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Gérez votre profil, abonnement et sécurité</p>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Mon compte</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>Gérez votre profil, abonnement et sécurité</p>
         </div>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors self-start sm:self-auto">
@@ -259,10 +259,10 @@ export default function AccountPage() {
           {/* ─── Profil ─── */}
           {activeTab === "profile" && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                 <User className="w-4 h-4" style={{ color: "#2563eb" }} /> Informations personnelles
               </h2>
-              <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez votre profil et vos coordonnées</p>
+              <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Gérez votre profil et vos coordonnées</p>
 
               <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
                 {profile?.avatar_url ? (
@@ -273,9 +273,9 @@ export default function AccountPage() {
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{fullName}</p>
-                  <p className="text-xs" style={{ color: "#64748b" }}>{email}</p>
-                  <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{fullName}</p>
+                  <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{email}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
                     Membre depuis {profile?.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { year: "numeric", month: "long" }) : "—"}
                   </p>
                 </div>
@@ -283,35 +283,35 @@ export default function AccountPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom complet</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Nom complet</label>
                   <div className="flex items-center gap-2.5">
-                    <User className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
+                    <User className="w-4 h-4" style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
                     <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "var(--text-primary)" }} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Email</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Email</label>
                   <div className="flex items-center gap-2.5">
-                    <Mail className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
-                    <input type="email" value={email} disabled className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 cursor-not-allowed" style={{ color: "#64748b" }} />
+                    <Mail className="w-4 h-4" style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
+                    <input type="email" value={email} disabled className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 cursor-not-allowed" style={{ color: "var(--text-tertiary)" }} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Téléphone</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Téléphone</label>
                   <div className="flex items-center gap-2.5">
-                    <Phone className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
+                    <Phone className="w-4 h-4" style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
                     <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "var(--text-primary)" }}
                       placeholder="+33 6 00 00 00 00" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Fuseau horaire</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Fuseau horaire</label>
                   <div className="flex items-center gap-2.5">
-                    <Globe className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
+                    <Globe className="w-4 h-4" style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
                     <select value={timezone} onChange={(e) => setTimezone(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none" style={{ color: "#0f172a" }}>
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none" style={{ color: "var(--text-primary)" }}>
                       <option value="Europe/Paris">Europe/Paris (GMT+1)</option>
                       <option value="America/New_York">America/New York (GMT-5)</option>
                       <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
@@ -322,7 +322,7 @@ export default function AccountPage() {
               {/* Suppression de compte — accès discret */}
               <div className="mt-6 pt-4 border-t border-gray-100">
                 {deleteStep === 0 ? (
-                  <button onClick={() => setDeleteStep(1)} className="text-xs flex items-center gap-1.5 opacity-40 hover:opacity-80 transition-opacity" style={{ color: "#94a3b8" }}>
+                  <button onClick={() => setDeleteStep(1)} className="text-xs flex items-center gap-1.5 opacity-40 hover:opacity-80 transition-opacity" style={{ color: "var(--text-tertiary)" }}>
                     <Trash2 className="w-3 h-3" /> Supprimer mon compte
                   </button>
                 ) : (
@@ -332,33 +332,33 @@ export default function AccountPage() {
                     </p>
                     {deleteStep === 1 && (
                       <div className="space-y-3">
-                        <p className="text-sm" style={{ color: "#374151" }}>Cette action effacera définitivement votre compte, boutiques et toutes vos données.</p>
+                        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Cette action effacera définitivement votre compte, boutiques et toutes vos données.</p>
                         <div className="flex gap-2">
                           <button onClick={() => setDeleteStep(0)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold" style={{ color: "#fff" }}>Conserver mon compte</button>
-                          <button onClick={() => setDeleteStep(2)} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-xs" style={{ color: "#64748b" }}>Continuer &rarr;</button>
+                          <button onClick={() => setDeleteStep(2)} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-xs" style={{ color: "var(--text-tertiary)" }}>Continuer &rarr;</button>
                         </div>
                       </div>
                     )}
                     {deleteStep === 2 && (
                       <div className="space-y-3">
-                        <p className="text-sm" style={{ color: "#374151" }}>Dernière chance avant suppression définitive.</p>
+                        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Dernière chance avant suppression définitive.</p>
                         <div className="flex gap-2">
                           <button onClick={() => setDeleteStep(0)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold" style={{ color: "#fff" }}>Annuler</button>
-                          <button onClick={() => setDeleteStep(3)} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-xs" style={{ color: "#64748b" }}>Supprimer quand même</button>
+                          <button onClick={() => setDeleteStep(3)} className="px-4 py-2 hover:bg-gray-100 rounded-lg text-xs" style={{ color: "var(--text-tertiary)" }}>Supprimer quand même</button>
                         </div>
                       </div>
                     )}
                     {deleteStep === 3 && (
                       <div className="space-y-3">
-                        <label className="text-xs block" style={{ color: "#64748b" }}>
+                        <label className="text-xs block" style={{ color: "var(--text-tertiary)" }}>
                           Tapez <strong style={{ color: "#dc2626" }}>SUPPRIMER</strong> pour confirmer :
                         </label>
                         <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)}
                           placeholder="SUPPRIMER" className="w-full max-w-xs px-3 py-2 border border-red-300 rounded-lg text-sm font-mono"
-                          style={{ color: "#0f172a" }} />
+                          style={{ color: "var(--text-primary)" }} />
                         <div className="flex gap-2">
                           <button onClick={() => { setDeleteStep(0); setDeleteConfirmText(""); }}
-                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium" style={{ color: "#374151" }}>Annuler</button>
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium" style={{ color: "var(--text-secondary)" }}>Annuler</button>
                           <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== "SUPPRIMER" || deleteLoading}
                             className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 rounded-lg text-xs font-medium flex items-center gap-1.5">
                             {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#fff" }} />}
@@ -406,7 +406,7 @@ export default function AccountPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <Zap className="w-4 h-4" style={{ color: "#d97706" }} /> Utilisation des actions
                 </h3>
                 <div className="flex items-center gap-4 mb-4">
@@ -423,7 +423,7 @@ export default function AccountPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold mb-5" style={{ color: "#0f172a" }}>Changer de plan</h3>
+                <h3 className="text-sm font-semibold mb-5" style={{ color: "var(--text-primary)" }}>Changer de plan</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {([
                     {
@@ -518,9 +518,9 @@ export default function AccountPage() {
                           </div>
                         )}
 
-                        <h3 className="font-bold text-base" style={{ color: "#0f172a" }}>{p.name}</h3>
-                        <div className="text-2xl font-black mt-0.5" style={{ color: "#0f172a" }}>
-                          {p.price}<span className="text-xs font-normal" style={{ color: "#64748b" }}>/mois</span>
+                        <h3 className="font-bold text-base" style={{ color: "var(--text-primary)" }}>{p.name}</h3>
+                        <div className="text-2xl font-black mt-0.5" style={{ color: "var(--text-primary)" }}>
+                          {p.price}<span className="text-xs font-normal" style={{ color: "var(--text-tertiary)" }}>/mois</span>
                         </div>
 
                         {/* What you gain vs Free */}
@@ -572,17 +572,17 @@ export default function AccountPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-base font-semibold flex items-center gap-2" style={{ color: "#0f172a" }}>
+                  <h2 className="text-base font-semibold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                     <Store className="w-4 h-4" style={{ color: "#2563eb" }} /> Boutiques connectées
                   </h2>
-                  <p className="text-xs mt-1" style={{ color: "#64748b" }}>{shops.filter((s) => s.is_active).length} active{shops.filter((s) => s.is_active).length !== 1 ? "s" : ""}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>{shops.filter((s) => s.is_active).length} active{shops.filter((s) => s.is_active).length !== 1 ? "s" : ""}</p>
                 </div>
                 <Link href="/dashboard/shops" className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-medium" style={{ color: "#fff" }}>+ Ajouter</Link>
               </div>
               {shops.length === 0 ? (
                 <div className="text-center py-8">
                   <Store className="w-10 h-10 mx-auto mb-3" style={{ color: "#d1d5db" }} />
-                  <p className="text-sm" style={{ color: "#64748b" }}>Aucune boutique connectée</p>
+                  <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Aucune boutique connectée</p>
                   <Link href="/dashboard/shops" className="inline-block mt-4 px-4 py-2 bg-blue-600 rounded-lg text-xs font-medium" style={{ color: "#fff" }}>Connecter ma boutique</Link>
                 </div>
               ) : (
@@ -595,7 +595,7 @@ export default function AccountPage() {
                             <Store className="w-5 h-5" style={{ color: shop.is_active ? "#059669" : "#94a3b8" }} />
                           </div>
                           <div>
-                            <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{shop.shop_name || shop.shop_domain}</p>
+                            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{shop.shop_name || shop.shop_domain}</p>
                             <a href={`https://${shop.shop_domain}`} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1" style={{ color: "#2563eb" }}>
                               {shop.shop_domain} <ExternalLink className="w-3 h-3" />
                             </a>
@@ -603,8 +603,8 @@ export default function AccountPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <p className="text-xs" style={{ color: "#64748b" }}>{shop.products_count || 0} produits</p>
-                            <p className="text-xs" style={{ color: "#94a3b8" }}>Synchro : {formatDate(shop.last_sync_at)}</p>
+                            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{shop.products_count || 0} produits</p>
+                            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Synchro : {formatDate(shop.last_sync_at)}</p>
                           </div>
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${shop.is_active ? "bg-emerald-50" : "bg-red-50"}`}
                             style={{ color: shop.is_active ? "#059669" : "#dc2626" }}>
@@ -622,16 +622,16 @@ export default function AccountPage() {
           {/* ─── Notifications ─── */}
           {activeTab === "notifications" && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                 <Bell className="w-4 h-4" style={{ color: "#2563eb" }} /> E-mails & alertes
               </h2>
-              <p className="text-xs mb-5" style={{ color: "#64748b" }}>Choisissez les notifications à recevoir</p>
+              <p className="text-xs mb-5" style={{ color: "var(--text-tertiary)" }}>Choisissez les notifications à recevoir</p>
               <ToggleSwitch on={notifEmail} onToggle={() => setNotifEmail(!notifEmail)} label="Notifications par email" desc="Résumé des actions sur votre compte" />
               <ToggleSwitch on={notifStock} onToggle={() => setNotifStock(!notifStock)} label="Alertes stock bas" desc="Quand un produit est presque en rupture" />
               <ToggleSwitch on={notifSyncErrors} onToggle={() => setNotifSyncErrors(!notifSyncErrors)} label="Erreurs de synchronisation" desc="Quand la sync Shopify échoue" />
               <ToggleSwitch on={notifWeekly} onToggle={() => setNotifWeekly(!notifWeekly)} label="Rapport hebdomadaire" desc="Résumé chaque lundi" />
               <ToggleSwitch on={notifSecurity} onToggle={() => setNotifSecurity(!notifSecurity)} label="Alertes de sécurité" desc="Connexions suspectes" />
-              <p className="text-xs mt-4" style={{ color: "#94a3b8" }}>Cliquez sur &quot;Sauvegarder&quot; pour enregistrer vos préférences</p>
+              <p className="text-xs mt-4" style={{ color: "var(--text-tertiary)" }}>Cliquez sur &quot;Sauvegarder&quot; pour enregistrer vos préférences</p>
             </div>
           )}
 
@@ -640,21 +640,21 @@ export default function AccountPage() {
             <div className="space-y-6">
               {/* Session info */}
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <Shield className="w-4 h-4" style={{ color: "#2563eb" }} /> Session actuelle
                 </h2>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Navigateur actuel</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Session authentifiée via Supabase</p>
+                      <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Navigateur actuel</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>Session authentifiée via Supabase</p>
                     </div>
                     <span className="text-xs px-2 py-1 bg-emerald-100 rounded-full font-medium" style={{ color: "#059669" }}>Active</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Dernière connexion</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                      <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Dernière connexion</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                         {profile?.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { dateStyle: "medium" }) : "—"}
                       </p>
                     </div>
@@ -663,30 +663,30 @@ export default function AccountPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <Lock className="w-4 h-4" style={{ color: "#2563eb" }} /> Changer le mot de passe
                 </h2>
-                <p className="text-xs mb-5" style={{ color: "#64748b" }}>Utilisez un mot de passe fort</p>
+                <p className="text-xs mb-5" style={{ color: "var(--text-tertiary)" }}>Utilisez un mot de passe fort</p>
                 <div className="space-y-3 max-w-md">
                   <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nouveau mot de passe</label>
+                    <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Nouveau mot de passe</label>
                     <div className="flex items-center gap-2.5">
-                      <Key className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
+                      <Key className="w-4 h-4" style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
                       <input type={showPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} placeholder="6 caractères minimum" />
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "var(--text-primary)" }} placeholder="6 caractères minimum" />
                       <button onClick={() => setShowPassword(!showPassword)} className="p-1" type="button">
-                        {showPassword ? <EyeOff className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <Eye className="w-4 h-4" style={{ color: "#94a3b8" }} />}
+                        {showPassword ? <EyeOff className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} /> : <Eye className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} />}
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Confirmer</label>
+                    <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Confirmer</label>
                     <div className="flex items-center gap-2.5">
-                      <Key className="w-4 h-4" style={{ color: "#94a3b8", flexShrink: 0 }} />
+                      <Key className="w-4 h-4" style={{ color: "var(--text-tertiary)", flexShrink: 0 }} />
                       <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "#0f172a" }} />
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none" style={{ color: "var(--text-primary)" }} />
                       <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="p-1" type="button">
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <Eye className="w-4 h-4" style={{ color: "#94a3b8" }} />}
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} /> : <Eye className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} />}
                       </button>
                     </div>
                   </div>

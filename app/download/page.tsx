@@ -47,7 +47,7 @@ export default function DownloadPage() {
 
       <div style={{ position: 'fixed', top: 16, left: 16 }}>
         <Link href="/" style={{
-          color: '#94a3b8',
+          color: "var(--text-tertiary)",
           textDecoration: 'none',
           fontSize: '14px',
           display: 'flex',
@@ -75,7 +75,7 @@ export default function DownloadPage() {
           <h1 style={{ color: '#ffffff', fontWeight: '900', fontSize: '24px', margin: '0 0 4px' }}>
             EcomPilot Elite
           </h1>
-          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+          <p style={{ color: "var(--text-tertiary)", fontSize: '14px', margin: 0 }}>
             Version 1.0 &middot; Android &middot; 4.3 MB
           </p>
         </div>
@@ -194,7 +194,7 @@ export default function DownloadPage() {
               borderRadius: '12px',
               padding: '14px 16px'
             }}>
-              <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0, lineHeight: '1.5' }}>
+              <p style={{ color: "var(--text-tertiary)", fontSize: '13px', margin: 0, lineHeight: '1.5' }}>
                 <strong style={{ color: '#e2e8f0' }}>Google Play Protect ?</strong>
                 <br />
                 Normal pour une app hors Play Store.
@@ -205,7 +205,7 @@ export default function DownloadPage() {
             </div>
 
             <div style={{ textAlign: 'center', paddingTop: '8px' }}>
-              <p style={{ color: '#475569', fontSize: '12px', margin: '0 0 4px' }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: '12px', margin: '0 0 4px' }}>
                 Pas d&apos;installation ? Utilisez la version web
               </p>
               <Link href="/dashboard" style={{
@@ -233,7 +233,7 @@ export default function DownloadPage() {
               <h2 style={{ color: '#ffffff', fontWeight: '900', fontSize: '18px', margin: '0 0 8px' }}>
                 App iOS - Bientot disponible
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.6', margin: '0 0 20px' }}>
+              <p style={{ color: "var(--text-tertiary)", fontSize: '14px', lineHeight: '1.6', margin: '0 0 20px' }}>
                 En attendant, accedez a EcomPilot Elite
                 depuis Safari et installez-le sur votre
                 ecran d&apos;accueil.

@@ -63,8 +63,8 @@ function parsePrice(v: string): number | null {
 }
 
 const inputStyle: CSSProperties = {
-  width: '100%', background: '#f9fafb', border: '1px solid #d1d5db',
-  borderRadius: 8, color: '#111827', fontSize: 14, fontWeight: 400,
+  width: '100%', background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)",
+  borderRadius: 8, color: "var(--text-primary)", fontSize: 14, fontWeight: 400,
   padding: '8px 12px', boxSizing: 'border-box', outline: 'none',
 }
 
@@ -295,7 +295,7 @@ function BulkAIModal({
 
             <div style={{ marginTop: 20 }}>
               <p className="aiSectionLabel">Langue du contenu</p>
-              <select value={lang} onChange={e => setLang(e.target.value)} style={{ background: '#f9fafb', border: '1px solid #d1d5db', borderRadius: 8, padding: '8px 14px', color: '#111827', fontSize: 14, outline: 'none', cursor: 'pointer' }}>
+              <select value={lang} onChange={e => setLang(e.target.value)} style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", borderRadius: 8, padding: '8px 14px', color: "var(--text-primary)", fontSize: 14, outline: 'none', cursor: 'pointer' }}>
                 <option value="fr">Français</option>
                 <option value="en">Anglais</option>
                 <option value="es">Espagnol</option>
@@ -304,7 +304,7 @@ function BulkAIModal({
             </div>
 
             {genError && (
-              <p style={{ color: '#dc2626', fontSize: 13, fontWeight: 600, marginTop: 14, padding: '10px 14px', background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
+              <p style={{ color: '#dc2626', fontSize: 13, fontWeight: 600, marginTop: 14, padding: '10px 14px', background: "rgba(239,68,68,0.10)", borderRadius: 8, border: "1px solid rgba(239,68,68,0.30)" }}>
                 {genError}
               </p>
             )}
@@ -312,7 +312,7 @@ function BulkAIModal({
             {generating && (
               <div style={{ marginTop: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ color: '#374151', fontSize: 13, fontWeight: 600 }}>Génération en cours...</span>
+                  <span style={{ color: "var(--text-secondary)", fontSize: 13, fontWeight: 600 }}>Génération en cours...</span>
                   <span style={{ color: '#2563eb', fontSize: 13, fontWeight: 700 }}>{genProgress}%</span>
                 </div>
                 <div style={{ height: 8, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
@@ -335,8 +335,8 @@ function BulkAIModal({
           <div className="aiBody">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <div>
-                <p style={{ color: '#111827', fontSize: 14, fontWeight: 700, margin: 0 }}>Vérifiez et modifiez avant de publier</p>
-                <p style={{ color: '#6b7280', fontSize: 12, margin: '2px 0 0' }}>Cliquez sur un produit pour l&apos;inclure ou l&apos;ignorer</p>
+                <p style={{ color: "var(--text-primary)", fontSize: 14, fontWeight: 700, margin: 0 }}>Vérifiez et modifiez avant de publier</p>
+                <p style={{ color: "var(--text-tertiary)", fontSize: 12, margin: '2px 0 0' }}>Cliquez sur un produit pour l&apos;inclure ou l&apos;ignorer</p>
               </div>
               <button className="aiGhostBtn" onClick={toggleAll} style={{ fontSize: 12, padding: '5px 10px' }}>
                 {preview.every(e => e.enabled) ? 'Tout désélectionner' : 'Tout sélectionner'}
@@ -357,14 +357,14 @@ function BulkAIModal({
                         )}
                       </div>
                       {img
-                        ? <img src={img} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', border: '1px solid #e5e7eb', flexShrink: 0 }} />
-                        : <div style={{ width: 36, height: 36, borderRadius: 6, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📦</div>
+                        ? <img src={img} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', border: "1px solid var(--apple-gray-200)", flexShrink: 0 }} />
+                        : <div style={{ width: 36, height: 36, borderRadius: 6, background: "var(--surface-secondary)", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📦</div>
                       }
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, color: '#111827', fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ margin: 0, color: "var(--text-primary)", fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {entry.product.title}
                         </p>
-                        {entry.product.vendor && <p style={{ margin: 0, color: '#6b7280', fontSize: 11 }}>{entry.product.vendor}</p>}
+                        {entry.product.vendor && <p style={{ margin: 0, color: "var(--text-tertiary)", fontSize: 11 }}>{entry.product.vendor}</p>}
                       </div>
                       <span style={{ fontSize: 11, fontWeight: 700, flexShrink: 0, padding: '3px 8px', borderRadius: 20, background: entry.enabled ? '#dcfce7' : '#f3f4f6', color: entry.enabled ? '#059669' : '#9ca3af' }}>
                         {entry.enabled ? 'Inclus' : 'Ignoré'}
@@ -419,7 +419,7 @@ function BulkAIModal({
             {publishing && (
               <div style={{ marginTop: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ color: '#374151', fontSize: 13, fontWeight: 600 }}>Publication...</span>
+                  <span style={{ color: "var(--text-secondary)", fontSize: 13, fontWeight: 600 }}>Publication...</span>
                   <span style={{ color: '#059669', fontSize: 13, fontWeight: 700 }}>{pubProgress}%</span>
                 </div>
                 <div style={{ height: 6, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
@@ -445,19 +445,19 @@ function BulkAIModal({
           <div className="aiBody" style={{ padding: '32px 24px 28px' }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 52, marginBottom: 12 }}>{successCount > 0 ? '🎉' : '⚠️'}</div>
-              <h3 style={{ color: '#111827', fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>
+              <h3 style={{ color: "var(--text-primary)", fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>
                 {successCount > 0
                   ? successCount + ' produit' + (successCount > 1 ? 's' : '') + ' publié' + (successCount > 1 ? 's' : '') + ' !'
                   : 'Publication échouée'}
               </h3>
               {successCount > 0 && (
-                <p style={{ color: '#374151', fontSize: 14, margin: '0 0 16px' }}>
+                <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: '0 0 16px' }}>
                   Le contenu IA a été synchronisé sur votre boutique Shopify.
                 </p>
               )}
             </div>
             {failCount > 0 && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '12px 14px', marginTop: 4 }}>
+              <div style={{ background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.30)", borderRadius: 10, padding: '12px 14px', marginTop: 4 }}>
                 <p style={{ color: '#dc2626', fontSize: 13, fontWeight: 700, margin: '0 0 8px' }}>
                   {failCount} échec{failCount > 1 ? 's' : ''}
                 </p>
@@ -731,8 +731,8 @@ export default function ProductsPage() {
   }
 
   const selStyle: CSSProperties = {
-    background: '#ffffff', border: '1px solid #d1d5db', borderRadius: 8,
-    color: '#111827', fontSize: 13, padding: '7px 10px', outline: 'none',
+    background: "var(--surface-primary)", border: "1px solid var(--apple-gray-200)", borderRadius: 8,
+    color: "var(--text-primary)", fontSize: 13, padding: '7px 10px', outline: 'none',
     fontFamily: 'inherit', fontWeight: 500, cursor: 'pointer',
   }
 
@@ -764,10 +764,10 @@ export default function ProductsPage() {
 
       {/* ── No shop ── */}
       {hasShop === false && (
-        <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ background: "var(--surface-primary)", border: "1px solid var(--apple-gray-200)", borderRadius: 12, padding: '48px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 44, marginBottom: 12 }}>🔗</div>
-          <p style={{ color: '#111827', fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>Aucune boutique connectée</p>
-          <p style={{ color: '#374151', fontSize: 14, margin: '0 0 20px' }}>
+          <p style={{ color: "var(--text-primary)", fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>Aucune boutique connectée</p>
+          <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: '0 0 20px' }}>
             Connectez votre boutique Shopify pour voir et modifier vos produits.
           </p>
           <a href="/dashboard/shops" className="primaryBtn" style={{ display: 'inline-block', textDecoration: 'none' }}>
@@ -868,16 +868,16 @@ export default function ProductsPage() {
           {/* ── Loading ── */}
           {loading && (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <p style={{ color: '#6b7280', fontSize: 14 }}>Chargement des produits...</p>
+              <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Chargement des produits...</p>
             </div>
           )}
 
           {/* ── Empty state ── */}
           {!loading && products.length === 0 && (
-            <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '48px 24px', textAlign: 'center' }}>
+            <div style={{ background: "var(--surface-primary)", border: "1px solid var(--apple-gray-200)", borderRadius: 12, padding: '48px 24px', textAlign: 'center' }}>
               <div style={{ fontSize: 44, marginBottom: 12 }}>📦</div>
-              <p style={{ color: '#111827', fontSize: 16, fontWeight: 700, margin: '0 0 8px' }}>Aucun produit trouvé</p>
-              <p style={{ color: '#374151', fontSize: 14, margin: '0 0 20px' }}>
+              <p style={{ color: "var(--text-primary)", fontSize: 16, fontWeight: 700, margin: '0 0 8px' }}>Aucun produit trouvé</p>
+              <p style={{ color: "var(--text-secondary)", fontSize: 14, margin: '0 0 20px' }}>
                 Cliquez sur Synchroniser Shopify pour importer vos produits.
               </p>
               <button className="primaryBtn" onClick={doSync} disabled={syncing}>

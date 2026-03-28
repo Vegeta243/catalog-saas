@@ -266,9 +266,19 @@ a:hover {
   color: #166534;
 }
 
+.dark .badge-success {
+  background: rgba(16,185,129,0.15);
+  color: #6ee7b7;
+}
+
 .badge-destructive {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.dark .badge-destructive {
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
 }
 
 /* ═══════════════════════════════════════════════════════════

@@ -34,7 +34,7 @@ const EVENT_TYPES = [
   { value: "restock", label: "Alerte stock", icon: Package, color: "#3b82f6" },
   { value: "promotion", label: "Promotion", icon: PartyPopper, color: "#ec4899" },
   { value: "import", label: "Import produits", icon: Download, color: "#06b6d4" },
-  { value: "custom", label: "Personnalisé", icon: Tag, color: "#6b7280" },
+  { value: "custom", label: "Personnalisé", icon: Tag, color: "var(--text-tertiary)" },
 ];
 
 const STATUS_BADGES: Record<string, { label: string; className: string }> = {

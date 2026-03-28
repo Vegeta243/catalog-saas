@@ -21,14 +21,14 @@ const PLANS = [
     cta: "Créer un compte gratuit",
     popular: false,
     isFree: true,
-    cardBg: "#ffffff",
+    cardBg: "var(--surface-primary)",
     border: "1px solid #e5e7eb",
-    badgeBg: "#f9fafb",
+    badgeBg: "rgba(255,255,255,0.06)",
     badgeColor: "#6b7280",
-    iconBg: "#f3f4f6",
-    iconColor: "#6b7280",
-    btnCls: "bg-gray-100 hover:bg-gray-200",
-    btnStyle: { color: "#374151" },
+    iconBg: "rgba(255,255,255,0.07)",
+    iconColor: "#9ca3af",
+    btnCls: "",
+    btnStyle: { background: "rgba(255,255,255,0.08)", color: "#d1d5db" },
     shadow: "none",
     scale: false,
   },
@@ -52,11 +52,11 @@ const PLANS = [
     cta: "Choisir Starter",
     popular: false,
     isFree: false,
-    cardBg: "#f8faff",
+    cardBg: "rgba(37,99,235,0.06)",
     border: "1px solid #bfdbfe",
-    badgeBg: "#eff6ff",
-    badgeColor: "#1d4ed8",
-    iconBg: "#eff6ff",
+    badgeBg: "rgba(37,99,235,0.12)",
+    badgeColor: "#93c5fd",
+    iconBg: "rgba(37,99,235,0.12)",
     iconColor: "#2563eb",
     btnCls: "bg-blue-600 hover:bg-blue-700",
     btnStyle: { color: "#fff" },
@@ -85,12 +85,12 @@ const PLANS = [
     cta: "Choisir Pro",
     popular: true,
     isFree: false,
-    cardBg: "linear-gradient(150deg,#fdf8ff 0%,#f5f3ff 100%)",
+    cardBg: "rgba(124,58,237,0.08)",
     border: "2px solid #a78bfa",
     badgeBg: "#7c3aed",
     badgeColor: "#ffffff",
     badgeText: "RECOMMANDÉ",
-    iconBg: "#ede9fe",
+    iconBg: "rgba(124,58,237,0.12)",
     iconColor: "#7c3aed",
     btnCls: "hover:opacity-90",
     btnStyle: { background: "#7c3aed", color: "#fff" },
@@ -116,11 +116,11 @@ const PLANS = [
     cta: "Choisir Agency",
     popular: false,
     isFree: false,
-    cardBg: "#f0fdf9",
+    cardBg: "rgba(5,150,105,0.06)",
     border: "1px solid #6ee7b7",
-    badgeBg: "#d1fae5",
-    badgeColor: "#065f46",
-    iconBg: "#d1fae5",
+    badgeBg: "rgba(5,150,105,0.12)",
+    badgeColor: "#6ee7b7",
+    iconBg: "rgba(5,150,105,0.12)",
     iconColor: "#059669",
     btnCls: "hover:opacity-90",
     btnStyle: { background: "#059669", color: "#fff" },
@@ -133,15 +133,15 @@ export default function PricingPage() {
   const [yearly, setYearly] = useState(false);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f8fafc" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "var(--background)" }}>
       {/* Header */}
-      <nav className="border-b border-gray-200 bg-white">
+      <nav className="border-b" style={{ background: "var(--surface-primary)", borderColor: "var(--border)" }}>
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold" style={{ color: "#0f172a" }}>
+          <Link href="/" className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
             Ecom<span style={{ color: "#2563eb" }}>Pilot</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium hover:underline" style={{ color: "#374151" }}>Connexion</Link>
+            <Link href="/login" className="text-sm font-medium hover:underline" style={{ color: "var(--text-secondary)" }}>Connexion</Link>
             <Link href="/login?tab=signup" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>
               S&apos;inscrire
             </Link>
@@ -151,23 +151,23 @@ export default function PricingPage() {
 
       {/* Hero */}
       <div className="text-center pt-16 pb-12 px-6">
-        <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: "#0f172a" }}>
+        <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>
           Des prix simples, <span style={{ color: "#2563eb" }}>transparents</span>
         </h1>
-        <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "#64748b" }}>
+        <p className="text-lg mt-4 max-w-2xl mx-auto" style={{ color: "var(--text-tertiary)" }}>
           30 actions gratuites, sans carte bancaire. Passez à un plan payant quand vous êtes prêt.
         </p>
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mt-8">
-          <span className="text-sm font-medium" style={{ color: yearly ? "#94a3b8" : "#0f172a" }}>Mensuel</span>
+          <span className="text-sm font-medium" style={{ color: yearly ? "var(--text-tertiary)" : "var(--text-primary)" }}>Mensuel</span>
           <button onClick={() => setYearly(!yearly)} className="relative">
             {yearly
               ? <ToggleRight className="w-10 h-10" style={{ color: "#2563eb" }} />
-              : <ToggleLeft className="w-10 h-10" style={{ color: "#94a3b8" }} />}
+              : <ToggleLeft className="w-10 h-10" style={{ color: "var(--text-tertiary)" }} />}
           </button>
-          <span className="text-sm font-medium" style={{ color: yearly ? "#0f172a" : "#94a3b8" }}>
-            Annuel <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100" style={{ color: "#059669" }}>-30%</span>
+          <span className="text-sm font-medium" style={{ color: yearly ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+            Annuel <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(5,150,105,0.15)", color: "#34d399" }}>-30%</span>
           </span>
         </div>
       </div>
@@ -200,20 +200,20 @@ export default function PricingPage() {
                   <Icon className="w-5 h-5" style={{ color: plan.iconColor }} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>{plan.name}</h3>
-                  <p className="text-xs" style={{ color: "#64748b" }}>{plan.description}</p>
+                  <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>{plan.name}</h3>
+                  <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{plan.description}</p>
                 </div>
               </div>
 
               <div className="mb-6">
                 {plan.isFree ? (
-                  <span className="text-4xl font-extrabold" style={{ color: "#0f172a" }}>Gratuit</span>
+                  <span className="text-4xl font-extrabold" style={{ color: "var(--text-primary)" }}>Gratuit</span>
                 ) : (
                   <>
-                    <span className="text-4xl font-extrabold" style={{ color: "#0f172a" }}>{price}€</span>
-                    <span className="text-sm" style={{ color: "#64748b" }}>/mois</span>
+                    <span className="text-4xl font-extrabold" style={{ color: "var(--text-primary)" }}>{price}€</span>
+                    <span className="text-sm" style={{ color: "var(--text-tertiary)" }}>/mois</span>
                     {yearly && (
-                      <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>
+                      <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
                         Facturé {price * 12}€/an
                       </p>
                     )}
@@ -223,7 +223,7 @@ export default function PricingPage() {
 
               <ul className="space-y-3 mb-8 flex-1">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "#374151" }}>
+                  <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
                     <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#059669" }} />
                     {f}
                   </li>
@@ -243,14 +243,14 @@ export default function PricingPage() {
       {/* Payment methods */}
       <div className="max-w-2xl mx-auto px-6 pb-16 text-center">
         <div className="flex items-center justify-center gap-6 flex-wrap">
-          <div className="flex items-center gap-2 text-sm" style={{ color: "#64748b" }}>
+          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-tertiary)" }}>
             <CreditCard className="w-4 h-4" />
             Visa / Mastercard
           </div>
           <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: "#003087" }}>
             Pay<span style={{ color: "#009cde" }}>Pal</span>
           </div>
-          <div className="flex items-center gap-2 text-sm" style={{ color: "#64748b" }}>
+          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-tertiary)" }}>
             <Shield className="w-4 h-4" />
             Paiement sécurisé SSL
           </div>
@@ -258,15 +258,15 @@ export default function PricingPage() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 py-8">
+      <div className="border-t py-8" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-6 text-xs" style={{ color: "#94a3b8" }}>
+          <div className="flex items-center gap-6 text-xs" style={{ color: "var(--text-tertiary)" }}>
             <Link href="/cgu" className="hover:underline">CGU</Link>
             <Link href="/cgv" className="hover:underline">CGV</Link>
             <Link href="/politique-confidentialite" className="hover:underline">Confidentialité</Link>
             <Link href="/mentions-legales" className="hover:underline">Mentions légales</Link>
           </div>
-          <p className="text-xs" style={{ color: "#94a3b8" }}>© 2026 EcomPilot — Tous droits réservés.</p>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>© 2026 EcomPilot — Tous droits réservés.</p>
         </div>
       </div>
     </div>

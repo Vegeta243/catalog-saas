@@ -403,7 +403,7 @@ export default function AutomationPage() {
                   <button onClick={() => setExpandedId(isExpanded ? null : auto.id)} style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", color: "var(--text-tertiary)", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                     {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
-                  <button onClick={() => handleDelete(auto.id)} style={{ background: "var(--surface-secondary)", border: "1px solid #fecaca", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <button onClick={() => handleDelete(auto.id)} style={{ background: "var(--surface-secondary)", border: "1px solid rgba(239,68,68,0.30)", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                     <Trash2 size={13} />
                   </button>
                 </div>

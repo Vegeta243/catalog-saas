@@ -286,7 +286,7 @@ export default function SettingsPage() {
 
   const ToggleSwitch = ({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) => (
     <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <span className="text-sm" style={{ color: "#374151" }}>{label}</span>
+      <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{label}</span>
       <button onClick={onToggle} className="relative w-10 h-6 rounded-full transition-colors"
         style={{ backgroundColor: on ? "#2563eb" : "#d1d5db" }}>
         <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
@@ -299,8 +299,8 @@ export default function SettingsPage() {
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Paramètres</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Gérez les préférences de votre compte et boutique</p>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Paramètres</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>Gérez les préférences de votre compte et boutique</p>
         </div>
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors self-start sm:self-auto">
@@ -342,11 +342,11 @@ export default function SettingsPage() {
           {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                 <User className="w-4 h-4" style={{ color: "#2563eb" }} />
                 Informations personnelles
               </h2>
-              <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez votre profil et vos coordonnées</p>
+              <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Gérez votre profil et vos coordonnées</p>
 
               {/* Avatar */}
               <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
@@ -377,8 +377,8 @@ export default function SettingsPage() {
                   onChange={handleAvatarUpload}
                 />
                 <div>
-                  <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{fullName}</p>
-                  <p className="text-xs" style={{ color: "#64748b" }}>{email}</p>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{fullName}</p>
+                  <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{email}</p>
                   <button
                     className="flex items-center gap-1 mt-1 text-xs font-medium"
                     style={{ color: "#2563eb" }}
@@ -392,39 +392,39 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom complet</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Nom complet</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                     <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
                       className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
-                      style={{ color: "#0f172a" }} />
+                      style={{ color: "var(--text-primary)" }} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Email</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Email</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                       className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
-                      style={{ color: "#0f172a" }} />
+                      style={{ color: "var(--text-primary)" }} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Téléphone</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Téléphone</label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                     <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)}
                       className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 outline-none"
-                      style={{ color: "#0f172a" }} />
+                      style={{ color: "var(--text-primary)" }} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Fuseau horaire</label>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Fuseau horaire</label>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                     <select value={timezone} onChange={(e) => setTimezone(e.target.value)}
                       className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }}>
+                      style={{ color: "var(--text-primary)" }}>
                       <option value="Europe/Paris">Europe/Paris (GMT+1)</option>
                       <option value="America/New_York">America/New York (GMT-5)</option>
                       <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
@@ -440,33 +440,33 @@ export default function SettingsPage() {
           {activeTab === "shop" && (
             <div className="space-y-6">
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <Store className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Configuration de la boutique
                 </h2>
-                <p className="text-xs mb-6" style={{ color: "#64748b" }}>Paramètres de votre boutique Shopify</p>
+                <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Paramètres de votre boutique Shopify</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Nom de la boutique</label>
+                    <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Nom de la boutique</label>
                     <input type="text" value={shopName} onChange={(e) => setShopName(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }} />
+                      style={{ color: "var(--text-primary)" }} />
                   </div>
                   <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>URL Shopify</label>
+                    <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>URL Shopify</label>
                     <div className="relative">
                       <input type="text" value={shopUrl} onChange={(e) => setShopUrl(e.target.value)}
                         className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-blue-400 outline-none pr-8"
-                        style={{ color: "#0f172a" }} />
-                      <ExternalLink className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                        style={{ color: "var(--text-primary)" }} />
+                      <ExternalLink className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Devise</label>
+                    <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Devise</label>
                     <select value={currency} onChange={(e) => setCurrency(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }}>
+                      style={{ color: "var(--text-primary)" }}>
                       <option value="EUR">EUR (€)</option>
                       <option value="USD">USD ($)</option>
                       <option value="GBP">GBP (£)</option>
@@ -474,10 +474,10 @@ export default function SettingsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Langue du catalogue</label>
+                    <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Langue du catalogue</label>
                     <select value={language} onChange={(e) => setLanguage(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }}>
+                      style={{ color: "var(--text-primary)" }}>
                       <option value="fr">Français</option>
                       <option value="en">English</option>
                       <option value="es">Español</option>
@@ -488,17 +488,17 @@ export default function SettingsPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <RefreshCw className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Synchronisation
                 </h2>
                 <ToggleSwitch on={autoSync} onToggle={() => setAutoSync(!autoSync)} label="Synchronisation automatique" />
                 {autoSync && (
                   <div className="mt-4">
-                    <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Intervalle (minutes)</label>
+                    <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Intervalle (minutes)</label>
                     <select value={syncInterval} onChange={(e) => setSyncInterval(e.target.value)}
                       className="w-48 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:border-blue-400 outline-none"
-                      style={{ color: "#0f172a" }}>
+                      style={{ color: "var(--text-primary)" }}>
                       <option value="15">15 minutes</option>
                       <option value="30">30 minutes</option>
                       <option value="60">1 heure</option>
@@ -513,11 +513,11 @@ export default function SettingsPage() {
           {/* Notifications Tab */}
           {activeTab === "notifications" && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                 <Bell className="w-4 h-4" style={{ color: "#2563eb" }} />
                 Préférences de notification
               </h2>
-              <p className="text-xs mb-6" style={{ color: "#64748b" }}>Choisissez quelles notifications recevoir</p>
+              <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Choisissez quelles notifications recevoir</p>
 
               <div className="space-y-1">
                 <ToggleSwitch on={emailNotifs} onToggle={() => setEmailNotifs(!emailNotifs)} label="Notifications par email" />
@@ -534,11 +534,11 @@ export default function SettingsPage() {
           {activeTab === "billing" && (
             <div className="space-y-6">
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <CreditCard className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Plan actuel
                 </h2>
-                <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez votre abonnement et votre facturation</p>
+                <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Gérez votre abonnement et votre facturation</p>
 
                 <div className="bg-blue-700 rounded-xl p-6 text-white mb-6">
                   <div className="flex items-center justify-between">
@@ -559,8 +559,8 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
                   <div>
-                    <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Gérer mon abonnement</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>Changez de plan, consultez vos factures et gérez votre abonnement</p>
+                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Gérer mon abonnement</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>Changez de plan, consultez vos factures et gérez votre abonnement</p>
                   </div>
                   <a href="/dashboard/billing" className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors" style={{ color: "#fff" }}>
                     Gérer <ExternalLink className="w-3.5 h-3.5" />
@@ -573,11 +573,11 @@ export default function SettingsPage() {
           {/* API Keys Tab */}
           {activeTab === "api" && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                 <Key className="w-4 h-4" style={{ color: "#2563eb" }} />
                 Clés API
               </h2>
-              <p className="text-xs mb-6" style={{ color: "#64748b" }}>Gérez vos intégrations API tierces</p>
+              <p className="text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>Gérez vos intégrations API tierces</p>
 
               <div className="space-y-4">
                 {/* Shopify Token */}
@@ -588,8 +588,8 @@ export default function SettingsPage() {
                         <Store className="w-4 h-4" style={{ color: "#16a34a" }} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Shopify</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>{shopUrl || "Aucune boutique connectée"}</p>
+                        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Shopify</p>
+                        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{shopUrl || "Aucune boutique connectée"}</p>
                       </div>
                     </div>
                     {shopHasToken
@@ -604,13 +604,13 @@ export default function SettingsPage() {
                         value={shopToken}
                         readOnly
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs bg-white font-mono"
-                        style={{ color: "#0f172a" }}
+                        style={{ color: "var(--text-primary)" }}
                       />
                       <button onClick={() => setShowShopifyKey(!showShopifyKey)} className="p-2 hover:bg-gray-200 rounded-lg">
-                        {showShopifyKey ? <EyeOff className="w-4 h-4" style={{ color: "#64748b" }} /> : <Eye className="w-4 h-4" style={{ color: "#64748b" }} />}
+                        {showShopifyKey ? <EyeOff className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} /> : <Eye className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} />}
                       </button>
                       <button onClick={() => copyToClipboard(shopToken)} className="p-2 hover:bg-gray-200 rounded-lg">
-                        <Copy className="w-4 h-4" style={{ color: "#64748b" }} />
+                        <Copy className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                       </button>
                     </div>
                   )}
@@ -629,8 +629,8 @@ export default function SettingsPage() {
                         <Key className="w-4 h-4" style={{ color: "#7c3aed" }} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>OpenAI API</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>Géré côté serveur — GPT-4o-mini</p>
+                        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>OpenAI API</p>
+                        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Géré côté serveur — GPT-4o-mini</p>
                       </div>
                     </div>
                     <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Actif</span>
@@ -645,8 +645,8 @@ export default function SettingsPage() {
                         <CreditCard className="w-4 h-4" style={{ color: "#2563eb" }} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium" style={{ color: "#0f172a" }}>Stripe</p>
-                        <p className="text-xs" style={{ color: "#64748b" }}>Paiements et abonnements — géré côté serveur</p>
+                        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Stripe</p>
+                        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Paiements et abonnements — géré côté serveur</p>
                       </div>
                     </div>
                     <span className="text-xs px-2 py-0.5 bg-emerald-100 rounded" style={{ color: "#059669" }}>Actif</span>
@@ -660,7 +660,7 @@ export default function SettingsPage() {
           {activeTab === "advanced" && (
             <div className="space-y-6">
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <Palette className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Apparence
                 </h2>
@@ -680,7 +680,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   <Shield className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Options avancées
                 </h2>
@@ -689,17 +689,17 @@ export default function SettingsPage() {
               </div>
 
               <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
-                <h2 className="text-sm font-semibold mb-1" style={{ color: "#94a3b8" }}>Compte</h2>
-                <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>Gestion et suppression de votre compte</p>
+                <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--text-tertiary)" }}>Compte</h2>
+                <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Gestion et suppression de votre compte</p>
                 <div className="flex flex-wrap gap-3">
                   <a href="/api/user/export-data" download
                     className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
-                    style={{ color: "#64748b" }}>
+                    style={{ color: "var(--text-tertiary)" }}>
                     ⬇️ Exporter mes données (RGPD)
                   </a>
                   <a href="/dashboard/account"
                     className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-gray-200 rounded-lg hover:bg-white transition-colors"
-                    style={{ color: "#64748b" }}>
+                    style={{ color: "var(--text-tertiary)" }}>
                     Supprimer mon compte
                   </a>
                 </div>
@@ -712,14 +712,14 @@ export default function SettingsPage() {
             <div className="space-y-6">
               {loadingProfitSettings ? (
                 <div className="flex items-center justify-center p-12">
-                  <RefreshCw className="w-5 h-5 animate-spin mr-2" style={{ color: "#94a3b8" }} />
-                  <span className="text-sm" style={{ color: "#94a3b8" }}>Chargement…</span>
+                  <RefreshCw className="w-5 h-5 animate-spin mr-2" style={{ color: "var(--text-tertiary)" }} />
+                  <span className="text-sm" style={{ color: "var(--text-tertiary)" }}>Chargement…</span>
                 </div>
               ) : (
                 <>
                   {/* Plateforme */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+                    <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                       <Globe className="w-4 h-4" style={{ color: "#2563eb" }} />
                       Plateforme Shopify
                     </h2>
@@ -731,7 +731,7 @@ export default function SettingsPage() {
                         { key: "payment_processing_fixed" as const, label: "Frais fixe paiement (€ par commande)", placeholder: "0.25", help: "Ex: 0.25€ pour Stripe" },
                       ].map(({ key, label, placeholder, help }) => (
                         <div key={key}>
-                          <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>{label}</label>
+                          <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>{label}</label>
                           <input
                             type="number"
                             value={profitSettings[key]}
@@ -740,9 +740,9 @@ export default function SettingsPage() {
                             min="0"
                             step="0.01"
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                            style={{ color: "#0f172a" }}
+                            style={{ color: "var(--text-primary)" }}
                           />
-                          <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>{help}</p>
+                          <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>{help}</p>
                         </div>
                       ))}
                     </div>
@@ -750,9 +750,9 @@ export default function SettingsPage() {
 
                   {/* Publicité */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}> Publicité</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "var(--text-primary)" }}> Publicité</h2>
                     <div>
-                      <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>
+                      <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>
                         % du CA dépensé en publicité
                       </label>
                       <input
@@ -764,15 +764,15 @@ export default function SettingsPage() {
                         max="100"
                         step="0.1"
                         className="w-full max-w-xs px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                        style={{ color: "#0f172a" }}
+                        style={{ color: "var(--text-primary)" }}
                       />
-                      <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Ex: 15% si vous dépensez 150€ de pub pour 1000€ de CA</p>
+                      <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>Ex: 15% si vous dépensez 150€ de pub pour 1000€ de CA</p>
                     </div>
                   </div>
 
                   {/* Logistique */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}> Logistique & Retours</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "var(--text-primary)" }}> Logistique & Retours</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
                         { key: "avg_shipping_cost" as const, label: "Coût moyen expédition (€/commande)", placeholder: "5" },
@@ -780,7 +780,7 @@ export default function SettingsPage() {
                         { key: "avg_return_cost" as const, label: "Coût traitement d'un retour (€)", placeholder: "8" },
                       ].map(({ key, label, placeholder }) => (
                         <div key={key}>
-                          <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>{label}</label>
+                          <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>{label}</label>
                           <input
                             type="number"
                             value={profitSettings[key]}
@@ -789,7 +789,7 @@ export default function SettingsPage() {
                             min="0"
                             step="0.01"
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                            style={{ color: "#0f172a" }}
+                            style={{ color: "var(--text-primary)" }}
                           />
                         </div>
                       ))}
@@ -798,10 +798,10 @@ export default function SettingsPage() {
 
                   {/* Taxes */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>️ Taxes & Légal</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "var(--text-primary)" }}>️ Taxes & Légal</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>TVA applicable (%)</label>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>TVA applicable (%)</label>
                         <input
                           type="number"
                           value={profitSettings.vat_rate_pct}
@@ -810,12 +810,12 @@ export default function SettingsPage() {
                           min="0"
                           max="100"
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          style={{ color: "#0f172a" }}
+                          style={{ color: "var(--text-primary)" }}
                         />
-                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>France: 20% (standard), 10% ou 5.5% (réduit)</p>
+                        <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>France: 20% (standard), 10% ou 5.5% (réduit)</p>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Impôt sur les bénéfices (%)</label>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Impôt sur les bénéfices (%)</label>
                         <input
                           type="number"
                           value={profitSettings.income_tax_rate_pct}
@@ -824,19 +824,19 @@ export default function SettingsPage() {
                           min="0"
                           max="100"
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          style={{ color: "#0f172a" }}
+                          style={{ color: "var(--text-primary)" }}
                         />
-                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>IS: 15% (PME jusqu'à 42500€), 25% au-delà</p>
+                        <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>IS: 15% (PME jusqu'à 42500€), 25% au-delà</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Outils & Fixes */}
                   <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>️ Outils & Charges fixes</h2>
+                    <h2 className="text-base font-semibold mb-4" style={{ color: "var(--text-primary)" }}>️ Outils & Charges fixes</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Abonnement EcomPilot (€/mois)</label>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Abonnement EcomPilot (€/mois)</label>
                         <input
                           type="number"
                           value={profitSettings.ecompilot_monthly}
@@ -844,12 +844,12 @@ export default function SettingsPage() {
                           placeholder="29"
                           min="0"
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          style={{ color: "#0f172a" }}
+                          style={{ color: "var(--text-primary)" }}
                         />
-                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Auto-rempli selon votre plan actuel</p>
+                        <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>Auto-rempli selon votre plan actuel</p>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Autres outils SaaS (€/mois)</label>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Autres outils SaaS (€/mois)</label>
                         <input
                           type="number"
                           value={profitSettings.other_tools_monthly}
@@ -857,12 +857,12 @@ export default function SettingsPage() {
                           placeholder="0"
                           min="0"
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          style={{ color: "#0f172a" }}
+                          style={{ color: "var(--text-primary)" }}
                         />
-                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Email marketing, analytics, etc.</p>
+                        <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>Email marketing, analytics, etc.</p>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Charges fixes mensuelles (€)</label>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Charges fixes mensuelles (€)</label>
                         <input
                           type="number"
                           value={profitSettings.monthly_fixed_costs}
@@ -870,12 +870,12 @@ export default function SettingsPage() {
                           placeholder="0"
                           min="0"
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          style={{ color: "#0f172a" }}
+                          style={{ color: "var(--text-primary)" }}
                         />
-                        <p className="text-[11px] mt-1" style={{ color: "#94a3b8" }}>Loyer, comptable, etc. répartis sur vos commandes</p>
+                        <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>Loyer, comptable, etc. répartis sur vos commandes</p>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1" style={{ color: "#374151" }}>Nb commandes/mois (pour répartir les fixes)</label>
+                        <label className="block text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Nb commandes/mois (pour répartir les fixes)</label>
                         <input
                           type="number"
                           value={profitSettings.avg_orders_per_month}
@@ -883,7 +883,7 @@ export default function SettingsPage() {
                           placeholder="100"
                           min="1"
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          style={{ color: "#0f172a" }}
+                          style={{ color: "var(--text-primary)" }}
                         />
                       </div>
                     </div>
@@ -902,7 +902,7 @@ export default function SettingsPage() {
                     <a
                       href="/dashboard/rentabilite"
                       className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
-                      style={{ color: "#374151" }}
+                      style={{ color: "var(--text-secondary)" }}
                     >
                       <TrendingUp className="w-4 h-4" />
                       Ouvrir le calculateur

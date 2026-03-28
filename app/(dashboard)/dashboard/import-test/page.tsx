@@ -33,7 +33,7 @@ export default function ImportTestPage() {
         <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>
           Test du Modal d'Import
         </h2>
-        <p style={{ color: '#94a3b8', marginBottom: '20px' }}>
+        <p style={{ color: "var(--text-tertiary)", marginBottom: '20px' }}>
           Cliquez sur le bouton ci-dessous pour ouvrir le modal d'import en masse.
         </p>
 
@@ -81,7 +81,7 @@ export default function ImportTestPage() {
         <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>
           Instructions de Test
         </h2>
-        <ol style={{ color: '#94a3b8', lineHeight: '1.8', paddingLeft: '20px' }}>
+        <ol style={{ color: "var(--text-tertiary)", lineHeight: '1.8', paddingLeft: '20px' }}>
           <li>Cliquez sur "Ouvrir le Modal d'Import"</li>
           <li>Collez des URLs de produits (AliExpress, CJ, etc.)</li>
           <li>Ajustez la marge avec le slider</li>
@@ -98,8 +98,8 @@ export default function ImportTestPage() {
           fontSize: '13px',
         }}>
           <p style={{ color: '#60a5fa', marginBottom: '8px' }}>Exemple d'URLs à tester :</p>
-          <p style={{ color: '#94a3b8' }}>https://www.aliexpress.com/item/1005006294704696.html</p>
-          <p style={{ color: '#94a3b8' }}>https://www.aliexpress.com/item/1005005531234567.html</p>
+          <p style={{ color: "var(--text-tertiary)" }}>https://www.aliexpress.com/item/1005006294704696.html</p>
+          <p style={{ color: "var(--text-tertiary)" }}>https://www.aliexpress.com/item/1005005531234567.html</p>
         </div>
       </div>
 

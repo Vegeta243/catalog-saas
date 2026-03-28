@@ -11,26 +11,26 @@ const S = {
     margin: '0 auto',
   } as CSSProperties,
   h1: {
-    color: '#111827',
+    color: "var(--text-primary)",
     fontSize: '22px',
     fontWeight: 700,
     margin: '0 0 4px 0',
     letterSpacing: '-0.01em',
   } as CSSProperties,
   sub: {
-    color: '#374151',
+    color: "var(--text-secondary)",
     fontSize: '14px',
     margin: '0 0 24px 0',
     fontWeight: 400,
   } as CSSProperties,
   card: {
-    background: '#ffffff',
-    border: '1px solid #e5e7eb',
+    background: "var(--surface-primary)",
+    border: "1px solid var(--apple-gray-200)",
     borderRadius: '14px',
     padding: '20px',
   } as CSSProperties,
   sectionTitle: {
-    color: '#111827',
+    color: "var(--text-primary)",
     fontSize: '15px',
     fontWeight: 600,
     margin: '0 0 16px 0',
@@ -125,13 +125,13 @@ export default function DashboardPage() {
             href: '/dashboard/ai',
           },
           { label: 'Boutiques', value: loading ? '-' : String(shopCount), color: '#059669', href: '/dashboard/shops' },
-          { label: 'Plan actuel', value: loading ? '-' : plan.charAt(0).toUpperCase() + plan.slice(1), color: '#6b7280', href: '/dashboard/billing' },
+          { label: 'Plan actuel', value: loading ? '-' : plan.charAt(0).toUpperCase() + plan.slice(1), color: "var(--text-tertiary)", href: '/dashboard/billing' },
         ].map((k) => (
           <a key={k.label} href={k.href} style={{ textDecoration: 'none' }}>
-            <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '14px', padding: '18px 16px' }}>
+            <div style={{ background: "var(--surface-primary)", border: "1px solid var(--apple-gray-200)", borderRadius: '14px', padding: '18px 16px' }}>
               <p
                 style={{
-                  color: '#374151',
+                  color: "var(--text-secondary)",
                   fontSize: '11px',
                   fontWeight: 600,
                   textTransform: 'uppercase',
@@ -150,7 +150,7 @@ export default function DashboardPage() {
       {remaining !== null && (
         <div style={{ ...S.card, marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <p style={{ color: '#111827', fontSize: '14px', fontWeight: 500, margin: 0 }}>Actions IA restantes ce mois</p>
+            <p style={{ color: "var(--text-primary)", fontSize: '14px', fontWeight: 500, margin: 0 }}>Actions IA restantes ce mois</p>
             <p style={{ color: remaining <= 5 ? '#f87171' : '#4f8ef7', fontSize: '14px', fontWeight: 600, margin: 0 }}>
               {remaining} / {actionsLimit}
             </p>
@@ -210,7 +210,7 @@ export default function DashboardPage() {
                       {s.done ? (
                         <span style={{ color: 'white', fontSize: '11px', fontWeight: 700 }}>OK</span>
                       ) : (
-                        <span style={{ color: '#6b7280', fontSize: '11px', fontWeight: 600 }}>{i + 1}</span>
+                        <span style={{ color: "var(--text-tertiary)", fontSize: '11px', fontWeight: 600 }}>{i + 1}</span>
                       )}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                       >
                         {s.label}
                       </p>
-                      <p style={{ color: '#374151', fontSize: '12px', margin: 0, fontWeight: 400 }}>{s.desc}</p>
+                      <p style={{ color: "var(--text-secondary)", fontSize: '12px', margin: 0, fontWeight: 400 }}>{s.desc}</p>
                     </div>
                   </div>
                 </a>
@@ -253,16 +253,16 @@ export default function DashboardPage() {
                   alignItems: 'center',
                   padding: '11px 14px',
                   borderRadius: '10px',
-                  background: '#f9fafb',
-                  border: '1px solid #e5e7eb',
+                  background: "var(--surface-secondary)",
+                  border: "1px solid var(--apple-gray-200)",
                   textDecoration: 'none',
                 }}
               >
                 <div>
-                  <p style={{ color: '#111827', fontSize: '13px', fontWeight: 600, margin: '0 0 1px 0' }}>{a.label}</p>
-                  <p style={{ color: '#374151', fontSize: '12px', margin: 0, fontWeight: 400 }}>{a.desc}</p>
+                  <p style={{ color: "var(--text-primary)", fontSize: '13px', fontWeight: 600, margin: '0 0 1px 0' }}>{a.label}</p>
+                  <p style={{ color: "var(--text-secondary)", fontSize: '12px', margin: 0, fontWeight: 400 }}>{a.desc}</p>
                 </div>
-                <span style={{ color: '#6b7280', fontSize: '16px', fontWeight: 600 }}>›</span>
+                <span style={{ color: "var(--text-tertiary)", fontSize: '16px', fontWeight: 600 }}>›</span>
               </a>
             ))}
           </div>

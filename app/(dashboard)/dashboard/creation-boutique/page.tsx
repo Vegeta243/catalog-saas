@@ -148,7 +148,7 @@ export default function CreationBoutiquePage() {
   if (adminChecking || loadingShop) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "#94a3b8" }} />
+        <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "var(--text-tertiary)" }} />
       </div>
     );
   }
@@ -159,8 +159,8 @@ export default function CreationBoutiquePage() {
     return (
       <div className="max-w-xl mx-auto pt-12 text-center">
         <Store className="w-14 h-14 mx-auto mb-4 text-blue-400" />
-        <h2 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>Aucune boutique connectée</h2>
-        <p className="text-sm mb-5" style={{ color: "#64748b" }}>
+        <h2 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>Aucune boutique connectée</h2>
+        <p className="text-sm mb-5" style={{ color: "var(--text-tertiary)" }}>
           Connectez d&apos;abord votre boutique Shopify pour pouvoir personnaliser son design.
         </p>
         <Link href="/dashboard/shops" className="inline-flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm font-bold text-white">
@@ -176,8 +176,8 @@ export default function CreationBoutiquePage() {
         <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 className="w-10 h-10 text-emerald-600" />
         </div>
-        <h2 className="text-2xl font-bold mb-2" style={{ color: "#0f172a" }}> Design appliqué !</h2>
-        <p className="text-sm mb-6" style={{ color: "#64748b" }}>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}> Design appliqué !</h2>
+        <p className="text-sm mb-6" style={{ color: "var(--text-tertiary)" }}>
           Votre boutique <strong>{shop?.shop_name}</strong> a été mise à jour avec le design <strong>{config.ambiance}</strong>.
         </p>
         <a href={`https://${shop?.shop_domain}`} target="_blank" rel="noopener noreferrer"
@@ -200,7 +200,7 @@ export default function CreationBoutiquePage() {
         <div className="bg-white rounded-2xl border border-gray-200 p-10">
           <div className="text-center mb-8">
             <RefreshCw className="w-10 h-10 mx-auto mb-3 text-blue-600 animate-spin" />
-            <h2 className="text-xl font-bold" style={{ color: "#0f172a" }}>Application en cours…</h2>
+            <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Application en cours…</h2>
           </div>
           <div className="space-y-3">
             {APPLY_STEPS.map((s, i) => {
@@ -231,12 +231,12 @@ export default function CreationBoutiquePage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "#0f172a" }}>
+        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
           <Sparkles className="w-6 h-6 text-blue-600" />
           Designer ma boutique avec l&apos;IA
         </h1>
         {shop && (
-          <p className="text-sm mt-1 flex items-center gap-1.5" style={{ color: "#64748b" }}>
+          <p className="text-sm mt-1 flex items-center gap-1.5" style={{ color: "var(--text-tertiary)" }}>
             <Store className="w-3.5 h-3.5 text-emerald-500" />
             Boutique : <span className="font-medium text-emerald-600">{shop.shop_name}</span>
           </p>
@@ -269,11 +269,11 @@ export default function CreationBoutiquePage() {
         {step === 1 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-base font-semibold mb-1" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                 <Palette className="inline w-4 h-4 mr-1 text-blue-600" />
                 Étape 1 — Ambiance visuelle
               </h2>
-              <p className="text-xs" style={{ color: "#64748b" }}>Choisissez le style général de votre boutique</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Choisissez le style général de votre boutique</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -283,14 +283,14 @@ export default function CreationBoutiquePage() {
                     config.ambiance === a.id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
                   }`}>
                   <span className="text-xl">{a.emoji}</span>
-                  <p className="text-sm font-semibold mt-1" style={{ color: "#0f172a" }}>{a.label}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{a.desc}</p>
+                  <p className="text-sm font-semibold mt-1" style={{ color: "var(--text-primary)" }}>{a.label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{a.desc}</p>
                 </button>
               ))}
             </div>
 
             <div>
-              <p className="text-xs font-medium mb-2" style={{ color: "#374151" }}>Couleur principale</p>
+              <p className="text-xs font-medium mb-2" style={{ color: "var(--text-secondary)" }}>Couleur principale</p>
               <div className="flex gap-2 flex-wrap">
                 {COLOR_PALETTES.map(c => (
                   <button key={c.id} onClick={() => setConfig(cfg => ({ ...cfg, primaryColor: c.id }))}
@@ -317,11 +317,11 @@ export default function CreationBoutiquePage() {
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-base font-semibold mb-1" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                 <LayoutGrid className="inline w-4 h-4 mr-1 text-blue-600" />
                 Étape 2 — Sections de la page d&apos;accueil
               </h2>
-              <p className="text-xs" style={{ color: "#64748b" }}>Sélectionnez les sections à afficher</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Sélectionnez les sections à afficher</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -338,8 +338,8 @@ export default function CreationBoutiquePage() {
                       {active && <span className="text-xs leading-none"></span>}
                     </div>
                     <div>
-                      <p className="text-xs font-semibold" style={{ color: "#0f172a" }}>{s.label}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{s.desc}</p>
+                      <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{s.label}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{s.desc}</p>
                     </div>
                   </button>
                 );
@@ -360,27 +360,27 @@ export default function CreationBoutiquePage() {
         {step === 3 && (
           <div className="space-y-5">
             <div>
-              <h2 className="text-base font-semibold mb-1" style={{ color: "#0f172a" }}>
+              <h2 className="text-base font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
                 <Rocket className="inline w-4 h-4 mr-1 text-blue-600" />
                 Étape 3 — Confirmer l&apos;application
               </h2>
-              <p className="text-xs" style={{ color: "#64748b" }}>Vérifiez vos choix avant d&apos;appliquer le design</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Vérifiez vos choix avant d&apos;appliquer le design</p>
             </div>
 
             <div className="rounded-xl border border-gray-200 divide-y divide-gray-100">
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-xs text-gray-500">Boutique</span>
-                <span className="text-xs font-semibold" style={{ color: "#0f172a" }}>{shop?.shop_name} ({shop?.shop_domain})</span>
+                <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{shop?.shop_name} ({shop?.shop_domain})</span>
               </div>
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-xs text-gray-500">Ambiance</span>
-                <span className="text-xs font-semibold capitalize" style={{ color: "#0f172a" }}>
+                <span className="text-xs font-semibold capitalize" style={{ color: "var(--text-primary)" }}>
                   {AMBIANCES.find(a => a.id === config.ambiance)?.emoji} {config.ambiance}
                 </span>
               </div>
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-xs text-gray-500">Couleur principale</span>
-                <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#0f172a" }}>
+                <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
                   <span className="w-4 h-4 rounded-full inline-block border border-gray-200" style={{ backgroundColor: config.primaryColor }} />
                   {COLOR_PALETTES.find(c => c.id === config.primaryColor)?.label}
                 </span>

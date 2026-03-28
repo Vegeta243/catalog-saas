@@ -7,7 +7,7 @@ import { getTasksColor, getResetDate, PLAN_TASKS, PLAN_PRICES } from "@/lib/cred
 import { createClient } from "@/lib/supabase/client";
 
 const PLAN_META: Record<string, { name: string; icon: typeof Zap; color: string; bg: string; features: string[] }> = {
-  free:    { name: "Free",    icon: Star,   color: "#6b7280", bg: "#f9fafb",  features: ["30 actions gratuites", "1 boutique", "Export CSV basique"] },
+  free:    { name: "Free",    icon: Star,   color: "var(--text-tertiary)", bg: "#f9fafb",  features: ["30 actions gratuites", "1 boutique", "Export CSV basique"] },
   starter: { name: "Starter", icon: Zap,    color: "#2563eb", bg: "#eff6ff",  features: ["500 actions/mois", "1 boutique", "Modification en masse", "Support email"] },
   pro:     { name: "Pro",     icon: Crown,  color: "#8b5cf6", bg: "#faf5ff",  features: ["5 000 actions/mois", "3 boutiques", "Éditeur d'images IA", "Automatisations", "Support prioritaire"] },
   agency:  { name: "Agency",  icon: Rocket, color: "#059669", bg: "#f0fdf4",  features: ["Actions illimitées", "Boutiques illimitées", "Automatisations illimitées", "API access", "Support dédié"] },
@@ -107,8 +107,8 @@ export default function TasksPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Mon forfait & actions</h1>
-        <p className="text-sm mt-1" style={{ color: "#64748b" }}>Votre abonnement et votre utilisation</p>
+        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Mon forfait & actions</h1>
+        <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>Votre abonnement et votre utilisation</p>
       </div>
 
       {/* Usage Overview */}
@@ -117,7 +117,7 @@ export default function TasksPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Zap className="w-5 h-5" style={{ color: "#2563eb" }} />
-              <h2 className="font-semibold" style={{ color: "#0f172a" }}>Mes actions ce mois</h2>
+              <h2 className="font-semibold" style={{ color: "var(--text-primary)" }}>Mes actions ce mois</h2>
             </div>
             <span className="text-sm font-bold" style={{ color }}>{used} / {total} utilisées</span>
           </div>
@@ -129,22 +129,22 @@ export default function TasksPage() {
             }} />
           </div>
 
-          <div className="flex items-center gap-2 text-xs mb-6" style={{ color: "#64748b" }}>
+          <div className="flex items-center gap-2 text-xs mb-6" style={{ color: "var(--text-tertiary)" }}>
             <Calendar className="w-3.5 h-3.5" />
             <span>Se renouvellent le {resetDate}</span>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#f0fdf4" }}>
-              <p className="text-xs" style={{ color: "#64748b" }}>Restantes</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Restantes</p>
               <p className="text-xl font-bold" style={{ color }}>{remaining}</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#eff6ff" }}>
-              <p className="text-xs" style={{ color: "#64748b" }}>Utilisées</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Utilisées</p>
               <p className="text-xl font-bold" style={{ color: "#2563eb" }}>{used}</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#faf5ff" }}>
-              <p className="text-xs" style={{ color: "#64748b" }}>Limite</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Limite</p>
               <p className="text-xl font-bold" style={{ color: "#7c3aed" }}>{total}</p>
             </div>
           </div>
@@ -153,9 +153,9 @@ export default function TasksPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
             <TrendingUp className="w-5 h-5" style={{ color: "#7c3aed" }} />
-            <h2 className="font-semibold" style={{ color: "#0f172a" }}>Coût par action</h2>
+            <h2 className="font-semibold" style={{ color: "var(--text-primary)" }}>Coût par action</h2>
           </div>
-          <p className="text-xs mb-4" style={{ color: "#64748b" }}>
+          <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>
             Les modifications en masse ne consomment pas d&apos;actions.
           </p>
           <div className="space-y-3">
@@ -168,7 +168,7 @@ export default function TasksPage() {
               { action: "Modifications en masse", cost: 0 },
             ].map((a) => (
               <div key={a.action} className="flex items-center justify-between py-1">
-                <span className="text-sm" style={{ color: "#374151" }}>{a.action}</span>
+                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{a.action}</span>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{
                   backgroundColor: a.cost === 0 ? "#f0fdf4" : "#eff6ff",
                   color: a.cost === 0 ? "#059669" : "#2563eb",
@@ -192,7 +192,7 @@ export default function TasksPage() {
         const NextIcon = nextMeta?.icon;
         return (
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#0f172a" }}>
+            <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
               <PlanIcon className="w-5 h-5" style={{ color: meta.color }} /> Mon forfait
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -202,14 +202,14 @@ export default function TasksPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg font-bold" style={{ color: "#0f172a" }}>Plan {meta.name}</span>
+                    <span className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Plan {meta.name}</span>
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: meta.bg, color: meta.color }}>
                       {plan === "free" ? "Gratuit" : `${price}/mois`}
                     </span>
                   </div>
                   <ul className="flex flex-wrap gap-x-4 gap-y-1">
                     {meta.features.map((f) => (
-                      <li key={f} className="flex items-center gap-1 text-xs" style={{ color: "#475569" }}>
+                      <li key={f} className="flex items-center gap-1 text-xs" style={{ color: "var(--text-secondary)" }}>
                         <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#059669" }} /> {f}
                       </li>
                     ))}
@@ -234,12 +234,12 @@ export default function TasksPage() {
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
           <BarChart3 className="w-5 h-5" style={{ color: "#2563eb" }} />
-          <h2 className="font-semibold" style={{ color: "#0f172a" }}>Historique d&apos;utilisation</h2>
+          <h2 className="font-semibold" style={{ color: "var(--text-primary)" }}>Historique d&apos;utilisation</h2>
         </div>
         {history.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-sm" style={{ color: "#64748b" }}>Aucune action effectuée pour l&apos;instant</p>
-            <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Vos actions IA et imports apparaîtront ici</p>
+            <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Aucune action effectuée pour l&apos;instant</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Vos actions IA et imports apparaîtront ici</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -252,13 +252,13 @@ export default function TasksPage() {
                       <Icon className="w-4 h-4" style={{ color: "#2563eb" }} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{actionLabels[h.action_type] || h.action_type}</p>
-                      <p className="text-xs" style={{ color: "#94a3b8" }}>{h.description || `${h.products_count} produit${h.products_count > 1 ? "s" : ""}`}</p>
+                      <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{actionLabels[h.action_type] || h.action_type}</p>
+                      <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{h.description || `${h.products_count} produit${h.products_count > 1 ? "s" : ""}`}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-xs font-semibold" style={{ color: "#dc2626" }}>-{h.credits_used} action{h.credits_used > 1 ? "s" : ""}</span>
-                    <span className="text-xs" style={{ color: "#94a3b8" }}>{formatTime(h.created_at)}</span>
+                    <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{formatTime(h.created_at)}</span>
                   </div>
                 </div>
               );

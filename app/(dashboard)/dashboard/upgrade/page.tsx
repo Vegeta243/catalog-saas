@@ -119,17 +119,17 @@ function UpgradeContent() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4" style={{ backgroundColor: "#fef3c7", color: "#92400e" }}>
           <Zap className="w-3 h-3" /> Limite atteinte
         </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "#0f172a" }}>
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-4" style={{ color: "var(--text-primary)" }}>
           Vous avez utilisé vos 30 actions gratuites
         </h1>
-        <p className="text-lg leading-relaxed" style={{ color: "#64748b" }}>
+        <p className="text-lg leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
           Vous avez exploré l&apos;essentiel d&apos;EcomPilot. Choisissez un plan pour continuer à optimiser votre catalogue sans limite.
         </p>
       </div>
 
       {/* Progress bar */}
       <div className="w-full max-w-sm mb-8">
-        <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: "#94a3b8" }}>
+        <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: "var(--text-tertiary)" }}>
           <span>Actions utilisées</span><span className="font-bold" style={{ color: "#dc2626" }}>50 / 50</span>
         </div>
         <div className="h-2.5 rounded-full w-full" style={{ backgroundColor: "#fee2e2" }}>
@@ -156,7 +156,7 @@ function UpgradeContent() {
       </div>
 
       {/* Consent checkbox — required before checkout */}
-      <label className="flex items-center gap-2 text-sm mb-4 max-w-md cursor-pointer" style={{ color: "#64748b" }}>
+      <label className="flex items-center gap-2 text-sm mb-4 max-w-md cursor-pointer" style={{ color: "var(--text-tertiary)" }}>
         <input
           type="checkbox"
           checked={consent}
@@ -186,18 +186,18 @@ function UpgradeContent() {
                 </div>
               )}
               <div className="mb-4">
-                <h3 className="text-xl font-bold" style={{ color: "#0f172a" }}>{plan.name}</h3>
+                <h3 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{plan.name}</h3>
                 <div className="flex items-baseline gap-1 mt-2">
                   <span className="text-4xl font-extrabold" style={{ color: plan.color }}>{displayPrice}€</span>
-                  <span className="text-sm" style={{ color: "#94a3b8" }}>/mois</span>
+                  <span className="text-sm" style={{ color: "var(--text-tertiary)" }}>/mois</span>
                 </div>
                 {billing === "yearly" && (
-                  <p className="text-xs mt-1" style={{ color: "#64748b" }}>Facturé {displayPrice * 12}€/an</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Facturé {displayPrice * 12}€/an</p>
                 )}
               </div>
               <ul className="space-y-2.5 mb-6 flex-1">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "#374151" }}>
+                  <li key={f} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
                     <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: plan.color }} />
                     {f}
                   </li>
@@ -221,7 +221,7 @@ function UpgradeContent() {
       </div>
 
       {/* Trust badges */}
-      <div className="flex flex-wrap items-center justify-center gap-6 text-sm" style={{ color: "#94a3b8" }}>
+      <div className="flex flex-wrap items-center justify-center gap-6 text-sm" style={{ color: "var(--text-tertiary)" }}>
         <span className="flex items-center gap-1.5"><Shield className="w-4 h-4" style={{ color: "#059669" }} /> Paiement sécurisé Stripe</span>
         <span className="flex items-center gap-1.5"><Check className="w-4 h-4" style={{ color: "#059669" }} /> Sans engagement</span>
         <span className="flex items-center gap-1.5"><Zap className="w-4 h-4" style={{ color: "#2563eb" }} /> Accès immédiat</span>

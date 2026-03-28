@@ -193,8 +193,8 @@ function ShopsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>Mes boutiques</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Mes boutiques</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>
             Gérez et basculez entre vos boutiques Shopify
           </p>
         </div>
@@ -213,8 +213,8 @@ function ShopsContent() {
           <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ backgroundColor: "#eff6ff" }}>
             <Store className="w-8 h-8" style={{ color: "#2563eb" }} />
           </div>
-          <h2 className="text-xl font-bold mb-3" style={{ color: "#0f172a" }}>Aucune boutique connectée</h2>
-          <p className="text-base mb-6 max-w-sm mx-auto" style={{ color: "#64748b" }}>
+          <h2 className="text-xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>Aucune boutique connectée</h2>
+          <p className="text-base mb-6 max-w-sm mx-auto" style={{ color: "var(--text-tertiary)" }}>
             Connectez votre boutique Shopify pour commencer à optimiser votre catalogue avec l&apos;IA.
           </p>
           <button
@@ -232,8 +232,8 @@ function ShopsContent() {
             ].map((item) => (
               <div key={item.title} className="p-4 rounded-xl" style={{ backgroundColor: "#f8fafc" }}>
                 <span className="text-2xl mb-2 block">{item.icon}</span>
-                <p className="text-sm font-bold" style={{ color: "#0f172a" }}>{item.title}</p>
-                <p className="text-xs" style={{ color: "#64748b" }}>{item.desc}</p>
+                <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{item.title}</p>
+                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -262,8 +262,8 @@ function ShopsContent() {
                             className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${s.id === activeShopId ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"}`}>
                             <Store className="w-4 h-4 flex-shrink-0" style={{ color: s.id === activeShopId ? "#2563eb" : "#64748b" }} />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{s.shop_name || s.shop_domain}</p>
-                              <p className="text-[11px] truncate" style={{ color: "#94a3b8" }}>{s.shop_domain}</p>
+                              <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{s.shop_name || s.shop_domain}</p>
+                              <p className="text-[11px] truncate" style={{ color: "var(--text-tertiary)" }}>{s.shop_domain}</p>
                             </div>
                             {s.id === activeShopId && <CheckCircle className="w-4 h-4" style={{ color: "#2563eb" }} />}
                           </button>
@@ -279,15 +279,15 @@ function ShopsContent() {
                 <Store className="w-7 h-7" style={{ color: "#2563eb" }} />
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold truncate" style={{ color: "#0f172a" }}>{activeShop?.shop_name || activeShop?.shop_domain}</h2>
-                <p className="text-sm truncate" style={{ color: "#64748b" }}>{activeShop?.shop_domain}</p>
+                <h2 className="text-lg font-bold truncate" style={{ color: "var(--text-primary)" }}>{activeShop?.shop_name || activeShop?.shop_domain}</h2>
+                <p className="text-sm truncate" style={{ color: "var(--text-tertiary)" }}>{activeShop?.shop_domain}</p>
               </div>
             </div>
           </div>
 
           {/* Shops grid */}
           <div>
-            <h3 className="text-base font-bold mb-4" style={{ color: "#0f172a" }}>Toutes vos boutiques ({shops.length})</h3>
+            <h3 className="text-base font-bold mb-4" style={{ color: "var(--text-primary)" }}>Toutes vos boutiques ({shops.length})</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {shops.map((shop) => {
                 const isActive = shop.id === activeShopId;
@@ -317,8 +317,8 @@ function ShopsContent() {
                           <Store className="w-5 h-5" style={{ color: "#2563eb" }} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{shop.shop_name || shop.shop_domain}</p>
-                          <p className="text-xs truncate" style={{ color: "#94a3b8" }}>{shop.shop_domain}</p>
+                          <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{shop.shop_name || shop.shop_domain}</p>
+                          <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{shop.shop_domain}</p>
                         </div>
                       </div>
                       <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ml-2"
@@ -331,7 +331,7 @@ function ShopsContent() {
                       {!isActive ? (
                         <button onClick={() => setActiveShop(shop.id)}
                           className="flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5"
-                          style={{ backgroundColor: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe" }}>
+                          style={{ backgroundColor: "#eff6ff", color: "#2563eb", border: "1px solid rgba(37,99,235,0.30)" }}>
                           <ArrowRight className="w-3.5 h-3.5" /> Basculer
                         </button>
                       ) : (
@@ -342,11 +342,11 @@ function ShopsContent() {
                       )}
                       <button onClick={() => router.push("/dashboard/products")}
                         className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50" title="Produits">
-                        <PackageSearch className="w-4 h-4" style={{ color: "#64748b" }} />
+                        <PackageSearch className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                       </button>
                       <a href={`https://${shop.shop_domain}`} target="_blank" rel="noopener noreferrer"
                         className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50">
-                        <ExternalLink className="w-4 h-4" style={{ color: "#64748b" }} />
+                        <ExternalLink className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                       </a>
                       <button onClick={() => handleDisconnect(shop.id)}
                         className="p-2 rounded-lg border border-gray-200 hover:bg-red-50">
@@ -372,23 +372,23 @@ function ShopsContent() {
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); setNewShopUrl(""); }}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold mb-1" style={{ color: "#0f172a" }}>Ajouter une boutique</h2>
-            <p className="text-sm mb-5" style={{ color: "#64748b" }}>Entrez votre domaine Shopify pour l&apos;ajouter à votre compte.</p>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "var(--text-primary)" }}>Ajouter une boutique</h2>
+            <p className="text-sm mb-5" style={{ color: "var(--text-tertiary)" }}>Entrez votre domaine Shopify pour l&apos;ajouter à votre compte.</p>
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-1.5" style={{ color: "#374151" }}>Domaine Shopify</label>
+                <label className="text-sm font-medium block mb-1.5" style={{ color: "var(--text-secondary)" }}>Domaine Shopify</label>
                 <input
                   type="text"
                   value={newShopUrl}
                   onChange={(e) => { setNewShopUrl(e.target.value); setConnectError(""); }}
                   placeholder="ma-boutique ou ma-boutique.myshopify.com"
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                  style={{ color: "#0f172a" }}
+                  style={{ color: "var(--text-primary)" }}
                   onKeyDown={(e) => e.key === "Enter" && !connectLoading && handleConnect()}
                   autoFocus
                 />
-                <p className="mt-1 text-[11px]" style={{ color: "#94a3b8" }}>
+                <p className="mt-1 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
                   Accepte : ma-boutique, ma-boutique.myshopify.com, ou lien admin.shopify.com
                 </p>
               </div>
@@ -404,7 +404,7 @@ function ShopsContent() {
                 <button
                   onClick={() => { setShowAddModal(false); setConnectError(""); setConnectSuccess(""); setNewShopUrl(""); }}
                   className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50"
-                  style={{ color: "#374151" }}>
+                  style={{ color: "var(--text-secondary)" }}>
                   Annuler
                 </button>
                 <button

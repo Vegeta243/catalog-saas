@@ -495,12 +495,12 @@ export default function ImagesPage() {
       <div className="bg-white border-b border-gray-200 px-4 py-2.5 flex-shrink-0">
         <div className="flex items-center gap-2 flex-wrap">
           <div>
-            <h1 className="text-lg font-bold leading-tight" style={{ color: "#0f172a" }}>Éditeur d&apos;images</h1>
+            <h1 className="text-lg font-bold leading-tight" style={{ color: "var(--text-primary)" }}>Éditeur d&apos;images</h1>
           </div>
 
           {/* Stats */}
           {loadedImages.length > 0 && (
-            <span className="text-xs px-2 py-1 bg-gray-100 rounded-full ml-1" style={{ color: "#64748b" }}>
+            <span className="text-xs px-2 py-1 bg-gray-100 rounded-full ml-1" style={{ color: "var(--text-tertiary)" }}>
               <LayoutGrid className="w-3 h-3 inline mr-1" />{loadedImages.length} image{loadedImages.length !== 1 ? "s" : ""} &middot; <span style={{ color: "#2563eb" }}>{selectedIndices.size} sélectionnée{selectedIndices.size !== 1 ? "s" : ""}</span>
             </span>
           )}
@@ -522,7 +522,7 @@ export default function ImagesPage() {
               onClick={() => setSelectedIndices(new Set())}
               disabled={selectedIndices.size === 0}
               className="px-3 py-1.5 text-xs font-medium border border-gray-200 hover:bg-gray-50 disabled:opacity-40 rounded-lg"
-              style={{ color: "#64748b" }}
+              style={{ color: "var(--text-tertiary)" }}
             >
               Désélectionner
             </button>
@@ -533,7 +533,7 @@ export default function ImagesPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 hover:bg-gray-50 rounded-lg"
-              style={{ color: "#374151" }}
+              style={{ color: "var(--text-secondary)" }}
             >
               <Upload className="w-3.5 h-3.5" /> Importer
             </button>
@@ -553,12 +553,12 @@ export default function ImagesPage() {
         {showShopifyPanel && (
           <div className="mt-2 border border-gray-200 rounded-xl overflow-hidden bg-white">
             <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
-              <span className="text-xs font-medium" style={{ color: "#64748b" }}>
+              <span className="text-xs font-medium" style={{ color: "var(--text-tertiary)" }}>
                 {shopifyLoaded ? `${shopifyProducts.length} produit${shopifyProducts.length !== 1 ? "s" : ""}` : "Chargement..."}
               </span>
               <button onClick={() => { setShopifyLoaded(false); setShopifyProducts([]); }}
                 className="p-1 rounded hover:bg-gray-100" title="Actualiser">
-                <RefreshCw className="w-3.5 h-3.5" style={{ color: "#94a3b8" }} />
+                <RefreshCw className="w-3.5 h-3.5" style={{ color: "var(--text-tertiary)" }} />
               </button>
             </div>
 
@@ -566,12 +566,12 @@ export default function ImagesPage() {
               {loadingShopify ? (
                 <div className="flex flex-col items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin mb-2" style={{ color: "#3b82f6" }} />
-                  <p className="text-xs" style={{ color: "#64748b" }}>Chargement...</p>
+                  <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Chargement...</p>
                 </div>
               ) : shopifyProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
                   <Package className="w-8 h-8 mb-2" style={{ color: "#cbd5e1" }} />
-                  <p className="text-sm font-medium" style={{ color: "#64748b" }}>Aucune boutique connectée</p>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>Aucune boutique connectée</p>
                   <a href="/dashboard/shops" className="text-blue-600 text-xs underline mt-1 hover:text-blue-800">Connecter une boutique →</a>
                 </div>
               ) : (
@@ -585,12 +585,12 @@ export default function ImagesPage() {
                           <img src={product.images[0].src} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-gray-200" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate" style={{ color: "#0f172a" }}>{product.productTitle}</p>
-                          <p className="text-[10px]" style={{ color: "#94a3b8" }}>{product.images.length} image{product.images.length > 1 ? "s" : ""}</p>
+                          <p className="text-xs font-medium truncate" style={{ color: "var(--text-primary)" }}>{product.productTitle}</p>
+                          <p className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>{product.images.length} image{product.images.length > 1 ? "s" : ""}</p>
                         </div>
                         {expandedProduct === product.productId
-                          ? <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#94a3b8" }} />
-                          : <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#94a3b8" }} />}
+                          ? <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--text-tertiary)" }} />
+                          : <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--text-tertiary)" }} />}
                       </button>
                       {expandedProduct === product.productId && (
                         <div className="px-3 pb-3 bg-gray-50/50">
@@ -644,8 +644,8 @@ export default function ImagesPage() {
           {loadedImages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-20 text-center">
               <ImageIcon className="w-16 h-16 mb-4" style={{ color: "#cbd5e1" }} />
-              <p className="text-sm font-medium mb-1" style={{ color: "#64748b" }}>Aucune image chargée</p>
-              <p className="text-xs mb-4" style={{ color: "#94a3b8" }}>Importez des fichiers ou chargez depuis Shopify</p>
+              <p className="text-sm font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Aucune image chargée</p>
+              <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Importez des fichiers ou chargez depuis Shopify</p>
               <div className="flex gap-2">
                 <button onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium"
@@ -654,7 +654,7 @@ export default function ImagesPage() {
                 </button>
                 <button onClick={() => setShowShopifyPanel(true)}
                   className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-white"
-                  style={{ color: "#374151" }}>
+                  style={{ color: "var(--text-secondary)" }}>
                   <Package className="w-4 h-4" /> Depuis Shopify
                 </button>
               </div>
@@ -742,7 +742,7 @@ export default function ImagesPage() {
                             >
                               {isSelected && <span className="text-white text-[8px] font-bold"></span>}
                             </button>
-                            <span className="text-[10px] truncate font-medium" style={{ color: "#374151" }}>
+                            <span className="text-[10px] truncate font-medium" style={{ color: "var(--text-secondary)" }}>
                               {img.productTitle || img.name}
                             </span>
                           </div>
@@ -776,7 +776,7 @@ export default function ImagesPage() {
               <div className="flex items-center gap-1.5 min-w-0">
                 {activeItem && (
                   <>
-                    <span className="text-xs font-medium truncate" style={{ color: "#374151" }}>
+                    <span className="text-xs font-medium truncate" style={{ color: "var(--text-secondary)" }}>
                       {activeItem.productTitle || activeItem.name}
                     </span>
                     {processedImages[activeItem.idx] !== undefined && (
@@ -834,7 +834,7 @@ export default function ImagesPage() {
                    Appliquer
                 </button>
                 <button onClick={() => setPendingPreview(null)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-white" style={{ color: "#374151" }}>
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-white" style={{ color: "var(--text-secondary)" }}>
                   
                 </button>
               </div>
@@ -843,10 +843,10 @@ export default function ImagesPage() {
             {batchProcessing && (
               <div className="px-3 py-2 border-t border-gray-100 bg-blue-50">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-medium" style={{ color: "#1e40af" }}>
+                  <span className="text-[10px] font-medium" style={{ color: "#93c5fd" }}>
                     Lot : {batchDone}/{batchTotal}{batchErrors > 0 ? ` · ${batchErrors} err.` : ""}
                   </span>
-                  <span className="text-[10px] font-bold" style={{ color: "#1e40af" }}>{progress}%</span>
+                  <span className="text-[10px] font-bold" style={{ color: "#93c5fd" }}>{progress}%</span>
                 </div>
                 <div className="w-full bg-blue-200 rounded-full h-1.5">
                   <div className="bg-blue-600 h-1.5 rounded-full transition-all" style={{ width: `${progress}%` }} />
@@ -857,7 +857,7 @@ export default function ImagesPage() {
 
           {/* Filters */}
           <div className="p-3 border-b border-gray-100">
-            <h3 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#0f172a" }}>
+            <h3 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
               <Palette className="w-3.5 h-3.5" style={{ color: "#8b5cf6" }} /> Filtres
             </h3>
             <div className="grid grid-cols-4 gap-1">
@@ -891,7 +891,7 @@ export default function ImagesPage() {
 
           {/* Adjustments */}
           <div className="p-3 border-b border-gray-100">
-            <h3 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#0f172a" }}>
+            <h3 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
               <SunMedium className="w-3.5 h-3.5" style={{ color: "#f59e0b" }} /> Ajustements
             </h3>
             <div className="space-y-2.5">
@@ -903,8 +903,8 @@ export default function ImagesPage() {
               ] as const).map((adj) => (
                 <div key={adj.label}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <label className="text-[10px] font-medium" style={{ color: "#64748b" }}>{adj.label}</label>
-                    <span className="text-[10px] font-mono" style={{ color: "#94a3b8" }}>{adj.val}</span>
+                    <label className="text-[10px] font-medium" style={{ color: "var(--text-tertiary)" }}>{adj.label}</label>
+                    <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>{adj.val}</span>
                   </div>
                   <input type="range" min={adj.min} max={adj.max} value={adj.val}
                     onChange={(e) => handleSliderChange(adj.type, Number(e.target.value))}
@@ -928,13 +928,13 @@ export default function ImagesPage() {
               </button>
               <button onClick={handleReset} disabled={isProcessing || batchProcessing}
                 className="px-2 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50">
-                <RotateCcw className="w-3 h-3" style={{ color: "#64748b" }} />
+                <RotateCcw className="w-3 h-3" style={{ color: "var(--text-tertiary)" }} />
               </button>
             </div>
             <div className="flex flex-col gap-1 mt-1.5">
               <button onClick={() => applyToActive("improve")} disabled={isProcessing || loadedImages.length === 0}
                 className="w-full py-1.5 border border-gray-200 rounded-lg text-[10px] font-medium hover:bg-gray-50 disabled:opacity-40 flex items-center justify-center gap-1"
-                style={{ color: "#374151" }}>
+                style={{ color: "var(--text-secondary)" }}>
                 <Sparkles className="w-3 h-3" style={{ color: "#8b5cf6" }} /> Améliorer qualité (1 image)
               </button>
               <button onClick={() => applyToAll("improve")} disabled={batchProcessing || loadedImages.length === 0}
@@ -944,12 +944,12 @@ export default function ImagesPage() {
               </button>
               <button onClick={() => applyToActive("grayscale")} disabled={isProcessing || loadedImages.length === 0}
                 className="w-full py-1.5 border border-gray-200 rounded-lg text-[10px] font-medium hover:bg-gray-50 disabled:opacity-40 flex items-center justify-center gap-1"
-                style={{ color: "#374151" }}>
+                style={{ color: "var(--text-secondary)" }}>
                 <Contrast className="w-3 h-3" /> N&B (1 image)
               </button>
               <button onClick={handleReset} disabled={isProcessing || loadedImages.length === 0}
                 className="w-full py-1.5 border border-gray-200 rounded-lg text-[10px] font-medium hover:bg-gray-50 disabled:opacity-40 flex items-center justify-center gap-1"
-                style={{ color: "#64748b" }}>
+                style={{ color: "var(--text-tertiary)" }}>
                 <RotateCcw className="w-3 h-3" /> Restaurer original
               </button>
             </div>
@@ -957,11 +957,11 @@ export default function ImagesPage() {
 
           {/* Export */}
           <div className="p-3">
-            <h3 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "#0f172a" }}>
+            <h3 className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
               <Download className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /> Export
             </h3>
 
-            <p className="text-[10px] font-medium mb-1" style={{ color: "#64748b" }}>Format</p>
+            <p className="text-[10px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Format</p>
             <div className="flex gap-1 mb-2">
               {(["webp", "jpeg", "png"] as const).map((fmt) => (
                 <button key={fmt} onClick={() => setSelectedFormat(fmt)}
@@ -972,7 +972,7 @@ export default function ImagesPage() {
 
             <div className="mb-2">
               <div className="flex items-center justify-between mb-0.5">
-                <label className="text-[10px] font-medium" style={{ color: "#64748b" }}>Qualité</label>
+                <label className="text-[10px] font-medium" style={{ color: "var(--text-tertiary)" }}>Qualité</label>
                 <div className="flex gap-0.5">
                   {[60, 80, 100].map((q) => (
                     <button key={q} onClick={() => setQuality(q)}
@@ -985,24 +985,24 @@ export default function ImagesPage() {
                 className="w-full h-1 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600" />
             </div>
 
-            <p className="text-[10px] font-medium mb-1" style={{ color: "#64748b" }}>Redimensionner</p>
+            <p className="text-[10px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Redimensionner</p>
             <div className="grid grid-cols-2 gap-1 mb-1.5">
               {RESIZE_PRESETS.map((preset) => (
                 <button key={preset.label}
                   onClick={() => { setSelectedPreset(selectedPreset === preset.label ? null : preset.label); applyResize(preset.width, preset.height); }}
                   disabled={isProcessing || loadedImages.length === 0}
                   className={`py-1.5 px-1 rounded border text-left disabled:opacity-40 transition-all ${selectedPreset === preset.label ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"}`}>
-                  <p className="text-[10px] font-medium leading-tight" style={{ color: "#0f172a" }}>{preset.label}</p>
-                  <p className="text-[9px]" style={{ color: "#94a3b8" }}>{preset.width}×{preset.height}</p>
+                  <p className="text-[10px] font-medium leading-tight" style={{ color: "var(--text-primary)" }}>{preset.label}</p>
+                  <p className="text-[9px]" style={{ color: "var(--text-tertiary)" }}>{preset.width}×{preset.height}</p>
                 </button>
               ))}
             </div>
             <div className="flex items-center gap-1 mb-3">
               <input type="number" placeholder="L" value={customW} onChange={(e) => setCustomW(e.target.value)}
-                className="flex-1 px-1.5 py-1 border border-gray-200 rounded text-[10px] text-center outline-none focus:border-blue-400" style={{ color: "#0f172a" }} />
-              <span className="text-[10px]" style={{ color: "#94a3b8" }}>×</span>
+                className="flex-1 px-1.5 py-1 border border-gray-200 rounded text-[10px] text-center outline-none focus:border-blue-400" style={{ color: "var(--text-primary)" }} />
+              <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>×</span>
               <input type="number" placeholder="H" value={customH} onChange={(e) => setCustomH(e.target.value)}
-                className="flex-1 px-1.5 py-1 border border-gray-200 rounded text-[10px] text-center outline-none focus:border-blue-400" style={{ color: "#0f172a" }} />
+                className="flex-1 px-1.5 py-1 border border-gray-200 rounded text-[10px] text-center outline-none focus:border-blue-400" style={{ color: "var(--text-primary)" }} />
               <button
                 onClick={() => { const w = parseInt(customW); const h = parseInt(customH); if (w > 0 && h > 0) applyResize(w, h); }}
                 disabled={!customW || !customH || isProcessing}
@@ -1019,7 +1019,7 @@ export default function ImagesPage() {
 
               <button onClick={downloadImages} disabled={batchProcessing || loadedImages.length === 0}
                 className="w-full py-2 bg-white border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 disabled:opacity-40 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5"
-                style={{ color: "#374151" }}>
+                style={{ color: "var(--text-secondary)" }}>
                 <Download className="w-3.5 h-3.5" /> Télécharger ZIP ({loadedImages.length})
               </button>
             </div>

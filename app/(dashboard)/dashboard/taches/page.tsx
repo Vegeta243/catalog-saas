@@ -36,7 +36,7 @@ function getTypeInfo(actionType: string) {
   if (actionType.startsWith("ai.")) return TYPE_CONFIG["ai.generate"];
   if (actionType.startsWith("image.")) return TYPE_CONFIG["image.optimize"];
   if (actionType.startsWith("shopify.")) return TYPE_CONFIG["shopify.bulk_update"];
-  return { icon: Clock, label: actionType, color: "#6b7280" };
+  return { icon: Clock, label: actionType, color: "var(--text-tertiary)" };
 }
 
 type Tab = "all" | "ai" | "image" | "shopify" | "other";

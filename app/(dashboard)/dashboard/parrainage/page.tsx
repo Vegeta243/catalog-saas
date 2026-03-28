@@ -100,11 +100,11 @@ export default function ParrainagePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "#0f172a" }}>
+        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
           <Gift className="w-6 h-6 text-pink-500" />
           Programme de parrainage
         </h1>
-        <p className="text-sm mt-1" style={{ color: "#64748b" }}>
+        <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>
           Parrainez des amis et obtenez <strong>-20% sur votre facture mensuelle</strong> par filleul converti — cumulable jusqu&apos;à 3 parrainages (<strong>-60% max</strong>).
         </p>
       </div>
@@ -118,8 +118,8 @@ export default function ParrainagePage() {
         ].map(({ step, icon, title, desc }) => (
           <div key={step} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <div className="text-2xl mb-2">{icon}</div>
-            <p className="text-xs font-semibold mb-1" style={{ color: "#0f172a" }}>{title}</p>
-            <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{desc}</p>
+            <p className="text-xs font-semibold mb-1" style={{ color: "var(--text-primary)" }}>{title}</p>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{desc}</p>
           </div>
         ))}
       </div>
@@ -133,16 +133,16 @@ export default function ParrainagePage() {
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold" style={{ color }}>{value}</p>
-            <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{label}</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{label}</p>
           </div>
         ))}
       </div>
 
       {/* Referral link */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Votre lien de parrainage</h2>
+        <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Votre lien de parrainage</h2>
         <div className="flex items-center gap-2">
-          <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm font-mono truncate border border-gray-200" style={{ color: "#374151" }}>
+          <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm font-mono truncate border border-gray-200" style={{ color: "var(--text-secondary)" }}>
             {stats?.referralUrl || "Chargement…"}
           </div>
           <button onClick={copyLink}
@@ -166,7 +166,7 @@ export default function ParrainagePage() {
 
       {/* Invite by email */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold mb-3" style={{ color: "#0f172a" }}>Inviter directement par email</h2>
+        <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Inviter directement par email</h2>
         <div className="flex gap-2">
           <input
             type="email" value={inviteEmail}
@@ -174,7 +174,7 @@ export default function ParrainagePage() {
             onKeyDown={e => e.key === "Enter" && sendInvite()}
             placeholder="ami@exemple.com"
             className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            style={{ color: "#0f172a" }}
+            style={{ color: "var(--text-primary)" }}
           />
           <button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}
             className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl text-sm font-medium text-white transition-colors">
@@ -186,15 +186,15 @@ export default function ParrainagePage() {
       {/* Referral list */}
       {stats?.referrals && stats.referrals.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "#0f172a" }}>
+          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
             <Users className="w-4 h-4" /> Mes filleuls
           </h2>
           <div className="space-y-2">
             {stats.referrals.map((r, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div>
-                  <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{r.email}</p>
-                  <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "#94a3b8" }}>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{r.email}</p>
+                  <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                     <Calendar className="w-3 h-3" />
                     {new Date(r.created_at).toLocaleDateString("fr-FR")}
                   </p>

@@ -50,8 +50,8 @@ export default function ConnectShopify() {
         <div className="inline-flex w-16 h-16 rounded-2xl items-center justify-center mb-4 bg-gradient-to-br from-green-400 to-emerald-600">
           <Store className="w-8 h-8" style={{ color: "#fff" }} />
         </div>
-        <h1 className="text-2xl font-bold mb-2" style={{ color: "#0f172a" }}>Connecter votre boutique Shopify</h1>
-        <p className="text-sm" style={{ color: "#64748b" }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>Connecter votre boutique Shopify</h1>
+        <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
           Autorisez EcomPilot à accéder à votre boutique via Shopify OAuth pour synchroniser vos produits.
         </p>
       </div>
@@ -59,22 +59,22 @@ export default function ConnectShopify() {
       {/* Main card */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
         <div className="mb-6">
-          <label className="text-sm font-semibold mb-2 block" style={{ color: "#374151" }}>
+          <label className="text-sm font-semibold mb-2 block" style={{ color: "var(--text-secondary)" }}>
             URL de votre boutique Shopify
           </label>
           <div className="relative">
-            <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+            <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
             <input
               type="text"
               placeholder="ma-boutique.myshopify.com"
               value={shopDomain}
               onChange={(e) => { setShopDomain(e.target.value); setError(""); }}
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors"
-              style={{ color: "#0f172a" }}
+              style={{ color: "var(--text-primary)" }}
               onKeyDown={(e) => e.key === "Enter" && handleConnect()}
             />
           </div>
-          <p className="text-xs mt-2" style={{ color: "#94a3b8" }}>
+          <p className="text-xs mt-2" style={{ color: "var(--text-tertiary)" }}>
             Entrez uniquement le sous-domaine, ex: <strong>ma-boutique</strong> ou <strong>ma-boutique.myshopify.com</strong>
           </p>
           {error && (
@@ -97,8 +97,8 @@ export default function ConnectShopify() {
         </button>
 
         <div className="mt-4 flex items-center justify-center gap-2">
-          <Lock className="w-3.5 h-3.5" style={{ color: "#94a3b8" }} />
-          <p className="text-xs" style={{ color: "#94a3b8" }}>Connexion sécurisée via OAuth 2.0 officiel Shopify</p>
+          <Lock className="w-3.5 h-3.5" style={{ color: "var(--text-tertiary)" }} />
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Connexion sécurisée via OAuth 2.0 officiel Shopify</p>
         </div>
       </div>
 
@@ -117,8 +117,8 @@ export default function ConnectShopify() {
                 <Icon className="w-4 h-4" style={{ color: "#059669" }} />
               </div>
               <div>
-                <p className="text-sm font-semibold" style={{ color: "#0f172a" }}>{f.title}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{f.desc}</p>
+                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{f.title}</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>{f.desc}</p>
               </div>
             </div>
           );
@@ -130,7 +130,7 @@ export default function ConnectShopify() {
         <div className="flex items-start gap-3">
           <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#2563eb" }} />
           <div>
-            <p className="text-sm font-semibold mb-1" style={{ color: "#1e40af" }}>Comment ça marche ?</p>
+            <p className="text-sm font-semibold mb-1" style={{ color: "#93c5fd" }}>Comment ça marche ?</p>
             <ol className="text-xs space-y-1" style={{ color: "#3b82f6" }}>
               <li>1. Entrez le nom de votre boutique ci-dessus</li>
               <li>2. Vous serez redirigé vers Shopify pour autoriser l&apos;accès</li>

@@ -189,8 +189,8 @@ export default function HelpPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Centre d&apos;aide</h1>
-        <p className="text-sm mt-1" style={{ color: "#64748b" }}>FAQ, support et suivi de vos demandes</p>
+        <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Centre d&apos;aide</h1>
+        <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>FAQ, support et suivi de vos demandes</p>
       </div>
 
       <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 w-fit">
@@ -209,11 +209,11 @@ export default function HelpPage() {
       {mainTab === "faq" && (
         <div>
           <div className="relative mb-5">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher dans l'aide..."
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-400 outline-none bg-white"
-              style={{ color: "#0f172a" }} />
+              style={{ color: "var(--text-primary)" }} />
           </div>
           <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
             {CATEGORIES.map((cat) => (
@@ -242,7 +242,7 @@ export default function HelpPage() {
                     <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                       <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
                     </div>
-                    <span className="text-sm font-medium" style={{ color: "#0f172a" }}>{item.question}</span>
+                    <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{item.question}</span>
                   </div>
                   {expandedFAQ === item.id
                     ? <ChevronUp className="w-4 h-4 shrink-0 text-gray-400" />

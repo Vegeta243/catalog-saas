@@ -31,8 +31,8 @@ export default function ConnectShopifyPage() {
         <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center bg-gradient-to-br from-green-500 to-emerald-600">
           <ShoppingBag className="w-8 h-8" style={{ color: "#fff" }} />
         </div>
-        <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#0f172a" }}>Connecter votre boutique Shopify</h1>
-        <p className="text-base" style={{ color: "#64748b" }}>
+        <h1 className="text-2xl font-extrabold mb-2" style={{ color: "var(--text-primary)" }}>Connecter votre boutique Shopify</h1>
+        <p className="text-base" style={{ color: "var(--text-tertiary)" }}>
           Autorisez EcomPilot à accéder à votre catalogue pour l&apos;optimiser avec l&apos;IA.
         </p>
       </div>
@@ -41,25 +41,25 @@ export default function ConnectShopifyPage() {
       <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
         <form onSubmit={handleConnect} className="space-y-5">
           <div>
-            <label className="text-sm font-semibold block mb-1.5" style={{ color: "#374151" }}>
+            <label className="text-sm font-semibold block mb-1.5" style={{ color: "var(--text-secondary)" }}>
               Domaine de votre boutique
             </label>
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
-                <ShoppingBag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+                <ShoppingBag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
                 <input
                   type="text"
                   value={shop}
                   onChange={(e) => { setShop(e.target.value); setError(""); }}
                   placeholder="ma-boutique.myshopify.com"
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
-                  style={{ color: "#0f172a" }}
+                  style={{ color: "var(--text-primary)" }}
                   autoFocus
                 />
               </div>
             </div>
             {error && <p className="mt-1.5 text-xs" style={{ color: "#dc2626" }}>{error}</p>}
-            <p className="mt-1.5 text-xs" style={{ color: "#94a3b8" }}>
+            <p className="mt-1.5 text-xs" style={{ color: "var(--text-tertiary)" }}>
               Exemple : ma-boutique.myshopify.com ou simplement ma-boutique
             </p>
           </div>
@@ -92,8 +92,8 @@ export default function ConnectShopifyPage() {
               <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: `${item.color}15` }}>
                 <Icon className="w-4 h-4" style={{ color: item.color }} />
               </div>
-              <p className="text-sm font-semibold mb-1" style={{ color: "#0f172a" }}>{item.title}</p>
-              <p className="text-xs leading-relaxed" style={{ color: "#64748b" }}>{item.desc}</p>
+              <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>{item.title}</p>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>{item.desc}</p>
             </div>
           );
         })}
@@ -104,7 +104,7 @@ export default function ConnectShopifyPage() {
         <div className="flex items-start gap-3">
           <HelpCircle className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "#2563eb" }} />
           <div>
-            <p className="text-sm font-semibold mb-1" style={{ color: "#1e40af" }}>Comment trouver mon domaine Shopify ?</p>
+            <p className="text-sm font-semibold mb-1" style={{ color: "#93c5fd" }}>Comment trouver mon domaine Shopify ?</p>
             <p className="text-xs leading-relaxed" style={{ color: "#3b82f6" }}>
               Connectez-vous à votre admin Shopify. Dans l&apos;URL de votre navigateur, vous verrez{" "}
               <code className="font-mono bg-blue-100 px-1 py-0.5 rounded">https://admin.shopify.com/store/<strong>votre-boutique</strong></code>.

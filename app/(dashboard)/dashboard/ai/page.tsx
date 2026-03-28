@@ -347,23 +347,23 @@ export default function AIPage() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 p-6 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>Comparaison Avant / Après</h3>
-                <p className="text-sm mt-0.5" style={{ color: "#64748b" }}>{previewProduct.title}</p>
+                <h3 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Comparaison Avant / Après</h3>
+                <p className="text-sm mt-0.5" style={{ color: "var(--text-tertiary)" }}>{previewProduct.title}</p>
               </div>
-              <button onClick={() => setPreviewId(null)}><X className="w-5 h-5" style={{ color: "#94a3b8" }} /></button>
+              <button onClick={() => setPreviewId(null)}><X className="w-5 h-5" style={{ color: "var(--text-tertiary)" }} /></button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Before */}
               <div className="p-4 bg-red-50/50 rounded-xl border border-red-100">
                 <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#dc2626" }}>Avant</p>
                 <div className="space-y-3">
-                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre</p><p className="text-sm" style={{ color: "#0f172a" }}>{previewProduct.title}</p></div>
-                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description</p>
-                    {previewProduct.body_html ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} />
-                      : <p className="text-sm italic" style={{ color: "#94a3b8" }}>Aucune description</p>}
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Titre</p><p className="text-sm" style={{ color: "var(--text-primary)" }}>{previewProduct.title}</p></div>
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Description</p>
+                    {previewProduct.body_html ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} />
+                      : <p className="text-sm italic" style={{ color: "var(--text-tertiary)" }}>Aucune description</p>}
                   </div>
-                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Tags</p><p className="text-xs" style={{ color: "#374151" }}>{previewProduct.tags || "Aucun"}</p></div>
-                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Meta Description</p><p className="text-xs italic" style={{ color: "#94a3b8" }}>Non définie</p></div>
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Tags</p><p className="text-xs" style={{ color: "var(--text-secondary)" }}>{previewProduct.tags || "Aucun"}</p></div>
+                  <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Meta Description</p><p className="text-xs italic" style={{ color: "var(--text-tertiary)" }}>Non définie</p></div>
                   <ScoreBadge score={seoScore(previewProduct)} size="lg" />
                 </div>
               </div>
@@ -372,32 +372,32 @@ export default function AIPage() {
                 <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#059669" }}>Après (IA)</p>
                 {previewContent ? (
                   <div className="space-y-3">
-                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Titre</p><p className="text-sm font-medium" style={{ color: "#0f172a" }}>{previewContent.title || previewProduct.title}</p></div>
-                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Description</p>
-                      {previewContent.description ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: previewContent.description }} />
-                        : <p className="text-sm italic" style={{ color: "#94a3b8" }}>Non générée</p>}
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Titre</p><p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{previewContent.title || previewProduct.title}</p></div>
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Description</p>
+                      {previewContent.description ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: previewContent.description }} />
+                        : <p className="text-sm italic" style={{ color: "var(--text-tertiary)" }}>Non générée</p>}
                     </div>
-                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Mots-clés</p><p className="text-xs" style={{ color: "#374151" }}>{previewContent.keywords || "—"}</p></div>
-                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "#64748b" }}>Meta Description</p>
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Mots-clés</p><p className="text-xs" style={{ color: "var(--text-secondary)" }}>{previewContent.keywords || "—"}</p></div>
+                    <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Meta Description</p>
                       {previewContent.meta_description ? (
                         <div>
-                          <p className="text-xs" style={{ color: "#374151" }}>{previewContent.meta_description}</p>
-                          <p className="text-[10px] mt-1" style={{ color: "#94a3b8" }}>{previewContent.meta_description.length}/160 caractères</p>
+                          <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{previewContent.meta_description}</p>
+                          <p className="text-[10px] mt-1" style={{ color: "var(--text-tertiary)" }}>{previewContent.meta_description.length}/160 caractères</p>
                         </div>
-                      ) : <p className="text-xs italic" style={{ color: "#94a3b8" }}>Non générée</p>}
+                      ) : <p className="text-xs italic" style={{ color: "var(--text-tertiary)" }}>Non générée</p>}
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Sparkles className="w-8 h-8 mb-2" style={{ color: "#d1d5db" }} />
-                    <p className="text-sm" style={{ color: "#64748b" }}>Générez le contenu IA d&apos;abord</p>
+                    <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Générez le contenu IA d&apos;abord</p>
                   </div>
                 )}
               </div>
             </div>
             {previewContent && (
               <div className="mt-4 flex justify-end gap-3">
-                <button onClick={() => { setPreviewId(null); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "#374151" }}>Fermer</button>
+                <button onClick={() => { setPreviewId(null); }} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium" style={{ color: "var(--text-secondary)" }}>Fermer</button>
                 <button onClick={() => { applyGenerated(previewProduct.id); setPreviewId(null); }} disabled={generating === previewProduct.id}
                   className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-sm font-medium">
                   <ArrowRight className="w-4 h-4" style={{ color: "#fff" }} /><span style={{ color: "#fff" }}>Appliquer sur Shopify</span>
@@ -411,8 +411,8 @@ export default function AIPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "#0f172a" }}>Optimisation IA</h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>Analysez et optimisez le SEO de votre catalogue avec l&apos;intelligence artificielle</p>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Optimisation IA</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>Analysez et optimisez le SEO de votre catalogue avec l&apos;intelligence artificielle</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {Object.keys(generatedContent).length > 0 && (
@@ -500,8 +500,8 @@ export default function AIPage() {
                 <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: "#0f172a" }}>{stat.value}</p>
-                <p className="text-xs" style={{ color: "#64748b" }}>{stat.label}</p>
+                <p className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{stat.value}</p>
+                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{stat.label}</p>
               </div>
             </div>
           </div>
@@ -511,9 +511,9 @@ export default function AIPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[160px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
           <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20" style={{ color: "#0f172a" }} />
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20" style={{ color: "var(--text-primary)" }} />
         </div>
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           {[{ key: "all", label: "Tous" }, { key: "low", label: "Faible" }, { key: "medium", label: "Moyen" }, { key: "high", label: "Excellent" }].map((f) => (
@@ -523,7 +523,7 @@ export default function AIPage() {
           ))}
         </div>
         <button onClick={() => setSelected(selected.length === filteredProducts.length ? [] : filteredProducts.map((p) => p.id))}
-          className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50" style={{ color: "#374151" }}>
+          className="px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50" style={{ color: "var(--text-secondary)" }}>
           {selected.length === filteredProducts.length && filteredProducts.length > 0 ? "Désélectionner tout" : "Tout sélectionner"}
         </button>
       </div>
@@ -532,13 +532,13 @@ export default function AIPage() {
       {loading ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center">
           <RefreshCw className="w-8 h-8 animate-spin mb-3" style={{ color: "#8b5cf6" }} />
-          <p className="text-sm" style={{ color: "#64748b" }}>Chargement des produits...</p>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Chargement des produits...</p>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <Sparkles className="w-12 h-12 mx-auto mb-4" style={{ color: "#cbd5e1" }} />
-          <h3 className="text-lg font-semibold mb-2" style={{ color: "#0f172a" }}>Aucun produit</h3>
-          <p className="text-sm" style={{ color: "#64748b" }}>Connectez votre boutique et importez des produits</p>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text-primary)" }}>Aucun produit</h3>
+          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Connectez votre boutique et importez des produits</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -560,8 +560,8 @@ export default function AIPage() {
                     {asImageUrls(product.images)[0] ? <img src={asImageUrls(product.images)[0]} alt="" className="w-full h-full object-cover" /> : null}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: "#0f172a" }}>{product.title}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{product.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                       {parseFloat(product.price).toFixed(2)} € · {product.tags?.split(",").length || 0} tags · {product.body_html ? `${product.body_html.length} car.` : "Pas de description"}
                     </p>
                   </div>
@@ -580,7 +580,7 @@ export default function AIPage() {
                       title="Génère et applique directement sans prévisualisation"
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 rounded-lg text-xs font-semibold disabled:opacity-50">
                       {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#059669" }} /> : <Zap className="w-3.5 h-3.5" style={{ color: "#059669" }} />}
-                      <span className="hidden sm:inline" style={{ color: "#065f46" }}>Appliquer direct</span>
+                      <span className="hidden sm:inline" style={{ color: "#6ee7b7" }}>Appliquer direct</span>
                     </button>
                     {gen && (
                       <button onClick={() => applyGenerated(product.id)} disabled={generating === product.id}
@@ -590,11 +590,11 @@ export default function AIPage() {
                     )}
                     {gen && (
                       <button onClick={() => setPreviewId(product.id)} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-medium">
-                        <Eye className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /><span style={{ color: "#1e40af" }}>Avant/Après</span>
+                        <Eye className="w-3.5 h-3.5" style={{ color: "#2563eb" }} /><span style={{ color: "#93c5fd" }}>Avant/Après</span>
                       </button>
                     )}
                     <button onClick={() => setExpandedId(isExpanded ? null : product.id)} className="p-1.5 hover:bg-gray-100 rounded-lg">
-                      {isExpanded ? <ChevronUp className="w-4 h-4" style={{ color: "#94a3b8" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#94a3b8" }} />}
+                      {isExpanded ? <ChevronUp className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "var(--text-tertiary)" }} />}
                     </button>
                   </div>
                 </div>
@@ -610,7 +610,7 @@ export default function AIPage() {
                               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Titre SEO</p>
                               <button onClick={() => applyGenerated(product.id, ["title"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
                             </div>
-                            <p className="text-sm" style={{ color: "#0f172a" }}>{gen.title}</p>
+                            <p className="text-sm" style={{ color: "var(--text-primary)" }}>{gen.title}</p>
                           </div>
                         )}
                         {(gen.keywords || gen.tags) && (
@@ -619,7 +619,7 @@ export default function AIPage() {
                               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Mots-clés / Tags</p>
                               <button onClick={() => applyGenerated(product.id, ["tags"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
                             </div>
-                            <p className="text-xs" style={{ color: "#374151" }}>{gen.keywords || gen.tags}</p>
+                            <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{gen.keywords || gen.tags}</p>
                           </div>
                         )}
                         {gen.description && (
@@ -628,7 +628,7 @@ export default function AIPage() {
                               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Description complète</p>
                               <button onClick={() => applyGenerated(product.id, ["description"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
                             </div>
-                            <div className="text-xs leading-relaxed" style={{ color: "#374151" }} dangerouslySetInnerHTML={{ __html: gen.description }} />
+                            <div className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: gen.description }} />
                           </div>
                         )}
                         {gen.meta_description && (
@@ -637,8 +637,8 @@ export default function AIPage() {
                               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Meta Description</p>
                               <button onClick={() => applyGenerated(product.id, ["meta_description"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
                             </div>
-                            <p className="text-xs leading-relaxed" style={{ color: "#374151" }}>{gen.meta_description}</p>
-                            <p className="text-[10px] mt-1" style={{ color: "#94a3b8" }}>{gen.meta_description.length}/160 caractères</p>
+                            <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>{gen.meta_description}</p>
+                            <p className="text-[10px] mt-1" style={{ color: "var(--text-tertiary)" }}>{gen.meta_description.length}/160 caractères</p>
                           </div>
                         )}
                       </div>

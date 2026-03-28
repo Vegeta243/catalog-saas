@@ -299,10 +299,10 @@ export default function RentabilitePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#0f172a" }}>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
             Calculateur de rentabilité
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#64748b" }}>
+          <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>
             Marge réelle par produit après TOUS les coûts —{" "}
             <Link href="/dashboard/settings?tab=rentabilite" className="text-blue-600 underline hover:text-blue-700">
               Configurer vos coûts
@@ -310,7 +310,7 @@ export default function RentabilitePage() {
           </p>
         </div>
         {loadingSettings && (
-          <div className="flex items-center gap-2 text-sm" style={{ color: "#64748b" }}>
+          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-tertiary)" }}>
             <RefreshCw className="w-4 h-4 animate-spin" /> Chargement paramètres…
           </div>
         )}
@@ -320,27 +320,27 @@ export default function RentabilitePage() {
         {/* LEFT — Product list */}
         <div className="lg:col-span-2 space-y-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#94a3b8" }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
             <input
               type="text"
               placeholder="Rechercher un produit…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-              style={{ color: "#0f172a" }}
+              style={{ color: "var(--text-primary)" }}
             />
           </div>
 
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             {loadingProducts ? (
               <div className="p-8 text-center">
-                <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" style={{ color: "#94a3b8" }} />
-                <p className="text-sm" style={{ color: "#94a3b8" }}>Chargement des produits…</p>
+                <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" style={{ color: "var(--text-tertiary)" }} />
+                <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Chargement des produits…</p>
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="p-8 text-center">
                 <Package className="w-8 h-8 mx-auto mb-2" style={{ color: "#cbd5e1" }} />
-                <p className="text-sm" style={{ color: "#94a3b8" }}>Aucun produit trouvé</p>
+                <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Aucun produit trouvé</p>
                 <p className="text-xs mt-1" style={{ color: "#cbd5e1" }}>
                   <Link href="/dashboard/shops" className="text-blue-600 hover:underline">Connecter votre boutique Shopify</Link>
                 </p>
@@ -388,8 +388,8 @@ export default function RentabilitePage() {
           {!selectedProduct ? (
             <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
               <Calculator className="w-12 h-12 mx-auto mb-3" style={{ color: "#cbd5e1" }} />
-              <p className="text-base font-semibold" style={{ color: "#64748b" }}>Sélectionnez un produit</p>
-              <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>
+              <p className="text-base font-semibold" style={{ color: "var(--text-tertiary)" }}>Sélectionnez un produit</p>
+              <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>
                 Cliquez sur un produit à gauche pour voir sa rentabilité détaillée
               </p>
             </div>
@@ -406,7 +406,7 @@ export default function RentabilitePage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-base font-bold truncate" style={{ color: "#0f172a" }}>{selectedProduct.title}</h2>
+                    <h2 className="text-base font-bold truncate" style={{ color: "var(--text-primary)" }}>{selectedProduct.title}</h2>
                     <p className="text-sm font-bold mt-0.5" style={{ color: "#059669" }}>
                       Prix de vente : {sellingPrice.toFixed(2)} €
                     </p>
@@ -415,7 +415,7 @@ export default function RentabilitePage() {
 
                 <div className="flex items-end gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "#374151" }}>
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>
                       Prix d&apos;achat / Coût produit (€)
                     </label>
                     <input
@@ -426,7 +426,7 @@ export default function RentabilitePage() {
                       min="0"
                       step="0.01"
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
-                      style={{ color: "#0f172a" }}
+                      style={{ color: "var(--text-primary)" }}
                     />
                   </div>
                   <button
@@ -455,7 +455,7 @@ export default function RentabilitePage() {
               {sellingPrice > 0 && (
                 <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                   <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="text-sm font-bold" style={{ color: "#0f172a" }}>Décomposition des coûts</h3>
+                    <h3 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Décomposition des coûts</h3>
                   </div>
                   <div className="p-5 space-y-1.5">
                     {breakdown.map((line, i) => {
@@ -505,7 +505,7 @@ export default function RentabilitePage() {
                             {!isInfo && (
                               <span
                                 className="text-xs tabular-nums w-16 text-right font-medium"
-                                style={{ color: "#94a3b8" }}
+                                style={{ color: "var(--text-tertiary)" }}
                               >
                                 {line.pct > 0 ? "+" : ""}
                                 {line.pct.toFixed(1)}%
@@ -536,17 +536,17 @@ export default function RentabilitePage() {
 
                   {/* Break-even */}
                   <div className="rounded-2xl p-4 bg-slate-50 border border-slate-200">
-                    <p className="text-xs font-semibold mb-1" style={{ color: "#475569" }}>Seuil de rentabilité</p>
-                    <p className="text-2xl font-black tabular-nums" style={{ color: "#0f172a" }}>
+                    <p className="text-xs font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>Seuil de rentabilité</p>
+                    <p className="text-2xl font-black tabular-nums" style={{ color: "var(--text-primary)" }}>
                       {breakEvenPrice.toFixed(2)} €
                     </p>
-                    <p className="text-xs mt-1" style={{ color: "#64748b" }}>Prix minimum pour être à l&apos;équilibre</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Prix minimum pour être à l&apos;équilibre</p>
                   </div>
 
                   {/* Recommended price for 15% margin */}
                   <div className="rounded-2xl p-4 bg-blue-50 border border-blue-200">
                     <p className="text-xs font-semibold mb-1" style={{ color: "#2563eb" }}>Prix min. pour 15%</p>
-                    <p className="text-2xl font-black tabular-nums" style={{ color: "#1d4ed8" }}>
+                    <p className="text-2xl font-black tabular-nums" style={{ color: "#93c5fd" }}>
                       {targetMargin15Price > 0 ? targetMargin15Price.toFixed(2) : "—"} €
                     </p>
                     <p className="text-xs mt-1" style={{ color: "#3b82f6" }}>
@@ -567,11 +567,11 @@ export default function RentabilitePage() {
               {/* Simulation */}
               {sellingPrice > 0 && netProfit !== 0 && (
                 <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                  <h3 className="text-sm font-bold mb-3" style={{ color: "#0f172a" }}>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>
                      Simulation mensuelle
                   </h3>
                   <div className="flex items-center gap-3 mb-4">
-                    <label className="text-sm font-medium" style={{ color: "#374151" }}>
+                    <label className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                       Si je vends
                     </label>
                     <input
@@ -581,9 +581,9 @@ export default function RentabilitePage() {
                       min="1"
                       max="10000"
                       className="w-28 px-3 py-2 border border-gray-200 rounded-lg text-sm text-center font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                      style={{ color: "#0f172a" }}
+                      style={{ color: "var(--text-primary)" }}
                     />
-                    <label className="text-sm font-medium" style={{ color: "#374151" }}>
+                    <label className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                       unités/mois de ce produit :
                     </label>
                   </div>

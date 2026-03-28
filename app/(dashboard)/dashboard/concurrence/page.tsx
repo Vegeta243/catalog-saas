@@ -351,8 +351,8 @@ export default function ConcurrencePage() {
     {!featureLoading && !featureEnabled && (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
         <Lock className="w-12 h-12 mb-4" style={{ color: "#cbd5e1" }} />
-        <h2 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>Fonctionnalité non disponible</h2>
-        <p className="text-sm mb-4" style={{ color: "#64748b" }}>L&apos;analyse concurrentielle n&apos;est pas incluse dans votre plan actuel.</p>
+        <h2 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>Fonctionnalité non disponible</h2>
+        <p className="text-sm mb-4" style={{ color: "var(--text-tertiary)" }}>L&apos;analyse concurrentielle n&apos;est pas incluse dans votre plan actuel.</p>
         <a href="/dashboard/billing" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium" style={{ color: "#fff" }}>
           Voir les plans
         </a>
@@ -375,7 +375,7 @@ export default function ConcurrencePage() {
       `}>
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="font-semibold flex items-center gap-2 text-sm" style={{ color: '#0f172a' }}>
+            <h2 className="font-semibold flex items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
               <Eye className="w-4 h-4 text-blue-500" /> Concurrents
             </h2>
             <button
@@ -384,19 +384,19 @@ export default function ConcurrencePage() {
               <Plus className="w-3 h-3" /> Ajouter
             </button>
           </div>
-          <p className="text-xs" style={{ color: '#94a3b8' }}>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
             {competitors.length} concurrent{competitors.length !== 1 ? 's' : ''} suivis
           </p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12 text-sm" style={{ color: '#94a3b8' }}>Chargement...</div>
+            <div className="flex items-center justify-center py-12 text-sm" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
           ) : competitors.length === 0 ? (
             <div className="text-center py-12 px-4">
               <Eye className="w-8 h-8 mx-auto mb-3" style={{ color: '#d1d5db' }} />
-              <p className="text-sm mb-1" style={{ color: '#64748b' }}>Aucun concurrent</p>
-              <p className="text-xs" style={{ color: '#94a3b8' }}>
+              <p className="text-sm mb-1" style={{ color: "var(--text-tertiary)" }}>Aucun concurrent</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
                 Ajoutez l&apos;URL d&apos;une boutique concurrente pour commencer le suivi
               </p>
             </div>
@@ -411,8 +411,8 @@ export default function ConcurrencePage() {
               }`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{c.name}</p>
-                  <p className="text-xs truncate" style={{ color: '#94a3b8' }}>
+                  <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{c.name}</p>
+                  <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>
                     {c.url.replace(/^https?:\/\//, '')}
                   </p>
                 </div>
@@ -428,7 +428,7 @@ export default function ConcurrencePage() {
                   <span className="text-xs flex items-center gap-1" style={{ color: '#059669' }}>
                     <CheckCircle className="w-3 h-3" /> Analysé
                   </span>
-                  <span className="text-xs" style={{ color: '#94a3b8' }}>
+                  <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
                     {new Date(c.last_analyzed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                   </span>
                 </div>
@@ -444,7 +444,7 @@ export default function ConcurrencePage() {
                 onClick={e => { e.stopPropagation(); handleAnalyze(c) }}
                 disabled={analyzingId === c.id}
                 className="mt-2 w-full border border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-xs py-1.5 rounded-lg font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 bg-white"
-                style={{ color: '#374151' }}>
+                style={{ color: "var(--text-secondary)" }}>
                 <RefreshCw className={`w-3 h-3 ${analyzingId === c.id ? 'animate-spin' : ''}`} />
                 {analyzingId === c.id ? 'Analyse...' : 'Analyser'} · 5 tâches
               </button>
@@ -468,7 +468,7 @@ export default function ConcurrencePage() {
           {selected && (
             <button onClick={() => handleAnalyze(selected)} disabled={analyzingId === selected.id}
               className="ml-auto border border-gray-200 bg-white rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1 disabled:opacity-50"
-              style={{ color: '#374151' }}>
+              style={{ color: "var(--text-secondary)" }}>
               <RefreshCw className={`w-3 h-3 ${analyzingId === selected.id ? 'animate-spin' : ''}`} />
               Analyser
             </button>
@@ -479,8 +479,8 @@ export default function ConcurrencePage() {
           /* Empty state */
           <div className="flex flex-col items-center justify-center flex-1 text-center px-8 py-16">
             <Eye className="w-16 h-16 mb-4" style={{ color: '#d1d5db' }} />
-            <h3 className="text-xl font-semibold mb-2" style={{ color: '#374151' }}>Analyse concurrentielle</h3>
-            <p className="max-w-md text-sm" style={{ color: '#94a3b8' }}>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Analyse concurrentielle</h3>
+            <p className="max-w-md text-sm" style={{ color: "var(--text-tertiary)" }}>
               Sélectionnez un concurrent dans la liste pour voir les résultats.
             </p>
             {competitors.length === 0 && (
@@ -501,13 +501,13 @@ export default function ConcurrencePage() {
             {/* Desktop header */}
             <div className="hidden md:flex items-center justify-between p-5 bg-white border-b border-gray-200">
               <div>
-                <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: '#0f172a' }}>
+                <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
                   {selected.name}
                   <a href={selected.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-600">
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </h2>
-                <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                   {selected.last_analyzed_at ? `Dernière analyse : ${new Date(selected.last_analyzed_at).toLocaleString('fr-FR')}` : 'Pas encore analysé'}
                 </p>
               </div>
@@ -534,10 +534,10 @@ export default function ConcurrencePage() {
             {!selected.snapshot && activeTab !== 'alerts' && (
               <div className="flex flex-col items-center justify-center flex-1 text-center px-8 py-16">
                 <RefreshCw className="w-12 h-12 mb-4" style={{ color: '#93c5fd' }} />
-                <h3 className="text-lg font-semibold mb-2" style={{ color: '#374151' }}>
+                <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>
                   {selected.name} n&apos;a pas encore été analysé
                 </h3>
-                <p className="mb-6 text-sm" style={{ color: '#94a3b8' }}>Lancez l&apos;analyse pour voir les produits, prix, SEO et recommandations.</p>
+                <p className="mb-6 text-sm" style={{ color: "var(--text-tertiary)" }}>Lancez l&apos;analyse pour voir les produits, prix, SEO et recommandations.</p>
                 <button onClick={() => handleAnalyze(selected)} disabled={analyzingId === selected.id}
                   className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50 text-sm">
                   <RefreshCw className={`w-4 h-4 ${analyzingId === selected.id ? 'animate-spin' : ''}`} />
@@ -558,9 +558,9 @@ export default function ConcurrencePage() {
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <Shield className="w-4 h-4" style={{ color: THREAT_COLORS[compScore.threat_level].text }} />
-                              <h3 className="font-semibold text-sm" style={{ color: '#0f172a' }}>Score de menace concurrentielle</h3>
+                              <h3 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Score de menace concurrentielle</h3>
                             </div>
-                            <p className="text-xs" style={{ color: '#64748b' }}>{compScore.summary}</p>
+                            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{compScore.summary}</p>
                           </div>
                           <div className="text-center flex-shrink-0">
                             <div className="text-3xl font-black" style={{ color: THREAT_COLORS[compScore.threat_level].text }}>{compScore.score}</div>
@@ -570,7 +570,7 @@ export default function ConcurrencePage() {
                         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {Object.entries(compScore.breakdown).map(([key, val]) => (
                             <div key={key} className="bg-white/60 rounded-lg p-2 text-center">
-                              <div className="text-xs font-medium" style={{ color: '#374151' }}>{val.label}</div>
+                              <div className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>{val.label}</div>
                             </div>
                           ))}
                         </div>
@@ -584,21 +584,21 @@ export default function ConcurrencePage() {
                         { label: 'Promotions', value: selected.snapshot.promo_detected ? ' Actives' : 'Aucune', icon: <Bell className="w-4 h-4" style={{ color: '#ef4444' }} /> },
                       ].map((kpi, i) => (
                         <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-1">{kpi.icon}<span className="text-xs" style={{ color: '#94a3b8' }}>{kpi.label}</span></div>
-                          <p className="text-xl font-bold" style={{ color: '#0f172a' }}>{kpi.value}</p>
+                          <div className="flex items-center gap-2 mb-1">{kpi.icon}<span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{kpi.label}</span></div>
+                          <p className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{kpi.value}</p>
                         </div>
                       ))}
                     </div>
                     {(selected.snapshot.price_changes?.length > 0 || selected.snapshot.new_products?.length > 0 || selected.snapshot.removed_products?.length > 0) && (
                       <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: '#0f172a' }}>
+                        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
                           <AlertTriangle className="w-4 h-4" style={{ color: '#f59e0b' }} /> Changements détectés
                         </h3>
                         <div className="space-y-2">
                           {selected.snapshot.price_changes?.map((c, i) => (
                             <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg text-sm bg-blue-50">
                               {c.direction === 'down' ? <TrendingDown className="w-4 h-4 flex-shrink-0 text-red-500" /> : <TrendingUp className="w-4 h-4 flex-shrink-0 text-green-600" />}
-                              <span style={{ color: '#374151' }}>
+                              <span style={{ color: "var(--text-secondary)" }}>
                                 <strong>{c.product}</strong> : {c.old_price}€ → <strong>{c.new_price}€</strong>
                                 {c.old_price && c.new_price && (
                                   <span className={`ml-2 text-xs font-bold ${c.direction === 'down' ? 'text-red-500' : 'text-green-600'}`}>
@@ -611,13 +611,13 @@ export default function ConcurrencePage() {
                           {selected.snapshot.new_products?.map((p, i) => (
                             <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg text-sm bg-green-50">
                               <span style={{ color: '#059669', fontWeight: 700 }}>NEW</span>
-                              <span style={{ color: '#374151' }}>Nouveau : <strong>{p}</strong></span>
+                              <span style={{ color: "var(--text-secondary)" }}>Nouveau : <strong>{p}</strong></span>
                             </div>
                           ))}
                           {selected.snapshot.removed_products?.map((p, i) => (
                             <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg text-sm bg-red-50">
                               <span style={{ color: '#ef4444', fontWeight: 700 }}></span>
-                              <span style={{ color: '#374151' }}>Retiré : <strong>{p}</strong></span>
+                              <span style={{ color: "var(--text-secondary)" }}>Retiré : <strong>{p}</strong></span>
                             </div>
                           ))}
                         </div>
@@ -625,10 +625,10 @@ export default function ConcurrencePage() {
                     )}
                     {selected.snapshot.insights?.length > 0 && (
                       <div className="rounded-xl p-5 border" style={{ background: 'linear-gradient(135deg,#eff6ff,#eef2ff)', borderColor: '#bfdbfe' }}>
-                        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: '#1e40af' }}> Recommandations IA</h3>
+                        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: "#93c5fd" }}> Recommandations IA</h3>
                         <div className="space-y-2">
                           {selected.snapshot.insights.map((insight, i) => (
-                            <div key={i} className="flex gap-3 p-3 bg-white rounded-lg text-sm" style={{ color: '#374151' }}>
+                            <div key={i} className="flex gap-3 p-3 bg-white rounded-lg text-sm" style={{ color: "var(--text-secondary)" }}>
                               <span className="font-bold flex-shrink-0" style={{ color: '#2563eb' }}>{i + 1}.</span>
                               <span>{insight}</span>
                             </div>
@@ -640,10 +640,10 @@ export default function ConcurrencePage() {
                       <div className="grid grid-cols-2 gap-4">
                         {selected.snapshot.social && (
                           <div className="bg-white border border-gray-200 rounded-xl p-4">
-                            <h4 className="text-sm font-semibold mb-3" style={{ color: '#0f172a' }}> Réseaux sociaux</h4>
+                            <h4 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}> Réseaux sociaux</h4>
                             {[{ label: 'Facebook', val: selected.snapshot.social.facebook }, { label: 'Instagram', val: selected.snapshot.social.instagram }, { label: 'TikTok', val: selected.snapshot.social.tiktok }].map(s => (
                               <div key={s.label} className="flex items-center justify-between text-xs py-0.5">
-                                <span style={{ color: '#64748b' }}>{s.label}</span>
+                                <span style={{ color: "var(--text-tertiary)" }}>{s.label}</span>
                                 <span style={{ color: s.val ? '#059669' : '#d1d5db' }}>{s.val ? '' : ''}</span>
                               </div>
                             ))}
@@ -651,10 +651,10 @@ export default function ConcurrencePage() {
                         )}
                         {selected.snapshot.payment && (
                           <div className="bg-white border border-gray-200 rounded-xl p-4">
-                            <h4 className="text-sm font-semibold mb-3" style={{ color: '#0f172a' }}> Paiement</h4>
+                            <h4 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}> Paiement</h4>
                             {[{ label: 'PayPal', val: selected.snapshot.payment.paypal }, { label: 'Stripe', val: selected.snapshot.payment.stripe }, { label: 'Klarna', val: selected.snapshot.payment.klarna }].map(p => (
                               <div key={p.label} className="flex items-center justify-between text-xs py-0.5">
-                                <span style={{ color: '#64748b' }}>{p.label}</span>
+                                <span style={{ color: "var(--text-tertiary)" }}>{p.label}</span>
                                 <span style={{ color: p.val ? '#059669' : '#d1d5db' }}>{p.val ? '' : ''}</span>
                               </div>
                             ))}
@@ -664,8 +664,8 @@ export default function ConcurrencePage() {
                     )}
                     {selected.snapshot.shipping_info && selected.snapshot.shipping_info !== 'Non détecté' && (
                       <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Livraison</h3>
-                        <p className="text-sm" style={{ color: '#64748b' }}>{selected.snapshot.shipping_info}</p>
+                        <h3 className="font-semibold mb-1 text-sm" style={{ color: "var(--text-primary)" }}> Livraison</h3>
+                        <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>{selected.snapshot.shipping_info}</p>
                       </div>
                     )}
                   </div>
@@ -675,14 +675,14 @@ export default function ConcurrencePage() {
                 {activeTab === 'prices' && (
                   <div className="p-4 md:p-6 space-y-5">
                     <div className="bg-white border border-gray-200 rounded-xl p-5">
-                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Suivi des prix</h3>
-                      <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Historique des prix enregistrés automatiquement à chaque analyse.</p>
+                      <h3 className="font-semibold mb-1 text-sm" style={{ color: "var(--text-primary)" }}> Suivi des prix</h3>
+                      <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Historique des prix enregistrés automatiquement à chaque analyse.</p>
                       {isPriceLoading ? (
                         <div className="text-center py-8 text-sm text-gray-400">Chargement...</div>
                       ) : priceHistory.length === 0 ? (
                         <div className="text-center py-8">
                           <BarChart2 className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                          <p className="text-sm" style={{ color: '#94a3b8' }}>Aucun historique de prix</p>
+                          <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Aucun historique de prix</p>
                           <p className="text-xs mt-1" style={{ color: '#cbd5e1' }}>Lancez une analyse pour commencer le suivi</p>
                         </div>
                       ) : (() => {
@@ -697,18 +697,18 @@ export default function ConcurrencePage() {
                             <div className="grid grid-cols-3 gap-3 mb-4">
                               {[{ label: 'Prix min', value: `${min.toFixed(2)}€` }, { label: 'Prix moyen', value: `${avg.toFixed(2)}€` }, { label: 'Prix max', value: `${max.toFixed(2)}€` }].map((s, i) => (
                                 <div key={i} className="bg-gray-50 rounded-lg p-3 text-center">
-                                  <div className="text-lg font-bold" style={{ color: '#0f172a' }}>{s.value}</div>
-                                  <div className="text-xs" style={{ color: '#94a3b8' }}>{s.label}</div>
+                                  <div className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>{s.value}</div>
+                                  <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{s.label}</div>
                                 </div>
                               ))}
                             </div>
                             <div className="overflow-x-auto">
                               <table className="w-full text-xs">
                                 <thead><tr className="bg-gray-50 border-b border-gray-100">
-                                  <th className="text-left p-2 font-semibold" style={{ color: '#64748b' }}>Produit</th>
-                                  <th className="text-right p-2 font-semibold" style={{ color: '#64748b' }}>Dernier prix</th>
-                                  <th className="text-right p-2 font-semibold" style={{ color: '#64748b' }}>Enregistrements</th>
-                                  <th className="text-right p-2 font-semibold hidden sm:table-cell" style={{ color: '#64748b' }}>MAJ</th>
+                                  <th className="text-left p-2 font-semibold" style={{ color: "var(--text-tertiary)" }}>Produit</th>
+                                  <th className="text-right p-2 font-semibold" style={{ color: "var(--text-tertiary)" }}>Dernier prix</th>
+                                  <th className="text-right p-2 font-semibold" style={{ color: "var(--text-tertiary)" }}>Enregistrements</th>
+                                  <th className="text-right p-2 font-semibold hidden sm:table-cell" style={{ color: "var(--text-tertiary)" }}>MAJ</th>
                                 </tr></thead>
                                 <tbody>
                                   {Object.entries(byProduct).slice(0, 30).map(([name, points]) => {
@@ -717,14 +717,14 @@ export default function ConcurrencePage() {
                                     const trend = points.length > 1 ? (latest.price < first.price ? 'down' : latest.price > first.price ? 'up' : 'flat') : 'flat'
                                     return (
                                       <tr key={name} className="border-b border-gray-50 hover:bg-gray-50">
-                                        <td className="p-2" style={{ color: '#374151' }}>{name.length > 40 ? name.slice(0, 40) + '…' : name}</td>
+                                        <td className="p-2" style={{ color: "var(--text-secondary)" }}>{name.length > 40 ? name.slice(0, 40) + '…' : name}</td>
                                         <td className="p-2 text-right font-semibold" style={{ color: '#059669' }}>
                                           {latest.price.toFixed(2)}€
                                           {trend === 'down' && <TrendingDown className="inline w-3 h-3 ml-1 text-red-500" />}
                                           {trend === 'up' && <TrendingUp className="inline w-3 h-3 ml-1 text-green-600" />}
                                         </td>
-                                        <td className="p-2 text-right" style={{ color: '#94a3b8' }}>{points.length}</td>
-                                        <td className="p-2 text-right hidden sm:table-cell" style={{ color: '#94a3b8' }}>{new Date(latest.recorded_at).toLocaleDateString('fr-FR')}</td>
+                                        <td className="p-2 text-right" style={{ color: "var(--text-tertiary)" }}>{points.length}</td>
+                                        <td className="p-2 text-right hidden sm:table-cell" style={{ color: "var(--text-tertiary)" }}>{new Date(latest.recorded_at).toLocaleDateString('fr-FR')}</td>
                                       </tr>
                                     )
                                   })}
@@ -737,17 +737,17 @@ export default function ConcurrencePage() {
                     </div>
                     {selected.snapshot.products && selected.snapshot.products.length > 0 && (
                       <div className="bg-white border border-gray-200 rounded-xl p-5">
-                        <h3 className="font-semibold mb-3 text-sm" style={{ color: '#0f172a' }}>Produits actuels ({selected.snapshot.products.length})</h3>
+                        <h3 className="font-semibold mb-3 text-sm" style={{ color: "var(--text-primary)" }}>Produits actuels ({selected.snapshot.products.length})</h3>
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead><tr className="bg-gray-50 border-b border-gray-100">
-                              <th className="text-left p-2 font-semibold" style={{ color: '#64748b' }}>Produit</th>
-                              <th className="text-right p-2 font-semibold" style={{ color: '#64748b' }}>Prix</th>
+                              <th className="text-left p-2 font-semibold" style={{ color: "var(--text-tertiary)" }}>Produit</th>
+                              <th className="text-right p-2 font-semibold" style={{ color: "var(--text-tertiary)" }}>Prix</th>
                             </tr></thead>
                             <tbody>
                               {selected.snapshot.products.slice(0, 30).map((p, i) => (
                                 <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                                  <td className="p-2" style={{ color: '#374151' }}>{p.title}</td>
+                                  <td className="p-2" style={{ color: "var(--text-secondary)" }}>{p.title}</td>
                                   <td className="p-2 text-right font-semibold" style={{ color: '#059669' }}>{p.price !== null ? `${p.price.toFixed(2)}€` : '—'}</td>
                                 </tr>
                               ))}
@@ -764,32 +764,32 @@ export default function ConcurrencePage() {
                   <div className="p-4 md:p-6 space-y-5">
                     {selected.snapshot.seo && (
                       <div className="bg-white border border-gray-200 rounded-xl p-5">
-                        <h3 className="font-semibold mb-3 text-sm" style={{ color: '#0f172a' }}> Données SEO détectées</h3>
+                        <h3 className="font-semibold mb-3 text-sm" style={{ color: "var(--text-primary)" }}> Données SEO détectées</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="text-xs font-medium mb-1" style={{ color: '#64748b' }}>Title tag</div>
-                            <div className="text-sm font-semibold truncate" style={{ color: '#0f172a' }}>{selected.snapshot.seo.title_tag || 'Non détecté'}</div>
+                            <div className="text-xs font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Title tag</div>
+                            <div className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{selected.snapshot.seo.title_tag || 'Non détecté'}</div>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="text-xs font-medium mb-1" style={{ color: '#64748b' }}>Meta description</div>
+                            <div className="text-xs font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Meta description</div>
                             <div className="text-sm font-semibold" style={{ color: selected.snapshot.seo.has_meta_description ? '#059669' : '#ef4444' }}>
                               {selected.snapshot.seo.has_meta_description ? ' Présente' : ' Absente'}
                             </div>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="text-xs font-medium mb-1" style={{ color: '#64748b' }}>Balises H1</div>
-                            <div className="text-sm font-semibold" style={{ color: '#0f172a' }}>{selected.snapshot.seo.h1_count ?? '?'}</div>
+                            <div className="text-xs font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Balises H1</div>
+                            <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{selected.snapshot.seo.h1_count ?? '?'}</div>
                           </div>
                         </div>
                       </div>
                     )}
                     <div className="bg-white border border-gray-200 rounded-xl p-5">
-                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Comparaison SEO par IA</h3>
-                      <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Entrez vos mots-clés pour obtenir une analyse comparative.</p>
+                      <h3 className="font-semibold mb-1 text-sm" style={{ color: "var(--text-primary)" }}> Comparaison SEO par IA</h3>
+                      <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Entrez vos mots-clés pour obtenir une analyse comparative.</p>
                       <textarea value={myKeywords} onChange={e => setMyKeywords(e.target.value)}
                         placeholder="Entrez vos mots-clés..."
                         className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-blue-400"
-                        style={{ color: '#111827', minHeight: '80px' }} />
+                        style={{ color: "var(--text-primary)", minHeight: '80px' }} />
                       <button onClick={handleSeoCompare} disabled={isSeoLoading}
                         className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
                         {isSeoLoading ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" />Analyse IA...</> : <><Search className="w-3.5 h-3.5" />Analyser le SEO</>}
@@ -799,7 +799,7 @@ export default function ConcurrencePage() {
                       <div className="space-y-4">
                         {seoResult.score && (
                           <div className="bg-white border border-gray-200 rounded-xl p-5">
-                            <h4 className="font-semibold mb-3 text-sm" style={{ color: '#0f172a' }}>Score SEO comparatif</h4>
+                            <h4 className="font-semibold mb-3 text-sm" style={{ color: "var(--text-primary)" }}>Score SEO comparatif</h4>
                             <div className="grid grid-cols-2 gap-4">
                               <div className="text-center p-3 bg-blue-50 rounded-lg">
                                 <div className="text-2xl font-black text-blue-600">{seoResult.score.me}</div>
@@ -819,8 +819,8 @@ export default function ConcurrencePage() {
                           { title: ' Actions rapides', items: seoResult.quick_wins, color: '#faf5ff', border: '#e9d5ff' },
                         ] as { title: string; items: string[]; color: string; border: string }[]).map(({ title, items, color, border }) => items?.length > 0 && (
                           <div key={title} className="rounded-xl p-4 border" style={{ backgroundColor: color, borderColor: border }}>
-                            <h4 className="font-semibold mb-2 text-sm" style={{ color: '#0f172a' }}>{title}</h4>
-                            <ul className="space-y-1.5">{items.map((item, i) => <li key={i} className="text-sm flex gap-2" style={{ color: '#374151' }}><span className="flex-shrink-0">•</span>{item}</li>)}</ul>
+                            <h4 className="font-semibold mb-2 text-sm" style={{ color: "var(--text-primary)" }}>{title}</h4>
+                            <ul className="space-y-1.5">{items.map((item, i) => <li key={i} className="text-sm flex gap-2" style={{ color: "var(--text-secondary)" }}><span className="flex-shrink-0">•</span>{item}</li>)}</ul>
                           </div>
                         ))}
                       </div>
@@ -832,13 +832,13 @@ export default function ConcurrencePage() {
                 {activeTab === 'catalog' && (
                   <div className="p-4 md:p-6 space-y-5">
                     <div className="bg-white border border-gray-200 rounded-xl p-5">
-                      <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Analyse des gaps catalogue</h3>
-                      <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Comparez vos catalogues pour identifier les opportunités manquées.</p>
-                      <label className="text-xs font-medium block mb-1" style={{ color: '#374151' }}>Mes produits (un par ligne)</label>
+                      <h3 className="font-semibold mb-1 text-sm" style={{ color: "var(--text-primary)" }}> Analyse des gaps catalogue</h3>
+                      <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Comparez vos catalogues pour identifier les opportunités manquées.</p>
+                      <label className="text-xs font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>Mes produits (un par ligne)</label>
                       <textarea value={myProducts} onChange={e => setMyProducts(e.target.value)}
                         placeholder={"Produit A\nProduit B\nProduit C..."}
                         className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none focus:outline-none focus:border-blue-400"
-                        style={{ color: '#111827', minHeight: '100px' }} />
+                        style={{ color: "var(--text-primary)", minHeight: '100px' }} />
                       <button onClick={handleCatalogCompare} disabled={isCatalogLoading}
                         className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
                         {isCatalogLoading ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" />Analyse IA...</> : <><BookOpen className="w-3.5 h-3.5" />Analyser les catalogues</>}
@@ -846,16 +846,16 @@ export default function ConcurrencePage() {
                     </div>
                     {selected.snapshot.products_found > 0 && (
                       <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="font-semibold mb-2 text-sm" style={{ color: '#0f172a' }}>Produits concurrent : {selected.snapshot.products_found}</h4>
-                        <p className="text-xs" style={{ color: '#94a3b8' }}>Prix moyen : {selected.snapshot.avg_price ? `${selected.snapshot.avg_price.toFixed(2)}€` : 'N/A'}</p>
+                        <h4 className="font-semibold mb-2 text-sm" style={{ color: "var(--text-primary)" }}>Produits concurrent : {selected.snapshot.products_found}</h4>
+                        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Prix moyen : {selected.snapshot.avg_price ? `${selected.snapshot.avg_price.toFixed(2)}€` : 'N/A'}</p>
                       </div>
                     )}
                     {catalogResult && (
                       <div className="space-y-4">
                         <div className="bg-white border border-blue-200 rounded-xl p-4 flex items-center justify-between">
                           <div>
-                            <div className="font-semibold text-sm" style={{ color: '#0f172a' }}>Score d&apos;opportunité catalogue</div>
-                            <div className="text-xs" style={{ color: '#64748b' }}>{catalogResult.price_positioning}</div>
+                            <div className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Score d&apos;opportunité catalogue</div>
+                            <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>{catalogResult.price_positioning}</div>
                           </div>
                           <div className="text-3xl font-black text-blue-600">{catalogResult.opportunity_score}</div>
                         </div>
@@ -865,8 +865,8 @@ export default function ConcurrencePage() {
                           { title: ' Recommandations', items: catalogResult.recommendations, color: '#eff6ff', border: '#bfdbfe' },
                         ] as { title: string; items: string[]; color: string; border: string }[]).map(({ title, items, color, border }) => items?.length > 0 && (
                           <div key={title} className="rounded-xl p-4 border" style={{ backgroundColor: color, borderColor: border }}>
-                            <h4 className="font-semibold mb-2 text-sm" style={{ color: '#0f172a' }}>{title}</h4>
-                            <ul className="space-y-1.5">{items.map((item, i) => <li key={i} className="text-sm flex gap-2" style={{ color: '#374151' }}><span className="flex-shrink-0">•</span>{item}</li>)}</ul>
+                            <h4 className="font-semibold mb-2 text-sm" style={{ color: "var(--text-primary)" }}>{title}</h4>
+                            <ul className="space-y-1.5">{items.map((item, i) => <li key={i} className="text-sm flex gap-2" style={{ color: "var(--text-secondary)" }}><span className="flex-shrink-0">•</span>{item}</li>)}</ul>
                           </div>
                         ))}
                       </div>
@@ -880,13 +880,13 @@ export default function ConcurrencePage() {
             {activeTab === 'alerts' && (
               <div className="p-4 md:p-6 space-y-5">
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <h3 className="font-semibold mb-1 text-sm" style={{ color: '#0f172a' }}> Configurer une alerte</h3>
-                  <p className="text-xs mb-4" style={{ color: '#94a3b8' }}>Soyez notifié des changements de ce concurrent.</p>
+                  <h3 className="font-semibold mb-1 text-sm" style={{ color: "var(--text-primary)" }}> Configurer une alerte</h3>
+                  <p className="text-xs mb-4" style={{ color: "var(--text-tertiary)" }}>Soyez notifié des changements de ce concurrent.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium block mb-1" style={{ color: '#374151' }}>Type d&apos;alerte</label>
+                      <label className="text-xs font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>Type d&apos;alerte</label>
                       <select value={newAlertType} onChange={e => setNewAlertType(e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" style={{ color: '#374151' }}>
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" style={{ color: "var(--text-secondary)" }}>
                         <option value="price_drop">Baisse de prix</option>
                         <option value="price_increase">Hausse de prix</option>
                         <option value="new_product">Nouveau produit</option>
@@ -895,24 +895,24 @@ export default function ConcurrencePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium block mb-1" style={{ color: '#374151' }}>Seuil (€, optionnel)</label>
+                      <label className="text-xs font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>Seuil (€, optionnel)</label>
                       <input type="number" value={newAlertThreshold} onChange={e => setNewAlertThreshold(e.target.value)}
                         placeholder="ex: 5.00"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-base focus:outline-none focus:border-blue-400" style={{ color: '#374151' }} />
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-base focus:outline-none focus:border-blue-400" style={{ color: "var(--text-secondary)" }} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium block mb-1" style={{ color: '#374151' }}>Fréquence</label>
+                      <label className="text-xs font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>Fréquence</label>
                       <select value={newAlertFreq} onChange={e => setNewAlertFreq(e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" style={{ color: '#374151' }}>
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" style={{ color: "var(--text-secondary)" }}>
                         <option value="immediate">Immédiat</option>
                         <option value="daily">Quotidien</option>
                         <option value="weekly">Hebdomadaire</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium block mb-1" style={{ color: '#374151' }}>Notification</label>
+                      <label className="text-xs font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>Notification</label>
                       <select value={newAlertMethod} onChange={e => setNewAlertMethod(e.target.value)}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" style={{ color: '#374151' }}>
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" style={{ color: "var(--text-secondary)" }}>
                         <option value="email">Email</option>
                         <option value="dashboard">Dashboard</option>
                         <option value="both">Les deux</option>
@@ -925,13 +925,13 @@ export default function ConcurrencePage() {
                   </button>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <h3 className="font-semibold mb-3 text-sm" style={{ color: '#0f172a' }}>Alertes actives</h3>
+                  <h3 className="font-semibold mb-3 text-sm" style={{ color: "var(--text-primary)" }}>Alertes actives</h3>
                   {isAlertsLoading ? (
                     <div className="text-center py-4 text-sm text-gray-400">Chargement...</div>
                   ) : alerts.length === 0 ? (
                     <div className="text-center py-6">
                       <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                      <p className="text-sm" style={{ color: '#94a3b8' }}>Aucune alerte configurée</p>
+                      <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Aucune alerte configurée</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -941,11 +941,11 @@ export default function ConcurrencePage() {
                         return (
                           <div key={alert.id} className={`flex items-center justify-between p-3 rounded-lg border ${alert.is_active ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
                             <div>
-                              <div className="text-sm font-medium" style={{ color: '#374151' }}>
+                              <div className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                                 {typeLabels[alert.alert_type] || alert.alert_type}
                                 {alert.threshold_value && <span className="ml-2 text-xs text-gray-500">seuil: {alert.threshold_value}€</span>}
                               </div>
-                              <div className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
+                              <div className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                                 {freqLabels[alert.frequency] || alert.frequency} · {alert.notification_method === 'both' ? 'Email + Dashboard' : alert.notification_method === 'email' ? 'Email' : 'Dashboard'}
                               </div>
                             </div>
@@ -968,24 +968,24 @@ export default function ConcurrencePage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-bold mb-1" style={{ color: '#0f172a' }}>Ajouter un concurrent</h3>
-            <p className="text-sm mb-5" style={{ color: '#64748b' }}>Entrez l&apos;URL de la boutique à surveiller.</p>
+            <h3 className="text-lg font-bold mb-1" style={{ color: "var(--text-primary)" }}>Ajouter un concurrent</h3>
+            <p className="text-sm mb-5" style={{ color: "var(--text-tertiary)" }}>Entrez l&apos;URL de la boutique à surveiller.</p>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-1" style={{ color: '#374151' }}>Nom du concurrent</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>Nom du concurrent</label>
                 <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="ex: Boutique concurrente"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-base focus:outline-none focus:border-blue-500" style={{ color: '#111827' }} />
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-base focus:outline-none focus:border-blue-500" style={{ color: "var(--text-primary)" }} />
               </div>
               <div>
-                <label className="text-sm font-medium block mb-1" style={{ color: '#374151' }}>URL de la boutique</label>
+                <label className="text-sm font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>URL de la boutique</label>
                 <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://example.myshopify.com"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-base focus:outline-none focus:border-blue-500" style={{ color: '#111827' }} />
-                <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>Shopify, WooCommerce ou toute page produit</p>
+                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-base focus:outline-none focus:border-blue-500" style={{ color: "var(--text-primary)" }} />
+                <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Shopify, WooCommerce ou toute page produit</p>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => { setShowAddModal(false); setNewName(''); setNewUrl('') }}
-                className="flex-1 border border-gray-300 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50" style={{ color: '#374151' }}>
+                className="flex-1 border border-gray-300 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50" style={{ color: "var(--text-secondary)" }}>
                 Annuler
               </button>
               <button onClick={handleAdd} disabled={isAdding || !newName || !newUrl}
