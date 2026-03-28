@@ -1,4 +1,7 @@
-'use client'
+const fs = require('fs')
+const path = require('path')
+
+const PAGE = `'use client'
 import { useState, useEffect } from 'react'
 
 // ─── Filter definitions ────────────────────────────────────────
@@ -111,7 +114,7 @@ const TYPES = [
         { v: 'add_guarantee', l: '✓ Ajouter bloc garanties' },
         { v: 'add_shipping', l: '🚚 Ajouter infos livraison' },
         { v: 'clean_html', l: '🧹 Nettoyer le HTML sale' },
-        { v: 'add_cta', l: "→ Ajouter appel à l'action" },
+        { v: 'add_cta', l: '→ Ajouter appel à l\'action' },
       ]},
       { id: 'prefix', label: "Texte d'introduction (avant la description)", type: 'textarea', def: '', placeholder: 'Produit sélectionné avec soin par notre équipe.' },
       { id: 'suffix', label: 'Texte de conclusion (après la description)', type: 'textarea', def: '', placeholder: 'Livraison sous 7 à 15 jours. Satisfait ou remboursé 30 jours.' },
@@ -181,7 +184,7 @@ const TYPES = [
       { id: 'img_action', label: "Action", type: 'select', def: 'tag_no_image', options: [
         { v: 'tag_no_image', l: '🏷 Ajouter tag "sans-image" aux concernés' },
         { v: 'draft_no_image', l: "⏸ Passer en brouillon si pas d'image" },
-        { v: 'tag_low_images', l: "📷 Tagger les produits avec peu d'images" },
+        { v: 'tag_low_images', l: '📷 Tagger les produits avec peu d\'images' },
       ]},
       { id: 'min_images', label: "Nombre minimum d'images souhaité", type: 'number', def: 1, min: 1, max: 10 },
       { id: 'low_image_tag', label: 'Tag à ajouter', type: 'text', def: 'sans-image', placeholder: 'sans-image' },
@@ -224,7 +227,7 @@ const TYPES = [
     actions: [
       { id: 'col_action', label: "Action", type: 'select', def: 'add_collection_tag', options: [
         { v: 'add_collection_tag', l: '+ Ajouter tag pour rejoindre une collection' },
-        { v: 'remove_collection_tag', l: "− Retirer d'une collection via tag" },
+        { v: 'remove_collection_tag', l: '− Retirer d\'une collection via tag' },
         { v: 'sync_type_to_tag', l: '🔄 Synchroniser "Type produit" → tag' },
       ]},
       { id: 'collection_tag', label: 'Tag de collection à ajouter/retirer', type: 'text', def: '', placeholder: 'Ex: collection-femme' },
@@ -775,3 +778,12 @@ export default function AutomationPage() {
     </div>
   )
 }
+`
+
+const dest = path.join(__dirname, '..', 'app', '(dashboard)', 'dashboard', 'automation', 'page.tsx')
+fs.writeFileSync(dest, PAGE.trim() + '\n')
+const st = fs.statSync(dest)
+console.log('Written:', st.size, 'bytes,', PAGE.trim().split('\n').length, 'lines')
+console.log('Has #0f172a:', PAGE.includes("'#0f172a'"))
+console.log('Has FILTERS const:', PAGE.includes('const FILTERS'))
+console.log('Has 10 types:', (PAGE.match(/id: 'seo_title'|id: 'price_rules'|id: 'bulk_tags'|id: 'description_rules'|id: 'publish_rules'|id: 'vendor_normalize'|id: 'image_audit'|id: 'profit_alert'|id: 'collection_sync'|id: 'duplicate_detect'/g) || []).length)

@@ -1,4 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+const fs = require('fs')
+const path = require('path')
+
+// Each case sets resultMsg + resultCount then breaks — stats updated once at end
+const ROUTE = `import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export const maxDuration = 60
@@ -10,8 +14,8 @@ async function getFiltered(sb: any, userId: string, filter: string, fp: Record<s
   switch (filter) {
     case 'price_under': if (fp?.price_under_val) q = q.lte('price', fp.price_under_val); break
     case 'price_over': if (fp?.price_over_val) q = q.gte('price', fp.price_over_val); break
-    case 'title_contains': if (fp?.title_word) q = q.ilike('title', `%${fp.title_word}%`); break
-    case 'vendor_is': if (fp?.vendor_name) q = q.ilike('vendor', `%${fp.vendor_name}%`); break
+    case 'title_contains': if (fp?.title_word) q = q.ilike('title', \`%\${fp.title_word}%\`); break
+    case 'vendor_is': if (fp?.vendor_name) q = q.ilike('vendor', \`%\${fp.vendor_name}%\`); break
     case 'status_draft': q = q.eq('status', 'draft'); break
     case 'status_active': q = q.eq('status', 'active'); break
     case 'status_archived': q = q.eq('status', 'archived'); break
@@ -89,10 +93,10 @@ export async function POST(request: NextRequest) {
       case 'seo_title':
         for (const p of batch) {
           let title: string = (p.title as string) || ''
-          if (cfg.remove_sku) title = title.replace(/\b([A-Z0-9]{2,}-[A-Z0-9]{2,}|ref[-_\s]?\w+|sku[-_\s]?\w+|lot\d+|#\w+)\b/gi, ' ').trim()
-          if (cfg.remove_parentheses) title = title.replace(/\([^)]*\)/g, ' ').trim()
-          if (cfg.capitalize) title = title.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())
-          title = title.replace(/\s+/g, ' ').trim()
+          if (cfg.remove_sku) title = title.replace(/\\b([A-Z0-9]{2,}-[A-Z0-9]{2,}|ref[-_\\s]?\\w+|sku[-_\\s]?\\w+|lot\\d+|#\\w+)\\b/gi, ' ').trim()
+          if (cfg.remove_parentheses) title = title.replace(/\\([^)]*\\)/g, ' ').trim()
+          if (cfg.capitalize) title = title.toLowerCase().replace(/\\b\\w/g, (c: string) => c.toUpperCase())
+          title = title.replace(/\\s+/g, ' ').trim()
           const maxLen = cfg.max_length as number
           if (maxLen && maxLen > 0 && title.length > maxLen) title = title.slice(0, maxLen).trim()
           const sfx = cfg.add_suffix as string
@@ -158,21 +162,21 @@ export async function POST(request: NextRequest) {
           let changed = false
           switch (cfg.desc_action) {
             case 'add_prefix_suffix': {
-              const pre = cfg.prefix ? `<p>${cfg.prefix}</p>` : ''
-              const suf = cfg.suffix ? `<p>${cfg.suffix}</p>` : ''
+              const pre = cfg.prefix ? \`<p>\${cfg.prefix}</p>\` : ''
+              const suf = cfg.suffix ? \`<p>\${cfg.suffix}</p>\` : ''
               if (pre || suf) { desc = pre + desc + suf; changed = true }; break
             }
             case 'add_guarantee': {
               const g = (cfg.guarantee_text as string) || '✓ Satisfait ou remboursé 30 jours  ✓ Paiement sécurisé  ✓ Livraison suivie'
-              desc = desc + `<p><strong>${g}</strong></p>`; changed = true; break
+              desc = desc + \`<p><strong>\${g}</strong></p>\`; changed = true; break
             }
             case 'add_shipping': {
               desc = desc + '<p>🚚 <strong>Livraison sous 7 à 15 jours</strong> — Suivi inclus</p>'; changed = true; break
             }
             case 'clean_html': {
               desc = desc
-                .replace(/<script[^>]*>.*?<\/script>/gi, '')
-                .replace(/<style[^>]*>.*?<\/style>/gi, '')
+                .replace(/<script[^>]*>.*?<\\/script>/gi, '')
+                .replace(/<style[^>]*>.*?<\\/style>/gi, '')
                 .replace(/style="[^"]*"/gi, '')
                 .replace(/class="[^"]*"/gi, '')
               changed = true; break
@@ -212,7 +216,7 @@ export async function POST(request: NextRequest) {
         for (const p of batch) {
           let vendor = (p.vendor as string) || ''
           switch (cfg.vendor_action) {
-            case 'capitalize': vendor = vendor.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()); break
+            case 'capitalize': vendor = vendor.toLowerCase().replace(/\\b\\w/g, (c: string) => c.toUpperCase()); break
             case 'set_value': vendor = (cfg.new_vendor as string) || ''; break
             case 'replace_value': if (p.vendor === cfg.replace_from) vendor = (cfg.replace_to as string) || ''; break
             case 'clear': vendor = ''; break
@@ -294,7 +298,7 @@ export async function POST(request: NextRequest) {
             }
             case 'sync_type_to_tag': {
               if (p.product_type) {
-                const typeTag = ((cfg.product_type_prefix as string) || 'type-') + (p.product_type as string).toLowerCase().replace(/\s+/g, '-')
+                const typeTag = ((cfg.product_type_prefix as string) || 'type-') + (p.product_type as string).toLowerCase().replace(/\\s+/g, '-')
                 if (!newTags.includes(typeTag)) { newTags.push(typeTag); n++ }
               }; break
             }
@@ -309,7 +313,7 @@ export async function POST(request: NextRequest) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         batch.forEach((p: any) => {
           const k = cfg.similarity === 'similar_title'
-            ? (p.title || '').toLowerCase().replace(/\s+/g, ' ').trim()
+            ? (p.title || '').toLowerCase().replace(/\\s+/g, ' ').trim()
             : (p.title || '')
           if (!tMap.has(k)) tMap.set(k, [])
           tMap.get(k)!.push(p)
@@ -353,3 +357,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: errMsg }, { status: 500 })
   }
 }
+`
+
+const dest = path.join(__dirname, '..', 'app', 'api', 'automations', 'run', 'route.ts')
+fs.mkdirSync(path.dirname(dest), { recursive: true })
+fs.writeFileSync(dest, ROUTE.trim() + '\n')
+console.log('Run route written:', fs.statSync(dest).size, 'bytes,', ROUTE.trim().split('\n').length, 'lines')
