@@ -31,6 +31,7 @@ import {
   Search,
   MessageSquare,
   BookOpen,
+  Smartphone,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 import AIChatWidget from '@/components/ai-chat-widget';
@@ -83,6 +84,7 @@ const NAV_SECTIONS = [
 
 const BOTTOM_ITEMS = [
   { href: '/dashboard/parrainage', label: 'Parrainer → -20% par mois', icon: Gift },
+  { href: '/download', label: 'Télécharger l\'app', icon: Smartphone },
   { href: '/dashboard/account', label: 'Mon compte', icon: User },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];

@@ -8,12 +8,12 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string }> = {
-  free:    { name: "Free",    icon: Star,   price: 0,   yearlyPrice: 0,   color: "#6b7280" },
-  starter: { name: "Starter", icon: Zap,    price: 19,  yearlyPrice: 13,  color: "#2563eb" },
-  pro:     { name: "Pro",     icon: Crown,  price: 49,  yearlyPrice: 34,  color: "#8b5cf6" },
-  agency:  { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#059669" },
-  scale:   { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#059669" },
+const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string; cardBg: string; border: string; btnBg: string; btnColor: string; badgeBg: string; badgeColor: string }> = {
+  free:    { name: "Free",    icon: Star,   price: 0,   yearlyPrice: 0,   color: "#6b7280", cardBg: "#ffffff",  border: "1px solid #e5e7eb",  btnBg: "#f3f4f6", btnColor: "#374151", badgeBg: "#f9fafb",  badgeColor: "#6b7280" },
+  starter: { name: "Starter", icon: Zap,    price: 19,  yearlyPrice: 13,  color: "#2563eb", cardBg: "#f8faff",  border: "1px solid #bfdbfe",  btnBg: "#2563eb", btnColor: "#ffffff", badgeBg: "#eff6ff",  badgeColor: "#1d4ed8" },
+  pro:     { name: "Pro",     icon: Crown,  price: 49,  yearlyPrice: 34,  color: "#7c3aed", cardBg: "linear-gradient(150deg,#fdf8ff 0%,#f5f3ff 100%)", border: "2px solid #a78bfa", btnBg: "#7c3aed", btnColor: "#ffffff", badgeBg: "#7c3aed",  badgeColor: "#ffffff" },
+  agency:  { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#059669", cardBg: "#f0fdf9",  border: "1px solid #6ee7b7",  btnBg: "#059669", btnColor: "#ffffff", badgeBg: "#d1fae5",  badgeColor: "#065f46" },
+  scale:   { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 104, color: "#059669", cardBg: "#f0fdf9",  border: "1px solid #6ee7b7",  btnBg: "#059669", btnColor: "#ffffff", badgeBg: "#d1fae5",  badgeColor: "#065f46" },
 };
 
 function BillingContent() {
@@ -125,6 +125,11 @@ function BillingContent() {
     }
   };
 
+  const handleDowngrade = async (_newPlan: string) => {
+    addToast("Pour rétrograder, accédez au portail Stripe.", "info");
+    handlePortal();
+  };
+
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto">
@@ -137,20 +142,7 @@ function BillingContent() {
     );
   }
 
-  if (!plan || plan === "free") {
-    return (
-      <div className="max-w-3xl mx-auto text-center py-12">
-        <AlertTriangle className="w-12 h-12 mx-auto mb-4" style={{ color: "#f59e0b" }} />
-        <h2 className="text-xl font-bold mb-2" style={{ color: "#0f172a" }}>Aucun abonnement actif</h2>
-        <p className="text-sm mb-6" style={{ color: "#64748b" }}>Choisissez un plan pour débloquer toutes les fonctionnalités</p>
-        <Link href="/pricing" className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm font-semibold" style={{ color: "#fff" }}>
-          Voir les plans <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-    );
-  }
-
-  const info = PLAN_INFO[plan] || PLAN_INFO.starter;
+  const info = PLAN_INFO[(plan ?? 'free') as keyof typeof PLAN_INFO] || PLAN_INFO.starter;
   const Icon = info.icon;
   const displayPrice = billing === "yearly" ? info.yearlyPrice : info.price;
 
@@ -184,19 +176,19 @@ function BillingContent() {
       )}
 
       {/* Current Plan */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="rounded-xl p-6 mb-6" style={{ background: info.cardBg, border: info.border }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${info.color}15` }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${info.color}20` }}>
               <Icon className="w-6 h-6" style={{ color: info.color }} />
             </div>
             <div>
               <h2 className="text-lg font-bold" style={{ color: "#0f172a" }}>Plan {info.name}</h2>
-              <p className="text-sm" style={{ color: "#64748b" }}>{displayPrice}€/mois • {billing === "yearly" ? "Annuel" : "Mensuel"}</p>
+              <p className="text-sm" style={{ color: "#64748b" }}>{displayPrice === 0 ? "Gratuit" : `${displayPrice}€/mois`} • {billing === "yearly" ? "Annuel" : "Mensuel"}</p>
             </div>
           </div>
-          <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100" style={{ color: "#059669" }}>
-            {subscriptionStatus === "trialing" ? "Essai gratuit" : subscriptionStatus === "past_due" ? "Paiement en retard" : "Actif"}
+          <span className="px-3 py-1 text-xs font-medium rounded-full" style={{ background: info.badgeBg, color: info.badgeColor }}>
+            {subscriptionStatus === "trialing" ? "Essai gratuit" : subscriptionStatus === "past_due" ? "Paiement en retard" : plan === "free" ? "Gratuit" : "Actif"}
           </span>
         </div>
       </div>
@@ -250,36 +242,67 @@ function BillingContent() {
         </div>
       </div>
 
-      {/* Upgrade options */}
-      {plan !== "agency" && plan !== "scale" && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h3 className="text-base font-semibold mb-4" style={{ color: "#0f172a" }}>Passer à un plan supérieur</h3>
-          <div className="space-y-3">
-            {Object.entries(PLAN_INFO).filter(([key]) => {
-              const order = ["free", "starter", "pro", "agency"];
-              return order.indexOf(key) > order.indexOf(plan);
-            }).map(([key, p]) => {
-              const PlanIcon = p.icon;
-              const planPrice = billing === "yearly" ? p.yearlyPrice : p.price;
-              return (
-                <div key={key} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <PlanIcon className="w-5 h-5" style={{ color: p.color }} />
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: "#0f172a" }}>{p.name}</p>
-                      <p className="text-xs" style={{ color: "#64748b" }}>{planPrice}€/mois</p>
-                    </div>
-                  </div>
-                  <button onClick={() => handleUpgrade(key)}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-medium" style={{ color: "#fff" }}>
-                    Upgrader <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              );
-            })}
+      {/* All plans comparison grid */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold" style={{ color: "#0f172a" }}>Comparer les plans</h3>
+          {/* Billing toggle */}
+          <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }}>
+            <button
+              onClick={() => setBilling("monthly")}
+              className="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+              style={{ background: billing === "monthly" ? "#ffffff" : "transparent", color: billing === "monthly" ? "#0f172a" : "#64748b", boxShadow: billing === "monthly" ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
+            >
+              Mensuel
+            </button>
+            <button
+              onClick={() => setBilling("yearly")}
+              className="px-3 py-1 text-xs font-medium rounded-md transition-colors"
+              style={{ background: billing === "yearly" ? "#ffffff" : "transparent", color: billing === "yearly" ? "#0f172a" : "#64748b", boxShadow: billing === "yearly" ? "0 1px 3px rgba(0,0,0,0.1)" : "none" }}
+            >
+              Annuel <span style={{ color: "#059669", fontWeight: 600 }}>-20%</span>
+            </button>
           </div>
         </div>
-      )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {Object.entries(PLAN_INFO).filter(([key]) => key !== "scale").map(([key, p]) => {
+            const PlanIcon = p.icon;
+            const planPrice = billing === "yearly" ? p.yearlyPrice : p.price;
+            const isCurrent = plan === key || (key === "agency" && plan === "scale");
+            const planOrder = ["free", "starter", "pro", "agency"];
+            const isUpgrade = planOrder.indexOf(key) > planOrder.indexOf(plan ?? "free");
+            return (
+              <div key={key} className="rounded-xl p-4" style={{ background: p.cardBg, border: isCurrent ? "2px solid #10b981" : p.border }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <PlanIcon className="w-4 h-4" style={{ color: p.color }} />
+                    <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>{p.name}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: p.badgeBg, color: p.badgeColor }}>{planPrice === 0 ? "Gratuit" : `${planPrice}€/mois`}</span>
+                  </div>
+                  {isCurrent && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "#dcfce7", color: "#065f46" }}>✓ Actuel</span>
+                  )}
+                </div>
+                {isCurrent ? (
+                  <div className="w-full py-2 text-center rounded-lg text-xs font-medium" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#065f46" }}>
+                    Votre plan actuel
+                  </div>
+                ) : isUpgrade ? (
+                  <button onClick={() => handleUpgrade(key)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90"
+                    style={{ background: p.btnBg, color: p.btnColor, border: "none" }}>
+                    Passer à {p.name} <ArrowRight className="w-3 h-3" />
+                  </button>
+                ) : (
+                  <div className="w-full py-2 text-center rounded-lg text-xs" style={{ background: "#f9fafb", border: "1px solid #e5e7eb", color: "#9ca3af" }}>
+                    Plan inférieur
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Cancel */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">

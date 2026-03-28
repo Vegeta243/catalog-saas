@@ -21,6 +21,16 @@ const PLANS = [
     cta: "Créer un compte gratuit",
     popular: false,
     isFree: true,
+    cardBg: "#ffffff",
+    border: "1px solid #e5e7eb",
+    badgeBg: "#f9fafb",
+    badgeColor: "#6b7280",
+    iconBg: "#f3f4f6",
+    iconColor: "#6b7280",
+    btnCls: "bg-gray-100 hover:bg-gray-200",
+    btnStyle: { color: "#374151" },
+    shadow: "none",
+    scale: false,
   },
   {
     id: "starter",
@@ -28,7 +38,7 @@ const PLANS = [
     icon: Zap,
     monthlyPrice: 19,
     yearlyPrice: 13,
-    description: "Pour les petites boutiques qui démarrent",
+    description: "Pour débuter",
     features: [
       "1 boutique Shopify",
       "Jusqu'à 500 produits",
@@ -42,6 +52,16 @@ const PLANS = [
     cta: "Choisir Starter",
     popular: false,
     isFree: false,
+    cardBg: "#f8faff",
+    border: "1px solid #bfdbfe",
+    badgeBg: "#eff6ff",
+    badgeColor: "#1d4ed8",
+    iconBg: "#eff6ff",
+    iconColor: "#2563eb",
+    btnCls: "bg-blue-600 hover:bg-blue-700",
+    btnStyle: { color: "#fff" },
+    shadow: "none",
+    scale: false,
   },
   {
     id: "pro",
@@ -49,7 +69,7 @@ const PLANS = [
     icon: Crown,
     monthlyPrice: 49,
     yearlyPrice: 34,
-    description: "Pour les boutiques en croissance",
+    description: "Le plus populaire",
     features: [
       "Jusqu'à 3 boutiques",
       "Produits illimités",
@@ -65,6 +85,17 @@ const PLANS = [
     cta: "Choisir Pro",
     popular: true,
     isFree: false,
+    cardBg: "linear-gradient(150deg,#fdf8ff 0%,#f5f3ff 100%)",
+    border: "2px solid #a78bfa",
+    badgeBg: "#7c3aed",
+    badgeColor: "#ffffff",
+    badgeText: "RECOMMANDÉ",
+    iconBg: "#ede9fe",
+    iconColor: "#7c3aed",
+    btnCls: "hover:opacity-90",
+    btnStyle: { background: "#7c3aed", color: "#fff" },
+    shadow: "0 8px 32px rgba(124,58,237,0.12)",
+    scale: true,
   },
   {
     id: "agency",
@@ -72,7 +103,7 @@ const PLANS = [
     icon: Rocket,
     monthlyPrice: 149,
     yearlyPrice: 104,
-    description: "Pour les agences et multi-boutiques",
+    description: "Pour les agences",
     features: [
       "Boutiques illimitées",
       "Tout Pro +",
@@ -85,6 +116,16 @@ const PLANS = [
     cta: "Choisir Agency",
     popular: false,
     isFree: false,
+    cardBg: "#f0fdf9",
+    border: "1px solid #6ee7b7",
+    badgeBg: "#d1fae5",
+    badgeColor: "#065f46",
+    iconBg: "#d1fae5",
+    iconColor: "#059669",
+    btnCls: "hover:opacity-90",
+    btnStyle: { background: "#059669", color: "#fff" },
+    shadow: "none",
+    scale: false,
   },
 ];
 
@@ -132,21 +173,31 @@ export default function PricingPage() {
       </div>
 
       {/* Plans */}
-      <div className="max-w-7xl mx-auto px-6 pb-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-6 pb-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
         {PLANS.map((plan) => {
           const Icon = plan.icon;
           const price = yearly ? plan.yearlyPrice : plan.monthlyPrice;
           return (
             <div key={plan.id}
-              className={`relative bg-white rounded-2xl border-2 p-7 flex flex-col ${plan.popular ? "border-blue-500 shadow-xl shadow-blue-100" : "border-gray-200"}`}>
+              className="relative flex flex-col"
+              style={{
+                background: plan.cardBg,
+                border: plan.border,
+                borderRadius: '20px',
+                padding: '28px',
+                boxShadow: plan.shadow,
+                transform: plan.scale ? 'scale(1.03)' : 'none',
+                transition: 'transform 0.2s',
+              }}>
               {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 rounded-full text-xs font-semibold" style={{ color: "#fff" }}>
-                  Le plus populaire
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                  style={{ background: plan.badgeBg, color: plan.badgeColor }}>
+                  {plan.badgeText || "Le plus populaire"}
                 </div>
               )}
               <div className="flex items-center gap-3 mb-4">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${plan.popular ? "bg-blue-100" : "bg-gray-100"}`}>
-                  <Icon className="w-5 h-5" style={{ color: plan.popular ? "#2563eb" : "#64748b" }} />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: plan.iconBg }}>
+                  <Icon className="w-5 h-5" style={{ color: plan.iconColor }} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold" style={{ color: "#0f172a" }}>{plan.name}</h3>
@@ -180,8 +231,8 @@ export default function PricingPage() {
               </ul>
 
               <Link href={plan.isFree ? "/login?tab=signup" : `/login?tab=signup&plan=${plan.id}&billing=${yearly ? "yearly" : "monthly"}`}
-                className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.popular ? "bg-blue-600 hover:bg-blue-700" : plan.isFree ? "bg-gray-100 hover:bg-gray-200" : "bg-gray-900 hover:bg-gray-800"}`}
-                style={{ color: plan.isFree ? "#374151" : "#fff" }}>
+                className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors ${plan.btnCls}`}
+                style={plan.btnStyle}>
                 {plan.cta}
               </Link>
             </div>

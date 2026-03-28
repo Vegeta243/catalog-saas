@@ -170,10 +170,26 @@ export default function HomePage() {
         </a>
 
         {/* Secondary link */}
-        <div style={{ marginBottom: '28px' }}>
+        <div style={{ marginBottom: '16px' }}>
           <Link href="/login" className="text-muted-foreground" style={{ fontSize: '14px', textDecoration: 'none' }}>
             J&apos;ai déjà un compte
           </Link>
+        </div>
+
+        {/* Download app */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <Link href="/download" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '7px',
+            padding: '9px 18px',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '10px', color: 'var(--muted-foreground)',
+            fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+            transition: 'background 0.2s',
+          }}>
+            📱 Télécharger l&apos;app
+          </Link>
+          <span className="text-muted-foreground" style={{ fontSize: '12px' }}>Android · iPhone · Desktop</span>
         </div>
 
         {/* Trust strip */}
