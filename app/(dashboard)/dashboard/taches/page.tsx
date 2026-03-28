@@ -55,21 +55,24 @@ export default function TachesPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const [{ data: userData }, { data: historyData }] = await Promise.all([
-      supabase.from("users").select("plan, actions_used").eq("id", user.id).single(),
-      supabase.from("action_history").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
-    ]);
+      const [{ data: userData }, { data: historyData }] = await Promise.all([
+        supabase.from("users").select("plan, actions_used").eq("id", user.id).single(),
+        supabase.from("action_history").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
+      ]);
 
-    if (userData) {
-      setPlan(userData.plan || "free");
-      setTasksUsed(userData.actions_used || 0);
+      if (userData) {
+        setPlan(userData.plan || "free");
+        setTasksUsed(userData.actions_used || 0);
+      }
+      setActions(historyData || []);
+    } finally {
+      setLoading(false);
     }
-    setActions(historyData || []);
-    setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);

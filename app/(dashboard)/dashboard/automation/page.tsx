@@ -37,8 +37,8 @@ function ConfigFields({ type, config, onChange }: {
   onChange: (key: string, value: unknown) => void;
 }) {
   const inputStyle: React.CSSProperties = {
-    background: "#1a1a2e",
-    border: "1px solid #334155",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: 6,
     color: "#e2e8f0",
     padding: "6px 10px",
@@ -141,7 +141,7 @@ export default function AutomationPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/automations");
+      const res = await fetch("/api/automations", { credentials: "include" });
       const data = await res.json();
       if (data.automations) setAutomations(data.automations);
     } catch {
@@ -167,6 +167,7 @@ export default function AutomationPage() {
     try {
       const res = await fetch("/api/automations", {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, is_active: !currentValue }),
       });
@@ -184,6 +185,7 @@ export default function AutomationPage() {
     try {
       const res = await fetch("/api/automations/run", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
@@ -203,6 +205,7 @@ export default function AutomationPage() {
     try {
       const res = await fetch("/api/automations", {
         method: "DELETE",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
@@ -222,6 +225,7 @@ export default function AutomationPage() {
     try {
       const res = await fetch("/api/automations", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name.trim(), type: form.type, config: form.config }),
       });
@@ -243,8 +247,8 @@ export default function AutomationPage() {
   const filtered = automations.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()));
 
   const card: React.CSSProperties = {
-    background: "#0f172a",
-    border: "1px solid #1e293b",
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: 12,
     padding: "clamp(12px, 3vw, 20px)",
     marginBottom: 12,
@@ -303,7 +307,7 @@ export default function AutomationPage() {
               placeholder="Nom de l automatisation"
               value={form.name}
               onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              style={{ background: "#1a1a2e", border: "1px solid #334155", borderRadius: 6, color: "#e2e8f0", padding: "8px 12px", fontSize: 14, width: "100%", boxSizing: "border-box" }}
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "#e2e8f0", padding: "8px 12px", fontSize: 14, width: "100%", boxSizing: "border-box" }}
             />
             <div>
               <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 6 }}>Type</label>
@@ -313,8 +317,8 @@ export default function AutomationPage() {
                     key={t}
                     onClick={() => setForm((prev) => ({ ...prev, type: t, config: {} }))}
                     style={{
-                      background: form.type === t ? (TYPE_COLORS[t] + "22") : "#1e293b",
-                      border: "1px solid " + (form.type === t ? TYPE_COLORS[t] : "#334155"),
+                      background: form.type === t ? (TYPE_COLORS[t] + "22") : "rgba(255,255,255,0.05)",
+                      border: "1px solid " + (form.type === t ? TYPE_COLORS[t] : "rgba(255,255,255,0.12)"),
                       borderRadius: 8,
                       color: form.type === t ? TYPE_COLORS[t] : "#94a3b8",
                       padding: "8px 6px",
@@ -332,7 +336,7 @@ export default function AutomationPage() {
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 onClick={() => { setShowCreate(false); setForm({ name: "", type: "seo", config: {} }); }}
-                style={{ background: "#1e293b", border: "1px solid #334155", color: "#94a3b8", borderRadius: 6, padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", borderRadius: 6, padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
               >
                 Annuler
               </button>
@@ -353,7 +357,7 @@ export default function AutomationPage() {
           <input
             type="text" placeholder="Rechercher..." value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "100%", background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, color: "#e2e8f0", padding: "8px 12px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
+            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#e2e8f0", padding: "8px 12px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
           />
         </div>
       )}
@@ -392,14 +396,14 @@ export default function AutomationPage() {
                   <button
                     onClick={() => handleRun(auto.id)}
                     disabled={!auto.is_active || !!running}
-                    style={{ background: auto.is_active && !running ? "#10b98122" : "#1e293b", border: "1px solid " + (auto.is_active && !running ? "#10b981" : "#334155"), color: auto.is_active && !running ? "#10b981" : "#475569", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: auto.is_active && !running ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 4 }}
+                    style={{ background: auto.is_active && !running ? "#10b98122" : "rgba(255,255,255,0.05)", border: "1px solid " + (auto.is_active && !running ? "#10b981" : "rgba(255,255,255,0.1)"), color: auto.is_active && !running ? "#10b981" : "#475569", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: auto.is_active && !running ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 4 }}
                   >
                     {isRunning ? <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Play size={13} />}
                   </button>
-                  <button onClick={() => setExpandedId(isExpanded ? null : auto.id)} style={{ background: "#1e293b", border: "1px solid #334155", color: "#94a3b8", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <button onClick={() => setExpandedId(isExpanded ? null : auto.id)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                     {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
-                  <button onClick={() => handleDelete(auto.id)} style={{ background: "#1e293b", border: "1px solid #334155", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <button onClick={() => handleDelete(auto.id)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -418,14 +422,14 @@ export default function AutomationPage() {
                 </span>
               </div>
               {isExpanded && (
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #1e293b" }}>
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                   <p style={{ fontSize: 11, color: "#64748b", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Configuration</p>
                   {Object.keys(auto.config ?? {}).length === 0 ? (
                     <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>Configuration par défaut</p>
                   ) : (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                       {Object.entries(auto.config ?? {}).map(([k, v]) => (
-                        <span key={k} style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, padding: "3px 8px", fontSize: 12, color: "#94a3b8" }}>
+                        <span key={k} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "3px 8px", fontSize: 12, color: "#94a3b8" }}>
                           {k}: <strong style={{ color: "#e2e8f0" }}>{String(v)}</strong>
                         </span>
                       ))}

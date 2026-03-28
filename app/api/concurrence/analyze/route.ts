@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       supabase.from("competitor_snapshots").select("*").eq("competitor_id", competitor_id).order("analyzed_at", { ascending: false }).limit(1),
     ]);
 
-    if (userData && userData.actions_used + 5 > (userData.actions_limit || 50)) {
+    if (userData && userData.actions_used + 5 > (userData.actions_limit || 30)) {
       return NextResponse.json({ error: "Quota insuffisant (5 tâches requises)." }, { status: 403 });
     }
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       const res = await fetch(competitor.url, {
         signal: controller.signal,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/stdout)",
         },
       });
       clearTimeout(timeoutId);
@@ -84,7 +84,54 @@ export async function POST(request: NextRequest) {
       fetchError = true;
     }
 
-    // Extract products with cheerio
+    // ── Deep Shopify catalogue scrape via /products.json ────────────────────
+    type ShopifyProduct = {
+      title: string;
+      vendor: string;
+      product_type: string;
+      tags: string[];
+      variants: { price: string }[];
+    };
+    let shopifyProducts: ShopifyProduct[] = [];
+    let shopifyCollections: string[] = [];
+    try {
+      const baseUrl = new URL(competitor.url).origin;
+      const ua = "Mozilla/5.0 (compatible; EcomPilotBot/1.0)";
+      const [p1Res, p2Res, p3Res, colRes] = await Promise.allSettled([
+        fetch(`${baseUrl}/products.json?limit=250`, { headers: { "User-Agent": ua } }),
+        fetch(`${baseUrl}/products.json?limit=250&page=2`, { headers: { "User-Agent": ua } }),
+        fetch(`${baseUrl}/products.json?limit=250&page=3`, { headers: { "User-Agent": ua } }),
+        fetch(`${baseUrl}/collections.json?limit=100`, { headers: { "User-Agent": ua } }),
+      ]);
+      const parseProductsJson = async (r: PromiseSettledResult<Response>) => {
+        if (r.status !== "fulfilled" || !r.value.ok) return [];
+        try {
+          const d = await r.value.json() as { products?: ShopifyProduct[] };
+          return d.products || [];
+        } catch { return []; }
+      };
+      const [page1, page2, page3] = await Promise.all([parseProductsJson(p1Res), parseProductsJson(p2Res), parseProductsJson(p3Res)]);
+      shopifyProducts = [...page1, ...page2, ...page3];
+
+      if (colRes.status === "fulfilled" && colRes.value.ok) {
+        try {
+          const cd = await colRes.value.json() as { collections?: { title: string }[] };
+          shopifyCollections = (cd.collections || []).map((c) => c.title).filter(Boolean).slice(0, 50);
+        } catch { /* silent */ }
+      }
+    } catch { /* not a Shopify store or blocked */ }
+
+    // Build enriched product list from Shopify API first, fall back to HTML scrape
+    const productsFromApi = shopifyProducts.map((p) => ({
+      title: p.title,
+      price: p.variants?.[0]?.price ? parseFloat(p.variants[0].price) : null,
+      vendor: p.vendor || "",
+      product_type: p.product_type || "",
+      tags: Array.isArray(p.tags) ? p.tags : [],
+      url: "",
+    }));
+
+    // Extract products with cheerio (HTML fallback)
     const $ = cheerio.load(html);
     const products: { title: string; price: number | null; url: string }[] = [];
 
@@ -100,11 +147,42 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    const uniqueProducts = products.filter((p, i, arr) => arr.findIndex(x => x.title === p.title) === i).slice(0, 50);
-    const prices = uniqueProducts.filter(p => p.price !== null).map(p => p.price as number);
-    const avgPrice = prices.length > 0
-      ? Math.round((prices.reduce((a, b) => a + b, 0) / prices.length) * 100) / 100
+    // Merge: prefer API products (more complete), fallback HTML products de-duped
+    const mergedProducts = productsFromApi.length > 0
+      ? productsFromApi
+      : products.map((p) => ({ ...p, vendor: "", product_type: "", tags: [] }));
+
+    const uniqueProducts = mergedProducts
+      .filter((p, i, arr) => arr.findIndex(x => x.title === p.title) === i)
+      .slice(0, 500);
+
+    const allPrices = uniqueProducts.filter(p => p.price !== null && p.price > 0).map(p => p.price as number);
+    const avgPrice = allPrices.length > 0
+      ? Math.round((allPrices.reduce((a, b) => a + b, 0) / allPrices.length) * 100) / 100
       : null;
+
+    // Price distribution buckets
+    const priceBuckets = { under10: 0, "10to30": 0, "30to60": 0, "60to100": 0, over100: 0 };
+    for (const p of allPrices) {
+      if (p < 10) priceBuckets.under10++;
+      else if (p < 30) priceBuckets["10to30"]++;
+      else if (p < 60) priceBuckets["30to60"]++;
+      else if (p < 100) priceBuckets["60to100"]++;
+      else priceBuckets.over100++;
+    }
+
+    // Vendor & keyword analysis
+    const vendorCounts: Record<string, number> = {};
+    const keywordCounts: Record<string, number> = {};
+    const stopWords = new Set(["the","a","an","and","or","of","in","for","to","with","le","la","les","de","du","un","une","des","et","ou","en","pour","avec","sur","par","au","aux"]);
+    for (const p of uniqueProducts) {
+      if (p.vendor) vendorCounts[p.vendor] = (vendorCounts[p.vendor] || 0) + 1;
+      const words = p.title.toLowerCase().split(/[\s\-_,./()]+/).filter(w => w.length > 3 && !stopWords.has(w));
+      for (const w of words) keywordCounts[w] = (keywordCounts[w] || 0) + 1;
+    }
+    const topVendors = Object.entries(vendorCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([v, c]) => ({ vendor: v, count: c }));
+    const topKeywords = Object.entries(keywordCounts).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([k, c]) => ({ keyword: k, count: c }));
+    const productTypes = [...new Set(uniqueProducts.map(p => p.product_type).filter(Boolean))].slice(0, 20);
 
     // Detect changes vs previous snapshot
     const prevProducts = (prevSnapshot?.raw_data as { products?: { title: string; price: number | null }[] })?.products || [];
@@ -165,7 +243,7 @@ export async function POST(request: NextRequest) {
       h1_count: $("h1").length,
     };
 
-    // AI insights — always generate 5 recommendations
+    // AI insights — generate 8 recommendations with richer context
     let insights: string[] = [];
     try {
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -174,15 +252,32 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: "system",
-            content: "Tu es un expert e-commerce. Génère exactement 5 recommandations courtes et actionnables en français pour améliorer la compétitivité face à ce concurrent. Retourne un JSON array de 5 strings.",
+            content: "Tu es un expert e-commerce. Génère exactement 8 recommandations courtes et actionnables en français pour améliorer la compétitivité face à ce concurrent. Retourne un JSON array de 8 strings uniquement.",
           },
           {
             role: "user",
-            content: JSON.stringify({ competitorName: competitor.name, products_found: uniqueProducts.length, avg_price: avgPrice, promo_detected, shipping_info, avg_rating, priceChanges, newProducts, removedProducts, social, payment }),
+            content: JSON.stringify({
+              competitorName: competitor.name,
+              products_found: uniqueProducts.length,
+              avg_price: avgPrice,
+              price_distribution: priceBuckets,
+              top_vendors: topVendors.slice(0, 5),
+              top_keywords: topKeywords.slice(0, 15),
+              product_types: productTypes.slice(0, 10),
+              collections: shopifyCollections.slice(0, 15),
+              promo_detected,
+              shipping_info,
+              avg_rating,
+              priceChanges: priceChanges.slice(0, 10),
+              newProducts: newProducts.slice(0, 10),
+              removedProducts: removedProducts.slice(0, 10),
+              social,
+              payment,
+            }),
           },
         ],
         temperature: 0.7,
-        max_tokens: 700,
+        max_tokens: 900,
       });
       const content = completion.choices[0]?.message?.content || "[]";
       try {
@@ -201,7 +296,16 @@ export async function POST(request: NextRequest) {
         price_changes: priceChanges,
         new_products: newProducts,
         removed_products: removedProducts,
-        raw_data: { products: uniqueProducts, promo_detected, shipping_info, avg_rating, review_count, social, payment, seo, insights, fetch_error: fetchError },
+        raw_data: {
+          products: uniqueProducts.slice(0, 100),
+          top_vendors: topVendors,
+          top_keywords: topKeywords,
+          product_types: productTypes,
+          collections: shopifyCollections,
+          price_distribution: priceBuckets,
+          promo_detected, shipping_info, avg_rating, review_count,
+          social, payment, seo, insights, fetch_error: fetchError,
+        },
       }),
       supabase.from("competitors").update({ last_analyzed_at: new Date().toISOString() }).eq("id", competitor_id),
       supabase.rpc("increment_actions", { p_user_id: user.id, p_count: 5 }),
@@ -228,6 +332,11 @@ export async function POST(request: NextRequest) {
       social,
       payment,
       seo,
+      top_vendors: topVendors,
+      top_keywords: topKeywords,
+      product_types: productTypes,
+      collections: shopifyCollections,
+      price_distribution: priceBuckets,
     });
   }
 

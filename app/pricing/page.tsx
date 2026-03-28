@@ -76,7 +76,7 @@ const PLANS = [
     features: [
       "Boutiques illimitées",
       "Tout Pro +",
-      "Actions illimitées",
+      "50 000 actions/mois",
       "Automatisations illimitées",
       "Performance gros catalogues",
       "Support dédié (4h)",

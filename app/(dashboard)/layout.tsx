@@ -427,11 +427,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
 
               {/* User Menu */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div className="hidden sm:block" style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{userName}</p>
                   <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</p>
                 </div>
+                <Link href="/dashboard/account" style={{ textDecoration: 'none' }}>
                 <div style={{
                   width: '36px',
                   height: '36px',
@@ -443,9 +444,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   color: 'white',
                   fontWeight: '600',
                   fontSize: '14px',
+                  cursor: 'pointer',
                 }}>
                   {userName.charAt(0).toUpperCase()}
                 </div>
+                </Link>
               </div>
             </div>
           </header>

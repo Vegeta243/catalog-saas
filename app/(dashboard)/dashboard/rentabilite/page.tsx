@@ -358,17 +358,17 @@ export default function RentabilitePage() {
                       }`}
                     >
                       {asImageUrls(product.images)[0] ? (
-                        <img src={asImageUrls(product.images)[0]} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                        <img src={asImageUrls(product.images)[0]} alt="" className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center">
-                          <Package className="w-5 h-5" style={{ color: "#cbd5e1" }} />
+                        <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                          <Package className="w-7 h-7" style={{ color: "#cbd5e1" }} />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate" style={{ color: isSelected ? "#2563eb" : "#0f172a" }}>
                           {product.title}
                         </p>
-                        <p className="text-xs font-semibold mt-0.5" style={{ color: "#059669" }}>
+                        <p className="text-sm font-bold mt-0.5" style={{ color: "#2563eb" }}>
                           {parseFloat(product.price).toFixed(2)} €
                         </p>
                       </div>
