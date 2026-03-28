@@ -29,6 +29,8 @@ import {
   TrendingUp,
   Gift,
   Search,
+  MessageSquare,
+  BookOpen,
 } from 'lucide-react';
 import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 import AIChatWidget from '@/components/ai-chat-widget';
@@ -69,13 +71,20 @@ const NAV_SECTIONS = [
       { href: '/dashboard/concurrence', label: 'Analyse concurrence', icon: Eye },
     ],
   },
+  {
+    label: "ASSISTANCE",
+    items: [
+      { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle },
+      { href: '/dashboard/faq', label: 'FAQ', icon: BookOpen },
+      { href: '/dashboard/contact', label: 'Nous contacter', icon: MessageSquare },
+    ],
+  },
 ];
 
 const BOTTOM_ITEMS = [
   { href: '/dashboard/parrainage', label: 'Parrainer → -20% par mois', icon: Gift },
   { href: '/dashboard/account', label: 'Mon compte', icon: User },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
-  { href: '/dashboard/help', label: "Centre d'aide", icon: HelpCircle },
 ];
 
 const styles = {
@@ -457,6 +466,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <main style={{ padding: 'clamp(16px, 4vw, 32px)' }}>
             {children}
           </main>
+
+          {/* Legal Footer */}
+          <footer style={{
+            padding: '14px clamp(16px, 4vw, 32px)',
+            borderTop: '1px solid var(--apple-gray-200)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>
+              © {new Date().getFullYear()} EcomPilot Elite
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+              {[
+                { label: 'Mentions légales', href: '/mentions-legales' },
+                { label: 'CGV', href: '/cgv' },
+                { label: 'Confidentialité', href: '/politique-confidentialite' },
+                { label: 'FAQ', href: '/dashboard/faq' },
+                { label: 'Contact', href: '/dashboard/contact' },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{ color: 'var(--text-tertiary)', fontSize: '12px', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </footer>
 
           {/* AI Chat Widget */}
           <AIChatWidget />
