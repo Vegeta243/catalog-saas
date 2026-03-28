@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Zap, Play, Plus, Trash2, Clock, RefreshCw, Search, ToggleLeft, ToggleRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/lib/toast";
 import { hasFeature } from "@/lib/credits";
@@ -122,7 +122,7 @@ function ConfigFields({ type, config, onChange }: {
 export default function AutomationPage() {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(false);
+  const [hasAccess, setHasAccess] = useState(true); // all plans include automations
   const [showCreate, setShowCreate] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -138,30 +138,39 @@ export default function AutomationPage() {
   const toastSuccess = (msg: string) => addToast(msg, "success");
   const toastError = (msg: string) => addToast(msg, "error");
 
-  const load = useCallback(async () => {
+  // Stable ref so load() doesn't need addToast in deps (prevents infinite re-run)
+  const addToastRef = useRef(addToast);
+  useEffect(() => { addToastRef.current = addToast; });
+
+  const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/automations", { credentials: "include" });
+      const res = await fetch("/api/automations", { credentials: "include", cache: "no-store" });
       const data = await res.json();
-      if (data.automations) setAutomations(data.automations);
+      if (!res.ok) {
+        addToastRef.current(data.error ?? "Erreur chargement", "error");
+        return;
+      }
+      setAutomations(data.automations ?? []);
     } catch {
-      toastError("Erreur lors du chargement");
+      addToastRef.current("Erreur lors du chargement", "error");
     } finally {
       setLoading(false);
     }
-  }, [toastError]);
+  };
 
   useEffect(() => {
+    // Check plan access (non-blocking — all plans have automations)
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }: { data: { user: { user_metadata?: { plan?: string } } | null } }) => {
-      const user = data.user;
-      if (user) {
-        const plan = (user.user_metadata?.plan ?? "free") as string;
-        setHasAccess(hasFeature(plan, "automations"));
-        load();
-      }
-    });
-  }, [load]);
+      const plan = (data.user?.user_metadata?.plan ?? "free") as string;
+      setHasAccess(hasFeature(plan, "automations"));
+    }).catch(() => setHasAccess(true));
+
+    // Load automations immediately — don't gate on getUser()
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggle = async (id: string, currentValue: boolean) => {
     try {

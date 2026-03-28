@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
@@ -10,14 +10,30 @@ function adminClient() {
   );
 }
 
+/** Resolves the authenticated user from cookie OR Authorization Bearer header */
+async function getUser(req: NextRequest) {
+  // 1. Try cookie-based auth (standard browser fetch with credentials:include)
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) return user;
+
+  // 2. Fallback: Authorization: Bearer <token> (direct API calls / test scripts)
+  const auth = req.headers.get("authorization");
+  if (auth?.startsWith("Bearer ")) {
+    const token = auth.slice(7);
+    const { data } = await adminClient().auth.getUser(token);
+    if (data.user) return data.user;
+  }
+  return null;
+}
+
 // GET — list automations for authenticated user
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser(req);
     if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-    const { data: automations, error } = await supabase
+    const { data: automations, error } = await adminClient()
       .from("automations")
       .select("*")
       .eq("user_id", user.id)
@@ -31,10 +47,9 @@ export async function GET() {
 }
 
 // POST — create a new automation
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser(req);
     if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
     const body = await req.json();
@@ -69,10 +84,9 @@ export async function POST(req: Request) {
 }
 
 // PATCH — update automation (toggle is_active, rename, update config)
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser(req);
     if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
     const body = await req.json();
@@ -105,10 +119,9 @@ export async function PATCH(req: Request) {
 }
 
 // DELETE — delete an automation
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser(req);
     if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
     const body = await req.json();
