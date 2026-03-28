@@ -1,4 +1,7 @@
-'use client'
+const fs = require('fs')
+const path = require('path')
+
+const content = `'use client'
 import { useState, useEffect } from 'react'
 
 type Auto = {
@@ -519,3 +522,17 @@ export default function AutomationPage() {
     </div>
   )
 }
+`
+
+const outPath = path.join(__dirname, '..', 'app', '(dashboard)', 'dashboard', 'automation', 'page.tsx')
+fs.writeFileSync(outPath, content.trimStart())
+const written = fs.readFileSync(outPath, 'utf8')
+const lines = written.split('\n').length
+const bytes = fs.statSync(outPath).size
+console.log('Written:', lines, 'lines,', bytes, 'bytes')
+console.log('Has #111827:', written.includes('#111827'))
+console.log('Has wordBreak:', written.includes('wordBreak'))
+console.log('Has boxSizing:', written.includes('boxSizing'))
+console.log('Has minWidth:0:', written.includes("minWidth: 0"))
+console.log('Has white bg:', written.includes('#ffffff'))
+console.log('Has credentials:', written.includes("credentials: 'include'"))

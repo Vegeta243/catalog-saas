@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const content = `'use client'
+// REWRITE v3 — bulletproof layout, no overflow
 import { useState, useEffect } from 'react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
