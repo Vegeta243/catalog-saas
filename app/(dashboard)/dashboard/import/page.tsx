@@ -107,7 +107,7 @@ export default function ImportPage() {
     border: '1px solid #e2e8f0',
     borderRadius: 12, padding: 20, marginBottom: 16,
   }
-  const lbl: React.CSSProperties = { color: '#475569', fontSize: 12, fontWeight: 500 }
+  const lbl: React.CSSProperties = { color: '#475569', fontSize: 12, fontWeight: 500, display: 'block' }
   const btnPri: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     gap: 8, padding: '13px 20px', background: '#4f8ef7',
@@ -119,7 +119,7 @@ export default function ImportPage() {
     background: '#f8fafc',
     border: '1px solid #e2e8f0',
     color: '#0f172a', borderRadius: 10,
-    fontSize: 14, fontWeight: 400, cursor: 'pointer',
+    fontSize: 14, fontWeight: 600, cursor: 'pointer',
   }
 
   return (
@@ -157,8 +157,8 @@ export default function ImportPage() {
         {([['import', 'Importer'], ['history', 'Historique']] as const).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{
             padding: '9px 18px', border: 'none', background: 'transparent',
-            cursor: 'pointer', fontSize: 14, fontWeight: 500,
-            color: tab === id ? '#e8ecf4' : '#555f7a',
+            cursor: 'pointer', fontSize: 14, fontWeight: 600,
+            color: tab === id ? '#0f172a' : '#64748b',
             borderBottom: '2px solid ' + (tab === id ? '#4f8ef7' : 'transparent'),
           }}>{label}</button>
         ))}
@@ -322,7 +322,7 @@ export default function ImportPage() {
                       <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f8fafc', flexShrink: 0 }} />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: r.success ? '#e8ecf4' : '#f87171', fontSize: 13, fontWeight: 500, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ color: r.success ? '#0f172a' : '#dc2626', fontSize: 13, fontWeight: 600, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {r.success ? r.title : "Échec de l'import"}
                       </p>
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>

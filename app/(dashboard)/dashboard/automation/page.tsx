@@ -650,12 +650,15 @@ export default function AutomationPage() {
             <button onClick={() => setScreen('pick')} style={{ ...pri('#2563eb'), fontSize: '15px', padding: '12px 28px' }}>
               Choisir une automatisation
             </button>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(180px,100%),1fr))', gap: '10px', marginTop: '28px' }}>
-              {TYPES.slice(0, 5).map(t => (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(260px,100%),1fr))', gap: '12px', marginTop: '32px', textAlign: 'left' }}>
+              {TYPES.slice(0, 4).map(t => (
                 <button key={t.id} onClick={() => pick(t)}
-                  style={{ ...S.card, padding: '14px', cursor: 'pointer', textAlign: 'left', background: t.bg, border: '1px solid ' + t.color + '33' }}>
-                  <p style={{ color: '#0f172a', fontSize: '13px', fontWeight: 700, margin: '0 0 4px', wordBreak: 'break-word' }}>{t.icon} {t.name.split(' ').slice(0, 3).join(' ')}</p>
-                  <p style={{ color: t.color, fontSize: '11px', margin: 0, fontWeight: 600 }}>{t.result}</p>
+                  style={{ ...S.card, padding: '16px', cursor: 'pointer', textAlign: 'left', background: t.bg, border: '1px solid ' + t.color + '33', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '20px', flexShrink: 0 }}>{t.icon}</span>
+                    <p style={{ color: '#0f172a', fontSize: '14px', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{t.name}</p>
+                  </div>
+                  <p style={{ color: t.color, fontSize: '12px', margin: 0, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>↗ {t.result}</p>
                 </button>
               ))}
             </div>
