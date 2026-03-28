@@ -247,8 +247,8 @@ export default function ImportPage() {
               onClick={() => shopifyOk && setPushShopify(prev => !prev)}
               style={{
                 width: 40, height: 22, borderRadius: 11, flexShrink: 0,
-                background: pushShopify && shopifyOk ? '#4f8ef7' : 'rgba(255,255,255,0.08)',
-                border: '1px solid ' + (pushShopify && shopifyOk ? '#4f8ef7' : 'rgba(255,255,255,0.12)'),
+                background: pushShopify && shopifyOk ? '#4f8ef7' : '#e2e8f0',
+                border: '1px solid ' + (pushShopify && shopifyOk ? '#4f8ef7' : '#cbd5e1'),
                 position: 'relative',
                 cursor: shopifyOk ? 'pointer' : 'not-allowed',
                 transition: 'background 0.2s',

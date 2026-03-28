@@ -1,4 +1,6 @@
-'use client'
+const fs = require('fs')
+
+const code = `'use client'
 import { useState, useEffect, useRef } from 'react'
 
 type Product = {
@@ -97,7 +99,7 @@ export default function ImagesPage() {
         reader.readAsDataURL(file)
       })
       const pid = selected.shopify_product_id || selected.id
-      const res = await fetch(`/api/shopify/products/${pid}/image`, {
+      const res = await fetch(\`/api/shopify/products/\${pid}/image\`, {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageBase64: base64, filename: file.name })
@@ -122,7 +124,7 @@ export default function ImagesPage() {
     setSaveMsg('')
     try {
       const pid = selected.shopify_product_id || selected.id
-      const res = await fetch(`/api/shopify/products/${pid}`, {
+      const res = await fetch(\`/api/shopify/products/\${pid}\`, {
         method: 'PUT', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -247,7 +249,7 @@ export default function ImagesPage() {
                 <div style={{ width: '100%', paddingTop: '65%', position: 'relative', background: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', marginBottom: '12px' }}>
                   <img src={currentImgUrl} alt="selected"
                     style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
-                      filter: `brightness(${brightness}%) contrast(${contrast}%)` }} />
+                      filter: \`brightness(\${brightness}%) contrast(\${contrast}%)\` }} />
                 </div>
               )}
 
@@ -259,7 +261,7 @@ export default function ImagesPage() {
                     {selectedImages.map((img, i) => (
                       <div key={i} onClick={() => setSelectedImgIdx(i)}
                         style={{ width: '44px', height: '44px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
-                          border: `2px solid ${i === selectedImgIdx ? '#2563eb' : '#e2e8f0'}`, flexShrink: 0 }}>
+                          border: \`2px solid \${i === selectedImgIdx ? '#2563eb' : '#e2e8f0'}\`, flexShrink: 0 }}>
                         <img src={img} alt={'img ' + i} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     ))}
@@ -331,7 +333,7 @@ export default function ImagesPage() {
               {saveMsg && (
                 <div style={{ padding: '9px 12px', borderRadius: '7px', marginBottom: '12px',
                   background: saveMsg.includes('Erreur') ? '#fef2f2' : '#f0fdf4',
-                  border: `1px solid ${saveMsg.includes('Erreur') ? '#fecaca' : '#bbf7d0'}` }}>
+                  border: \`1px solid \${saveMsg.includes('Erreur') ? '#fecaca' : '#bbf7d0'}\` }}>
                   <p style={{ color: saveMsg.includes('Erreur') ? '#dc2626' : '#15803d', fontSize: '13px', margin: 0, fontWeight: 500 }}>
                     {saveMsg}
                   </p>
@@ -357,3 +359,8 @@ export default function ImagesPage() {
     </div>
   )
 }
+`
+
+fs.writeFileSync('app/(dashboard)/dashboard/images/page.tsx', code.trim())
+const st = fs.statSync('app/(dashboard)/dashboard/images/page.tsx')
+console.log('Images page written:', st.size, 'bytes,', code.trim().split('\n').length, 'lines')

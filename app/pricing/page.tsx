@@ -28,7 +28,7 @@ const PLANS = [
     iconBg: "rgba(255,255,255,0.07)",
     iconColor: "#9ca3af",
     btnCls: "",
-    btnStyle: { background: "rgba(255,255,255,0.08)", color: "#d1d5db" },
+    btnStyle: { background: '#f8fafc', color: "#d1d5db" },
     shadow: "none",
     scale: false,
   },
@@ -107,7 +107,7 @@ const PLANS = [
     features: [
       "Boutiques illimitées",
       "Tout Pro +",
-      "50 000 actions/mois",
+      "Actions illimitées/mois",
       "Automatisations illimitées",
       "Performance gros catalogues",
       "Support dédié (4h)",

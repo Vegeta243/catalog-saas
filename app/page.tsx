@@ -63,7 +63,7 @@ export default function HomePage() {
 
   const faqItems = [
     { q: "Est-ce que mes produits sont modifiés sans mon accord ?", a: "Non, jamais. EcomPilot génère des suggestions que vous validez avant d'appliquer." },
-    { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec 30 actions, sans carte." },
+    { q: "Faut-il une carte bancaire pour commencer ?", a: "Non. Vous démarrez gratuitement avec 100 actions, sans carte." },
     { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic. Aucun engagement, aucun frais caché." },
   ];
 
@@ -187,8 +187,8 @@ export default function HomePage() {
           <Link href="/download" style={{
             display: 'inline-flex', alignItems: 'center', gap: '7px',
             padding: '9px 18px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.12)',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
             borderRadius: '10px', color: 'var(--muted-foreground)',
             fontSize: '13px', fontWeight: 600, textDecoration: 'none',
             transition: 'background 0.2s',

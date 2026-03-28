@@ -98,8 +98,8 @@ export default function FeaturesHelpPage() {
           <div
             key={feature.title}
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
               borderRadius: 20,
               overflow: 'hidden',
             }}
@@ -143,8 +143,8 @@ export default function FeaturesHelpPage() {
                   <div
                     key={s.step}
                     style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
                       borderRadius: 14,
                       padding: '14px 16px',
                       display: 'flex',

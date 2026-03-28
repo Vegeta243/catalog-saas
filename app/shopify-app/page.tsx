@@ -381,7 +381,7 @@ export default function ShopifyAppPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {[
               { name: "Gratuit", price: "0€", tasks: "30 actions", color: "#64748b", popular: false },
-              { name: "Starter", price: "19€", tasks: "1 500 actions/mois", color: "#2563eb", popular: false },
+              { name: "Starter", price: "19€", tasks: "1 1 500 actions/mois", color: "#2563eb", popular: false },
               { name: "Pro", price: "49€", tasks: "10 000 actions/mois", color: "#7c3aed", popular: true },
               { name: "Agency", price: "149€", tasks: "Actions illimitées", color: "#059669", popular: false },
             ].map((p) => (
