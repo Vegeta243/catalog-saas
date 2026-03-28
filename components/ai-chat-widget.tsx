@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Sparkles, ChevronDown, User } from "lucide-react";
+import { X, Send, Sparkles, User } from "lucide-react";
 
 interface Message {
   id: string;
@@ -181,8 +181,9 @@ export default function AIChatWidget({ plan, currentPage, tasksRemaining, tasksT
             <button
               onClick={() => setOpen(false)}
               className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/25 transition-colors flex items-center justify-center"
+              aria-label="Fermer le chat"
             >
-              <ChevronDown className="w-4 h-4 text-white" />
+              <X className="w-4 h-4 text-white" />
             </button>
           </div>
 

@@ -37,10 +37,10 @@ function ConfigFields({ type, config, onChange }: {
   onChange: (key: string, value: unknown) => void;
 }) {
   const inputStyle: React.CSSProperties = {
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    background: "var(--surface-secondary)",
+    border: "1px solid var(--apple-gray-200)",
     borderRadius: 6,
-    color: "#e2e8f0",
+    color: "var(--text-primary)",
     padding: "6px 10px",
     fontSize: 13,
     width: "100%",
@@ -50,7 +50,7 @@ function ConfigFields({ type, config, onChange }: {
   if (type === "seo") {
     return (
       <div>
-        <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>
+        <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>
           Nb produits max à traiter
         </label>
         <input
@@ -69,7 +69,7 @@ function ConfigFields({ type, config, onChange }: {
     return (
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 120 }}>
-          <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>Direction</label>
+          <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>Direction</label>
           <select
             value={String(config.direction ?? "increase")}
             onChange={(e) => onChange("direction", e.target.value)}
@@ -80,7 +80,7 @@ function ConfigFields({ type, config, onChange }: {
           </select>
         </div>
         <div style={{ flex: 1, minWidth: 120 }}>
-          <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>Pourcentage (%)</label>
+          <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>Pourcentage (%)</label>
           <input
             type="number" min={1} max={100}
             value={String(config.percent ?? 10)}
@@ -95,8 +95,8 @@ function ConfigFields({ type, config, onChange }: {
   if (type === "stock_alert") {
     return (
       <div>
-        <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 4 }}>
-          Seuil d\'alerte (quantité)
+        <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>
+          Seuil d'alerte (quantité)
         </label>
         <input
           type="number" min={0}
@@ -110,7 +110,7 @@ function ConfigFields({ type, config, onChange }: {
 
   if (type === "import") {
     return (
-      <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>
+      <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: 0 }}>
         Synchronise les produits depuis votre boutique Shopify connectée.
       </p>
     );
@@ -247,8 +247,8 @@ export default function AutomationPage() {
   const filtered = automations.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()));
 
   const card: React.CSSProperties = {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: "var(--surface-primary)",
+    border: "1px solid var(--apple-gray-200)",
     borderRadius: 12,
     padding: "clamp(12px, 3vw, 20px)",
     marginBottom: 12,
@@ -269,9 +269,9 @@ export default function AutomationPage() {
 
   if (!hasAccess && !loading) {
     return (
-      <div style={{ padding: "clamp(16px, 4vw, 32px)", textAlign: "center", color: "#94a3b8" }}>
+      <div style={{ padding: "clamp(16px, 4vw, 32px)", textAlign: "center", color: "var(--text-tertiary)" }}>
         <Zap size={40} color="#6366f1" style={{ marginBottom: 16 }} />
-        <p style={{ fontSize: 18, fontWeight: 600, color: "#e2e8f0" }}>Automatisations indisponibles</p>
+        <p style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>Automatisations indisponibles</p>
         <p>Passez à un plan supérieur pour accéder aux automatisations.</p>
       </div>
     );
@@ -282,7 +282,7 @@ export default function AutomationPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Zap size={22} color="#6366f1" />
-          <h1 style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, color: "#f1f5f9", margin: 0 }}>
+          <h1 style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
             Automatisations
           </h1>
           <span style={{ background: "#6366f122", color: "#818cf8", border: "1px solid #6366f144", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 600 }}>
@@ -300,27 +300,27 @@ export default function AutomationPage() {
 
       {showCreate && (
         <div style={{ ...card, border: "1px solid #6366f144", marginBottom: 20 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0", margin: "0 0 14px" }}>Nouvelle automatisation</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 14px" }}>Nouvelle automatisation</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <input
               type="text"
               placeholder="Nom de l automatisation"
               value={form.name}
               onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "#e2e8f0", padding: "8px 12px", fontSize: 14, width: "100%", boxSizing: "border-box" }}
+              style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", borderRadius: 6, color: "var(--text-primary)", padding: "8px 12px", fontSize: 14, width: "100%", boxSizing: "border-box" }}
             />
             <div>
-              <label style={{ fontSize: 12, color: "#94a3b8", display: "block", marginBottom: 6 }}>Type</label>
+              <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 6 }}>Type</label>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
                 {(["seo", "price", "import", "stock_alert"] as const).map((t) => (
                   <button
                     key={t}
                     onClick={() => setForm((prev) => ({ ...prev, type: t, config: {} }))}
                     style={{
-                      background: form.type === t ? (TYPE_COLORS[t] + "22") : "rgba(255,255,255,0.05)",
-                      border: "1px solid " + (form.type === t ? TYPE_COLORS[t] : "rgba(255,255,255,0.12)"),
+                      background: form.type === t ? (TYPE_COLORS[t] + "22") : "var(--surface-secondary)",
+                      border: "1px solid " + (form.type === t ? TYPE_COLORS[t] : "var(--apple-gray-200)"),
                       borderRadius: 8,
-                      color: form.type === t ? TYPE_COLORS[t] : "#94a3b8",
+                      color: form.type === t ? TYPE_COLORS[t] : "var(--text-secondary)",
                       padding: "8px 6px",
                       fontSize: 12,
                       fontWeight: 600,
@@ -336,7 +336,7 @@ export default function AutomationPage() {
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
                 onClick={() => { setShowCreate(false); setForm({ name: "", type: "seo", config: {} }); }}
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", borderRadius: 6, padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
+                style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", color: "var(--text-secondary)", borderRadius: 6, padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
               >
                 Annuler
               </button>
@@ -357,20 +357,20 @@ export default function AutomationPage() {
           <input
             type="text" placeholder="Rechercher..." value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#e2e8f0", padding: "8px 12px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
+            style={{ width: "100%", background: "var(--surface-primary)", border: "1px solid var(--apple-gray-200)", borderRadius: 8, color: "var(--text-primary)", padding: "8px 12px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
           />
         </div>
       )}
 
       {loading ? (
-        <div style={{ ...card, textAlign: "center", color: "#64748b" }}>
+        <div style={{ ...card, textAlign: "center", color: "var(--text-tertiary)" }}>
           <RefreshCw size={20} style={{ animation: "spin 1s linear infinite" }} />
           <p style={{ margin: "8px 0 0" }}>Chargement...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ ...card, textAlign: "center", color: "#64748b" }}>
-          <Zap size={32} color="#334155" style={{ marginBottom: 12 }} />
-          <p style={{ fontSize: 14, margin: "0 0 4px", color: "#94a3b8" }}>
+        <div style={{ ...card, textAlign: "center", color: "var(--text-tertiary)" }}>
+          <Zap size={32} color="var(--apple-gray-200)" style={{ marginBottom: 12 }} />
+          <p style={{ fontSize: 14, margin: "0 0 4px", color: "var(--text-secondary)" }}>
             {search ? "Aucun résultat" : "Aucune automatisation créée"}
           </p>
           {!search && <p style={{ fontSize: 12, margin: 0 }}>Créez votre première automatisation.</p>}
@@ -388,7 +388,7 @@ export default function AutomationPage() {
                 >
                   {auto.is_active ? <ToggleRight size={22} color="#6366f1" /> : <ToggleLeft size={22} color="#475569" />}
                 </button>
-                <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "clamp(13px, 2vw, 15px)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "clamp(13px, 2vw, 15px)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {auto.name}
                 </span>
                 <span style={typeBadge(auto.type)}>{TYPE_LABELS[auto.type] ?? auto.type}</span>
@@ -400,37 +400,37 @@ export default function AutomationPage() {
                   >
                     {isRunning ? <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Play size={13} />}
                   </button>
-                  <button onClick={() => setExpandedId(isExpanded ? null : auto.id)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <button onClick={() => setExpandedId(isExpanded ? null : auto.id)} style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", color: "var(--text-tertiary)", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                     {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
-                  <button onClick={() => handleDelete(auto.id)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <button onClick={() => handleDelete(auto.id)} style={{ background: "var(--surface-secondary)", border: "1px solid #fecaca", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                     <Trash2 size={13} />
                   </button>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 11, color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Play size={10} />{auto.run_count} exécution{auto.run_count !== 1 ? "s" : ""}
                 </span>
                 {auto.last_run_at && (
-                  <span style={{ fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 11, color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 4 }}>
                     <Clock size={10} />{new Date(auto.last_run_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 )}
-                <span style={{ fontSize: 11, color: auto.is_active ? "#10b981" : "#64748b", marginLeft: "auto" }}>
+                <span style={{ fontSize: 11, color: auto.is_active ? "#10b981" : "var(--text-tertiary)", marginLeft: "auto" }}>
                   {auto.is_active ? "● Actif" : "○ Inactif"}
                 </span>
               </div>
               {isExpanded && (
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                  <p style={{ fontSize: 11, color: "#64748b", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Configuration</p>
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--apple-gray-200)" }}>
+                  <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Configuration</p>
                   {Object.keys(auto.config ?? {}).length === 0 ? (
-                    <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>Configuration par défaut</p>
+                    <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Configuration par défaut</p>
                   ) : (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                       {Object.entries(auto.config ?? {}).map(([k, v]) => (
-                        <span key={k} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "3px 8px", fontSize: 12, color: "#94a3b8" }}>
-                          {k}: <strong style={{ color: "#e2e8f0" }}>{String(v)}</strong>
+                        <span key={k} style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", borderRadius: 6, padding: "3px 8px", fontSize: 12, color: "var(--text-secondary)" }}>
+                          {k}: <strong style={{ color: "var(--text-primary)" }}>{String(v)}</strong>
                         </span>
                       ))}
                     </div>
