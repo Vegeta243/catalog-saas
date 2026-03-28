@@ -1,4 +1,7 @@
-'use client'
+const fs = require('fs')
+const path = require('path')
+
+const content = `'use client'
 import { useState, useEffect } from 'react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -39,7 +42,7 @@ const CAT = [
     border: '#6ee7b7',
     name: 'Ajustement automatique des prix',
     pitch: 'Adaptez vos marges en un coup. Augmentez les prix pendant les périodes fortes, baissez-les pour liquider les stocks.',
-    impact: "Modifie jusqu'\u00e0 200 prix en moins de 30 secondes",
+    impact: 'Modifie jusqu\'à 200 prix en moins de 30 secondes',
     before: 'Produit à 12,50€ avec marge de 15%',
     after: 'Prix augmenté à 14,38€ — marge à 29%',
     fields: [
@@ -116,12 +119,12 @@ const CAT = [
     bg: '#fdf2f8',
     border: '#f9a8d4',
     name: 'Compléter les descriptions vides',
-    pitch: "Les produits sans description convertissent 3x moins. Cette automatisation ajoute un texte d'accroche aux produits qui en sont dépourvus.",
+    pitch: 'Les produits sans description convertissent 3x moins. Cette automatisation ajoute un texte d\'accroche aux produits qui en sont dépourvus.',
     impact: 'Améliore le taux de conversion des produits sans description',
     before: 'Produit sans description — taux de conversion: 0.8%',
     after: 'Description ajoutée — taux de conversion: 2.4%',
     fields: [
-      { key: 'prefix', label: "Texte d'introduction (avant)", type: 'text', default: '', hint: 'Ex: Produit premium sélectionné avec soin.' },
+      { key: 'prefix', label: 'Texte d\'introduction (avant)', type: 'text', default: '', hint: 'Ex: Produit premium sélectionné avec soin.' },
       { key: 'suffix', label: 'Texte de fin (après)', type: 'text', default: '', hint: 'Ex: Livraison rapide sous 7-15 jours.' },
       { key: 'max_per_run', label: 'Produits max par exécution', type: 'number', default: 10, min: 1, max: 50 },
     ],
@@ -134,7 +137,7 @@ const CAT = [
     border: '#93c5fd',
     name: 'Synchronisation Shopify',
     pitch: 'Importez automatiquement tous vos produits Shopify dans EcomPilot pour avoir vos données à jour avant une optimisation.',
-    impact: "Synchronise 250+ produits en moins d'une minute",
+    impact: 'Synchronise 250+ produits en moins d\'une minute',
     before: 'EcomPilot désynchronisé — 12 nouveaux produits manquants',
     after: 'Tous les produits synchronisés — prêts à optimiser',
     fields: [],
@@ -596,3 +599,15 @@ export default function AutomationPage() {
     </div>
   )
 }
+`
+
+const outPath = path.join(__dirname, '..', 'app', '(dashboard)', 'dashboard', 'automation', 'page.tsx')
+fs.writeFileSync(outPath, content.trimStart())
+const written = fs.readFileSync(outPath, 'utf8')
+const lines = written.split('\n').length
+const bytes = fs.statSync(outPath).size
+console.log('Written:', lines, 'lines,', bytes, 'bytes')
+console.log('Has #111827:', written.includes('#111827'))
+console.log('Has white bg:', written.includes('#ffffff'))
+console.log('Has credentials:', written.includes("credentials: 'include'"))
+console.log('Has before/after:', written.includes('before') && written.includes('after'))
