@@ -664,108 +664,116 @@ export default function AutomationPage() {
 
         {/* List */}
         {!loading && autos.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {autos.map(a => {
               const t = getType(a.type)
               const r = runRes[a.id]
               const isOpen = openId === a.id
               const filterInfo = getFilter((a.config?.filter as string) || 'all')
+              const ac = t?.color || '#2563eb'
               return (
                 <div key={a.id} style={{ ...S.card, overflow: 'hidden' }}>
-                  {a.is_active && <div style={{ height: '3px', background: t?.color || '#2563eb' }} />}
-                  <div style={{ padding: '16px 18px' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                      {/* Icon */}
-                      <div style={{ width: '44px', minWidth: '44px', height: '44px', borderRadius: '11px', background: t?.bg || '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
-                        {t?.icon || '⚙️'}
-                      </div>
-                      {/* Info */}
-                      <div style={{ flex: '1 1 180px', minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
-                          <p style={{ color: '#0f172a', fontSize: '14px', fontWeight: 700, margin: 0, wordBreak: 'break-word' }}>{a.name}</p>
-                          <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 600, flexShrink: 0, background: a.is_active ? (t?.bg || '#eff6ff') : '#f1f5f9', color: a.is_active ? (t?.color || '#2563eb') : '#94a3b8', border: '1px solid ' + (a.is_active ? (t?.color || '#2563eb') + '44' : '#e2e8f0') }}>
-                            {a.is_active ? '● Actif' : '○ Pause'}
-                          </span>
+                  <div style={{ display: 'flex', minWidth: 0 }}>
+                    {/* Left accent stripe */}
+                    <div style={{ width: '4px', minWidth: '4px', background: a.is_active ? ac : '#e2e8f0', borderRadius: '12px 0 0 12px' }} />
+                    {/* Card body */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ padding: '14px 16px 12px' }}>
+                        {/* Top row: icon + name/type + controls — no flexWrap, text truncates instead */}
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', minWidth: 0 }}>
+                          <div style={{ width: '38px', minWidth: '38px', height: '38px', borderRadius: '10px', background: t?.bg || '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
+                            {t?.icon || '⚙️'}
+                          </div>
+                          {/* Text section: flex:1 minWidth:0 ensures the name can truncate */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                              <p style={{ color: '#0f172a', fontSize: '14px', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{a.name}</p>
+                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '20px', fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap', background: a.is_active ? (t?.bg || '#eff6ff') : '#f1f5f9', color: a.is_active ? ac : '#94a3b8', border: '1px solid ' + (a.is_active ? ac + '33' : '#e2e8f0') }}>
+                                {a.is_active ? '● Actif' : '○ Pause'}
+                              </span>
+                            </div>
+                            <p style={{ color: '#94a3b8', fontSize: '12px', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t?.name || a.type}</p>
+                          </div>
+                          {/* Controls — always right-aligned, never wrap */}
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                            <button onClick={() => toggle(a.id, a.is_active)} title={a.is_active ? 'Mettre en pause' : 'Activer'}
+                              style={{ width: '36px', height: '20px', borderRadius: '10px', background: a.is_active ? ac : '#cbd5e1', border: 'none', position: 'relative', cursor: 'pointer', padding: 0, flexShrink: 0 }}>
+                              <div style={{ width: '14px', height: '14px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', transform: a.is_active ? 'translateX(19px)' : 'translateX(3px)', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                            </button>
+                            <button onClick={() => setOpenId(isOpen ? null : a.id)} style={{ ...S.sec, padding: '6px 10px', fontSize: '12px' }}>
+                              {isOpen ? '▲' : '▼'} Détails
+                            </button>
+                            <button onClick={() => run(a.id)} disabled={runId === a.id || !a.is_active}
+                              style={{ ...pri(a.is_active ? ac : '#94a3b8'), padding: '7px 14px', opacity: (!a.is_active || runId === a.id) ? 0.55 : 1, fontSize: '12px' }}>
+                              {runId === a.id ? '⟳ En cours' : '▶ Exécuter'}
+                            </button>
+                            <button onClick={() => del(a.id)}
+                              style={{ width: '30px', height: '30px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '7px', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+                              ×
+                            </button>
+                          </div>
                         </div>
-                        <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 6px' }}>{t?.name || a.type}</p>
-                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {/* Meta row — wraps freely on narrow screens */}
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '8px', paddingLeft: '48px' }}>
                           {filterInfo && (
-                            <span style={{ fontSize: '12px', color: '#475569', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '5px', padding: '2px 8px', fontWeight: 500 }}>
+                            <span style={{ fontSize: '11px', color: '#475569', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '2px 7px', fontWeight: 500, whiteSpace: 'nowrap' }}>
                               {filterInfo.icon} {filterInfo.label}
                             </span>
                           )}
                           {(a.run_count || 0) > 0 && (
-                            <span style={{ color: '#64748b', fontSize: '12px' }}>
-                              <span style={{ color: t?.color || '#2563eb', fontWeight: 700 }}>{a.run_count}</span> exéc.
+                            <span style={{ color: '#64748b', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: ac, fontWeight: 700 }}>{a.run_count}</span> exéc.
                             </span>
                           )}
                           {a.last_run_at
-                            ? <span style={{ color: '#94a3b8', fontSize: '12px' }}>Dernière: {new Date(a.last_run_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                            : <span style={{ color: '#cbd5e1', fontSize: '12px', fontStyle: 'italic' }}>Jamais exécutée</span>
+                            ? <span style={{ color: '#94a3b8', fontSize: '11px', whiteSpace: 'nowrap' }}>Dernière : {new Date(a.last_run_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                            : <span style={{ color: '#cbd5e1', fontSize: '11px', fontStyle: 'italic', whiteSpace: 'nowrap' }}>Jamais exécutée</span>
                           }
                         </div>
                       </div>
-                      {/* Controls */}
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
-                        <button onClick={() => toggle(a.id, a.is_active)} title={a.is_active ? 'Mettre en pause' : 'Activer'}
-                          style={{ width: '40px', height: '22px', borderRadius: '11px', background: a.is_active ? (t?.color || '#2563eb') : '#cbd5e1', border: 'none', position: 'relative', cursor: 'pointer', padding: 0, flexShrink: 0 }}>
-                          <div style={{ width: '16px', height: '16px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '3px', transform: a.is_active ? 'translateX(21px)' : 'translateX(3px)', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-                        </button>
-                        <button onClick={() => setOpenId(isOpen ? null : a.id)} style={{ ...S.sec, padding: '7px 10px', fontSize: '12px' }}>
-                          {isOpen ? '▲' : '▼'} Détails
-                        </button>
-                        <button onClick={() => run(a.id)} disabled={runId === a.id || !a.is_active}
-                          style={{ ...pri(a.is_active ? (t?.color || '#2563eb') : '#94a3b8'), padding: '8px 16px', opacity: (!a.is_active || runId === a.id) ? 0.6 : 1, fontSize: '13px' }}>
-                          {runId === a.id ? '⟳ En cours' : '▶ Exécuter'}
-                        </button>
-                        <button onClick={() => del(a.id)}
-                          style={{ width: '32px', height: '32px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '7px', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                    {/* Run result */}
-                    {r && (
-                      <div style={{ marginTop: '12px', padding: '10px 14px', background: r.ok ? '#f0fdf4' : '#fef2f2', border: '1px solid ' + (r.ok ? '#86efac' : '#fca5a5'), borderRadius: '8px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: '16px', flexShrink: 0 }}>{r.ok ? '✅' : '❌'}</span>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ color: r.ok ? '#14532d' : '#7f1d1d', fontSize: '13px', fontWeight: 600, margin: '0 0 2px', wordBreak: 'break-word' }}>{r.msg}</p>
-                          {r.count != null && <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>{r.count} produit(s) traité(s)</p>}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {/* Expanded */}
-                  {isOpen && (
-                    <div style={{ borderTop: '1px solid #f1f5f9', padding: '14px 18px', background: '#fafbfd' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(150px,100%),1fr))', gap: '12px', marginBottom: '12px' }}>
-                        <div>
-                          <p style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase' }}>Type</p>
-                          <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0, wordBreak: 'break-word' }}>{t?.name || a.type}</p>
-                        </div>
-                        <div>
-                          <p style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase' }}>Filtre</p>
-                          <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0 }}>{filterInfo?.label || 'Tous'}</p>
-                        </div>
-                        <div>
-                          <p style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase' }}>Créée le</p>
-                          <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0 }}>{new Date(a.created_at).toLocaleDateString('fr-FR')}</p>
-                        </div>
-                        {Object.entries(a.config || {}).filter(([k, v]) => k !== 'filter' && k !== 'filter_params' && v !== '' && v !== null && v !== false).map(([k, v]) => (
-                          <div key={k}>
-                            <p style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase' }}>{k.replace(/_/g, ' ')}</p>
-                            <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0, wordBreak: 'break-all' }}>{String(v)}</p>
+                      {/* Run result */}
+                      {r && (
+                        <div style={{ margin: '0 16px 12px', padding: '10px 14px', background: r.ok ? '#f0fdf4' : '#fef2f2', border: '1px solid ' + (r.ok ? '#86efac' : '#fca5a5'), borderRadius: '8px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                          <span style={{ fontSize: '14px', flexShrink: 0 }}>{r.ok ? '✅' : '❌'}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ color: r.ok ? '#14532d' : '#7f1d1d', fontSize: '13px', fontWeight: 600, margin: '0 0 2px', wordBreak: 'break-word' }}>{r.msg}</p>
+                            {r.count != null && <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>{r.count} produit(s) traité(s)</p>}
                           </div>
-                        ))}
-                      </div>
-                      {t && (
-                        <div style={{ padding: '10px 14px', background: t.bg, border: '1px solid ' + t.color + '33', borderRadius: '8px' }}>
-                          <p style={{ color: '#334155', fontSize: '12px', margin: '0 0 4px', lineHeight: '1.6' }}>{t.pitch}</p>
-                          <p style={{ color: t.color, fontSize: '12px', fontWeight: 600, margin: 0 }}>↗ {t.result}</p>
+                        </div>
+                      )}
+                      {/* Expanded */}
+                      {isOpen && (
+                        <div style={{ borderTop: '1px solid #f1f5f9', padding: '14px 16px', background: '#f8fafc' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(140px,100%),1fr))', gap: '10px', marginBottom: '12px' }}>
+                            <div>
+                              <p style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</p>
+                              <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0, wordBreak: 'break-word' }}>{t?.name || a.type}</p>
+                            </div>
+                            <div>
+                              <p style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filtre</p>
+                              <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0 }}>{filterInfo?.label || 'Tous'}</p>
+                            </div>
+                            <div>
+                              <p style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Créée le</p>
+                              <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0 }}>{new Date(a.created_at).toLocaleDateString('fr-FR')}</p>
+                            </div>
+                            {Object.entries(a.config || {}).filter(([k, v]) => k !== 'filter' && k !== 'filter_params' && v !== '' && v !== null && v !== false).map(([k, v]) => (
+                              <div key={k}>
+                                <p style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{k.replace(/_/g, ' ')}</p>
+                                <p style={{ color: '#334155', fontSize: '13px', fontWeight: 500, margin: 0, wordBreak: 'break-all' }}>{String(v)}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {t && (
+                            <div style={{ padding: '10px 14px', background: t.bg, border: '1px solid ' + t.color + '22', borderRadius: '8px' }}>
+                              <p style={{ color: '#334155', fontSize: '12px', margin: '0 0 4px', lineHeight: '1.6', wordBreak: 'break-word' }}>{t.pitch}</p>
+                              <p style={{ color: t.color, fontSize: '12px', fontWeight: 600, margin: 0 }}>↗ {t.result}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
               )
             })}
