@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Champs requis manquants (name, type)" }, { status: 400 });
     }
 
-    const validTypes = ["seo", "price", "import", "stock_alert"];
+    const validTypes = ["seo", "price", "title_template", "tag_add", "tag_remove", "status_change", "sync_shopify", "description_add"];
     if (!validTypes.includes(type)) {
       return NextResponse.json({ error: "Type invalide" }, { status: 400 });
     }

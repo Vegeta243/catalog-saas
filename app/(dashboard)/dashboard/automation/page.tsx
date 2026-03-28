@@ -1,456 +1,457 @@
-"use client";
-
+﻿"use client";
 import { useState, useEffect, useRef } from "react";
-import { Zap, Play, Plus, Trash2, Clock, RefreshCw, Search, ToggleLeft, ToggleRight, ChevronDown, ChevronUp } from "lucide-react";
-import { useToast } from "@/lib/toast";
-import { hasFeature } from "@/lib/credits";
-import { createClient } from "@/lib/supabase/client";
 
-interface Automation {
-  id: string;
-  name: string;
-  type: "seo" | "price" | "import" | "stock_alert";
-  config: Record<string, unknown>;
-  is_active: boolean;
-  last_run_at?: string | null;
-  run_count: number;
-  created_at: string;
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  seo: "Génération SEO",
-  price: "Ajustement prix",
-  import: "Import produits",
-  stock_alert: "Alerte stock",
+type Auto = {
+  id: string; name: string; type: string; config: Record<string, unknown>;
+  is_active: boolean; last_run_at?: string; run_count?: number; created_at: string;
 };
+type RunResult = { success: boolean; message: string; details?: Record<string, unknown>; };
 
-const TYPE_COLORS: Record<string, string> = {
-  seo: "#6366f1",
-  price: "#f59e0b",
-  import: "#10b981",
-  stock_alert: "#ef4444",
+const CATALOG = [
+  {
+    id: "seo", icon: "🔍",
+    label: "Optimisation SEO des titres",
+    description: "Reformate automatiquement les titres de vos produits pour ameliorer leur referencement Google et Shopify.",
+    example: "\"rouge a levre mat\" → \"Rouge A Levre Mat\"",
+    color: "#4f8ef7",
+    fields: [
+      { key: "fields", label: "Champs a optimiser", type: "select", options: [{ v: "both", l: "Titre + Description" }, { v: "title", l: "Titre uniquement" }], default: "both" },
+      { key: "max_per_run", label: "Produits max par execution", type: "number", default: 5, min: 1, max: 50 },
+    ],
+  },
+  {
+    id: "price", icon: "💰",
+    label: "Ajustement automatique des prix",
+    description: "Augmente ou diminue les prix de vos produits d'un pourcentage defini.",
+    example: "Tous les produits +15% pendant les soldes",
+    color: "#10b981",
+    fields: [
+      { key: "action", label: "Action", type: "select", options: [{ v: "increase", l: "Augmenter les prix" }, { v: "decrease", l: "Diminuer les prix" }], default: "increase" },
+      { key: "percent", label: "Pourcentage (%)", type: "number", default: 10, min: 1, max: 90 },
+      { key: "max_products", label: "Produits max", type: "number", default: 50, min: 1, max: 500 },
+    ],
+  },
+  {
+    id: "title_template", icon: "✏️",
+    label: "Modele de titre personnalise",
+    description: "Applique un gabarit de titre uniforme a tous vos produits avec des variables dynamiques.",
+    example: "Modele: \"{title} | {vendor}\" → \"Robe Fleurie | MarqueParis\"",
+    color: "#8b5cf6",
+    hint: "Variables: {title}, {vendor}, {type}",
+    fields: [
+      { key: "template", label: "Modele de titre", type: "text", placeholder: "{title} | {vendor}", default: "{title} | {vendor}" },
+      { key: "max_per_run", label: "Produits max par execution", type: "number", default: 10, min: 1, max: 100 },
+    ],
+  },
+  {
+    id: "tag_add", icon: "🏷️",
+    label: "Ajouter des tags en masse",
+    description: "Ajoute des tags a tous vos produits pour ameliorer les filtres et collections.",
+    example: "Ajouter \"promo, ete-2024, bestseller\" a 100 produits",
+    color: "#f59e0b",
+    fields: [
+      { key: "tags", label: "Tags a ajouter (separes par virgule)", type: "text", placeholder: "promo, bestseller", default: "" },
+    ],
+  },
+  {
+    id: "tag_remove", icon: "🗑️",
+    label: "Supprimer des tags en masse",
+    description: "Retire des tags specifiques de tous vos produits en une seule operation.",
+    example: "Retirer le tag \"soldes\" apres la fin des promotions",
+    color: "#ef4444",
+    fields: [
+      { key: "tags", label: "Tags a supprimer (separes par virgule)", type: "text", placeholder: "ancien-tag, obsolete", default: "" },
+    ],
+  },
+  {
+    id: "status_change", icon: "🔄",
+    label: "Changer le statut des produits",
+    description: "Publie ou depublie des produits en masse selon leur statut actuel.",
+    example: "Publier tous les produits en brouillon d'un coup",
+    color: "#06b6d4",
+    fields: [
+      { key: "from_status", label: "Transition de statut", type: "select", options: [{ v: "draft", l: "Brouillon → Actif" }, { v: "active", l: "Actif → Archive" }, { v: "archived", l: "Archive → Actif" }], default: "draft" },
+    ],
+  },
+  {
+    id: "sync_shopify", icon: "🔗",
+    label: "Synchronisation Shopify",
+    description: "Synchronise automatiquement tous vos produits Shopify avec EcomPilot.",
+    example: "Importer 50 produits depuis votre boutique connectee",
+    color: "#4f8ef7",
+    fields: [],
+  },
+  {
+    id: "description_add", icon: "📝",
+    label: "Completer les descriptions manquantes",
+    description: "Ajoute un texte aux produits qui n'ont pas encore de description.",
+    example: "Ajouter \"Livraison gratuite des 50€\" aux produits sans description",
+    color: "#ec4899",
+    fields: [
+      { key: "prefix", label: "Texte au debut", type: "text", placeholder: "Produit de qualite premium.", default: "" },
+      { key: "suffix", label: "Texte a la fin", type: "text", placeholder: "Livraison gratuite des 50€.", default: "" },
+      { key: "max_per_run", label: "Produits max par execution", type: "number", default: 10, min: 1, max: 50 },
+    ],
+  },
+] as const;
+
+type CatalogItem = (typeof CATALOG)[number];
+type ConfigField = CatalogItem["fields"][number];
+
+const S = {
+  page: { padding: "clamp(16px,4vw,32px)", maxWidth: "960px", margin: "0 auto", boxSizing: "border-box" } as React.CSSProperties,
+  card: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "20px" } as React.CSSProperties,
+  inp: { width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "#e8ecf4", fontSize: "14px", padding: "10px 14px", boxSizing: "border-box" as const, outline: "none", fontFamily: "inherit" },
+  lbl: { color: "#8b9fc4", fontSize: "12px", fontWeight: 500, display: "block", marginBottom: "6px" } as React.CSSProperties,
+  pri: (bg?: string): React.CSSProperties => ({ padding: "10px 20px", background: bg ?? "#4f8ef7", color: "#fff", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }),
+  sec: { padding: "9px 16px", background: "rgba(255,255,255,0.06)", color: "#8b9fc4", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", fontSize: "13px", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" } as React.CSSProperties,
 };
-
-function ConfigFields({ type, config, onChange }: {
-  type: string;
-  config: Record<string, unknown>;
-  onChange: (key: string, value: unknown) => void;
-}) {
-  const inputStyle: React.CSSProperties = {
-    background: "var(--surface-secondary)",
-    border: "1px solid var(--apple-gray-200)",
-    borderRadius: 6,
-    color: "var(--text-primary)",
-    padding: "6px 10px",
-    fontSize: 13,
-    width: "100%",
-    boxSizing: "border-box",
-  };
-
-  if (type === "seo") {
-    return (
-      <div>
-        <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>
-          Nb produits max à traiter
-        </label>
-        <input
-          type="number"
-          min={1}
-          max={100}
-          value={String(config.limit ?? 20)}
-          onChange={(e) => onChange("limit", Number(e.target.value))}
-          style={inputStyle}
-        />
-      </div>
-    );
-  }
-
-  if (type === "price") {
-    return (
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 120 }}>
-          <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>Direction</label>
-          <select
-            value={String(config.direction ?? "increase")}
-            onChange={(e) => onChange("direction", e.target.value)}
-            style={{ ...inputStyle, cursor: "pointer" }}
-          >
-            <option value="increase">Augmenter</option>
-            <option value="decrease">Réduire</option>
-          </select>
-        </div>
-        <div style={{ flex: 1, minWidth: 120 }}>
-          <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>Pourcentage (%)</label>
-          <input
-            type="number" min={1} max={100}
-            value={String(config.percent ?? 10)}
-            onChange={(e) => onChange("percent", Number(e.target.value))}
-            style={inputStyle}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (type === "stock_alert") {
-    return (
-      <div>
-        <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 4 }}>
-          Seuil d'alerte (quantité)
-        </label>
-        <input
-          type="number" min={0}
-          value={String(config.threshold ?? 5)}
-          onChange={(e) => onChange("threshold", Number(e.target.value))}
-          style={inputStyle}
-        />
-      </div>
-    );
-  }
-
-  if (type === "import") {
-    return (
-      <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: 0 }}>
-        Synchronise les produits depuis votre boutique Shopify connectée.
-      </p>
-    );
-  }
-
-  return null;
-}
 
 export default function AutomationPage() {
-  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [automations, setAutomations] = useState<Auto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(true); // all plans include automations
-  const [showCreate, setShowCreate] = useState(false);
-  const [running, setRunning] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [view, setView] = useState<"list" | "catalog">("list");
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", type: "", config: {} as Record<string, unknown> });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [runningId, setRunningId] = useState<string | null>(null);
+  const [runResults, setRunResults] = useState<Record<string, RunResult>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-
-  const [form, setForm] = useState({
-    name: "",
-    type: "seo" as Automation["type"],
-    config: {} as Record<string, unknown>,
-  });
-
-  const { addToast } = useToast();
-  const toastSuccess = (msg: string) => addToast(msg, "success");
-  const toastError = (msg: string) => addToast(msg, "error");
-
-  // Stable ref so load() doesn't need addToast in deps (prevents infinite re-run)
-  const addToastRef = useRef(addToast);
-  useEffect(() => { addToastRef.current = addToast; });
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/automations", { credentials: "include", cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) {
-        addToastRef.current(data.error ?? "Erreur chargement", "error");
-        return;
-      }
-      setAutomations(data.automations ?? []);
-    } catch {
-      addToastRef.current("Erreur lors du chargement", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const addToastRef = useRef<((m: string, t: string) => void) | null>(null);
 
   useEffect(() => {
-    // Check plan access (non-blocking — all plans have automations)
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }: { data: { user: { user_metadata?: { plan?: string } } | null } }) => {
-      const plan = (data.user?.user_metadata?.plan ?? "free") as string;
-      setHasAccess(hasFeature(plan, "automations"));
-    }).catch(() => setHasAccess(true));
-
-    // Load automations immediately — don't gate on getUser()
-    load();
+    document.title = "Automatisations — EcomPilot Elite";
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleToggle = async (id: string, currentValue: boolean) => {
+  async function loadData() {
+    setLoading(true); setError("");
     try {
-      const res = await fetch("/api/automations", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, is_active: !currentValue }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setAutomations((prev) => prev.map((a) => (a.id === id ? { ...a, is_active: !currentValue } : a)));
-    } catch (err) {
-      toastError((err as Error).message);
-    }
-  };
-
-  const handleRun = async (id: string) => {
-    if (running) return;
-    setRunning(id);
-    try {
-      const res = await fetch("/api/automations/run", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error ?? data.message);
-      toastSuccess(data.message ?? "Automatisation exécutée !");
-      await load();
-    } catch (err) {
-      toastError((err as Error).message);
+      const res = await fetch("/api/automations", { credentials: "include", cache: "no-store" });
+      const text = await res.text();
+      let data: Record<string, unknown> = {};
+      try { data = JSON.parse(text); } catch { setError("Reponse serveur invalide"); return; }
+      if (res.status === 401) { setError("Session expiree — rechargez la page"); return; }
+      if (!res.ok) { setError((data.error as string) || "Erreur serveur"); return; }
+      setAutomations((data.automations as Auto[]) ?? []);
+    } catch (e: unknown) {
+      setError("Erreur reseau: " + (e as Error).message);
     } finally {
-      setRunning(null);
+      setLoading(false);
     }
-  };
+  }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cette automatisation ?")) return;
+  function getCat(type: string): CatalogItem | undefined {
+    return CATALOG.find(c => c.id === type);
+  }
+
+  function openCatalog(typeId?: string) {
+    setView("catalog"); setSaveError("");
+    if (typeId) { pickType(typeId); } else { setSelectedType(null); setForm({ name: "", type: "", config: {} }); }
+  }
+
+  function pickType(typeId: string) {
+    const cat = getCat(typeId);
+    if (!cat) return;
+    setSelectedType(typeId);
+    const defaults: Record<string, unknown> = {};
+    (cat.fields as readonly ConfigField[]).forEach((f) => { defaults[f.key] = "default" in f ? f.default : ""; });
+    setForm({ name: cat.label, type: typeId, config: defaults });
+  }
+
+  async function handleCreate() {
+    if (!form.name.trim() || !form.type) { setSaveError("Nom et type requis"); return; }
+    setSaving(true); setSaveError("");
     try {
       const res = await fetch("/api/automations", {
-        method: "DELETE",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error);
-      }
-      setAutomations((prev) => prev.filter((a) => a.id !== id));
-      toastSuccess("Automatisation supprimée");
-    } catch (err) {
-      toastError((err as Error).message);
-    }
-  };
-
-  const handleCreate = async () => {
-    if (!form.name.trim()) { toastError("Le nom est requis"); return; }
-    try {
-      const res = await fetch("/api/automations", {
-        method: "POST",
-        credentials: "include",
+        method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name.trim(), type: form.type, config: form.config }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      toastSuccess("Automatisation créée !");
-      setShowCreate(false);
-      setForm({ name: "", type: "seo", config: {} });
-      await load();
-    } catch (err) {
-      toastError((err as Error).message);
+      if (!res.ok) { setSaveError(data.error || "Erreur " + res.status); return; }
+      setAutomations(prev => [data.automation, ...prev]);
+      setView("list"); setSelectedType(null);
+    } catch (e: unknown) {
+      setSaveError("Erreur: " + (e as Error).message);
+    } finally {
+      setSaving(false);
     }
-  };
+  }
 
-  const updateFormConfig = (key: string, value: unknown) => {
-    setForm((prev) => ({ ...prev, config: { ...prev.config, [key]: value } }));
-  };
+  async function toggleActive(id: string, current: boolean) {
+    setAutomations(prev => prev.map(a => a.id === id ? { ...a, is_active: !current } : a));
+    const res = await fetch("/api/automations", {
+      method: "PATCH", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, is_active: !current }),
+    });
+    if (!res.ok) setAutomations(prev => prev.map(a => a.id === id ? { ...a, is_active: current } : a));
+  }
 
-  const filtered = automations.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()));
+  async function deleteAuto(id: string) {
+    if (!confirm("Supprimer cette automatisation ?")) return;
+    setAutomations(prev => prev.filter(a => a.id !== id));
+    await fetch("/api/automations", {
+      method: "DELETE", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+  }
 
-  const card: React.CSSProperties = {
-    background: "var(--surface-primary)",
-    border: "1px solid var(--apple-gray-200)",
-    borderRadius: 12,
-    padding: "clamp(12px, 3vw, 20px)",
-    marginBottom: 12,
-  };
+  async function runAuto(id: string) {
+    setRunningId(id);
+    setRunResults(p => ({ ...p, [id]: { success: true, message: "Execution en cours..." } }));
+    try {
+      const res = await fetch("/api/automations/run", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      setRunResults(p => ({
+        ...p,
+        [id]: {
+          success: res.ok && data.success !== false,
+          message: data.message || data.error || (res.ok ? "Executee avec succes" : "Erreur"),
+          details: data.details,
+        },
+      }));
+      if (res.ok) await loadData();
+    } catch (e: unknown) {
+      setRunResults(p => ({ ...p, [id]: { success: false, message: "Erreur reseau: " + (e as Error).message } }));
+    } finally {
+      setRunningId(null);
+    }
+  }
 
-  const typeBadge = (type: string): React.CSSProperties => ({
-    background: (TYPE_COLORS[type] ?? "#334155") + "22",
-    color: TYPE_COLORS[type] ?? "#94a3b8",
-    border: "1px solid " + (TYPE_COLORS[type] ?? "#334155") + "44",
-    borderRadius: 6,
-    padding: "2px 8px",
-    fontSize: 11,
-    fontWeight: 600 as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
-    whiteSpace: "nowrap" as const,
-  });
+  void addToastRef;
 
-  if (!hasAccess && !loading) {
+  // ── CATALOG VIEW ──
+  if (view === "catalog") {
+    const selected = selectedType ? getCat(selectedType) : null;
     return (
-      <div style={{ padding: "clamp(16px, 4vw, 32px)", textAlign: "center", color: "var(--text-tertiary)" }}>
-        <Zap size={40} color="#6366f1" style={{ marginBottom: 16 }} />
-        <p style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>Automatisations indisponibles</p>
-        <p>Passez à un plan supérieur pour accéder aux automatisations.</p>
+      <div style={S.page}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "28px", flexWrap: "wrap" }}>
+          <button onClick={() => setView("list")} style={S.sec}>← Retour</button>
+          <h1 style={{ color: "#e8ecf4", fontSize: "clamp(17px,3.5vw,21px)", fontWeight: 700, margin: 0 }}>
+            {selected ? "Configurer" : "Choisir un type"}
+          </h1>
+        </div>
+
+        {!selected ? (
+          <div>
+            <p style={{ color: "#8b9fc4", fontSize: "14px", margin: "0 0 24px 0" }}>
+              Selectionnez le type d&apos;automatisation que vous souhaitez creer.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(280px,100%),1fr))", gap: "12px" }}>
+              {CATALOG.map(cat => (
+                <div key={cat.id} onClick={() => pickType(cat.id)}
+                  style={{ ...S.card, cursor: "pointer", transition: "border-color 0.15s" }}
+                  onMouseOver={e => (e.currentTarget.style.borderColor = cat.color + "55")}
+                  onMouseOut={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: cat.color + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>
+                      {cat.icon}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ color: "#e8ecf4", fontSize: "14px", fontWeight: 600, margin: "0 0 5px 0", lineHeight: 1.3 }}>{cat.label}</p>
+                      <p style={{ color: "#6b7a99", fontSize: "12px", margin: "0 0 7px 0", lineHeight: 1.5 }}>{cat.description}</p>
+                      <p style={{ color: cat.color + "cc", fontSize: "11px", margin: 0, fontStyle: "italic" }}>Ex: {cat.example}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "16px 20px", background: selected.color + "15", border: "1px solid " + selected.color + "44", borderRadius: "14px", marginBottom: "24px" }}>
+              <div style={{ fontSize: "28px" }}>{selected.icon}</div>
+              <div>
+                <p style={{ color: "#e8ecf4", fontSize: "15px", fontWeight: 700, margin: "0 0 3px 0" }}>{selected.label}</p>
+                <p style={{ color: "#8b9fc4", fontSize: "13px", margin: 0 }}>{selected.description}</p>
+                {"hint" in selected && <p style={{ color: selected.color + "cc", fontSize: "12px", margin: "4px 0 0", fontStyle: "italic" }}>{selected.hint}</p>}
+              </div>
+            </div>
+
+            <div style={{ ...S.card, marginBottom: "16px" }}>
+              <p style={{ color: "#e8ecf4", fontSize: "15px", fontWeight: 600, margin: "0 0 20px 0" }}>Configuration</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div>
+                  <label style={S.lbl}>Nom de l&apos;automatisation *</label>
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder={"Ex: " + selected.label} style={S.inp} autoFocus />
+                </div>
+                {(selected.fields as readonly ConfigField[]).map(field => (
+                  <div key={field.key}>
+                    <label style={S.lbl}>{field.label}</label>
+                    {"options" in field ? (
+                      <select value={String(form.config[field.key] ?? field.default)}
+                        onChange={e => setForm(f => ({ ...f, config: { ...f.config, [field.key]: e.target.value } }))}
+                        style={{ ...S.inp, cursor: "pointer" }}>
+                        {field.options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                      </select>
+                    ) : field.type === "number" ? (
+                      <input type="number" min={"min" in field ? field.min : undefined} max={"max" in field ? field.max : undefined}
+                        value={String(form.config[field.key] ?? field.default)}
+                        onChange={e => setForm(f => ({ ...f, config: { ...f.config, [field.key]: parseInt(e.target.value) || ("default" in field ? field.default : 0) } }))}
+                        style={{ ...S.inp, maxWidth: "180px" }} />
+                    ) : (
+                      <input type="text" placeholder={"placeholder" in field ? field.placeholder : ""}
+                        value={String(form.config[field.key] ?? ("default" in field ? field.default : ""))}
+                        onChange={e => setForm(f => ({ ...f, config: { ...f.config, [field.key]: e.target.value } }))}
+                        style={S.inp} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: "16px", padding: "12px 16px", background: "rgba(79,142,247,0.08)", border: "1px solid rgba(79,142,247,0.2)", borderRadius: "10px" }}>
+                <p style={{ color: "#93c5fd", fontSize: "12px", margin: "0 0 3px 0", fontWeight: 600 }}>Exemple de resultat</p>
+                <p style={{ color: "#6b7a99", fontSize: "12px", margin: 0, fontStyle: "italic" }}>{selected.example}</p>
+              </div>
+            </div>
+
+            {saveError && <p style={{ color: "#f87171", fontSize: "13px", margin: "0 0 12px 0" }}>{saveError}</p>}
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", flexWrap: "wrap" }}>
+              <button onClick={() => setSelectedType(null)} style={S.sec}>← Changer de type</button>
+              <button onClick={handleCreate} disabled={saving || !form.name.trim()} style={{ ...S.pri(), opacity: saving || !form.name.trim() ? 0.6 : 1 }}>
+                {saving ? "Creation..." : "Creer l'automatisation"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
+  // ── LIST VIEW ──
   return (
-    <div style={{ padding: "clamp(16px, 4vw, 32px)", maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Zap size={22} color="#6366f1" />
-          <h1 style={{ fontSize: "clamp(18px, 3vw, 22px)", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-            Automatisations
-          </h1>
-          <span style={{ background: "#6366f122", color: "#818cf8", border: "1px solid #6366f144", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 600 }}>
-            {automations.length}
-          </span>
+    <div style={S.page}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <h1 style={{ color: "#e8ecf4", fontSize: "clamp(18px,4vw,22px)", fontWeight: 700, margin: "0 0 4px 0" }}>Automatisations</h1>
+          <p style={{ color: "#6b7a99", fontSize: "14px", margin: 0 }}>
+            {automations.length > 0
+              ? automations.length + " automatisation" + (automations.length > 1 ? "s configurees" : " configuree")
+              : "Automatisez vos taches repetitives sur vos produits"}
+          </p>
         </div>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "#6366f1", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-        >
-          <Plus size={15} />
-          Nouvelle
-        </button>
+        <button onClick={() => openCatalog()} style={S.pri()}>+ Nouvelle automatisation</button>
       </div>
 
-      {showCreate && (
-        <div style={{ ...card, border: "1px solid #6366f144", marginBottom: 20 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", margin: "0 0 14px" }}>Nouvelle automatisation</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <input
-              type="text"
-              placeholder="Nom de l automatisation"
-              value={form.name}
-              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", borderRadius: 6, color: "var(--text-primary)", padding: "8px 12px", fontSize: 14, width: "100%", boxSizing: "border-box" }}
-            />
-            <div>
-              <label style={{ fontSize: 12, color: "var(--text-tertiary)", display: "block", marginBottom: 6 }}>Type</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
-                {(["seo", "price", "import", "stock_alert"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setForm((prev) => ({ ...prev, type: t, config: {} }))}
-                    style={{
-                      background: form.type === t ? (TYPE_COLORS[t] + "22") : "var(--surface-secondary)",
-                      border: "1px solid " + (form.type === t ? TYPE_COLORS[t] : "var(--apple-gray-200)"),
-                      borderRadius: 8,
-                      color: form.type === t ? TYPE_COLORS[t] : "var(--text-secondary)",
-                      padding: "8px 6px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {TYPE_LABELS[t]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <ConfigFields type={form.type} config={form.config} onChange={updateFormConfig} />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button
-                onClick={() => { setShowCreate(false); setForm({ name: "", type: "seo", config: {} }); }}
-                style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", color: "var(--text-secondary)", borderRadius: 6, padding: "7px 16px", fontSize: 13, cursor: "pointer" }}
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleCreate}
-                style={{ background: "#6366f1", border: "none", color: "#fff", borderRadius: 6, padding: "7px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >
-                Créer
-              </button>
-            </div>
-          </div>
+      {error && (
+        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+          <p style={{ color: "#f87171", fontSize: "14px", margin: 0 }}>{error}</p>
+          <button onClick={loadData} style={{ ...S.sec, color: "#f87171", borderColor: "rgba(239,68,68,0.3)", flexShrink: 0 }}>Reessayer</button>
         </div>
       )}
 
-      {automations.length > 0 && (
-        <div style={{ position: "relative", marginBottom: 16 }}>
-          <Search size={14} color="#64748b" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
-          <input
-            type="text" placeholder="Rechercher..." value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "100%", background: "var(--surface-primary)", border: "1px solid var(--apple-gray-200)", borderRadius: 8, color: "var(--text-primary)", padding: "8px 12px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
-          />
-        </div>
-      )}
+      {loading && <div style={{ textAlign: "center", padding: "60px", color: "#6b7a99", fontSize: "14px" }}>Chargement...</div>}
 
-      {loading ? (
-        <div style={{ ...card, textAlign: "center", color: "var(--text-tertiary)" }}>
-          <RefreshCw size={20} style={{ animation: "spin 1s linear infinite" }} />
-          <p style={{ margin: "8px 0 0" }}>Chargement...</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div style={{ ...card, textAlign: "center", color: "var(--text-tertiary)" }}>
-          <Zap size={32} color="var(--apple-gray-200)" style={{ marginBottom: 12 }} />
-          <p style={{ fontSize: 14, margin: "0 0 4px", color: "var(--text-secondary)" }}>
-            {search ? "Aucun résultat" : "Aucune automatisation créée"}
+      {!loading && !error && automations.length === 0 && (
+        <div style={{ ...S.card, textAlign: "center", padding: "60px 24px" }}>
+          <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚡</div>
+          <p style={{ color: "#e8ecf4", fontSize: "18px", fontWeight: 700, margin: "0 0 10px 0" }}>Aucune automatisation</p>
+          <p style={{ color: "#6b7a99", fontSize: "14px", margin: "0 0 28px 0", maxWidth: "400px", marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
+            Les automatisations executent des actions sur vos produits en 1 clic.<br />
+            {CATALOG.length} types disponibles.
           </p>
-          {!search && <p style={{ fontSize: 12, margin: 0 }}>Créez votre première automatisation.</p>}
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap", marginBottom: "24px" }}>
+            {CATALOG.slice(0, 4).map(cat => (
+              <button key={cat.id} onClick={() => openCatalog(cat.id)}
+                style={{ padding: "8px 14px", background: cat.color + "18", border: "1px solid " + cat.color + "44", borderRadius: "10px", color: "#e8ecf4", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span>{cat.icon}</span>{cat.label.split(" ").slice(0, 3).join(" ")}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => openCatalog()} style={S.pri()}>Voir toutes les automatisations →</button>
         </div>
-      ) : (
-        filtered.map((auto) => {
-          const isExpanded = expandedId === auto.id;
-          const isRunning = running === auto.id;
-          return (
-            <div key={auto.id} style={{ ...card, opacity: auto.is_active ? 1 : 0.65 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <button
-                  onClick={() => handleToggle(auto.id, auto.is_active)}
-                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0, flexShrink: 0 }}
-                >
-                  {auto.is_active ? <ToggleRight size={22} color="#6366f1" /> : <ToggleLeft size={22} color="#475569" />}
-                </button>
-                <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "clamp(13px, 2vw, 15px)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {auto.name}
-                </span>
-                <span style={typeBadge(auto.type)}>{TYPE_LABELS[auto.type] ?? auto.type}</span>
-                <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: "auto" }}>
-                  <button
-                    onClick={() => handleRun(auto.id)}
-                    disabled={!auto.is_active || !!running}
-                    style={{ background: auto.is_active && !running ? "#10b98122" : "rgba(255,255,255,0.05)", border: "1px solid " + (auto.is_active && !running ? "#10b981" : "rgba(255,255,255,0.1)"), color: auto.is_active && !running ? "#10b981" : "#475569", borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: auto.is_active && !running ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 4 }}
-                  >
-                    {isRunning ? <RefreshCw size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Play size={13} />}
+      )}
+
+      {!loading && automations.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {automations.map(a => {
+            const cat = getCat(a.type);
+            const result = runResults[a.id];
+            const isExpanded = expandedId === a.id;
+            return (
+              <div key={a.id} style={{ ...S.card, padding: 0, overflow: "hidden" }}>
+                <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+                  <button onClick={() => toggleActive(a.id, a.is_active)} title={a.is_active ? "Mettre en pause" : "Activer"}
+                    style={{ width: "40px", height: "22px", borderRadius: "11px", background: a.is_active ? (cat?.color ?? "#4f8ef7") : "rgba(255,255,255,0.12)", border: "none", position: "relative", cursor: "pointer", transition: "background 0.2s", padding: 0, flexShrink: 0 }}>
+                    <div style={{ width: "16px", height: "16px", background: "#fff", borderRadius: "50%", position: "absolute", top: "3px", transition: "transform 0.2s", transform: a.is_active ? "translateX(21px)" : "translateX(3px)", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }} />
                   </button>
-                  <button onClick={() => setExpandedId(isExpanded ? null : auto.id)} style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", color: "var(--text-tertiary)", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                    {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  </button>
-                  <button onClick={() => handleDelete(auto.id)} style={{ background: "var(--surface-secondary)", border: "1px solid rgba(239,68,68,0.30)", color: "#ef4444", borderRadius: 6, padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                    <Trash2 size={13} />
-                  </button>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: (cat?.color ?? "#4f8ef7") + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>
+                    {cat?.icon ?? "⚙️"}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "3px" }}>
+                      <p style={{ color: "#e8ecf4", fontSize: "14px", fontWeight: 600, margin: 0, wordBreak: "break-word" }}>{a.name}</p>
+                      <span style={{ fontSize: "11px", padding: "2px 7px", borderRadius: "5px", fontWeight: 500, background: a.is_active ? (cat?.color ?? "#4f8ef7") + "22" : "rgba(255,255,255,0.06)", color: a.is_active ? (cat?.color ?? "#4f8ef7") : "#6b7a99" }}>
+                        {a.is_active ? "Actif" : "En pause"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ color: "#6b7a99", fontSize: "12px" }}>{cat?.label ?? a.type}</span>
+                      {a.last_run_at && <span style={{ color: "#4a5878", fontSize: "11px" }}>Derniere: {new Date(a.last_run_at).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>}
+                      {(a.run_count ?? 0) > 0 && <span style={{ color: "#4a5878", fontSize: "11px" }}>{a.run_count} exec.</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", flexShrink: 0, flexWrap: "wrap" }}>
+                    <button onClick={() => setExpandedId(isExpanded ? null : a.id)} style={{ ...S.sec, fontSize: "12px" }}>
+                      {isExpanded ? "▲ Masquer" : "▼ Details"}
+                    </button>
+                    <button onClick={() => runAuto(a.id)} disabled={runningId === a.id || !a.is_active}
+                      style={{ ...S.pri(cat?.color), opacity: (!a.is_active || runningId === a.id) ? 0.5 : 1, fontSize: "13px", padding: "9px 18px" }}>
+                      {runningId === a.id ? "Execution..." : "▶ Executer"}
+                    </button>
+                    <button onClick={() => deleteAuto(a.id)} style={{ ...S.sec, color: "#f87171", borderColor: "rgba(239,68,68,0.25)", fontSize: "12px" }}>✕</button>
+                  </div>
                 </div>
-              </div>
-              <div style={{ display: "flex", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 11, color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 4 }}>
-                  <Play size={10} />{auto.run_count} exécution{auto.run_count !== 1 ? "s" : ""}
-                </span>
-                {auto.last_run_at && (
-                  <span style={{ fontSize: 11, color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 4 }}>
-                    <Clock size={10} />{new Date(auto.last_run_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                  </span>
+
+                {result && (
+                  <div style={{ margin: "0 20px 12px", padding: "10px 14px", background: result.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: "1px solid " + (result.success ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"), borderRadius: "9px" }}>
+                    <p style={{ color: result.success ? "#4ade80" : "#f87171", fontSize: "13px", fontWeight: 600, margin: result.details ? "0 0 2px 0" : 0 }}>
+                      {result.success ? "✓ " : "✗ "}{result.message}
+                    </p>
+                    {result.details && Object.keys(result.details).length > 0 && (
+                      <p style={{ color: "#6b7a99", fontSize: "11px", margin: 0 }}>
+                        {Object.entries(result.details).map(([k, v]) => k.replace(/_/g, " ") + ": " + v).join(" · ")}
+                      </p>
+                    )}
+                  </div>
                 )}
-                <span style={{ fontSize: 11, color: auto.is_active ? "#10b981" : "var(--text-tertiary)", marginLeft: "auto" }}>
-                  {auto.is_active ? "● Actif" : "○ Inactif"}
-                </span>
-              </div>
-              {isExpanded && (
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--apple-gray-200)" }}>
-                  <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Configuration</p>
-                  {Object.keys(auto.config ?? {}).length === 0 ? (
-                    <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}>Configuration par défaut</p>
-                  ) : (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      {Object.entries(auto.config ?? {}).map(([k, v]) => (
-                        <span key={k} style={{ background: "var(--surface-secondary)", border: "1px solid var(--apple-gray-200)", borderRadius: 6, padding: "3px 8px", fontSize: 12, color: "var(--text-secondary)" }}>
-                          {k}: <strong style={{ color: "var(--text-primary)" }}>{String(v)}</strong>
-                        </span>
+
+                {isExpanded && (
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "16px 20px", background: "rgba(255,255,255,0.02)" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(180px,100%),1fr))", gap: "12px", marginBottom: "12px" }}>
+                      <div>
+                        <p style={{ color: "#6b7a99", fontSize: "11px", fontWeight: 500, margin: "0 0 3px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Type</p>
+                        <p style={{ color: "#e8ecf4", fontSize: "13px", margin: 0 }}>{cat?.label ?? a.type}</p>
+                      </div>
+                      <div>
+                        <p style={{ color: "#6b7a99", fontSize: "11px", fontWeight: 500, margin: "0 0 3px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>Creee le</p>
+                        <p style={{ color: "#e8ecf4", fontSize: "13px", margin: 0 }}>{new Date(a.created_at).toLocaleDateString("fr-FR")}</p>
+                      </div>
+                      {Object.entries(a.config ?? {}).map(([k, v]) => (
+                        <div key={k}>
+                          <p style={{ color: "#6b7a99", fontSize: "11px", fontWeight: 500, margin: "0 0 3px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>{k.replace(/_/g, " ")}</p>
+                          <p style={{ color: "#e8ecf4", fontSize: "13px", margin: 0, wordBreak: "break-all" }}>{String(v)}</p>
+                        </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })
+                    {cat?.description && <p style={{ color: "#6b7a99", fontSize: "12px", margin: 0, fontStyle: "italic" }}>{cat.description}</p>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
-      <style>{"@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }"}</style>
     </div>
   );
 }
