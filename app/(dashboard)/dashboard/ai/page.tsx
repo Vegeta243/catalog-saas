@@ -470,7 +470,7 @@ export default function AIPage() {
 
       {/* Upsell notice when below 80% tasks remaining */}
       {(() => {
-        const total = PLAN_TASKS[plan] || 50;
+        const total = PLAN_TASKS[plan] || 100;
         const remaining = Math.max(0, total - tasksUsed);
         if (remaining >= total * 0.8) return null;
         return (
@@ -513,7 +513,7 @@ export default function AIPage() {
         <div className="relative flex-1 min-w-[160px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
           <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20" style={{ color: "var(--text-primary)" }} />
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20" style={{ color: "var(--text-primary)", paddingLeft: '40px' }} />
         </div>
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           {[{ key: "all", label: "Tous" }, { key: "low", label: "Faible" }, { key: "medium", label: "Moyen" }, { key: "high", label: "Excellent" }].map((f) => (

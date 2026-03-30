@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       currentUsed = 0;
     }
 
-    const limit = userData.actions_limit || 30;
+    const limit = userData.actions_limit || 100;
 
     if (currentUsed + cost > limit) {
       return NextResponse.json(
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
           limit,
           plan: userData.plan || "free",
         },
-        { status: 429 }
+        { status: 402 }
       );
     }
 

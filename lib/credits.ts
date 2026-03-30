@@ -2,7 +2,7 @@
 // Tâches mensuelles par plan (serveur uniquement)
 
 export const PLAN_TASKS: Record<string, number> = {
-  free: 30,
+  free: 100,
   starter: 500,
   pro: 5000,
   agency: 999999,
@@ -12,7 +12,7 @@ export const PLAN_TASKS: Record<string, number> = {
 
 export const PLAN_FEATURES = {
   free: {
-    tasks: 30,
+    tasks: 100,
     shops: 1,
     products: 50,
     ai_titles: true,

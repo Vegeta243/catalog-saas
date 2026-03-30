@@ -27,7 +27,7 @@ export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Non authentifiÃ©" }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
     const { data: shop } = await supabase
       .from("shops")
@@ -38,7 +38,7 @@ export async function GET() {
       .single();
 
     if (!shop?.access_token) {
-      return NextResponse.json({ products: [], message: "Boutique non connectÃ©e" });
+      return NextResponse.json({ products: [], message: "Boutique non connectée" });
     }
     const { shop_domain, access_token } = shop;
 
@@ -73,7 +73,7 @@ export async function GET() {
   } catch (err) {
     if (err instanceof ShopifyTokenExpiredError) {
       return NextResponse.json({
-        error: 'Votre connexion Shopify a expirÃ©. Veuillez reconnecter votre boutique.',
+        error: 'Votre connexion Shopify a expiré. Veuillez reconnecter votre boutique.',
         code: 'SHOPIFY_TOKEN_EXPIRED',
         reconnect_url: '/dashboard/shops',
       }, { status: 401 });
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Non authentifiÃ©" }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
     const { data: shop } = await supabase
       .from("shops")
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!shop?.access_token) {
-      return NextResponse.json({ error: "Boutique non connectÃ©e" }, { status: 400 });
+      return NextResponse.json({ error: "Boutique non connectée" }, { status: 400 });
     }
 
     const { shop_domain, access_token } = shop;

@@ -7,7 +7,7 @@ const FAQ_ITEMS = [
   {
     category: 'Mon abonnement',
     questions: [
-      { q: 'Quelles sont les limites du plan gratuit ?', a: "Le plan gratuit inclut 30 actions IA par mois, 1 boutique Shopify et jusqu'à 50 produits. Il ne nécessite aucune carte bancaire." },
+      { q: 'Quelles sont les limites du plan gratuit ?', a: "Le plan gratuit inclut 100 actions IA par mois, 1 boutique Shopify et jusqu'à 50 produits. Il ne nécessite aucune carte bancaire." },
       { q: 'Comment upgrader mon abonnement ?', a: 'Rendez-vous dans Mon forfait > Changer de plan. Vous pouvez upgrader à tout moment et le changement est immédiat.' },
       { q: 'Puis-je annuler mon abonnement ?', a: 'Oui, vous pouvez annuler à tout moment depuis Mon forfait > Gérer mon abonnement. Aucun frais d\'annulation. Vous gardez l\'accès jusqu\'à la fin de la période payée.' },
       { q: "Que se passe-t-il quand j'atteins ma limite d'actions ?", a: 'Vos actions sont réinitialisées le 1er de chaque mois. Vous pouvez aussi upgrader pour obtenir plus d\'actions immédiatement.' },

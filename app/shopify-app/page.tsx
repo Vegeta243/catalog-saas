@@ -187,7 +187,7 @@ export default function ShopifyAppPage() {
                   Commencez gratuitement dès aujourd&apos;hui
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  {["30 actions offertes", "Aucune carte requise", "Installation en 1 min"].map((item) => (
+                  {["100 actions offertes", "Aucune carte requise", "Installation en 1 min"].map((item) => (
                     <p key={item} className="flex items-center gap-1.5 text-sm" style={{ color: "#475569" }}>
                       <Check className="w-4 h-4" style={{ color: "#059669" }} /> {item}
                     </p>
@@ -380,7 +380,7 @@ export default function ShopifyAppPage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {[
-              { name: "Gratuit", price: "0€", tasks: "30 actions", color: "#64748b", popular: false },
+              { name: "Gratuit", price: "0€", tasks: "100 actions", color: "#64748b", popular: false },
               { name: "Starter", price: "19€", tasks: "1 1 500 actions/mois", color: "#2563eb", popular: false },
               { name: "Pro", price: "49€", tasks: "10 000 actions/mois", color: "#7c3aed", popular: true },
               { name: "Agency", price: "149€", tasks: "Actions illimitées", color: "#059669", popular: false },

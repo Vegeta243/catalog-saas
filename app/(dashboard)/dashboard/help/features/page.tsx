@@ -64,7 +64,7 @@ const FEATURES = [
     href: '/dashboard/credits',
     ctaLabel: 'Voir mon forfait →',
     steps: [
-      { step: 1, title: 'Actions IA disponibles', desc: 'Chaque action IA (génération de titre, description, etc.) consomme 1 crédit. L\'offre gratuite inclut 30 actions par mois.' },
+      { step: 1, title: 'Actions IA disponibles', desc: 'Chaque action IA (génération de titre, description, etc.) consomme 1 crédit. L\'offre gratuite inclut 100 actions par mois.' },
       { step: 2, title: 'Suivi de la consommation', desc: 'La barre de progression dans la sidebar gauche indique votre consommation en temps réel. Elle se réinitialise chaque mois.' },
       { step: 3, title: 'Upgrader votre forfait', desc: 'Dans Mon forfait, comparez les offres (Starter, Pro, Business) et choisissez celle qui correspond à votre volume de produits.' },
       { step: 4, title: 'Bonus parrainage', desc: 'Parrainez un ami et gagnez des crédits bonus. Votre filleul bénéficie également d\'un avantage à l\'inscription.' },

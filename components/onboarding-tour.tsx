@@ -49,7 +49,7 @@ const TOUR_STEPS = [
   {
     emoji: '🚀',
     title: 'Vous êtes prêt !',
-    description: "Votre essai gratuit inclut 30 actions IA. Commencez par connecter votre boutique Shopify pour débloquer toutes les fonctionnalités.",
+    description: "Votre essai gratuit inclut 100 actions IA. Commencez par connecter votre boutique Shopify pour débloquer toutes les fonctionnalités.",
     ctaLabel: 'Accéder au tableau de bord',
     navigateTo: '/dashboard',
     tryLabel: null,

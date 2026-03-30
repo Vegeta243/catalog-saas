@@ -105,7 +105,7 @@ export default function HistoryPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-tertiary)" }} />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher…"
-            className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm" style={{ color: "var(--text-primary)" }} />
+            className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm" style={{ color: "var(--text-primary)", paddingLeft: '36px' }} />
         </div>
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
           className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white" style={{ color: "var(--text-secondary)" }}>

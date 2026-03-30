@@ -47,10 +47,10 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState("free");
   const [used, setUsed] = useState(0);
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(100);
   const [history, setHistory] = useState<ActionHistoryItem[]>([]);
 
-  const total = limit || PLAN_TASKS[plan] || 50;
+  const total = limit || PLAN_TASKS[plan] || 100;
   const remaining = Math.max(0, total - used);
   const resetDate = getResetDate();
   const color = getTasksColor(remaining);
@@ -73,7 +73,7 @@ export default function TasksPage() {
       if (userData) {
         setPlan(userData.plan || "free");
         setUsed(userData.actions_used || 0);
-        setLimit(userData.actions_limit || 50);
+        setLimit(userData.actions_limit || 100);
       }
 
       // Fetch action history

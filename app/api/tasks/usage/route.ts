@@ -24,7 +24,7 @@ export async function GET() {
 
     const plan = data.plan || "free";
     const used = data.actions_used || 0;
-    const limit = data.actions_limit || PLAN_TASKS[plan] || 30;
+    const limit = data.actions_limit || PLAN_TASKS[plan] || 100;
 
     // Compute next reset date (1st of next month)
     const now = new Date();

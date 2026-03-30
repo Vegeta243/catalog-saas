@@ -55,7 +55,7 @@ export default function ImagesPage() {
   const resizeContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    document.title = "Ã‰diteur d'images â€” EcomPilot Elite"
+    document.title = "Éditeur d'images | EcomPilot Elite"
     loadProducts()
   }, [])
 
@@ -117,9 +117,9 @@ export default function ImagesPage() {
       const data = await res.json()
       if (res.ok && data.image?.src) {
         await loadProducts()
-        setSaveMsg('Image tÃ©lÃ©chargÃ©e avec succÃ¨s')
+        setSaveMsg('Image téléchargée avec succès')
       } else {
-        setSaveMsg('Erreur: ' + (data.error || 'Upload Ã©chouÃ©'))
+        setSaveMsg('Erreur: ' + (data.error || 'Upload échoué'))
       }
     } catch (err: unknown) {
       setSaveMsg('Erreur: ' + (err instanceof Error ? err.message : 'Inconnue'))
@@ -146,7 +146,7 @@ export default function ImagesPage() {
         })
       })
       if (res.ok) {
-        setSaveMsg('Modifications enregistrÃ©es')
+        setSaveMsg('Modifications enregistrées')
       } else {
         const d = await res.json()
         setSaveMsg((d as { error?: string }).error || 'Erreur lors de la sauvegarde')
@@ -179,7 +179,7 @@ export default function ImagesPage() {
       } catch { fail++ }
       await new Promise(r => setTimeout(r, 100))
     }
-    setMassMsg(`${ok} produit(s) mis Ã  jour${fail > 0 ? `, ${fail} Ã©chec(s)` : ''}`)
+    setMassMsg(`${ok} produit(s) mis Ã  jour${fail > 0 ? `, ${fail} échec(s)` : ''}`)
     setMassSaving(false)
     setTimeout(() => setMassMsg(''), 6000)
   }
@@ -221,8 +221,8 @@ export default function ImagesPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h1 style={S.h1}>Ã‰diteur d&apos;images</h1>
-            <p style={S.sub}>SÃ©lectionnez un produit pour modifier ses images</p>
+            <h1 style={S.h1}>Éditeur d&apos;images</h1>
+            <p style={S.sub}>Sélectionnez un produit pour modifier ses images</p>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Mass mode toggle */}
@@ -241,13 +241,13 @@ export default function ImagesPage() {
         {massMode && (
           <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
             <span style={{ color: '#1d4ed8', fontSize: '14px', fontWeight: 700 }}>
-              {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sÃ©lectionnÃ©{massSelected.size !== 1 ? 's' : ''} â€” Appliquer les mÃªmes modifications
+              {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sélectionné{massSelected.size !== 1 ? 's' : ''} "” Appliquer les mêmes modifications
             </span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
                 onClick={() => setMassSelected(new Set(products.map(p => p.shopify_product_id || p.id)))}
                 style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px' }}>
-                Tout sÃ©lectionner
+                Tout sélectionner
               </button>
               {massSelected.size > 0 && (
                 <button onClick={applyToAll} disabled={massSaving}
@@ -257,7 +257,7 @@ export default function ImagesPage() {
               )}
             </div>
             {massMsg && (
-              <span style={{ width: '100%', color: massMsg.includes('Ã©chec') ? '#dc2626' : '#15803d', fontSize: '13px', fontWeight: 600 }}>
+              <span style={{ width: '100%', color: massMsg.includes('échec') ? '#dc2626' : '#15803d', fontSize: '13px', fontWeight: 600 }}>
                 {massMsg}
               </span>
             )}
@@ -326,7 +326,7 @@ export default function ImagesPage() {
                           {p.title}
                         </p>
                         <p style={{ color: '#16a34a', fontSize: '13px', fontWeight: 700, margin: 0 }}>
-                          {p.price > 0 ? p.price.toFixed(2) + 'â‚¬' : 'â€”'}
+                          {p.price > 0 ? p.price.toFixed(2) + 'â‚¬' : '"”'}
                         </p>
                       </div>
                     </div>
@@ -350,7 +350,7 @@ export default function ImagesPage() {
               {/* Preview with resize handles */}
               {currentImgUrl && (
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={S.lbl}>AperÃ§u (glissez le coin pour redimensionner)</label>
+                  <label style={S.lbl}>Aperçu (glissez le coin pour redimensionner)</label>
                   <div
                     ref={resizeContainerRef}
                     onMouseUp={handleResizeEnd}
@@ -410,14 +410,14 @@ export default function ImagesPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
                   </svg>
-                  {uploading ? 'TÃ©lÃ©chargement...' : 'Importer une image'}
+                  {uploading ? 'Téléchargement...' : 'Importer une image'}
                 </button>
               </div>
 
               {/* Controls */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
                 <div>
-                  <label style={S.lbl}>LuminositÃ© â€” {brightness}%</label>
+                  <label style={S.lbl}>Luminosité "” {brightness}%</label>
                   <input type="range" min="0" max="200" value={brightness}
                     onChange={e => setBrightness(parseInt(e.target.value))}
                     style={{ width: '100%', accentColor: '#2563eb', cursor: 'pointer' }} />
@@ -428,7 +428,7 @@ export default function ImagesPage() {
                 </div>
 
                 <div>
-                  <label style={S.lbl}>Contraste â€” {contrast}%</label>
+                  <label style={S.lbl}>Contraste "” {contrast}%</label>
                   <input type="range" min="0" max="200" value={contrast}
                     onChange={e => setContrast(parseInt(e.target.value))}
                     style={{ width: '100%', accentColor: '#2563eb', cursor: 'pointer' }} />
@@ -441,12 +441,12 @@ export default function ImagesPage() {
                 {(brightness !== 100 || contrast !== 100) && (
                   <button onClick={() => { setBrightness(100); setContrast(100) }}
                     style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px', alignSelf: 'flex-start' }}>
-                    RÃ©initialiser
+                    Réinitialiser
                   </button>
                 )}
 
                 <div>
-                  <label style={S.lbl}>Dimensions (px) â€” sync avec l&apos;aperÃ§u</label>
+                  <label style={S.lbl}>Dimensions (px) "” sync avec l&apos;aperçu</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <label style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Largeur</label>

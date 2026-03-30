@@ -142,12 +142,12 @@ function SignupContent() {
           ) : (
             <div className="p-4 rounded-xl border" style={{ borderColor: "rgba(96,165,250,0.3)", backgroundColor: "rgba(96,165,250,0.05)" }}>
               <p className="text-xs font-semibold mb-1" style={{ color: "#94a3b8" }}>Plan</p>
-              <p className="text-lg font-extrabold" style={{ color: "#fff" }}>Gratuit <span style={{ color: "#60a5fa" }}>&bull; 30 actions</span></p>
+              <p className="text-lg font-extrabold" style={{ color: "#fff" }}>Gratuit <span style={{ color: "#60a5fa" }}>&bull; 100 actions</span></p>
               <p className="text-xs mt-1" style={{ color: "#64748b" }}>Aucune carte requise pour démarrer</p>
             </div>
           )}
         </div>
-        <p className="text-xs" style={{ color: "#475569" }}>� 2026 EcomPilot � Tous droits r�serv�s</p>
+        <p className="text-xs" style={{ color: "#475569" }}>© 2026 EcomPilot — Tous droits réservés</p>
       </div>
 
       {/* -- Right panel -- */}

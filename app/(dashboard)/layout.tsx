@@ -37,9 +37,10 @@ import { getTasksColor, PLAN_TASKS } from '@/lib/credits';
 import AIChatWidget from '@/components/ai-chat-widget';
 import { PreviewBanner } from '@/components/preview-banner';
 import { UserProvider } from '@/lib/contexts/UserContext';
-import { OnboardingTour } from '@/components/onboarding-tour';
+import { OnboardingTour, TourLauncher } from '@/components/onboarding-tour';
 import { OnboardingModal } from '@/components/onboarding-modal';
 import { ActionsCounter } from '@/components/actions-counter';
+import { ActionsLimitModal } from '@/components/actions-limit-modal';
 
 const NAV_SECTIONS = [
   {
@@ -206,8 +207,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [tasksTotalOverride, setTasksTotalOverride] = useState<number | null>(null);
   const [userName, setUserName] = useState("Mon compte");
   const [userEmail, setUserEmail] = useState("");
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
-  const tasksTotal = tasksTotalOverride ?? (PLAN_TASKS[plan] || PLAN_TASKS.free || 30);
+  const tasksTotal = tasksTotalOverride ?? (PLAN_TASKS[plan] || PLAN_TASKS.free || 100);
   const tasksRemaining = Math.max(0, tasksTotal - tasksUsed);
   const tasksColor = getTasksColor(tasksRemaining);
 
@@ -234,6 +236,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           setPlan(profile.plan || 'free');
           setTasksUsed(profile.actions_used || 0);
           if (profile.actions_limit) setTasksTotalOverride(profile.actions_limit);
+          // Show quota modal if free plan and quota exceeded
+          if ((profile.plan === 'free' || !profile.plan) && profile.actions_used >= (profile.actions_limit || 100)) {
+            setShowLimitModal(true);
+          }
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -264,7 +270,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-  const LOCKED_FOR_FREE = ['/dashboard/calendrier', '/dashboard/automation', '/dashboard/concurrence'];
+  const LOCKED_WITH_PLAN: Record<string, string> = {
+    '/dashboard/calendrier': 'Starter+',
+    '/dashboard/automation': 'Starter+',
+    '/dashboard/concurrence': 'Pro+',
+  };
 
   return (
     <UserProvider>
@@ -301,18 +311,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {section.items.map((item) => {
                   const isActive = pathname === item.href;
                   const Icon = item.icon;
-                  const isLocked = plan === 'free' && LOCKED_FOR_FREE.includes(item.href);
-                  if (isLocked) {
+                  const requiredPlan = plan === 'free' ? LOCKED_WITH_PLAN[item.href] : undefined;
+                  if (requiredPlan) {
+                    const badgeColor = requiredPlan === 'Pro+' ? { bg: '#7c3aed', text: '#fff' } : { bg: '#0ea5e9', text: '#fff' };
                     return (
                       <div key={item.href}
-                        title="Disponible à partir du plan Starter"
-                        style={{ ...styles.navItem, opacity: 0.5, cursor: 'not-allowed', userSelect: 'none' as const }}>
+                        title={`Disponible à partir du plan ${requiredPlan}`}
+                        style={{ ...styles.navItem, opacity: 0.6, cursor: 'not-allowed', userSelect: 'none' as const }}>
                         <Icon className="w-5 h-5" style={{ flexShrink: 0 }} />
                         {!sidebarCollapsed && <span style={{ fontSize: '14px', fontWeight: '500', flex: 1 }}>{item.label}</span>}
                         {!sidebarCollapsed && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#94a3b8">
-                            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4" fill="none" stroke="#94a3b8" strokeWidth="2"/>
-                          </svg>
+                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '9999px', background: badgeColor.bg, color: badgeColor.text, lineHeight: '16px' }}>
+                            {requiredPlan}
+                          </span>
                         )}
                       </div>
                     );
@@ -386,6 +397,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <LogOut className="w-5 h-5" style={{ flexShrink: 0 }} />
               {!sidebarCollapsed && <span style={{ fontSize: '14px', fontWeight: '500' }}>Déconnexion</span>}
             </button>
+
+            {!sidebarCollapsed && (
+              <div style={{ marginTop: '8px' }}>
+                <TourLauncher />
+              </div>
+            )}
           </div>
         </aside>
 
@@ -529,6 +546,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <AIChatWidget />
           {/* Onboarding Modal (first login only) */}
           <OnboardingModal />
+          {/* Interactive product tour */}
+          <OnboardingTour />
+          {/* Actions limit modal */}
+          <ActionsLimitModal
+            show={showLimitModal}
+            onClose={() => setShowLimitModal(false)}
+            used={tasksUsed}
+            limit={tasksTotalOverride ?? (PLAN_TASKS[plan] || 100)}
+          />
 
           {/* Logout Confirmation Modal */}
           {showLogoutConfirm && (
@@ -576,17 +602,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div key={section.label} style={{ marginBottom: '24px' }}>
                   <div style={styles.navLabel}>{section.label}</div>
                   {section.items.map((item) => {
-                    const isLocked = plan === 'free' && LOCKED_FOR_FREE.includes(item.href);
-                    if (isLocked) {
+                    const mobileRequiredPlan = plan === 'free' ? LOCKED_WITH_PLAN[item.href] : undefined;
+                    if (mobileRequiredPlan) {
+                      const badgeColor = mobileRequiredPlan === 'Pro+' ? { bg: '#7c3aed', text: '#fff' } : { bg: '#0ea5e9', text: '#fff' };
                       return (
                         <div key={item.href}
-                          title="Disponible à partir du plan Starter"
-                          style={{ ...styles.navItem, display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', opacity: 0.5, cursor: 'not-allowed', userSelect: 'none' as const, borderRadius: '12px', marginBottom: '4px' }}>
+                          title={`Disponible à partir du plan ${mobileRequiredPlan}`}
+                          style={{ ...styles.navItem, display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', opacity: 0.6, cursor: 'not-allowed', userSelect: 'none' as const, borderRadius: '12px', marginBottom: '4px' }}>
                           <item.icon className="w-5 h-5" />
                           <span style={{ fontSize: '14px', fontWeight: '500', flex: 1 }}>{item.label}</span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#94a3b8">
-                            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4" fill="none" stroke="#94a3b8" strokeWidth="2"/>
-                          </svg>
+                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '9999px', background: badgeColor.bg, color: badgeColor.text, lineHeight: '16px' }}>
+                            {mobileRequiredPlan}
+                          </span>
                         </div>
                       );
                     }

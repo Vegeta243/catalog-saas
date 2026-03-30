@@ -9,7 +9,7 @@ export default function DownloadPage() {
   const [prompted, setPrompted] = useState(false)
 
   useEffect(() => {
-    document.title = 'TÃ©lÃ©charger EcomPilot Elite'
+    document.title = 'Télécharger EcomPilot Elite'
     const ua = navigator.userAgent.toLowerCase()
     if (/iphone|ipad|ipod/.test(ua)) setTab('ios')
 
@@ -91,9 +91,9 @@ export default function DownloadPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {installed ? (
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '14px', padding: '20px', textAlign: 'center' }}>
-                <p style={{ fontSize: '28px', margin: '0 0 8px' }}>âœ…</p>
-                <p style={{ color: '#15803d', fontSize: '15px', fontWeight: 700, margin: '0 0 4px' }}>Application installÃ©e !</p>
-                <p style={{ color: '#166534', fontSize: '13px', margin: 0 }}>Retrouvez EcomPilot Elite sur votre Ã©cran d&apos;accueil.</p>
+                <p style={{ fontSize: '28px', margin: '0 0 8px' }}>✅</p>
+                <p style={{ color: '#15803d', fontSize: '15px', fontWeight: 700, margin: '0 0 4px' }}>Application installée !</p>
+                <p style={{ color: '#166534', fontSize: '13px', margin: 0 }}>Retrouvez EcomPilot Elite sur votre écran d&apos;accueil.</p>
               </div>
             ) : (
               <div>
@@ -102,13 +102,13 @@ export default function DownloadPage() {
                   border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: 800,
                   cursor: 'pointer', boxShadow: '0 6px 20px rgba(37,99,235,0.35)', marginBottom: '12px',
                 }}>
-                  {deferredPrompt ? 'â¬‡ Installer l\'application' : 'â¬‡ Installer sur l\'Ã©cran d\'accueil'}
+                  {deferredPrompt ? 'â¬‡ Installer l\'application' : 'â¬‡ Installer sur l\'écran d\'accueil'}
                 </button>
                 {prompted && !deferredPrompt && (
                   <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '14px', marginBottom: '12px' }}>
                     <p style={{ color: '#92400e', fontSize: '13px', margin: 0, lineHeight: 1.6 }}>
                       <strong>Installation manuelle :</strong><br />
-                      Menu â‹® (3 points) â†’ &quot;Ajouter Ã  l&apos;Ã©cran d&apos;accueil&quot; ou &quot;Installer l&apos;application&quot;
+                      Menu â‹® (3 points) â†’ &quot;Ajouter Ã  l&apos;écran d&apos;accueil&quot; ou &quot;Installer l&apos;application&quot;
                     </p>
                   </div>
                 )}
@@ -119,9 +119,9 @@ export default function DownloadPage() {
               <p style={{ color: '#0f172a', fontWeight: 700, fontSize: '13px', margin: '0 0 14px' }}>Comment installer :</p>
               {[
                 'Cliquez sur "Installer l\'application" ci-dessus',
-                'Une invite s\'affiche â€” appuyez sur "Installer"',
-                'L\'icÃ´ne EcomPilot apparaÃ®t sur votre Ã©cran d\'accueil',
-                'Ouvrez l\'app â€” elle fonctionne comme une app native',
+                'Une invite s\'affiche "” appuyez sur "Installer"',
+                'L\'icône EcomPilot apparaît sur votre écran d\'accueil',
+                'Ouvrez l\'app "” elle fonctionne comme une app native',
               ].map((step, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: i < 3 ? '10px' : 0 }}>
                   <div style={{ minWidth: '22px', height: '22px', background: '#2563eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -151,13 +151,13 @@ export default function DownloadPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '20px' }}>
               <p style={{ color: '#0f172a', fontWeight: 700, fontSize: '14px', margin: '0 0 16px' }}>
-                Installer depuis Safari en 4 Ã©tapes :
+                Installer depuis Safari en 4 étapes :
               </p>
               {[
                 { icon: 'ðŸŒ', title: 'Ouvrez dans Safari', desc: 'Assurez-vous d\'utiliser Safari (pas Chrome ni Firefox)' },
-                { icon: 'â¬†ï¸', title: 'Appuyez sur Partager', desc: 'L\'icÃ´ne carrÃ© avec une flÃ¨che vers le haut, en bas de l\'Ã©cran' },
-                { icon: 'âž•', title: '"Sur l\'Ã©cran d\'accueil"', desc: 'Faites dÃ©filer dans le menu Partager et sÃ©lectionnez cette option' },
-                { icon: 'âœ…', title: 'Tapez "Ajouter"', desc: 'Personnalisez le nom si souhaitÃ©, puis confirmez avec "Ajouter"' },
+                { icon: 'â¬†ï¸', title: 'Appuyez sur Partager', desc: 'L\'icône carré avec une flèche vers le haut, en bas de l\'écran' },
+                { icon: 'âž•', title: '"Sur l\'écran d\'accueil"', desc: 'Faites défiler dans le menu Partager et sélectionnez cette option' },
+                { icon: '✅', title: 'Tapez "Ajouter"', desc: 'Personnalisez le nom si souhaité, puis confirmez avec "Ajouter"' },
               ].map((step, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: i < 3 ? '14px' : 0, paddingBottom: i < 3 ? '14px' : 0, borderBottom: i < 3 ? '1px solid #f1f5f9' : 'none' }}>
                   <div style={{ fontSize: '22px', flexShrink: 0, lineHeight: 1 }}>{step.icon}</div>
@@ -171,7 +171,7 @@ export default function DownloadPage() {
 
             <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '12px 14px' }}>
               <p style={{ color: '#9a3412', fontSize: '12px', margin: 0, lineHeight: 1.5 }}>
-                <strong>âš ï¸ Important :</strong> L&apos;installation sur l&apos;Ã©cran d&apos;accueil n&apos;est disponible que dans <strong>Safari</strong>. Elle ne fonctionne pas depuis Chrome ou Firefox sur iOS.
+                <strong>âš ï¸ Important :</strong> L&apos;installation sur l&apos;écran d&apos;accueil n&apos;est disponible que dans <strong>Safari</strong>. Elle ne fonctionne pas depuis Chrome ou Firefox sur iOS.
               </p>
             </div>
 

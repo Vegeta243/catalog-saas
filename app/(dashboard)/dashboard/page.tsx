@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const [state, setState] = useState({
     plan: 'free',
     actionsUsed: 0,
-    actionsLimit: 30,
+    actionsLimit: 100,
     shopCount: 0,
     productCount: 0,
     loading: true,
@@ -93,7 +93,7 @@ export default function DashboardPage() {
 
       const shopCount = shops?.length || 0
       const actionsUsed = profile?.actions_used || 0
-      const actionsLimit = profile?.actions_limit ?? 30
+      const actionsLimit = profile?.actions_limit ?? 100
       const plan = profile?.plan || 'free'
 
       setState({ plan, actionsUsed, actionsLimit, shopCount, productCount, loading: false, firstName })

@@ -16,7 +16,7 @@ interface QuotaGateProps {
  * Works for ALL plans including free, starter, pro, scale.
  */
 export default function QuotaGate({ plan, tasksUsed, children }: QuotaGateProps) {
-  const tasksTotal = PLAN_TASKS[plan] || PLAN_TASKS.free || 50;
+  const tasksTotal = PLAN_TASKS[plan] || PLAN_TASKS.free || 100;
   const remaining = Math.max(0, tasksTotal - tasksUsed);
 
   if (remaining > 0) {

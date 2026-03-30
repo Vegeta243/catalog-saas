@@ -213,7 +213,7 @@ export default function HelpPage() {
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher dans l'aide..."
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:border-blue-400 outline-none bg-white"
-              style={{ color: "var(--text-primary)" }} />
+              style={{ color: "var(--text-primary)", paddingLeft: '40px' }} />
           </div>
           <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
             {CATEGORIES.map((cat) => (
