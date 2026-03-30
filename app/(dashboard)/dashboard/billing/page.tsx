@@ -9,11 +9,11 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const PLAN_INFO: Record<string, { name: string; icon: typeof Zap; price: number; yearlyPrice: number; color: string; cardBg: string; border: string; btnBg: string; btnColor: string; badgeBg: string; badgeColor: string }> = {
-  free:    { name: "Free",    icon: Star,   price: 0,   yearlyPrice: 0,   color: "#9ca3af", cardBg: "var(--surface-primary)",   border: "1px solid var(--apple-gray-200)", btnBg: "rgba(255,255,255,0.08)", btnColor: "#d1d5db", badgeBg: "rgba(255,255,255,0.06)",  badgeColor: "#9ca3af" },
-  starter: { name: "Starter", icon: Zap,    price: 19,  yearlyPrice: 20,  color: "#60a5fa", cardBg: "rgba(37,99,235,0.06)",     border: "1px solid rgba(37,99,235,0.25)",  btnBg: "#2563eb",               btnColor: "#ffffff", badgeBg: "rgba(37,99,235,0.15)",   badgeColor: "#93c5fd" },
-  pro:     { name: "Pro",     icon: Crown,  price: 49,  yearlyPrice: 55,  color: "#a78bfa", cardBg: "rgba(124,58,237,0.08)",    border: "2px solid rgba(124,58,237,0.40)", btnBg: "#7c3aed",               btnColor: "#ffffff", badgeBg: "rgba(124,58,237,0.20)",  badgeColor: "#c4b5fd" },
-  agency:  { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 139, color: "#34d399", cardBg: "rgba(5,150,105,0.07)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.15)",   badgeColor: "#6ee7b7" },
-  scale:   { name: "Agency",  icon: Rocket, price: 149, yearlyPrice: 139, color: "#34d399", cardBg: "rgba(5,150,105,0.07)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.15)",   badgeColor: "#6ee7b7" },
+  free:    { name: "Free",    icon: Star,   price: 0,   yearlyPrice: 0,   color: "#64748b", cardBg: "#f8fafc",                  border: "1px solid #e2e8f0",              btnBg: "#f1f5f9",               btnColor: "#334155", badgeBg: "#f1f5f9",                badgeColor: "#64748b" },
+  starter: { name: "Starter", icon: Zap,    price: 29,  yearlyPrice: 20,  color: "#2563eb", cardBg: "rgba(37,99,235,0.06)",     border: "1px solid rgba(37,99,235,0.25)",  btnBg: "#2563eb",               btnColor: "#ffffff", badgeBg: "rgba(37,99,235,0.12)",   badgeColor: "#1d4ed8" },
+  pro:     { name: "Pro",     icon: Crown,  price: 79,  yearlyPrice: 55,  color: "#7c3aed", cardBg: "rgba(124,58,237,0.08)",    border: "2px solid rgba(124,58,237,0.40)", btnBg: "#7c3aed",               btnColor: "#ffffff", badgeBg: "rgba(124,58,237,0.15)",  badgeColor: "#5b21b6" },
+  agency:  { name: "Agency",  icon: Rocket, price: 199, yearlyPrice: 139, color: "#059669", cardBg: "rgba(5,150,105,0.06)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.12)",   badgeColor: "#065f46" },
+  scale:   { name: "Agency",  icon: Rocket, price: 199, yearlyPrice: 139, color: "#059669", cardBg: "rgba(5,150,105,0.06)",     border: "1px solid rgba(5,150,105,0.30)",  btnBg: "#059669",               btnColor: "#ffffff", badgeBg: "rgba(5,150,105,0.12)",   badgeColor: "#065f46" },
 };
 
 function BillingContent() {
@@ -169,8 +169,8 @@ function BillingContent() {
         <div className="flex items-center gap-3 p-4 mb-6 rounded-xl border border-emerald-200" style={{ backgroundColor: "rgba(16,185,129,0.08)" }}>
           <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: "#059669" }} />
           <div>
-            <p className="text-sm font-medium" style={{ color: "#6ee7b7" }}>Paiement confirmé !</p>
-            <p className="text-xs" style={{ color: "#6ee7b7" }}>Votre abonnement {info.name} est maintenant actif. Profitez de toutes les fonctionnalités !</p>
+            <p className="text-sm font-medium" style={{ color: "#065f46" }}>Paiement confirmé !</p>
+            <p className="text-xs" style={{ color: "#064e3b" }}>Votre abonnement {info.name} est maintenant actif. Profitez de toutes les fonctionnalités !</p>
           </div>
         </div>
       )}
@@ -234,8 +234,8 @@ function BillingContent() {
         <div className="flex items-center gap-3 p-4 rounded-lg" style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.20)" }}>
           <CreditCard className="w-5 h-5 flex-shrink-0" style={{ color: "#2563eb" }} />
           <div>
-            <p className="text-sm font-medium" style={{ color: "#93c5fd" }}>Factures disponibles dans le portail Stripe</p>
-            <p className="text-xs mt-0.5" style={{ color: "#3b82f6" }}>
+            <p className="text-sm font-medium" style={{ color: "#1d4ed8" }}>Factures disponibles dans le portail Stripe</p>
+            <p className="text-xs mt-0.5" style={{ color: "#334155" }}>
               Téléchargez vos factures et gérez votre moyen de paiement directement depuis le portail Stripe sécurisé.
             </p>
           </div>
@@ -251,14 +251,14 @@ function BillingContent() {
             <button
               onClick={() => setBilling("monthly")}
               className="px-3 py-1 text-xs font-medium rounded-md transition-colors"
-              style={{ background: billing === "monthly" ? "rgba(255,255,255,0.08)" : "transparent", color: billing === "monthly" ? "var(--text-primary)" : "var(--text-tertiary)", boxShadow: billing === "monthly" ? "0 1px 3px rgba(0,0,0,0.4)" : "none" }}
+                    style={{ background: billing === "monthly" ? "#ffffff" : "transparent", color: "var(--text-primary)", boxShadow: billing === "monthly" ? "0 1px 3px rgba(0,0,0,0.12)" : "none" }}
             >
               Mensuel
             </button>
             <button
               onClick={() => setBilling("yearly")}
               className="px-3 py-1 text-xs font-medium rounded-md transition-colors"
-              style={{ background: billing === "yearly" ? "rgba(255,255,255,0.08)" : "transparent", color: billing === "yearly" ? "var(--text-primary)" : "var(--text-tertiary)", boxShadow: billing === "yearly" ? "0 1px 3px rgba(0,0,0,0.4)" : "none" }}
+                    style={{ background: billing === "yearly" ? "#ffffff" : "transparent", color: "var(--text-primary)", boxShadow: billing === "yearly" ? "0 1px 3px rgba(0,0,0,0.12)" : "none" }}
             >
               Annuel <span style={{ color: "#059669", fontWeight: 600 }}>-20%</span>
             </button>
@@ -280,11 +280,11 @@ function BillingContent() {
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: p.badgeBg, color: p.badgeColor }}>{planPrice === 0 ? "Gratuit" : `${planPrice}€/mois`}</span>
                   </div>
                   {isCurrent && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(16,185,129,0.15)", color: "#6ee7b7" }}>✓ Actuel</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "rgba(5,150,105,0.12)", color: "#065f46" }}>✓ Actuel</span>
                   )}
                 </div>
                 {isCurrent ? (
-                  <div className="w-full py-2 text-center rounded-lg text-xs font-medium" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.30)", color: "#6ee7b7" }}>
+                  <div className="w-full py-2 text-center rounded-lg text-xs font-medium" style={{ background: "rgba(5,150,105,0.08)", border: "1px solid rgba(5,150,105,0.25)", color: "#065f46" }}>
                     Votre plan actuel
                   </div>
                 ) : isUpgrade ? (
