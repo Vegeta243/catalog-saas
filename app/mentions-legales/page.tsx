@@ -28,16 +28,19 @@ export default function MentionsLegalesPage() {
         <div className="space-y-6 text-sm leading-relaxed" style={{ color: "#374151" }}>
           <section>
             <h2 className="text-lg font-bold mb-3" style={{ color: "#0f172a" }}>1. Éditeur du site</h2>
-            <p>Le site EcomPilot est édité par :</p>
+            <p>Le site EcomPilot Elite est édité par :</p>
             <ul className="mt-2 space-y-1">
-              <li><strong>Raison sociale</strong> : EcomPilot SAS</li>
-              <li><strong>Forme juridique</strong> : Société par Actions Simplifiée (SAS)</li>
-              <li><strong>Siège social</strong> : France</li>
-              <li><strong>SIRET</strong> : En cours d&apos;immatriculation</li>
-              <li><strong>RCS</strong> : En cours d&apos;immatriculation</li>
-              <li><strong>Capital social</strong> : 1 000 €</li>
-              <li><strong>TVA intracommunautaire</strong> : Non applicable (seuil non atteint)</li>
-              <li><strong>Directeur de la publication</strong> : Le Directeur Général d&apos;EcomPilot SAS</li>
+              <li><strong>Dénomination</strong> : TSHILENGE ELLIOT</li>
+              <li><strong>Forme juridique</strong> : Entrepreneur individuel (EI)</li>
+              <li><strong>SIREN</strong> : 929 190 155</li>
+              <li><strong>SIRET</strong> : 929 190 155 00010</li>
+              <li><strong>RCS</strong> : RCS Paris 929 190 155</li>
+              <li><strong>Adresse</strong> : 229 rue Saint-Honoré, 75001 Paris, France</li>
+              <li><strong>Code APE/NAF</strong> : 4791A</li>
+              <li><strong>TVA intracommunautaire</strong> : FR94929190155</li>
+              <li><strong>Capital social</strong> : Sans capital social (entreprise individuelle)</li>
+              <li><strong>Directeur de la publication</strong> : Elliot Tshilenge</li>
+              <li><strong>Référent données personnelles</strong> : Elliot Tshilenge — <a href="mailto:contact@ecompilotelite.com" className="underline" style={{ color: "#2563eb" }}>contact@ecompilotelite.com</a></li>
               <li><strong>Email</strong> : <a href="mailto:contact@ecompilotelite.com" className="underline" style={{ color: "#2563eb" }}>contact@ecompilotelite.com</a></li>
             </ul>
           </section>

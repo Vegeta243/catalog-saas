@@ -56,14 +56,14 @@ export default function ParrainagePage() {
 
   const shareWhatsApp = () => {
     if (!stats?.referralUrl) return;
-    const text = ` Essaie EcomPilot Elite pour ton dropshipping ! Gère tes produits, imports AliExpress et descriptions IA en 1 clic. Utilise mon lien de parrainage → ${stats.referralUrl}`;
+    const text = `Essaie EcomPilot Elite pour optimiser ton catalogue Shopify ! Gère tes produits, imports AliExpress et descriptions IA en 1 clic. Utilise mon lien de parrainage → ${stats.referralUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const shareEmail = () => {
     if (!stats?.referralUrl) return;
-    const subject = "Essaie ce super outil dropshipping";
-    const body = `Salut,\n\nJe voulais te recommander EcomPilot Elite, un outil super pratique pour le dropshipping. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage :\n${stats.referralUrl}\n\nBonne chance !`;
+    const subject = "Essaie EcomPilot Elite pour ton catalogue Shopify";
+    const body = `Salut,\n\nJe voulais te recommander EcomPilot Elite, un outil super pratique pour optimiser ton catalogue Shopify. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage :\n${stats.referralUrl}\n\nBonne chance !`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 

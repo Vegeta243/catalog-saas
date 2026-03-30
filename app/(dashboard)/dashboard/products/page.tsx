@@ -566,6 +566,9 @@ export default function ProductsPage() {
   const [editState, setEditState] = useState<EditState | null>(null)
   const [showAIModal, setShowAIModal] = useState(false)
 
+  // View mode
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
   const allIds = products.map(p => p.shopify_product_id || p.id)
   const allSelected = selectedIds.size > 0 && selectedIds.size === products.length
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PER_PAGE)), [total])
@@ -792,6 +795,27 @@ export default function ProductsPage() {
                 {allSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
               </button>
             )}
+            {/* View mode toggle */}
+            <div style={{ display: 'flex', gap: '2px', border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+              <button
+                onClick={() => setViewMode('grid')}
+                title="Vue grille"
+                style={{ background: viewMode === 'grid' ? '#2563eb' : '#fff', color: viewMode === 'grid' ? '#fff' : '#6b7280', border: 'none', padding: '7px 10px', cursor: 'pointer', lineHeight: 1 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                  <rect x="0" y="0" width="6" height="6" rx="1"/><rect x="8" y="0" width="6" height="6" rx="1"/>
+                  <rect x="0" y="8" width="6" height="6" rx="1"/><rect x="8" y="8" width="6" height="6" rx="1"/>
+                </svg>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                title="Vue liste"
+                style={{ background: viewMode === 'list' ? '#2563eb' : '#fff', color: viewMode === 'list' ? '#fff' : '#6b7280', border: 'none', padding: '7px 10px', cursor: 'pointer', lineHeight: 1 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                  <rect x="0" y="0" width="14" height="2.5" rx="1.25"/><rect x="0" y="5.75" width="14" height="2.5" rx="1.25"/>
+                  <rect x="0" y="11.5" width="14" height="2.5" rx="1.25"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* ── Bulk action bar (appears when items selected) ── */}
@@ -801,9 +825,19 @@ export default function ProductsPage() {
                 <span className="bulkCount">
                   {selectedIds.size} produit{selectedIds.size > 1 ? 's' : ''} sélectionné{selectedIds.size > 1 ? 's' : ''}
                 </span>
-                <button className="aiBulkBtn" onClick={() => setShowAIModal(true)}>
-                  ✨ Générer avec l&apos;IA
-                </button>
+                <span className="aiBulkWrap">
+                  <button className="aiBulkBtn" onClick={() => setShowAIModal(true)}>
+                    ✨ Générer avec l&apos;IA
+                  </button>
+                  <span className="aiBulkTooltip">
+                    <strong>Génère automatiquement :</strong>
+                    <br />✏️ Titres produit optimisés
+                    <br />📝 Descriptions persuasives
+                    <br />🏷️ Tags pour le référencement
+                    <br />🔍 Meta titres SEO
+                    <br />📋 Meta descriptions SEO
+                  </span>
+                </span>
               </div>
 
               <div className="bulkControls">
@@ -886,8 +920,8 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {/* ── Products grid ── */}
-          {!loading && products.length > 0 && (
+          {/* ── Products grid / list ── */}
+          {!loading && products.length > 0 && viewMode === 'grid' && (
             <div className="productGrid">
               {products.map(p => {
                 const id = p.shopify_product_id || p.id
@@ -927,6 +961,58 @@ export default function ProductsPage() {
                         {Number.isFinite(priceNum) && priceNum > 0 ? priceNum.toFixed(2) + ' €' : '—'}
                       </p>
                     </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── Products list view ── */}
+          {!loading && products.length > 0 && viewMode === 'list' && (
+            <div className="productList">
+              {products.map(p => {
+                const id = p.shopify_product_id || p.id
+                const isSel = selectedIds.has(id)
+                const image = asImageUrls(p.images)[0]
+                const priceNum = typeof p.price === 'number' ? p.price : Number(p.price || 0)
+                const statusLabel = p.status === 'active' ? 'Actif' : p.status === 'draft' ? 'Brouillon' : p.status === 'archived' ? 'Archivé' : p.status || '—'
+                const statusColor = p.status === 'active' ? { bg: '#dcfce7', color: '#15803d' } : p.status === 'draft' ? { bg: '#f3f4f6', color: '#6b7280' } : { bg: '#fef3c7', color: '#b45309' }
+                return (
+                  <div key={id} className={'listRow' + (isSel ? ' selected' : '')} onClick={() => openEdit(p)}>
+                    {/* Checkbox */}
+                    <div
+                      className={'cardCheck' + (isSel ? ' on' : '')}
+                      style={{ position: 'relative', top: 'unset', left: 'unset', flexShrink: 0 }}
+                      onClick={e => { e.stopPropagation(); toggleSelect(id) }}
+                    >
+                      {isSel && (
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                          <path d="M1.5 5.5l2.5 2.5 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                    {/* Image */}
+                    <div style={{ width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden', background: '#f3f4f6', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+                      {image
+                        ? <img src={image} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                        : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>📦</div>
+                      }
+                    </div>
+                    {/* Title + vendor */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, color: '#111827', fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</p>
+                      {p.vendor && <p style={{ margin: 0, color: '#6b7280', fontSize: '12px' }}>{p.vendor}</p>}
+                    </div>
+                    {/* Price */}
+                    <p style={{ margin: 0, color: '#2563eb', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
+                      {Number.isFinite(priceNum) && priceNum > 0 ? priceNum.toFixed(2) + ' €' : '—'}
+                    </p>
+                    {/* Status badge */}
+                    {p.status && (
+                      <span style={{ ...statusColor, fontSize: '11px', fontWeight: 700, padding: '2px 9px', borderRadius: '20px', flexShrink: 0 }}>
+                        {statusLabel}
+                      </span>
+                    )}
                   </div>
                 )
               })}
@@ -1134,6 +1220,31 @@ export default function ProductsPage() {
         .fieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .fieldFull { grid-column: 1 / -1; }
         .fieldLabel { display: block; color: #374151; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+
+        /* List view */
+        .productList { display: flex; flex-direction: column; gap: 6px; }
+        .listRow {
+          display: flex; align-items: center; gap: 12px;
+          background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px;
+          padding: 8px 12px; cursor: pointer; transition: all 0.12s;
+        }
+        .listRow:hover { border-color: #93c5fd; background: #f0f9ff; }
+        .listRow.selected { background: #eff6ff; border-color: #3b82f6; }
+
+        /* AI tooltip */
+        .aiBulkWrap { position: relative; display: inline-block; }
+        .aiBulkTooltip {
+          display: none; position: absolute; bottom: calc(100% + 8px); left: 50%;
+          transform: translateX(-50%);
+          background: #1e293b; color: #f8fafc; font-size: 12px; line-height: 1.6;
+          padding: 10px 14px; border-radius: 10px; white-space: nowrap;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 100; pointer-events: none;
+        }
+        .aiBulkTooltip::after {
+          content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+          border: 6px solid transparent; border-top-color: #1e293b;
+        }
+        .aiBulkWrap:hover .aiBulkTooltip { display: block; }
       `}</style>
     </div>
   )

@@ -42,9 +42,9 @@ const PLANS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Gary T.", role: "3 boutiques", niche: "mode", quote: "J'optimisais mes fiches à la main, maintenant l'IA fait tout. Vraiment efficace." },
+  { name: "Gary T.", role: "Dropshipper — Mode homme", niche: "mode", quote: "J'utilisais plusieurs outils séparés avant. EcomPilot Elite m'a permis de tout centraliser : je gère mes imports AliExpress, mes descriptions et mes prix au même endroit. Ça m'a fait gagner un temps fou sur la gestion quotidienne de ma boutique." },
   { name: "2L", role: "Boutique généraliste", niche: "décoration", quote: "L'import AliExpress + descriptions IA, mon catalogue de 200 produits optimisé en une après-midi." },
-  { name: "Ghiles A.", role: "Décoration intérieure", niche: "fitness", quote: "Simple à connecter. Les descriptions sont bien meilleures que ce que j'écrivais." },
+  { name: "Ghiles A.", role: "Dropshipper — Accessoires tech", niche: "accessoires", quote: "Ce qui m'a vraiment surpris, c'est à quel point tout s'enchaîne naturellement. En quelques clics, j'optimise mes titres, mes descriptions et mes tags sans jamais me perdre. L'interface est fluide, les fonctionnalités sont nombreuses mais rien n'est lourd à utiliser. Rare pour un outil aussi complet." },
 ];
 
 export default function HomePage() {
@@ -472,11 +472,13 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">© 2026 EcomPilot Elite. Tous droits réservés.</p>
+            <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} EcomPilot Elite — TSHILENGE ELLIOT — SIREN 929 190 155 — 229 rue Saint-Honoré, 75001 Paris</p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <Link href="/mentions-legales" className="hover:text-foreground">Mentions légales</Link>
               <Link href="/politique-confidentialite" className="hover:text-foreground">Confidentialité</Link>
               <Link href="/cgu" className="hover:text-foreground">CGU</Link>
               <Link href="/cgv" className="hover:text-foreground">CGV</Link>
+              <Link href="mailto:contact@ecompilotelite.com" className="hover:text-foreground">Contact</Link>
             </div>
           </div>
         </div>

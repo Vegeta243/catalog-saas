@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useRef } from 'react'
 
 type Product = {
@@ -20,7 +20,7 @@ function getImages(product: Product): string[] {
     if (typeof img === 'string') return img
     if (img && typeof img === 'object') {
       const o = img as Record<string, unknown>
-      return (typeof o.src === 'string' ? o.src : typeof o.url === 'string' ? o.url : '') 
+      return (typeof o.src === 'string' ? o.src : typeof o.url === 'string' ? o.url : '')
     }
     return ''
   }).filter(Boolean) as string[]
@@ -45,8 +45,17 @@ export default function ImagesPage() {
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  // Mass edit mode
+  const [massMode, setMassMode] = useState(false)
+  const [massSelected, setMassSelected] = useState<Set<string>>(new Set())
+  const [massSaving, setMassSaving] = useState(false)
+  const [massMsg, setMassMsg] = useState('')
+
+  // Resize handle container ref
+  const resizeContainerRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    document.title = "Éditeur d'images — EcomPilot Elite"
+    document.title = "Ã‰diteur d'images â€” EcomPilot Elite"
     loadProducts()
   }, [])
 
@@ -81,6 +90,12 @@ export default function ImagesPage() {
     setSaveMsg('')
   }
 
+  function toggleMassSelect(id: string) {
+    const next = new Set(massSelected)
+    next.has(id) ? next.delete(id) : next.add(id)
+    setMassSelected(next)
+  }
+
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !selected) return
@@ -89,10 +104,7 @@ export default function ImagesPage() {
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
-        reader.onload = () => {
-          const result = reader.result as string
-          resolve(result.split(',')[1])
-        }
+        reader.onload = () => { resolve((reader.result as string).split(',')[1]) }
         reader.onerror = reject
         reader.readAsDataURL(file)
       })
@@ -105,9 +117,9 @@ export default function ImagesPage() {
       const data = await res.json()
       if (res.ok && data.image?.src) {
         await loadProducts()
-        setSaveMsg('Image téléchargée avec succès')
+        setSaveMsg('Image tÃ©lÃ©chargÃ©e avec succÃ¨s')
       } else {
-        setSaveMsg('Erreur: ' + (data.error || 'Upload échoué'))
+        setSaveMsg('Erreur: ' + (data.error || 'Upload Ã©chouÃ©'))
       }
     } catch (err: unknown) {
       setSaveMsg('Erreur: ' + (err instanceof Error ? err.message : 'Inconnue'))
@@ -134,7 +146,7 @@ export default function ImagesPage() {
         })
       })
       if (res.ok) {
-        setSaveMsg('Modifications enregistrées')
+        setSaveMsg('Modifications enregistrÃ©es')
       } else {
         const d = await res.json()
         setSaveMsg((d as { error?: string }).error || 'Erreur lors de la sauvegarde')
@@ -144,6 +156,49 @@ export default function ImagesPage() {
     }
     setSaving(false)
   }
+
+  async function applyToAll() {
+    if (!massSelected.size) return
+    setMassSaving(true)
+    setMassMsg('')
+    let ok = 0, fail = 0
+    for (const pid of massSelected) {
+      try {
+        const res = await fetch(`/api/shopify/products/${pid}`, {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metafields: [{
+              namespace: 'ecompilot', key: 'image_settings',
+              value: JSON.stringify({ brightness, contrast, width: width || null, height: height || null }),
+              type: 'json'
+            }]
+          })
+        })
+        res.ok ? ok++ : fail++
+      } catch { fail++ }
+      await new Promise(r => setTimeout(r, 100))
+    }
+    setMassMsg(`${ok} produit(s) mis Ã  jour${fail > 0 ? `, ${fail} Ã©chec(s)` : ''}`)
+    setMassSaving(false)
+    setTimeout(() => setMassMsg(''), 6000)
+  }
+
+  // Sync resize container size â†’ width/height inputs
+  function handleResizeEnd() {
+    const el = resizeContainerRef.current
+    if (!el) return
+    setWidth(String(el.offsetWidth))
+    setHeight(String(el.offsetHeight))
+  }
+
+  // Sync manual inputs â†’ container size
+  useEffect(() => {
+    const el = resizeContainerRef.current
+    if (!el) return
+    if (width) el.style.width = width + 'px'
+    if (height) el.style.height = height + 'px'
+  }, [width, height])
 
   const S = {
     page: { background: '#f8fafc', minHeight: '100vh', padding: 'clamp(16px,4vw,28px)', boxSizing: 'border-box' as const },
@@ -166,13 +221,48 @@ export default function ImagesPage() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h1 style={S.h1}>Éditeur d&apos;images</h1>
-            <p style={S.sub}>Sélectionnez un produit pour modifier ses images</p>
+            <h1 style={S.h1}>Ã‰diteur d&apos;images</h1>
+            <p style={S.sub}>SÃ©lectionnez un produit pour modifier ses images</p>
           </div>
-          <button onClick={syncProducts} disabled={syncing} style={{ ...S.btnSec, opacity: syncing ? 0.6 : 1 }}>
-            {syncing ? 'Synchronisation...' : 'Synchroniser'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Mass mode toggle */}
+            <button
+              onClick={() => { setMassMode(!massMode); setMassSelected(new Set()) }}
+              style={{ ...S.btnSec, background: massMode ? '#eff6ff' : '#f8fafc', color: massMode ? '#2563eb' : '#334155', borderColor: massMode ? '#bfdbfe' : '#e2e8f0' }}>
+              {massMode ? 'âœ• Quitter le mode masse' : 'âŠž Mode masse'}
+            </button>
+            <button onClick={syncProducts} disabled={syncing} style={{ ...S.btnSec, opacity: syncing ? 0.6 : 1 }}>
+              {syncing ? 'Synchronisation...' : 'Synchroniser'}
+            </button>
+          </div>
         </div>
+
+        {/* Mass mode bar */}
+        {massMode && (
+          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ color: '#1d4ed8', fontSize: '14px', fontWeight: 700 }}>
+              {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sÃ©lectionnÃ©{massSelected.size !== 1 ? 's' : ''} â€” Appliquer les mÃªmes modifications
+            </span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={() => setMassSelected(new Set(products.map(p => p.shopify_product_id || p.id)))}
+                style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px' }}>
+                Tout sÃ©lectionner
+              </button>
+              {massSelected.size > 0 && (
+                <button onClick={applyToAll} disabled={massSaving}
+                  style={{ ...S.btn, fontSize: '12px', padding: '6px 14px', opacity: massSaving ? 0.6 : 1 }}>
+                  {massSaving ? 'Application...' : `Appliquer Ã  ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}`}
+                </button>
+              )}
+            </div>
+            {massMsg && (
+              <span style={{ width: '100%', color: massMsg.includes('Ã©chec') ? '#dc2626' : '#15803d', fontSize: '13px', fontWeight: 600 }}>
+                {massMsg}
+              </span>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: selected ? 'minmax(0,1fr) 360px' : '1fr', gap: '16px', alignItems: 'start' }}>
 
@@ -191,13 +281,28 @@ export default function ImagesPage() {
                 {products.map(p => {
                   const img = getFirstImage(p)
                   const isSel = selected?.id === p.id
+                  const pid = p.shopify_product_id || p.id
+                  const isMassSel = massSelected.has(pid)
                   return (
-                    <div key={p.id} onClick={() => selectProduct(p)}
-                      style={{ ...S.card, cursor: 'pointer', overflow: 'hidden',
-                        borderColor: isSel ? '#2563eb' : '#e2e8f0',
-                        borderWidth: isSel ? '2px' : '1px',
-                        boxShadow: isSel ? '0 0 0 3px rgba(37,99,235,0.1)' : 'none',
+                    <div key={p.id} onClick={() => massMode ? toggleMassSelect(pid) : selectProduct(p)}
+                      style={{ ...S.card, cursor: 'pointer', overflow: 'hidden', position: 'relative',
+                        borderColor: massMode ? (isMassSel ? '#2563eb' : '#e2e8f0') : (isSel ? '#2563eb' : '#e2e8f0'),
+                        borderWidth: (isSel || isMassSel) ? '2px' : '1px',
+                        boxShadow: (isSel || isMassSel) ? '0 0 0 3px rgba(37,99,235,0.1)' : 'none',
+                        background: (massMode && isMassSel) ? '#eff6ff' : '#fff',
                         transition: 'all 0.15s' }}>
+                      {/* Mass mode checkbox */}
+                      {massMode && (
+                        <div style={{
+                          position: 'absolute', top: '6px', left: '6px', zIndex: 3,
+                          width: '20px', height: '20px', borderRadius: '5px',
+                          background: isMassSel ? '#2563eb' : 'rgba(255,255,255,0.9)',
+                          border: `2px solid ${isMassSel ? '#2563eb' : '#cbd5e1'}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {isMassSel && <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 5.5l2.5 2.5 5-5" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>}
+                        </div>
+                      )}
                       <div style={{ width: '100%', paddingTop: '75%', position: 'relative', background: '#f1f5f9' }}>
                         {img ? (
                           <img src={img} alt={p.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
@@ -210,7 +315,7 @@ export default function ImagesPage() {
                             </svg>
                           </div>
                         )}
-                        {isSel && (
+                        {isSel && !massMode && (
                           <div style={{ position: 'absolute', top: '6px', right: '6px', width: '20px', height: '20px', background: '#2563eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                           </div>
@@ -221,7 +326,7 @@ export default function ImagesPage() {
                           {p.title}
                         </p>
                         <p style={{ color: '#16a34a', fontSize: '13px', fontWeight: 700, margin: 0 }}>
-                          {p.price > 0 ? p.price.toFixed(2) + '€' : '—'}
+                          {p.price > 0 ? p.price.toFixed(2) + 'â‚¬' : 'â€”'}
                         </p>
                       </div>
                     </div>
@@ -236,18 +341,47 @@ export default function ImagesPage() {
             <div style={{ ...S.card, padding: '20px', position: 'sticky', top: '20px', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                 <p style={{ color: '#0f172a', fontSize: '14px', fontWeight: 700, margin: 0 }}>Modifier les images</p>
-                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '18px', padding: 0, lineHeight: 1 }}>✕</button>
+                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '18px', padding: 0, lineHeight: 1 }}>âœ•</button>
               </div>
               <p style={{ color: '#64748b', fontSize: '12px', margin: '0 0 14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {selected.title}
               </p>
 
-              {/* Current image */}
+              {/* Preview with resize handles */}
               {currentImgUrl && (
-                <div style={{ width: '100%', paddingTop: '65%', position: 'relative', background: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', marginBottom: '12px' }}>
-                  <img src={currentImgUrl} alt="selected"
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain',
-                      filter: `brightness(${brightness}%) contrast(${contrast}%)` }} />
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={S.lbl}>AperÃ§u (glissez le coin pour redimensionner)</label>
+                  <div
+                    ref={resizeContainerRef}
+                    onMouseUp={handleResizeEnd}
+                    onTouchEnd={handleResizeEnd}
+                    style={{
+                      position: 'relative', display: 'block',
+                      resize: 'both', overflow: 'hidden',
+                      minWidth: '80px', minHeight: '80px',
+                      width: width ? width + 'px' : '100%',
+                      height: height ? height + 'px' : '200px',
+                      border: '2px dashed #2563eb',
+                      borderRadius: '8px',
+                      cursor: 'se-resize',
+                    }}
+                  >
+                    <img src={currentImgUrl} alt="selected"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain',
+                        filter: `brightness(${brightness}%) contrast(${contrast}%)`,
+                        display: 'block' }} />
+                    {/* Corner handles */}
+                    {(['nw', 'ne', 'sw', 'se'] as const).map(pos => (
+                      <div key={pos} style={{
+                        position: 'absolute',
+                        ...(pos.includes('n') ? { top: 0 } : { bottom: 0 }),
+                        ...(pos.includes('w') ? { left: 0 } : { right: 0 }),
+                        width: '10px', height: '10px',
+                        background: '#2563eb', borderRadius: '50%',
+                        cursor: pos + '-resize', zIndex: 2,
+                      }} />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -276,14 +410,14 @@ export default function ImagesPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
                   </svg>
-                  {uploading ? 'Téléchargement...' : 'Importer une image'}
+                  {uploading ? 'TÃ©lÃ©chargement...' : 'Importer une image'}
                 </button>
               </div>
 
               {/* Controls */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
                 <div>
-                  <label style={S.lbl}>Luminosité — {brightness}%</label>
+                  <label style={S.lbl}>LuminositÃ© â€” {brightness}%</label>
                   <input type="range" min="0" max="200" value={brightness}
                     onChange={e => setBrightness(parseInt(e.target.value))}
                     style={{ width: '100%', accentColor: '#2563eb', cursor: 'pointer' }} />
@@ -294,7 +428,7 @@ export default function ImagesPage() {
                 </div>
 
                 <div>
-                  <label style={S.lbl}>Contraste — {contrast}%</label>
+                  <label style={S.lbl}>Contraste â€” {contrast}%</label>
                   <input type="range" min="0" max="200" value={contrast}
                     onChange={e => setContrast(parseInt(e.target.value))}
                     style={{ width: '100%', accentColor: '#2563eb', cursor: 'pointer' }} />
@@ -307,21 +441,21 @@ export default function ImagesPage() {
                 {(brightness !== 100 || contrast !== 100) && (
                   <button onClick={() => { setBrightness(100); setContrast(100) }}
                     style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px', alignSelf: 'flex-start' }}>
-                    Réinitialiser
+                    RÃ©initialiser
                   </button>
                 )}
 
                 <div>
-                  <label style={S.lbl}>Redimensionner (optionnel)</label>
+                  <label style={S.lbl}>Dimensions (px) â€” sync avec l&apos;aperÃ§u</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <label style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Largeur (px)</label>
-                      <input type="number" min="1" placeholder="800" value={width}
+                      <label style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Largeur</label>
+                      <input type="number" min="1" placeholder="auto" value={width}
                         onChange={e => setWidth(e.target.value)} style={S.inp} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <label style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Hauteur (px)</label>
-                      <input type="number" min="1" placeholder="800" value={height}
+                      <label style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Hauteur</label>
+                      <input type="number" min="1" placeholder="auto" value={height}
                         onChange={e => setHeight(e.target.value)} style={S.inp} />
                     </div>
                   </div>
@@ -347,7 +481,7 @@ export default function ImagesPage() {
                 <a href={'https://admin.shopify.com/products/' + (selected.shopify_product_id || selected.id)}
                   target="_blank" rel="noopener noreferrer"
                   style={{ color: '#2563eb', fontSize: '12px', textDecoration: 'none', fontWeight: 400 }}>
-                  Voir sur Shopify Admin ↗
+                  Voir sur Shopify Admin â†—
                 </a>
               </p>
             </div>

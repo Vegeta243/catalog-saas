@@ -68,11 +68,28 @@ export default function ConfigClient({ initialConfigs }: { initialConfigs: Syste
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Landing page video slots
+  const [heroVideoUrl, setHeroVideoUrl] = useState<string | null>(null)
+  const [beforeafterVideoUrl, setBeforeafterVideoUrl] = useState<string | null>(null)
+  const [landingVideosLoaded, setLandingVideosLoaded] = useState(false)
+  const [uploadingSlot, setUploadingSlot] = useState<'hero' | 'beforeafter' | null>(null)
+  const heroFileRef = useRef<HTMLInputElement>(null)
+  const beforeafterFileRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     fetch('/api/admin/demo-video')
       .then(r => r.json())
       .then(d => { setVideoUrl(d.url || null); setVideoLoaded(true) })
       .catch(() => setVideoLoaded(true))
+    // Load landing video slots
+    Promise.all([
+      fetch('/api/admin/landing-video?slot=hero').then(r => r.json()),
+      fetch('/api/admin/landing-video?slot=beforeafter').then(r => r.json()),
+    ]).then(([hero, ba]) => {
+      setHeroVideoUrl(hero.url || null)
+      setBeforeafterVideoUrl(ba.url || null)
+      setLandingVideosLoaded(true)
+    }).catch(() => setLandingVideosLoaded(true))
   }, [])
 
   async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -101,6 +118,43 @@ export default function ConfigClient({ initialConfigs }: { initialConfigs: Syste
     const res = await fetch('/api/admin/demo-video', { method: 'DELETE' })
     if (res.ok) {
       setVideoUrl(null)
+      addToast('Vidéo supprimée', 'success')
+    } else {
+      addToast('Erreur lors de la suppression', 'error')
+    }
+  }
+
+  async function handleLandingVideoUpload(slot: 'hero' | 'beforeafter', e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingSlot(slot)
+    try {
+      const fd = new FormData()
+      fd.append('slot', slot)
+      fd.append('video', file)
+      const res = await fetch('/api/admin/landing-video', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (res.ok) {
+        if (slot === 'hero') setHeroVideoUrl(data.url)
+        else setBeforeafterVideoUrl(data.url)
+        addToast('Vidéo uploadée avec succès', 'success')
+      } else {
+        addToast(data.error || 'Erreur upload', 'error')
+      }
+    } finally {
+      setUploadingSlot(null)
+      if (slot === 'hero' && heroFileRef.current) heroFileRef.current.value = ''
+      if (slot === 'beforeafter' && beforeafterFileRef.current) beforeafterFileRef.current.value = ''
+    }
+  }
+
+  async function handleDeleteLandingVideo(slot: 'hero' | 'beforeafter') {
+    const label = slot === 'hero' ? 'Hero' : 'Avant/Après'
+    if (!confirm(`Supprimer la vidéo ${label} ?`)) return
+    const res = await fetch(`/api/admin/landing-video?slot=${slot}`, { method: 'DELETE' })
+    if (res.ok) {
+      if (slot === 'hero') setHeroVideoUrl(null)
+      else setBeforeafterVideoUrl(null)
       addToast('Vidéo supprimée', 'success')
     } else {
       addToast('Erreur lors de la suppression', 'error')
@@ -279,6 +333,82 @@ export default function ConfigClient({ initialConfigs }: { initialConfigs: Syste
         <p className="text-xs mt-2" style={{ color: '#94a3b8' }}>
           Formats: MP4, WebM · Max: 100MB
         </p>
+      </div>
+
+      {/* Landing page video slots */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold mb-1" style={{ color: '#0f172a' }}>
+          🎬 Vidéos Landing Page
+        </h2>
+        <p className="text-xs mb-5" style={{ color: '#64748b' }}>
+          Slot 1 — Hero (vidéo principale) · Slot 2 — Avant/Après. MP4 / WebM / MOV · Max 200MB.
+        </p>
+
+        {!landingVideosLoaded && <div className="h-8 bg-gray-100 rounded animate-pulse mb-4" />}
+
+        {landingVideosLoaded && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Hero slot */}
+            <div className="border border-gray-200 rounded-xl p-4">
+              <p className="text-xs font-semibold mb-3" style={{ color: '#0f172a' }}>Slot 1 — Vidéo Hero</p>
+              {heroVideoUrl ? (
+                <div className="mb-3 rounded-lg overflow-hidden border border-gray-200">
+                  <video src={heroVideoUrl} controls className="w-full max-h-32 bg-black" />
+                </div>
+              ) : (
+                <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Aucune vidéo hero uploadée</p>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input ref={heroFileRef} type="file" accept="video/mp4,video/webm,video/quicktime"
+                  onChange={e => handleLandingVideoUpload('hero', e)} className="hidden" id="hero-video-upload" />
+                <label htmlFor="hero-video-upload"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white cursor-pointer"
+                  style={{ backgroundColor: uploadingSlot === 'hero' ? '#1d4ed8' : '#2563eb' }}>
+                  {uploadingSlot === 'hero' ? <><RefreshCw className="w-3 h-3 animate-spin" /> Upload...</> : '+ Uploader'}
+                </label>
+                {heroVideoUrl && (
+                  <button onClick={() => handleDeleteLandingVideo('hero')}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+                    Supprimer
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Avant/Après slot */}
+            <div className="border border-gray-200 rounded-xl p-4">
+              <p className="text-xs font-semibold mb-3" style={{ color: '#0f172a' }}>Slot 2 — Vidéo Avant/Après</p>
+              {beforeafterVideoUrl ? (
+                <div className="mb-3 rounded-lg overflow-hidden border border-gray-200">
+                  <video src={beforeafterVideoUrl} controls className="w-full max-h-32 bg-black" />
+                </div>
+              ) : (
+                <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs" style={{ color: '#94a3b8' }}>Aucune vidéo avant/après uploadée</p>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input ref={beforeafterFileRef} type="file" accept="video/mp4,video/webm,video/quicktime"
+                  onChange={e => handleLandingVideoUpload('beforeafter', e)} className="hidden" id="beforeafter-video-upload" />
+                <label htmlFor="beforeafter-video-upload"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white cursor-pointer"
+                  style={{ backgroundColor: uploadingSlot === 'beforeafter' ? '#1d4ed8' : '#2563eb' }}>
+                  {uploadingSlot === 'beforeafter' ? <><RefreshCw className="w-3 h-3 animate-spin" /> Upload...</> : '+ Uploader'}
+                </label>
+                {beforeafterVideoUrl && (
+                  <button onClick={() => handleDeleteLandingVideo('beforeafter')}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                    style={{ backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+                    Supprimer
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* All configs raw view */}

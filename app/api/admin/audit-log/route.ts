@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
   const { data, error, count } = await query;
 
   if (error) {
+    // Table may not exist yet — return empty results instead of 500
+    if (error.code === '42P01' || error.message?.includes('does not exist')) {
+      return NextResponse.json({ entries: [], total: 0 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

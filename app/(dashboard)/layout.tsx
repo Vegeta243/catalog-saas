@@ -55,7 +55,6 @@ const NAV_SECTIONS = [
     label: "OPTIMISATION",
     items: [
       { href: '/dashboard/products', label: 'Modifier en masse', icon: PackageSearch },
-      { href: '/dashboard/ai', label: 'Optimisation IA', icon: Sparkles },
       { href: '/dashboard/images', label: 'Éditeur d\'images', icon: ImageIcon },
     ],
   },
@@ -200,6 +199,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [notifications, setNotifications] = useState(0);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const [plan, setPlan] = useState("free");
   const [tasksUsed, setTasksUsed] = useState(0);
@@ -258,7 +258,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       const supabase = createClient();
       await supabase.auth.signOut();
-      router.push('/login');
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -372,7 +372,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             })}
             
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               style={{
                 ...styles.navItem,
                 width: '100%',
@@ -529,6 +529,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <AIChatWidget />
           {/* Onboarding Modal (first login only) */}
           <OnboardingModal />
+
+          {/* Logout Confirmation Modal */}
+          {showLogoutConfirm && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+              <div style={{ background: '#ffffff', borderRadius: '14px', padding: '28px', maxWidth: '360px', width: '100%', boxShadow: '0 20px 48px rgba(0,0,0,0.15)', boxSizing: 'border-box' }}>
+                <p style={{ color: '#0f172a', fontSize: '16px', fontWeight: 700, margin: '0 0 8px' }}>Vous êtes sur le point de vous déconnecter</p>
+                <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 24px', lineHeight: '1.6' }}>Votre session sera fermée. Vous pourrez vous reconnecter à tout moment.</p>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <button onClick={() => setShowLogoutConfirm(false)}
+                    style={{ padding: '9px 18px', background: '#f1f5f9', color: '#334155', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                    Annuler
+                  </button>
+                  <button onClick={handleLogout}
+                    style={{ padding: '9px 18px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                    Se déconnecter
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu */}
