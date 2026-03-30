@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "EcomPilot <noreply@ecompilotelite.com>",
+          from: "EcomPilot Elite <onboarding@resend.dev>",
           to: emailLower,
           subject: `${inviterName} vous invite à rejoindre EcomPilot`,
           html: `

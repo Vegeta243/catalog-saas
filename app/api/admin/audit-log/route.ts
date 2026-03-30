@@ -40,5 +40,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ entries: data, total: count });
+  // Normalize columns — handle both old schema (target, details) and expected schema
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const entries = (data || []).map((row: any) => ({
+    id: row.id,
+    admin_email: row.admin_email || row.user_email || '—',
+    action: row.action || '—',
+    target_type: row.target_type || (row.target ? String(row.target) : null),
+    target_id: row.target_id || null,
+    detail: row.detail ?? row.details ?? {},
+    ip: row.ip || row.ip_address || null,
+    user_agent: row.user_agent || null,
+    created_at: row.created_at,
+  }));
+
+  return NextResponse.json({ entries, total: count });
 }

@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { verifyAdminSession } from "@/lib/admin-security";
 
-const FROM_EMAIL = "EcomPilot <noreply@ecompilotelite.com>";
+const FROM_EMAIL = "EcomPilot Elite <onboarding@resend.dev>";
 
 const replySchema = z.object({
   ticketId: z.string().uuid(),

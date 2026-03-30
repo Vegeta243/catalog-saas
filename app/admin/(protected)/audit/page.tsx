@@ -148,7 +148,7 @@ export default function AuditLogPage() {
                       {e.target_type ? `${e.target_type}${e.target_id ? ` #${e.target_id}` : ""}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-xs" style={{ color: "#64748b" }}>
-                      {Object.keys(e.detail).length > 0
+                      {e.detail && Object.keys(e.detail).length > 0
                         ? JSON.stringify(e.detail).slice(0, 80)
                         : "—"}
                     </td>

@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 
 const SUPPORT_EMAIL = "support@ecompilotelite.com";
-const FROM_EMAIL = "EcomPilot <noreply@ecompilotelite.com>";
+const FROM_EMAIL = "EcomPilot Elite <onboarding@resend.dev>";
 
 function getResend() {
   const key = process.env.RESEND_API_KEY;
