@@ -60,31 +60,30 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#e8f0f8] dark:bg-[#060d1c] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#e8f0f8] flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img src="/logo-white.svg" alt="EcomPilot Elite" className="h-10 w-auto hidden dark:block" />
-          <img src="/logo.svg" alt="EcomPilot Elite" className="h-10 w-auto dark:hidden" />
+          <img src="/logo.svg" alt="EcomPilot Elite" className="h-10 w-auto" />
         </div>
 
-        <div className="bg-white dark:bg-[#0f172a] rounded-2xl shadow-xl border border-slate-200 dark:border-[rgba(255,255,255,0.07)]/50 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 mb-4">
               <Store className="w-8 h-8 text-blue-600" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">
               Bienvenue sur EcomPilot, {userName}&nbsp;! 👋
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+            <p className="text-slate-500 text-sm">
               Connectez votre première boutique Shopify pour commencer à optimiser vos produits.
             </p>
           </div>
 
           {/* Connect form */}
           <form onSubmit={handleConnect} className="mb-8">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               URL de votre boutique Shopify
             </label>
             <div className="flex gap-2">
@@ -93,7 +92,7 @@ export default function OnboardingPage() {
                 placeholder="ma-boutique.myshopify.com"
                 value={shopUrl}
                 onChange={(e) => setShopUrl(e.target.value)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
               />
               <button
                 type="submit"
@@ -114,12 +113,12 @@ export default function OnboardingPage() {
           </form>
 
           {/* Free plan summary */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 mb-6 border border-slate-200 dark:border-[rgba(255,255,255,0.07)]">
+          <div className="bg-slate-50 rounded-xl p-5 mb-6 border border-slate-200">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                 Votre forfait actuel
               </span>
-              <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-full font-semibold">
+              <span className="text-xs bg-slate-200 text-slate-600 px-2.5 py-1 rounded-full font-semibold">
                 Gratuit
               </span>
             </div>
@@ -130,7 +129,7 @@ export default function OnboardingPage() {
                 { icon: Sparkles, label: `${freeLimits.ai_tasks_per_month} tâches IA / mois` },
                 { icon: Zap, label: "Optimisation SEO de base" },
               ].map(({ icon: Icon, label }) => (
-                <li key={label} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                <li key={label} className="flex items-center gap-2 text-sm text-slate-600">
                   <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                   {label}
                 </li>
@@ -138,7 +137,7 @@ export default function OnboardingPage() {
             </ul>
             <Link
               href="/pricing"
-              className="mt-4 flex items-center justify-center gap-2 w-full py-2 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              className="mt-4 flex items-center justify-center gap-2 w-full py-2 border border-blue-300 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
             >
               Voir tous les forfaits
               <ArrowRight className="w-3.5 h-3.5" />
@@ -147,7 +146,7 @@ export default function OnboardingPage() {
 
           {/* Skip link */}
           <p className="text-center text-xs text-slate-400">
-            <Link href="/dashboard/shops" className="hover:text-slate-600 dark:hover:text-slate-300 underline underline-offset-2">
+            <Link href="/dashboard/shops" className="hover:text-slate-600 underline underline-offset-2">
               Je connecterai ma boutique plus tard
             </Link>
           </p>

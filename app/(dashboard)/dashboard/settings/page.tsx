@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Settings, User, Store, Bell, CreditCard, Key, Shield, Save,
-  Globe, Moon, Sun, Palette, Upload, Eye, EyeOff, Check, Copy,
+  Globe, Palette, Upload, Eye, EyeOff, Check, Copy,
   RefreshCw, Mail, Phone, ExternalLink, TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/lib/toast";
@@ -110,7 +110,6 @@ export default function SettingsPage() {
   const [showShopifyKey, setShowShopifyKey] = useState(false);
 
   // Advanced
-  const [theme, setTheme] = useState<"light" | "dark" | "auto">("light");
   const [compactMode, setCompactMode] = useState(false);
   const [devMode, setDevMode] = useState(false);
 
@@ -136,28 +135,11 @@ export default function SettingsPage() {
 
   // Load persisted appearance preferences
   useEffect(() => {
-    const savedTheme = localStorage.getItem("app-theme") as "light" | "dark" | "auto" | null;
     const savedCompact = localStorage.getItem("app-compact") === "true";
     const savedDev = localStorage.getItem("app-dev") === "true";
-    if (savedTheme) setTheme(savedTheme);
     setCompactMode(savedCompact);
     setDevMode(savedDev);
   }, []);
-
-  // Apply theme to <html> element
-  useEffect(() => {
-    const html = document.documentElement;
-    if (theme === "dark") {
-      html.classList.add("dark");
-    } else if (theme === "light") {
-      html.classList.remove("dark");
-    } else {
-      // Auto: use system preference
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) html.classList.add("dark");
-      else html.classList.remove("dark");
-    }
-    localStorage.setItem("app-theme", theme);
-  }, [theme]);
 
   // Load profit settings from Supabase
   useEffect(() => {
@@ -214,10 +196,6 @@ export default function SettingsPage() {
     } finally {
       setSavingProfitSettings(false);
     }
-  };
-
-  const handleThemeChange = (t: "light" | "dark" | "auto") => {
-    setTheme(t);
   };
 
   const handleCompactChange = (val: boolean) => {
@@ -664,19 +642,7 @@ export default function SettingsPage() {
                   <Palette className="w-4 h-4" style={{ color: "#2563eb" }} />
                   Apparence
                 </h2>
-                <div className="flex items-center gap-3">
-                  {[
-                    { value: "light" as const, label: "Clair", icon: <Sun className="w-4 h-4" /> },
-                    { value: "dark" as const, label: "Sombre", icon: <Moon className="w-4 h-4" /> },
-                    { value: "auto" as const, label: "Auto", icon: <Settings className="w-4 h-4" /> },
-                  ].map((t) => (
-                    <button key={t.value} onClick={() => handleThemeChange(t.value)}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${theme === t.value ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
-                      style={{ color: theme === t.value ? "#2563eb" : "#374151" }}>
-                      {t.icon} {t.label}
-                    </button>
-                  ))}
-                </div>
+                <p className="text-sm text-gray-500">Le mode clair est actif par défaut.</p>
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">

@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-@variant dark (&:where(.dark, .dark *));
+/* Force light mode — dark mode disabled */
+:root { color-scheme: light !important; }
+html { color-scheme: light !important; }
 
 /* ═══════════════════════════════════════════════════════════
    DESIGN TOKENS
@@ -32,26 +34,6 @@
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-}
-
-.dark {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
-  --muted: #475569;
-  --muted-foreground: #64748b;
-  --popover: #0f172a;
-  --card: #0f172a;
-  --border: #1e293b;
-  --input: #1e293b;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #1e293b;
-  --secondary-foreground: #f1f5f9;
-  --accent: #1e3a5f;
-  --accent-foreground: #60a5fa;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #f87171;
-  --ring: #1e40af;
 }
 
 @theme inline {
@@ -266,19 +248,9 @@ a:hover {
   color: #166534;
 }
 
-.dark .badge-success {
-  background: rgba(16,185,129,0.15);
-  color: #6ee7b7;
-}
-
 .badge-destructive {
   background: #fee2e2;
   color: #991b1b;
-}
-
-.dark .badge-destructive {
-  background: rgba(239,68,68,0.15);
-  color: #f87171;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -343,37 +315,6 @@ a:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   DARK MODE OVERRIDES
-   ═══════════════════════════════════════════════════════════ */
-.dark body {
-  background-color: var(--background) !important;
-}
-
-.dark .bg-white {
-  background-color: var(--card) !important;
-}
-
-.dark .bg-gray-50 {
-  background-color: var(--secondary) !important;
-}
-
-.dark .text-gray-600,
-.dark .text-gray-700,
-.dark .text-gray-800,
-.dark .text-gray-900 {
-  color: var(--foreground) !important;
-}
-
-.dark .text-gray-500 {
-  color: var(--muted-foreground) !important;
-}
-
-.dark .border-gray-200,
-.dark .border-gray-300 {
-  border-color: var(--border) !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
    UTILITIES
    ═══════════════════════════════════════════════════════════ */
 .container {
@@ -429,27 +370,6 @@ a:hover {
   --radius-xl: 20px;
   --radius-2xl: 28px;
   --radius-full: 9999px;
-}
-
-.dark {
-  --apple-white: #1d1d1f;
-  --apple-gray-50: #2d2d2f;
-  --apple-gray-100: #3a3a3c;
-  --apple-gray-200: #48484a;
-  --apple-gray-300: #636366;
-  --apple-gray-400: #86868b;
-  --apple-gray-500: #a1a1a6;
-  --apple-gray-600: #f5f5f7;
-  --apple-blue: #2997ff;
-  --apple-blue-hover: #40a9ff;
-  --apple-blue-light: #0a84ff;
-  --surface-primary: #000000;
-  --surface-secondary: #1d1d1f;
-  --surface-tertiary: #2d2d2f;
-  --text-primary: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --text-tertiary: #86868b;
-  --text-link: #2997ff;
 }
 
 /* ── Mobile optimization ── */
