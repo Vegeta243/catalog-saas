@@ -6,7 +6,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 const SUPPORT_EMAIL = "support@ecompilotelite.com";
-const FROM_EMAIL = "EcomPilot Elite <onboarding@resend.dev>";
+const FROM_EMAIL = "EcomPilot Elite <noreply@ecompilotelite.com>";
 
 const createTicketSchema = z.object({
   subject: z.string().min(5).max(200),
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     // Email to admin
     try {
       const result = await resend.emails.send({
-        from: 'onboarding@resend.dev',
+        from: FROM_EMAIL,
         to: process.env.ADMIN_EMAIL || 'elliottshilenge5@gmail.com',
         subject: `[Support #${ticket.id.slice(0, 8)}] ${subject}`,
         html: `
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     // Confirmation email to user
     try {
       const result2 = await resend.emails.send({
-        from: 'onboarding@resend.dev',
+        from: FROM_EMAIL,
         to: user.email!,
         subject: `Votre demande a bien été reçue — EcomPilot Elite`,
         html: `

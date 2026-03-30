@@ -133,7 +133,7 @@ async function sendEmail(apiKey: string, { to, subject, html }: { to: string; su
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "EcomPilot Elite <onboarding@resend.dev>",
+      from: "EcomPilot Elite <noreply@ecompilotelite.com>",
       to,
       subject,
       html,
