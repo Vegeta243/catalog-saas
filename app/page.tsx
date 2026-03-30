@@ -137,30 +137,6 @@ export default function HomePage() {
           100 actions gratuites sans carte bancaire.
         </p>
 
-        {/* Video placeholder */}
-        <div style={{
-          width: '100%', maxWidth: '640px',
-          margin: '0 auto 40px',
-          borderRadius: '16px', overflow: 'hidden',
-          aspectRatio: '16 / 9',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer',
-        }} className="border bg-secondary/30">
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              width: '64px', height: '64px',
-              background: 'rgba(79,142,247,0.2)',
-              borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 12px',
-              fontSize: '28px',
-            }}>▶</div>
-            <p className="text-muted-foreground" style={{ fontSize: '14px', margin: 0 }}>
-              Démo 30 secondes — Avant/Après fiche produit
-            </p>
-          </div>
-        </div>
-
         {/* MAIN CTA */}
         <a href="/signup" style={{
           display: 'inline-block',
@@ -232,54 +208,6 @@ export default function HomePage() {
                 </div>
                 <h3 className="mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground text-sm">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Before / After */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="mb-3">Avant / Après EcomPilot</h2>
-            <p className="text-muted-foreground">Vos fiches produits transformées en quelques secondes.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                product: "Montre connectée",
-                before: "Montre connectée noire — livraison 2-3 semaines",
-                after: "Montre connectée premium — suivi cardio, notifications, autonomie 7 jours. Parfait pour sportifs exigeants.",
-              },
-              {
-                product: "T-shirt oversize",
-                before: "T-shirt blanc oversize taille M/L",
-                after: "T-shirt oversize streetwear 100% coton — coupe relaxée, polyvalent du casual au soirée. Livré en 48h.",
-              },
-              {
-                product: "Lampe LED bureau",
-                before: "Lampe LED USB — plusieurs couleurs",
-                after: "Lampe LED USB tactile 3 températures — idéale télétravail et gaming. Design épuré, fixation universelle.",
-              },
-              {
-                product: "Analyse concurrentielle",
-                before: "Tu ne sais pas ce que vend ton concurrent ni à quel prix",
-                after: "Score de menace concurrentielle en temps réel, prix et nouveaux produits détectés automatiquement",
-              },
-            ].map((item, i) => (
-              <div key={i} className="card overflow-hidden p-0">
-                <div className="px-5 py-4 bg-red-50 dark:bg-red-950/20 border-b">
-                  <p className="text-xs font-semibold text-red-500 uppercase mb-1">Avant</p>
-                  <p className="text-sm text-muted-foreground">{item.before}</p>
-                </div>
-                <div className="px-5 py-4 bg-green-50 dark:bg-green-950/20">
-                  <p className="text-xs font-semibold text-green-600 uppercase mb-1">Après IA</p>
-                  <p className="text-sm">{item.after}</p>
-                </div>
-                <div className="px-5 py-3 border-t">
-                  <p className="text-xs text-muted-foreground font-medium">{item.product}</p>
-                </div>
               </div>
             ))}
           </div>
