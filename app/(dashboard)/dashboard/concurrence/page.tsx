@@ -97,6 +97,24 @@ const THREAT_COLORS = {
   low: { bg: '#f0fdf4', border: '#bbf7d0', text: '#16a34a', badge: 'bg-green-100 text-green-700' },
 }
 
+/* ─────────────────────────── SEO SCORER ─────────────────────────── */
+function scoreSEO(product: { title: string; body_html: string; tags: string; images: string[] }): { score: number; issues: string[] } {
+  const issues: string[] = []
+  let score = 100
+  if (!product.title || product.title.length < 10) { score -= 20; issues.push('Titre trop court (< 10 car.)') }
+  else if (product.title.length > 70) { score -= 10; issues.push('Titre trop long (> 70 car.)') }
+  const desc = (product.body_html || '').replace(/<[^>]*>/g, '')
+  if (!desc || desc.length < 20) { score -= 25; issues.push('Description manquante ou trop courte') }
+  else if (desc.length < 100) { score -= 10; issues.push('Description courte (< 100 car.)') }
+  const imgCount = Array.isArray(product.images) ? product.images.length : 0
+  if (imgCount === 0) { score -= 20; issues.push('Aucune image') }
+  else if (imgCount < 3) { score -= 5; issues.push("Peu d'images (< 3)") }
+  const tagList = (product.tags || '').split(',').map(t => t.trim()).filter(Boolean)
+  if (tagList.length === 0) { score -= 15; issues.push('Aucun tag') }
+  else if (tagList.length < 3) { score -= 5; issues.push('Peu de tags (< 3)') }
+  return { score: Math.max(0, score), issues }
+}
+
 /* ─────────────────────────── MAIN PAGE ─────────────────────────── */
 export default function ConcurrencePage() {
   const [competitors, setCompetitors] = useState<Competitor[]>([])
@@ -126,8 +144,9 @@ export default function ConcurrencePage() {
   const [newAlertMethod, setNewAlertMethod] = useState('email')
   const [newAlertThreshold, setNewAlertThreshold] = useState('')
   const [compScore, setCompScore] = useState<CompetitiveScore>(null)
-  const [myStats, setMyStats] = useState<{ total: number; avgPrice: number; minPrice: number; maxPrice: number } | null>(null)
+  const [myStats, setMyStats] = useState<{ total: number; avgPrice: number; minPrice: number; maxPrice: number; activeProducts: number; withImages: number; withoutImages: number } | null>(null)
   const [myStatsLoading, setMyStatsLoading] = useState(false)
+  const [myShopProducts, setMyShopProducts] = useState<{ title: string; body_html: string; tags: string; images: string[]; status: string; price: number }[]>([])
 
   const { addToast } = useToast()
   useEffect(() => { document.title = "Concurrence | EcomPilot"; }, []);
@@ -149,13 +168,19 @@ export default function ConcurrencePage() {
     try {
       const res = await fetch('/api/shopify/products?limit=250')
       const data = await res.json()
-      const prods: { price: number }[] = data.products || []
+      const prods: { title: string; body_html: string; tags: string; images: string[]; status: string; price: number }[] = data.products || []
       const prices = prods.map(p => p.price).filter(p => p > 0)
+      const active = prods.filter(p => p.status === 'active')
+      const withImg = prods.filter(p => Array.isArray(p.images) && p.images.length > 0)
+      setMyShopProducts(prods)
       setMyStats({
         total: data.total || prods.length,
         avgPrice: prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0,
         minPrice: prices.length > 0 ? Math.min(...prices) : 0,
         maxPrice: prices.length > 0 ? Math.max(...prices) : 0,
+        activeProducts: active.length,
+        withImages: withImg.length,
+        withoutImages: prods.length - withImg.length,
       })
     } catch { /* silent */ }
     setMyStatsLoading(false)
@@ -512,6 +537,9 @@ export default function ConcurrencePage() {
                     { label: 'Prix moyen', value: myStats.avgPrice > 0 ? `${myStats.avgPrice.toFixed(2)}€` : 'N/A', icon: <Tag className="w-4 h-4" style={{ color: '#7c3aed' }} /> },
                     { label: 'Prix min', value: myStats.minPrice > 0 ? `${myStats.minPrice.toFixed(2)}€` : 'N/A', icon: <TrendingDown className="w-4 h-4" style={{ color: '#059669' }} /> },
                     { label: 'Prix max', value: myStats.maxPrice > 0 ? `${myStats.maxPrice.toFixed(2)}€` : 'N/A', icon: <TrendingUp className="w-4 h-4" style={{ color: '#ef4444' }} /> },
+                    { label: 'Actifs', value: String(myStats.activeProducts), icon: <CheckCircle className="w-4 h-4" style={{ color: '#059669' }} /> },
+                    { label: 'Avec images', value: String(myStats.withImages), icon: <Eye className="w-4 h-4" style={{ color: '#2563eb' }} /> },
+                    { label: 'Sans images', value: String(myStats.withoutImages), icon: <AlertTriangle className="w-4 h-4" style={{ color: myStats.withoutImages > 0 ? '#f59e0b' : '#059669' }} /> },
                   ].map((kpi, i) => (
                     <div key={i} className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                       <div className="flex items-center gap-2 mb-1">{kpi.icon}<span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{kpi.label}</span></div>
@@ -521,6 +549,40 @@ export default function ConcurrencePage() {
                 </div>
               ) : null}
             </div>
+            {/* SEO score per product */}
+            {myShopProducts.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
+                  <Search className="w-4 h-4 text-blue-500" /> Score SEO par produit
+                </h3>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {myShopProducts.map((prod, i) => {
+                    const { score, issues } = scoreSEO(prod)
+                    const color = score >= 70 ? '#059669' : score >= 40 ? '#d97706' : '#dc2626'
+                    return (
+                      <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <svg width="44" height="44" viewBox="0 0 44 44" className="flex-shrink-0">
+                          <circle cx="22" cy="22" r="18" fill="none" stroke="#e5e7eb" strokeWidth="4" />
+                          <circle cx="22" cy="22" r="18" fill="none" stroke={color} strokeWidth="4"
+                            strokeDasharray={`${(score / 100) * 113.1} 113.1`}
+                            strokeLinecap="round" transform="rotate(-90 22 22)" />
+                          <text x="22" y="26" textAnchor="middle" fontSize="12" fontWeight="bold" fill={color}>{score}</text>
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>{prod.title}</p>
+                          {issues.length > 0 && (
+                            <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-tertiary)" }}>{issues.join(' · ')}</p>
+                          )}
+                        </div>
+                        <a href="/dashboard/products" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex-shrink-0">
+                          Optimiser
+                        </a>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             <div className="flex flex-col items-center justify-center text-center px-8 py-8">
               <Eye className="w-16 h-16 mb-4" style={{ color: '#d1d5db' }} />
               <h3 className="text-xl font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Analyse concurrentielle</h3>
@@ -624,6 +686,34 @@ export default function ConcurrencePage() {
                         </div>
                       </div>
                     )}
+                    {/* Auto-detected opportunities */}
+                    {myStats && selected.snapshot && (() => {
+                      const opps: { icon: string; text: string; type: 'warning' | 'success' | 'info' }[] = []
+                      const priceDiff = myStats.avgPrice - (selected.snapshot!.avg_price || 0)
+                      const pricePct = myStats.avgPrice > 0 ? (priceDiff / myStats.avgPrice) * 100 : 0
+                      if (pricePct > 15) opps.push({ icon: '💰', text: `Vos prix sont ${pricePct.toFixed(0)}% plus élevés que ${selected.name}`, type: 'warning' })
+                      else if (pricePct < -15) opps.push({ icon: '✅', text: `Vos prix sont ${Math.abs(pricePct).toFixed(0)}% moins chers que ${selected.name}`, type: 'success' })
+                      const prodDiff = (selected.snapshot!.products_found || 0) - myStats.total
+                      if (prodDiff > 10) opps.push({ icon: '📦', text: `${selected.name} propose ${prodDiff} produits de plus — pensez à enrichir votre catalogue`, type: 'info' })
+                      if (selected.snapshot!.promo_detected) opps.push({ icon: '🏷️', text: `${selected.name} a des promotions actives — envisagez une stratégie de prix`, type: 'warning' })
+                      if (myStats.withoutImages > 0) opps.push({ icon: '📸', text: `${myStats.withoutImages} de vos produits n'ont pas d'image`, type: 'warning' })
+                      if (opps.length === 0) return null
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-xl p-5">
+                          <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
+                            💡 Opportunités détectées
+                          </h3>
+                          <div className="space-y-2">
+                            {opps.map((o, i) => (
+                              <div key={i} className={`flex gap-3 p-3 rounded-lg text-sm ${o.type === 'warning' ? 'bg-amber-50' : o.type === 'success' ? 'bg-green-50' : 'bg-blue-50'}`}>
+                                <span className="flex-shrink-0">{o.icon}</span>
+                                <span style={{ color: "var(--text-secondary)" }}>{o.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
                     {compScore && (
                       <div className="rounded-xl p-5 border"
                         style={{ backgroundColor: THREAT_COLORS[compScore.threat_level].bg, borderColor: THREAT_COLORS[compScore.threat_level].border }}>
