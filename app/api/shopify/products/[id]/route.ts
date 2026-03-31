@@ -36,6 +36,70 @@ export async function PUT(
     const { title, body_html, vendor, tags, status, variants, images, price, metafields_global_title_tag, metafields_global_description_tag } = body
     console.log('Price to apply:', price, '| variants in body:', variants !== undefined)
 
+    const shopifyBase = `https://${shop.shop_domain}/admin/api/2024-01`
+    const shopifyHeaders = {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': shop.access_token,
+    }
+
+    // ── PRICE UPDATE: use variant-level API (reliable, no silent failures) ──
+    if (price !== undefined && variants === undefined) {
+      console.log('Price-only update path — using variant-level API')
+      const varFetchUrl = `${shopifyBase}/products/${id}.json?fields=id,variants`
+      console.log('Fetching Shopify variants from:', varFetchUrl)
+      const varRes = await fetch(varFetchUrl, {
+        headers: { 'X-Shopify-Access-Token': shop.access_token },
+      })
+      console.log('Variant fetch status:', varRes.status)
+      if (!varRes.ok) {
+        const errTxt = await varRes.text()
+        console.log('Variant fetch ERROR:', varRes.status, errTxt.slice(0, 300))
+        return NextResponse.json({ error: `Impossible de récupérer les variants Shopify: ${varRes.status}` }, { status: 502 })
+      }
+      const varData = await varRes.json()
+      const vlist: any[] = varData.product?.variants || []
+      console.log('Variants found:', vlist.length, '| IDs:', vlist.map((v: any) => v.id).join(', '))
+      if (vlist.length === 0) {
+        return NextResponse.json({ error: 'Aucun variant trouvé pour ce produit sur Shopify' }, { status: 404 })
+      }
+
+      // Update ALL variants with new price via variant-level PUT
+      for (const variant of vlist) {
+        const varUpdateUrl = `${shopifyBase}/variants/${variant.id}.json`
+        console.log('Updating variant', variant.id, 'to price', String(price))
+        const varUpdateRes = await fetch(varUpdateUrl, {
+          method: 'PUT',
+          headers: shopifyHeaders,
+          body: JSON.stringify({ variant: { id: variant.id, price: String(price) } }),
+        })
+        const varUpdateData = await varUpdateRes.json().catch(() => ({}))
+        console.log('Variant', variant.id, 'update result:', varUpdateRes.status, 'new price:', (varUpdateData as any).variant?.price)
+        if (!varUpdateRes.ok) {
+          const errMsg = JSON.stringify((varUpdateData as any).errors || varUpdateData).slice(0, 200)
+          console.log('Variant update ERROR:', errMsg)
+          return NextResponse.json({ error: `Erreur variant Shopify ${varUpdateRes.status}: ${errMsg}` }, { status: varUpdateRes.status })
+        }
+      }
+
+      // Update Supabase cache
+      const parsedPrice = parseFloat(String(price))
+      console.log('Updating Supabase: shopify_product_id=', id, 'price=', parsedPrice)
+      try {
+        const { error: dbErr, count } = await supabase
+          .from('shopify_products')
+          .update({ price: parsedPrice, updated_at: new Date().toISOString() })
+          .eq('shopify_product_id', id)
+          .eq('user_id', user.id)
+        console.log('Supabase update result:', dbErr?.message ?? 'success', '| rows affected:', count)
+      } catch (dbEx: any) {
+        console.log('Supabase update EXCEPTION (non-blocking):', dbEx.message)
+      }
+
+      console.log('=== PUT SUCCESS (price via variants) ===')
+      return NextResponse.json({ success: true })
+    }
+
+    // ── ALL OTHER FIELD UPDATES: product-level PUT ──
     // Build main product payload — metafields handled separately below
     const productPayload: Record<string, unknown> = { id: parseInt(id) }
     if (title !== undefined) productPayload.title = title
@@ -43,46 +107,28 @@ export async function PUT(
     if (vendor !== undefined) productPayload.vendor = vendor
     if (tags !== undefined) productPayload.tags = Array.isArray(tags) ? tags.join(',') : tags
     if (status !== undefined) productPayload.status = status
-    if (variants !== undefined) productPayload.variants = variants
     if (images !== undefined) productPayload.images = images
-
-    const shopifyBase = `https://${shop.shop_domain}/admin/api/2024-01`
-    const shopifyHeaders = {
-      'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': shop.access_token,
-    }
-
-    // When price is given (and variants not explicitly supplied), fetch real variant IDs
-    // from Shopify before updating — otherwise Shopify creates a new variant
+    // When variants are explicitly sent (e.g. from edit modal with price + ID), include them directly
+    if (variants !== undefined) productPayload.variants = variants
+    // If price given alongside other fields (e.g., from edit modal), fetch real variant IDs first
     if (price !== undefined && variants === undefined) {
-      const varFetchUrl = `${shopifyBase}/products/${id}.json?fields=id,variants`
-      console.log('Fetching Shopify variants from:', varFetchUrl)
       try {
-        const varRes = await fetch(varFetchUrl, {
+        const varRes2 = await fetch(`${shopifyBase}/products/${id}.json?fields=id,variants`, {
           headers: { 'X-Shopify-Access-Token': shop.access_token },
         })
-        console.log('Variant fetch status:', varRes.status)
-        if (varRes.ok) {
-          const varData = await varRes.json()
-          const vlist: any[] = varData.product?.variants || []
-          console.log('Variants found:', vlist.length, '| IDs:', vlist.map((v: any) => v.id).join(', '))
-          if (vlist.length > 0) {
-            productPayload.variants = vlist.map((v: any, i: number) =>
+        if (varRes2.ok) {
+          const varData2 = await varRes2.json()
+          const vlist2: any[] = varData2.product?.variants || []
+          if (vlist2.length > 0) {
+            productPayload.variants = vlist2.map((v: any, i: number) =>
               i === 0 ? { id: v.id, price: String(price) } : { id: v.id }
             )
-          } else {
-            console.log('WARNING: No variants found — price will not be set')
           }
-        } else {
-          const errTxt = await varRes.text()
-          console.log('Variant fetch ERROR:', varRes.status, errTxt.slice(0, 300))
         }
-      } catch (varErr: any) {
-        console.log('Variant fetch EXCEPTION:', varErr.message)
-      }
+      } catch { /* best-effort */ }
     }
 
-    console.log('Shopify PUT payload:', JSON.stringify({ product: productPayload }).slice(0, 500))
+    console.log('Shopify product PUT payload:', JSON.stringify({ product: productPayload }).slice(0, 500))
     const shopifyRes = await fetch(`${shopifyBase}/products/${id}.json`, {
       method: 'PUT',
       headers: shopifyHeaders,
@@ -97,10 +143,9 @@ export async function PUT(
     }
 
     const result = await shopifyRes.json()
-    const updatedVariantPrice = result.product?.variants?.[0]?.price
-    console.log('Shopify PUT success — updated variant[0].price:', updatedVariantPrice)
+    console.log('Shopify PUT success — variant[0].price:', result.product?.variants?.[0]?.price)
 
-    // Write updated price back to Supabase so fetchProducts (cache) reflects the change
+    // Write updated price back to Supabase
     if (price !== undefined) {
       const parsedPrice = parseFloat(String(price))
       console.log('Updating Supabase: shopify_product_id=', id, 'price=', parsedPrice)
@@ -111,12 +156,8 @@ export async function PUT(
           .eq('shopify_product_id', id)
           .eq('user_id', user.id)
         console.log('Supabase update result:', dbErr?.message ?? 'success', '| rows affected:', count)
-        if (dbErr) {
-          // Fallback: try updating by Shopify product ID stored as string
-          console.log('Supabase update failed, trying without user_id filter...')
-        }
       } catch (dbEx: any) {
-        console.log('Supabase update EXCEPTION:', dbEx.message)
+        console.log('Supabase update EXCEPTION (non-blocking):', dbEx.message)
       }
     }
 
