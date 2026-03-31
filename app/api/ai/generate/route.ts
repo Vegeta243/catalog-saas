@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { aiCache, aiCacheKey } from "@/lib/cache";
 import { getCreditCost } from "@/lib/credits";
@@ -108,86 +109,69 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, demo: true, taskCost, ...mockResult });
     }
 
-    let prompt = "";
-
-    if (mode === "title") {
-      prompt = `Tu es un expert e-commerce. Génère un titre accrocheur pour ce produit Shopify.
-Titre actuel : "${product.title}"
-Contraintes :
-- Exactement entre 50 et 70 caractères
-- Commence par le mot-clé principal du produit
-- Naturel et commercial, donne envie d'acheter
-- INTERDIT absolu : les mots "SEO", "optimisé", "optimisée", "référencement", "livraison gratuite", "livraison offerte", "qualité premium", "premium", "meilleur rapport qualité-prix"
-Langue : ${language}. Réponds uniquement avec le titre, sans guillemets ni explication.`;
-    } else if (mode === "tags") {
-      prompt = `Tu es un expert e-commerce. Génère exactement 10 mots-clés pour ce produit Shopify.
-Titre : "${product.title}". Description : "${product.description || ""}"
-Contraintes :
-- Mots-clés que les acheteurs tapent réellement dans Google ou sur Shopify
-- Variez entre : terme générique, spécifique, cas d'usage, audience
-- INTERDIT absolu : "SEO", "optimisé", "shopify", "boutique" seul, "premium" seul, "livraison gratuite", "livraison offerte", "qualité premium"
-Langue : ${language}. Réponds uniquement avec les mots-clés séparés par des virgules, sans numérotation.`;
-    } else {
-      prompt = `Tu es un copywriter e-commerce expert. Pour ce produit Shopify :
-Titre : "${product.title}"
-Description actuelle : "${product.description || "Aucune"}"
-
-Génère :
-1. Un titre accrocheur de 55 à 60 caractères exact, qui commence par le mot-clé principal
-2. Une description de vente d'au moins 220 mots en HTML avec puces <ul><li>, mettant en avant les bénéfices concrets pour l'acheteur
-3. 10 mots-clés que les acheteurs tapent réellement, séparés par des virgules
-4. Une meta description de 150 à 160 caractères accrocheuse pour Google, qui résume le produit et donne envie de cliquer
-
-Règles STRICTES pour tout le contenu :
-- N'utilise JAMAIS : "SEO", "optimisé", "optimisée", "référencement", "strategiquement", "livraison gratuite", "livraison offerte", "qualité premium", "premium", "meilleur rapport qualité-prix"
-- La description doit parler du produit, pas de la boutique
-- Ton direct, bénéfices concrets, pas de superlatifs vides
-- La meta description doit faire EXACTEMENT entre 150 et 160 caractères
-
-Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","keywords":"...","meta_description":"..."}`;
+    const options = {
+      title: mode !== 'tags',
+      description: mode !== 'title' && mode !== 'tags',
+      tags: mode !== 'title',
     }
+
+    const systemPrompt = `Tu es un expert en e-commerce francophone spécialisé dans le dropshipping.
+
+RÈGLES ABSOLUES — SANS EXCEPTION :
+1. Tu réponds UNIQUEMENT en français. Zéro mot anglais, zéro mot dans une autre langue.
+2. Si le produit a un nom anglais, tu le TRADUIS en français naturel adapté au marché français.
+3. Tu ne gardes JAMAIS un mot anglais même s'il semble "international" (ex: "snowboard" → "snowboard" est acceptable car mot intégré en français, mais "The Collection" → "La Collection").
+4. Les titres doivent être accrocheurs, naturels en français, optimisés SEO pour Google.fr.
+5. Les descriptions doivent être persuasives, en français courant, sans anglicismes.
+6. Les tags doivent être des mots-clés français que les acheteurs français tapent sur Google.
+
+TRADUCTIONS AUTOMATIQUES :
+- "The [X]" → "Le/La [X traduit]"
+- "Edition" → "Édition"  
+- "Premium" → "Premium" (acceptable)
+- "Collection" → "Collection" (acceptable)
+- Tous les autres mots anglais → traduction française`
+
+    const userPrompt = `INSTRUCTION PRIORITAIRE : Ta réponse doit être ENTIÈREMENT en français. Traduis tout ce qui est en anglais.
+
+Produit à optimiser :
+Titre actuel : ${product.title}
+Description actuelle : ${product.body_html || 'Aucune description'}
+Tags actuels : ${product.tags || 'Aucun'}
+Prix : ${product.price}€
+
+Génère en français :
+${options.title ? '- Un titre optimisé SEO en français (50-70 caractères)' : ''}
+${options.description ? '- Une description persuasive en français (300-500 mots)' : ''}
+${options.tags ? '- 8 à 12 tags en français séparés par des virgules' : ''}
+
+Réponds UNIQUEMENT en JSON sans markdown :
+{
+  ${options.title ? '"title": "titre en français",' : ''}
+  ${options.description ? '"description": "description en français",' : ''}
+  ${options.tags ? '"tags": "tag1, tag2, tag3"' : ''}
+}`
 
     // Use gpt-4o-mini by default (10x cheaper than gpt-4o)
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "Tu es un expert en e-commerce francophone. Tu dois TOUJOURS répondre UNIQUEMENT en français, sans aucune exception. N'utilise JAMAIS de mots anglais, espagnols ou dans une autre langue que le français. Tous tes textes (titres, descriptions, tags, méta-titres, méta-descriptions) doivent être intégralement rédigés en français."
-          },
-          { role: "user", content: `IMPORTANT : Réponds uniquement en français.\n\n${prompt}` }
-        ],
-        temperature: 0.7,
-        max_tokens: 1200, // Increased for 220+ word descriptions
-      }),
+    const openai = new OpenAI({ apiKey });
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.6,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' }  // force JSON output
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      return NextResponse.json({ error: `Erreur OpenAI: ${err}` }, { status: 500 });
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content?.trim() || "";
+    const content = completion.choices?.[0]?.message?.content?.trim() || "";
 
     let result: Record<string, string>;
 
-    if (mode === "title") {
-      result = { title: content };
-    } else if (mode === "tags") {
-      result = { tags: content };
-    } else {
-      try {
-        result = JSON.parse(content);
-      } catch {
-        result = { description: content };
-      }
+    try {
+      result = JSON.parse(content);
+    } catch {
+      result = { description: content };
     }
 
     // Cache the result
