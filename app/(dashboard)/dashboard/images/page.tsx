@@ -433,6 +433,52 @@ export default function ImagesPage() {
               />
             </div>
 
+            {/* LIVE PREVIEW — bulk mode */}
+            {(() => {
+              const firstId = massSelected.size > 0 ? [...massSelected][0] : null
+              const firstProduct = firstId ? products.find(p => (p.shopify_product_id || p.id) === firstId) : null
+              const previewUrl = firstProduct ? getFirstImage(firstProduct) : null
+              return (
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, marginBottom: '10px' }}>Aperçu du résultat</div>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                    {/* BEFORE */}
+                    <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px', textAlign: 'center', fontWeight: 500 }}>Avant</div>
+                      <div style={{ width: '100%', aspectRatio: '1', background: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', position: 'relative' }}>
+                        {previewUrl ? (
+                          <img src={previewUrl} alt="Avant" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'none' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '12px' }}>Aucune image</div>
+                        )}
+                        <div style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: '10px', padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>Original</div>
+                      </div>
+                    </div>
+                    {/* Arrow */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '28px', flexShrink: 0, color: '#2563eb', fontSize: '20px' }}>→</div>
+                    {/* AFTER */}
+                    <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                      <div style={{ fontSize: '11px', color: '#2563eb', marginBottom: '6px', textAlign: 'center', fontWeight: 600 }}>Après</div>
+                      <div style={{ width: '100%', aspectRatio: '1', background: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', border: '2px solid #2563eb', position: 'relative' }}>
+                        {previewUrl ? (
+                          <img src={previewUrl} alt="Après" style={{ width: '100%', height: '100%', objectFit: resizeMode === 'contain' ? 'contain' : resizeMode === 'cover' ? 'cover' : 'fill', filter: `brightness(${brightness}%) contrast(${contrast}%)`, transition: 'all 0.2s ease' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '12px' }}>Aucune image</div>
+                        )}
+                        <div style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', background: '#2563eb', color: '#fff', fontSize: '10px', padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap', fontWeight: 600 }}>{width || '800'} × {height || '800'} px</div>
+                      </div>
+                    </div>
+                  </div>
+                  {width && height && Number(width) !== Number(height) && resizeMode === 'stretch' && (
+                    <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fef9c3', border: '1px solid #fde68a', borderRadius: '6px', fontSize: '12px', color: '#d97706' }}>⚠️ Mode "Étirer" avec des dimensions non carrées peut déformer l&apos;image.</div>
+                  )}
+                  {(brightness !== 100 || contrast !== 100) && (
+                    <div style={{ marginTop: '8px', padding: '8px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '12px', color: '#2563eb' }}>Lum. {brightness}% · Contr. {contrast}% appliqués dans l&apos;aperçu</div>
+                  )}
+                </div>
+              )
+            })()}
+
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
@@ -719,6 +765,45 @@ export default function ImagesPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* LIVE PREVIEW — individual mode */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, marginBottom: '10px' }}>Aperçu du résultat</div>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  {/* BEFORE */}
+                  <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px', textAlign: 'center', fontWeight: 500 }}>Avant</div>
+                    <div style={{ width: '100%', aspectRatio: '1', background: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', position: 'relative' }}>
+                      {currentImgUrl ? (
+                        <img src={currentImgUrl} alt="Avant" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'none' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '12px' }}>Aucune image</div>
+                      )}
+                      <div style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: '10px', padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>Original</div>
+                    </div>
+                  </div>
+                  {/* Arrow */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '28px', flexShrink: 0, color: '#2563eb', fontSize: '20px' }}>→</div>
+                  {/* AFTER */}
+                  <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                    <div style={{ fontSize: '11px', color: '#2563eb', marginBottom: '6px', textAlign: 'center', fontWeight: 600 }}>Après</div>
+                    <div style={{ width: '100%', aspectRatio: '1', background: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', border: '2px solid #2563eb', position: 'relative' }}>
+                      {currentImgUrl ? (
+                        <img src={currentImgUrl} alt="Après" style={{ width: '100%', height: '100%', objectFit: resizeMode === 'contain' ? 'contain' : resizeMode === 'cover' ? 'cover' : 'fill', filter: `brightness(${brightness}%) contrast(${contrast}%)`, transition: 'all 0.2s ease' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '12px' }}>Aucune image</div>
+                      )}
+                      <div style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', background: '#2563eb', color: '#fff', fontSize: '10px', padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap', fontWeight: 600 }}>{width || '800'} × {height || '800'} px</div>
+                    </div>
+                  </div>
+                </div>
+                {width && height && Number(width) !== Number(height) && resizeMode === 'stretch' && (
+                  <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fef9c3', border: '1px solid #fde68a', borderRadius: '6px', fontSize: '12px', color: '#d97706' }}>⚠️ Mode "Étirer" avec des dimensions non carrées peut déformer l&apos;image.</div>
+                )}
+                {(brightness !== 100 || contrast !== 100) && (
+                  <div style={{ marginTop: '8px', padding: '8px 12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '12px', color: '#2563eb' }}>Lum. {brightness}% · Contr. {contrast}% appliqués dans l&apos;aperçu</div>
+                )}
               </div>
 
               {saveMsg && (
