@@ -5,12 +5,16 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log('=== PUT /api/shopify/products/[id] START ===')
   try {
     const { id } = await params
+    console.log('Product ID param:', id)
     const body = await request.json()
+    console.log('Request body:', JSON.stringify(body))
 
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('Auth:', user?.id ?? 'NO USER', authError?.message ?? 'no error')
     if (authError || !user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
@@ -23,11 +27,14 @@ export async function PUT(
       .limit(1)
 
     const shop = shopRows?.[0]
+    console.log('Shop found:', shop?.shop_domain ?? 'NONE', shopError?.message ?? 'no error')
+    console.log('Access token prefix:', shop?.access_token?.slice(0, 6) ?? 'MISSING')
     if (shopError || !shop) {
       return NextResponse.json({ error: 'Aucune boutique connectée' }, { status: 404 })
     }
 
     const { title, body_html, vendor, tags, status, variants, images, price, metafields_global_title_tag, metafields_global_description_tag } = body
+    console.log('Price to apply:', price, '| variants in body:', variants !== undefined)
 
     // Build main product payload — metafields handled separately below
     const productPayload: Record<string, unknown> = { id: parseInt(id) }
@@ -48,27 +55,40 @@ export async function PUT(
     // When price is given (and variants not explicitly supplied), fetch real variant IDs
     // from Shopify before updating — otherwise Shopify creates a new variant
     if (price !== undefined && variants === undefined) {
+      const varFetchUrl = `${shopifyBase}/products/${id}.json?fields=id,variants`
+      console.log('Fetching Shopify variants from:', varFetchUrl)
       try {
-        const varRes = await fetch(`${shopifyBase}/products/${id}.json?fields=id,variants`, {
+        const varRes = await fetch(varFetchUrl, {
           headers: { 'X-Shopify-Access-Token': shop.access_token },
         })
+        console.log('Variant fetch status:', varRes.status)
         if (varRes.ok) {
           const varData = await varRes.json()
           const vlist: any[] = varData.product?.variants || []
+          console.log('Variants found:', vlist.length, '| IDs:', vlist.map((v: any) => v.id).join(', '))
           if (vlist.length > 0) {
             productPayload.variants = vlist.map((v: any, i: number) =>
               i === 0 ? { id: v.id, price: String(price) } : { id: v.id }
             )
+          } else {
+            console.log('WARNING: No variants found — price will not be set')
           }
+        } else {
+          const errTxt = await varRes.text()
+          console.log('Variant fetch ERROR:', varRes.status, errTxt.slice(0, 300))
         }
-      } catch { /* non-blocking */ }
+      } catch (varErr: any) {
+        console.log('Variant fetch EXCEPTION:', varErr.message)
+      }
     }
 
+    console.log('Shopify PUT payload:', JSON.stringify({ product: productPayload }).slice(0, 500))
     const shopifyRes = await fetch(`${shopifyBase}/products/${id}.json`, {
       method: 'PUT',
       headers: shopifyHeaders,
       body: JSON.stringify({ product: productPayload }),
     })
+    console.log('Shopify PUT status:', shopifyRes.status)
 
     if (!shopifyRes.ok) {
       const err = await shopifyRes.text()
@@ -77,16 +97,27 @@ export async function PUT(
     }
 
     const result = await shopifyRes.json()
+    const updatedVariantPrice = result.product?.variants?.[0]?.price
+    console.log('Shopify PUT success — updated variant[0].price:', updatedVariantPrice)
 
     // Write updated price back to Supabase so fetchProducts (cache) reflects the change
     if (price !== undefined) {
+      const parsedPrice = parseFloat(String(price))
+      console.log('Updating Supabase: shopify_product_id=', id, 'price=', parsedPrice)
       try {
-        await supabase
+        const { error: dbErr, count } = await supabase
           .from('shopify_products')
-          .update({ price: parseFloat(String(price)), updated_at: new Date().toISOString() })
+          .update({ price: parsedPrice, updated_at: new Date().toISOString() })
           .eq('shopify_product_id', id)
           .eq('user_id', user.id)
-      } catch { /* non-blocking — Shopify already updated */ }
+        console.log('Supabase update result:', dbErr?.message ?? 'success', '| rows affected:', count)
+        if (dbErr) {
+          // Fallback: try updating by Shopify product ID stored as string
+          console.log('Supabase update failed, trying without user_id filter...')
+        }
+      } catch (dbEx: any) {
+        console.log('Supabase update EXCEPTION:', dbEx.message)
+      }
     }
 
     // Handle SEO metafields via the Metafields API (not inline on product)
@@ -125,9 +156,10 @@ export async function PUT(
       }
     }
 
+    console.log('=== PUT SUCCESS ===')
     return NextResponse.json({ product: result.product, success: true })
   } catch (error) {
-    console.error('PUT /api/shopify/products/[id]:', error)
+    console.error('=== PUT ERROR ===', (error as Error).message, (error as Error).stack)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
 }

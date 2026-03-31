@@ -712,6 +712,7 @@ export default function ProductsPage() {
         const pctVal = parseFloat(bulkValue)
         const toProcess = products.filter(p => selectedIds.has(p.shopify_product_id || p.id))
         let success = 0
+        const priceMap: Record<string, number> = {}
         for (const p of toProcess) {
           const pid = p.shopify_product_id || p.id
           const cur = typeof p.price === 'number' ? p.price : Number(p.price || 0)
@@ -726,12 +727,26 @@ export default function ProductsPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ price: String(newPrice.toFixed(2)) }),
           })
-          if (res.ok) success++
+          if (res.ok) {
+            success++
+            priceMap[pid] = newPrice
+          } else {
+            const errData = await res.json().catch(() => ({}))
+            console.error('Price update failed for', pid, res.status, errData)
+          }
+        }
+        // Optimistic local update so UI reflects changes immediately (independent of Supabase cache)
+        if (Object.keys(priceMap).length > 0) {
+          setProducts(prev => prev.map(p => {
+            const pid = p.shopify_product_id || p.id
+            return pid in priceMap ? { ...p, price: priceMap[pid] } : p
+          }))
         }
         setBulkMsg(`${success}/${toProcess.length} produit(s) mis à jour`)
         setBulkMsgOk(success > 0)
         setSelectedIds(new Set()); setBulkValue('')
-        await fetchProducts(page, search)
+        // Also refresh from server to sync any backend changes
+        fetchProducts(page, search).catch(() => { /* silent — local state already updated */ })
       } catch (e: any) {
         setBulkMsg('Erreur réseau: ' + e.message); setBulkMsgOk(false)
       } finally {
