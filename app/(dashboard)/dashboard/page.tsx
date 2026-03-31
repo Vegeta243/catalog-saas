@@ -239,7 +239,6 @@ export default function DashboardPage() {
           <p style={S.sectionTitle}>Navigation rapide</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {[
-              { href: '/dashboard/ai', label: 'Optimisation IA', desc: 'Generer des fiches produits' },
               { href: '/dashboard/products', label: 'Mes produits', desc: 'Gerer le catalogue' },
               { href: '/dashboard/billing', label: 'Abonnement', desc: `${plan.charAt(0).toUpperCase() + plan.slice(1)} - Gerer le plan` },
             ].map((a) => (
