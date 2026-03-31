@@ -45,11 +45,13 @@ export default function ImagesPage() {
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // Mass edit mode
   const [massMode, setMassMode] = useState(false)
   const [massSelected, setMassSelected] = useState<Set<string>>(new Set())
   const [massSaving, setMassSaving] = useState(false)
   const [massMsg, setMassMsg] = useState('')
+  const [resizeMode, setResizeMode] = useState<string>('contain')
+  const [isApplying, setIsApplying] = useState(false)
+  const [isApplyingSingle, setIsApplyingSingle] = useState(false)
 
   // Crop
   const [cropEnabled, setCropEnabled] = useState(false)
@@ -90,10 +92,6 @@ export default function ImagesPage() {
   function selectProduct(p: Product) {
     setSelected(p)
     setSelectedImgIdx(0)
-    setBrightness(100)
-    setContrast(100)
-    setWidth('')
-    setHeight('')
     setCropEnabled(false)
     setCropTop('')
     setCropLeft('')
@@ -198,35 +196,85 @@ export default function ImagesPage() {
     setSaving(false)
   }
 
-  async function applyToAll() {
-    if (!massSelected.size) return
-    setMassSaving(true)
-    setMassMsg('Traitement en cours...')
-    let done = 0, errors = 0
-    const pids = Array.from(massSelected)
-    for (const pid of pids) {
-      try {
-        const product = products.find(p => (p.shopify_product_id || p.id) === pid)
-        if (!product) { errors++; continue }
-        const imgUrl = getFirstImage(product)
-        if (!imgUrl) { errors++; continue }
-        const base64Data = await processImageToBase64(imgUrl)
-        const res = await fetch(`/api/shopify/products/${pid}/image`, {
-          method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64Data, filename: 'image-editee.jpg' })
-        })
-        if (res.ok) done++; else errors++
-      } catch { errors++ }
-      setMassMsg(`Traitement: ${done + errors}/${pids.length}...`)
+  async function handleBulkApply() {
+    const ids = [...massSelected]
+    if (ids.length === 0) {
+      alert('Sélectionnez au moins un produit')
+      return
     }
-    setMassMsg(errors === 0
-      ? `✓ ${done} image${done > 1 ? 's' : ''} modifiée${done > 1 ? 's' : ''} sur Shopify`
-      : `${done} réussi${done > 1 ? 's' : ''}, ${errors} erreur${errors > 1 ? 's' : ''}`)
-    setMassSaving(false)
-    setMassSelected(new Set())
-    setMassMode(false)
-    setTimeout(() => setMassMsg(''), 8000)
+
+    const w = Number(width)
+    const h = Number(height)
+    if (!w || !h || w < 50 || h < 50) {
+      alert('Entrez des dimensions valides (minimum 50px)')
+      return
+    }
+
+    setIsApplying(true)
+    let successCount = 0
+    try {
+      for (const productId of ids) {
+        const res = await fetch(`/api/shopify/products/${productId}/resize-images`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            width: w,
+            height: h,
+            mode: resizeMode,
+            brightness,
+            contrast,
+          }),
+        })
+        if (res.ok) successCount++
+        else {
+          const err = await res.text()
+          console.error('Failed for', productId, err)
+        }
+      }
+      alert(`✅ ${successCount}/${ids.length} produit(s) traité(s) — ${w}×${h}px`)
+      setMassSelected(new Set())
+      setMassMode(false)
+    } catch (e: unknown) {
+      alert('Erreur : ' + (e instanceof Error ? e.message : 'Inconnue'))
+    } finally {
+      setIsApplying(false)
+    }
+  }
+
+  async function handleSingleApply(productId: string) {
+    const w = Number(width)
+    const h = Number(height)
+    if (!w || !h || w < 50 || h < 50) {
+      alert('Entrez des dimensions valides (minimum 50px)')
+      return
+    }
+
+    setIsApplyingSingle(true)
+    try {
+      const res = await fetch(`/api/shopify/products/${productId}/resize-images`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          width: w,
+          height: h,
+          mode: resizeMode,
+          brightness,
+          contrast,
+        }),
+      })
+      if (res.ok) {
+        alert(`✅ Image redimensionnée en ${w}×${h}px`)
+      } else {
+        const err = await res.text()
+        alert('Erreur : ' + err)
+      }
+    } catch (e: unknown) {
+      alert('Erreur : ' + (e instanceof Error ? e.message : 'Inconnue'))
+    } finally {
+      setIsApplyingSingle(false)
+    }
   }
 
   // Sync resize container size → width/height inputs
@@ -284,52 +332,122 @@ export default function ImagesPage() {
 
         {/* Mass mode bar */}
         {massMode && (
-          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ color: '#1d4ed8', fontSize: '14px', fontWeight: 700 }}>
+          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+            <div style={{ color: '#1d4ed8', fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>
               {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sélectionné{massSelected.size !== 1 ? 's' : ''} — Appliquer les mêmes modifications
-            </span>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Compact adjustment controls visible directly in mass bar */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '5px 10px', border: '1px solid #bfdbfe' }}>
-                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>Lum. {brightness}%</span>
-                <input type="range" min="0" max="200" value={brightness}
-                  onChange={e => setBrightness(parseInt(e.target.value))}
-                  style={{ width: '70px', accentColor: '#2563eb', cursor: 'pointer' }} />
+            </div>
+
+            {/* Dimension inputs */}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                  Largeur (px)
+                </label>
+                <input
+                  type="number"
+                  value={width}
+                  onChange={e => setWidth(e.target.value)}
+                  min={50}
+                  max={4000}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    background: '#fff',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '5px 10px', border: '1px solid #bfdbfe' }}>
-                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>Cont. {contrast}%</span>
-                <input type="range" min="0" max="200" value={contrast}
-                  onChange={e => setContrast(parseInt(e.target.value))}
-                  style={{ width: '70px', accentColor: '#2563eb', cursor: 'pointer' }} />
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                  Hauteur (px)
+                </label>
+                <input
+                  type="number"
+                  value={height}
+                  onChange={e => setHeight(e.target.value)}
+                  min={50}
+                  max={4000}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    background: '#fff',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
-              {(brightness !== 100 || contrast !== 100) && (
-                <button onClick={() => { setBrightness(100); setContrast(100) }}
-                  style={{ ...S.btnSec, fontSize: '11px', padding: '4px 8px', color: '#64748b' }}>
-                  ↺ Reset
-                </button>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '5px 10px', border: '1px solid #bfdbfe' }}>
-                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>L</span>
-                <input type="number" min="1" value={width} onChange={e => setWidth(e.target.value)}
-                  style={{ width: '60px', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '2px 4px', fontSize: '11px', textAlign: 'center' }} />
-                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600 }}>×</span>
-                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>H</span>
-                <input type="number" min="1" value={height} onChange={e => setHeight(e.target.value)}
-                  style={{ width: '60px', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '2px 4px', fontSize: '11px', textAlign: 'center' }} />
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>px</span>
-              </div>
+            </div>
+
+            {/* Mode selector */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                Mode de redimensionnement
+              </label>
+              <select
+                value={resizeMode}
+                onChange={e => setResizeMode(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  color: '#0f172a',
+                  background: '#fff',
+                }}
+              >
+                <option value="contain">Contenir (garde les proportions)</option>
+                <option value="cover">Remplir (recadre si nécessaire)</option>
+                <option value="stretch">Étirer (ignore les proportions)</option>
+              </select>
+            </div>
+
+            {/* Sliders */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                Luminosité : {brightness}%
+              </label>
+              <input
+                type="range"
+                min={0} max={200} value={brightness}
+                onChange={e => setBrightness(Number(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                Contraste : {contrast}%
+              </label>
+              <input
+                type="range"
+                min={0} max={200} value={contrast}
+                onChange={e => setContrast(Number(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 onClick={() => setMassSelected(new Set(products.map(p => p.shopify_product_id || p.id)))}
                 style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px' }}>
                 Tout sélectionner
               </button>
-              <button onClick={applyToAll} disabled={massSaving || massSelected.size === 0}
-                style={{ ...S.btn, fontSize: '12px', padding: '6px 14px', opacity: (massSaving || massSelected.size === 0) ? 0.5 : 1 }}>
-                {massSaving ? 'Application...' : massSelected.size > 0 ? `Appliquer à ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}` : 'Appliquer (0 sélectionné)'}
+              <button onClick={handleBulkApply} disabled={isApplying || massSelected.size === 0}
+                style={{ ...S.btn, fontSize: '12px', padding: '6px 14px', opacity: (isApplying || massSelected.size === 0) ? 0.5 : 1 }}>
+                {isApplying ? 'Application...' : massSelected.size > 0 ? `Appliquer à ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}` : 'Appliquer (0 sélectionné)'}
               </button>
             </div>
+
             {massMsg && (
-              <span style={{ width: '100%', color: massMsg.includes('échec') ? '#dc2626' : '#15803d', fontSize: '13px', fontWeight: 600 }}>
+              <span style={{ display: 'block', marginTop: '10px', color: massMsg.includes('échec') ? '#dc2626' : '#15803d', fontSize: '13px', fontWeight: 600 }}>
                 {massMsg}
               </span>
             )}
@@ -561,6 +679,21 @@ export default function ImagesPage() {
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <label style={{ ...S.lbl, marginBottom: 0 }}>Mode de redimensionnement</label>
+                  </div>
+                  <select
+                    value={resizeMode}
+                    onChange={e => setResizeMode(e.target.value)}
+                    style={{ ...S.inp }}
+                  >
+                    <option value="contain">Contenir (garde les proportions)</option>
+                    <option value="cover">Remplir (recadre si nécessaire)</option>
+                    <option value="stretch">Étirer (ignore les proportions)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <label style={{ ...S.lbl, marginBottom: 0 }}>Recadrage (crop)</label>
                     <button onClick={() => setCropEnabled(!cropEnabled)}
                       style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', border: 'none', cursor: 'pointer',
@@ -598,9 +731,9 @@ export default function ImagesPage() {
                 </div>
               )}
 
-              <button onClick={applyChanges} disabled={saving}
-                style={{ ...S.btn, width: '100%', justifyContent: 'center', opacity: saving ? 0.6 : 1 }}>
-                {saving ? 'Enregistrement...' : 'Appliquer les modifications'}
+              <button onClick={() => handleSingleApply(selected.shopify_product_id || selected.id)} disabled={isApplyingSingle}
+                style={{ ...S.btn, width: '100%', justifyContent: 'center', opacity: isApplyingSingle ? 0.6 : 1 }}>
+                {isApplyingSingle ? 'Application...' : 'Appliquer à ce produit'}
               </button>
 
               <p style={{ textAlign: 'center', marginTop: '12px' }}>
