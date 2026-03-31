@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
         if (Object.keys(dbUpdate).length > 0) {
           await supabase
             .from('shopify_products')
-            .update({ ...dbUpdate, updated_at: new Date().toISOString() })
+            .update({ ...dbUpdate, synced_at: new Date().toISOString() })
             .eq('id', product.id)
             .eq('user_id', user.id)
         }

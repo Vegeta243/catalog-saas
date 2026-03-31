@@ -99,7 +99,7 @@ export async function PUT(
       try {
         const { error: dbErr, count } = await supabase
           .from('shopify_products')
-          .update({ price: parsedPrice, updated_at: new Date().toISOString() })
+          .update({ price: parsedPrice, synced_at: new Date().toISOString() })
           .eq('shopify_product_id', id)
           .eq('user_id', user.id)
         console.log('Supabase update result:', dbErr?.message ?? 'success', '| rows affected:', count)
@@ -164,7 +164,7 @@ export async function PUT(
       try {
         const { error: dbErr, count } = await supabase
           .from('shopify_products')
-          .update({ price: parsedPrice, updated_at: new Date().toISOString() })
+          .update({ price: parsedPrice, synced_at: new Date().toISOString() })
           .eq('shopify_product_id', id)
           .eq('user_id', user.id)
         console.log('Supabase update result:', dbErr?.message ?? 'success', '| rows affected:', count)
