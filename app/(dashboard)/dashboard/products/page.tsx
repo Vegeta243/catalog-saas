@@ -30,6 +30,40 @@ type EditState = {
   vendor: string
 }
 
+const PRODUCTS_CACHE_KEY = 'products_cache'
+
+const SkeletonCard = () => (
+  <div style={{
+    background: '#fff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '16px',
+    animation: 'pulse 1.5s ease-in-out infinite',
+  }}>
+    <div style={{ width: '100%', paddingBottom: '75%', background: '#f1f5f9', borderRadius: '8px', marginBottom: '12px' }} />
+    <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '4px', marginBottom: '8px', width: '80%' }} />
+    <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '4px', width: '50%' }} />
+  </div>
+)
+
+const SkeletonListRow = () => (
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: '16px',
+    padding: '12px 16px', background: '#fff',
+    border: '1px solid #e2e8f0', borderRadius: '10px',
+    animation: 'pulse 1.5s ease-in-out infinite',
+  }}>
+    <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: '#f1f5f9', flexShrink: 0 }} />
+    <div style={{ width: '48px', height: '48px', borderRadius: '6px', background: '#f1f5f9', flexShrink: 0 }} />
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '4px', width: '70%', marginBottom: '8px' }} />
+      <div style={{ height: '12px', background: '#f1f5f9', borderRadius: '4px', width: '35%' }} />
+    </div>
+    <div style={{ width: '72px', height: '26px', borderRadius: '999px', background: '#f1f5f9', flexShrink: 0 }} />
+    <div style={{ width: '80px', height: '16px', borderRadius: '4px', background: '#f1f5f9', flexShrink: 0 }} />
+  </div>
+)
+
 const PER_PAGE = 24
 
 function asImageUrls(value: unknown): string[] {
@@ -550,7 +584,7 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
@@ -594,23 +628,64 @@ export default function ProductsPage() {
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PER_PAGE)), [total])
 
   const fetchProducts = useCallback(async (nextPage = 1, nextSearch = '') => {
-    setLoading(true)
+    const canUseCache = nextPage === 1 && !nextSearch.trim()
+    let usedCache = false
+
+    if (canUseCache) {
+      try {
+        const cached = localStorage.getItem(PRODUCTS_CACHE_KEY)
+        if (cached) {
+          const parsed = JSON.parse(cached) as { products?: Product[]; total?: number }
+          if (Array.isArray(parsed.products)) {
+            setProducts(parsed.products)
+            setTotal(typeof parsed.total === 'number' ? parsed.total : parsed.products.length)
+            setHasShop(true)
+            setLoading(false)
+            usedCache = true
+          }
+        }
+      } catch {
+        // Ignore invalid cache payloads.
+      }
+    }
+
+    if (!usedCache) setLoading(true)
     try {
       const params = new URLSearchParams({ limit: String(PER_PAGE), page: String(nextPage) })
       if (nextSearch.trim()) params.set('search', nextSearch.trim())
-      const res = await fetch('/api/shopify/products?' + params.toString(), { cache: 'no-store' })
+      const res = await fetch('/api/shopify/products?' + params.toString(), { credentials: 'include' })
       const body = await res.json().catch(() => ({}))
       if (res.ok) {
-        setProducts(Array.isArray(body.products) ? body.products : [])
-        setTotal(typeof body.total === 'number' ? body.total : 0)
+        const nextProducts = Array.isArray(body.products) ? body.products : []
+        const nextTotal = typeof body.total === 'number' ? body.total : 0
+        setProducts(nextProducts)
+        setTotal(nextTotal)
         setHasShop(true)
+        if (canUseCache) {
+          try {
+            localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify({ products: nextProducts, total: nextTotal }))
+          } catch {
+            // Ignore storage quota failures.
+          }
+        }
         return
       }
-      if (res.status === 400) setHasShop(false)
-      setProducts([]); setTotal(0)
+      if (res.status === 400) {
+        setHasShop(false)
+        if (canUseCache) {
+          try { localStorage.removeItem(PRODUCTS_CACHE_KEY) } catch {}
+        }
+      }
+      if (!usedCache) {
+        setProducts([])
+        setTotal(0)
+      }
       setSyncMsg(body.error || 'Erreur API ' + res.status); setSyncOk(false)
     } catch {
-      setProducts([]); setTotal(0)
+      if (!usedCache) {
+        setProducts([])
+        setTotal(0)
+      }
       setSyncMsg('Erreur réseau'); setSyncOk(false)
     } finally { setLoading(false) }
   }, [])
@@ -866,6 +941,12 @@ export default function ProductsPage() {
 
   return (
     <div className="productsPage">
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
       {/* ── Header ── */}
       <div className="headerRow">
         <div>
@@ -1027,9 +1108,15 @@ export default function ProductsPage() {
 
           {/* ── Loading ── */}
           {loading && (
-            <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <p style={{ color: "var(--text-tertiary)", fontSize: 14 }}>Chargement des produits...</p>
-            </div>
+            viewMode === 'list' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {Array.from({ length: 10 }).map((_, index) => <SkeletonListRow key={index} />)}
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%), 1fr))', gap: '16px' }}>
+                {Array.from({ length: 10 }).map((_, index) => <SkeletonCard key={index} />)}
+              </div>
+            )
           )}
 
           {/* ── Empty state ── */}

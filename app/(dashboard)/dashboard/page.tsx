@@ -4,6 +4,19 @@ import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+const SkeletonCard = () => (
+  <div style={{
+    background: '#fff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '16px',
+    animation: 'pulse 1.5s ease-in-out infinite',
+  }}>
+    <div style={{ height: '14px', background: '#f1f5f9', borderRadius: '4px', marginBottom: '12px', width: '60%' }} />
+    <div style={{ height: '28px', background: '#f1f5f9', borderRadius: '6px', width: '38%' }} />
+  </div>
+)
+
 const S = {
   page: {
     padding: '16px',
@@ -112,11 +125,17 @@ export default function DashboardPage() {
 
   return (
     <div style={S.page}>
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
       <h1 style={S.h1}>Bonjour{firstName ? `, ${firstName}` : ''}</h1>
       <p style={S.sub}>Vue d'ensemble de votre boutique</p>
 
       <div className="dash-stats-grid">
-        {[
+        {loading ? Array.from({ length: 4 }).map((_, index) => <SkeletonCard key={index} />) : [
           { label: 'Produits', value: loading ? '-' : String(productCount), color: '#2563eb', href: '/dashboard/products' },
           {
             label: 'Actions IA',
@@ -177,7 +196,7 @@ export default function DashboardPage() {
       )}
 
       <div className="dash-bottom-grid">
-        {!allDone && (
+        {!allDone && !loading && (
           <div style={S.card}>
             <p style={S.sectionTitle}>Démarrer</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -238,7 +257,12 @@ export default function DashboardPage() {
         <div style={S.card}>
           <p style={S.sectionTitle}>Navigation rapide</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {[
+            {loading ? Array.from({ length: 2 }).map((_, index) => (
+              <div key={index} style={{ padding: '11px 14px', borderRadius: '10px', background: 'var(--surface-secondary)', border: '1px solid var(--apple-gray-200)', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                <div style={{ height: '14px', width: '45%', background: '#f1f5f9', borderRadius: '4px', marginBottom: '8px' }} />
+                <div style={{ height: '12px', width: '70%', background: '#f1f5f9', borderRadius: '4px' }} />
+              </div>
+            )) : [
               { href: '/dashboard/products', label: 'Mes produits', desc: 'Gerer le catalogue' },
               { href: '/dashboard/billing', label: 'Abonnement', desc: `${plan.charAt(0).toUpperCase() + plan.slice(1)} - Gerer le plan` },
             ].map((a) => (

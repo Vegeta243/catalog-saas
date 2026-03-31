@@ -3,6 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export const maxDuration = 30
 
+const cacheHeaders = {
+  'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+}
+
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -44,7 +48,7 @@ export async function GET(request: NextRequest) {
         products,
         total: count ?? products.length,
         source: 'cache',
-      })
+      }, { headers: cacheHeaders })
     }
   } catch (cacheErr: any) {
     console.warn('[products] cache error:', cacheErr.message)
@@ -59,7 +63,7 @@ export async function GET(request: NextRequest) {
 
   const shop = shops?.[0] as Record<string, unknown> | undefined
   if (!shop) {
-    return NextResponse.json({ products: [], total: 0, source: 'none' })
+    return NextResponse.json({ products: [], total: 0, source: 'none' }, { headers: cacheHeaders })
   }
 
   const shopDomain =
@@ -75,7 +79,7 @@ export async function GET(request: NextRequest) {
     ''
 
   if (!shopDomain || !accessToken) {
-    return NextResponse.json({ products: [], total: 0, source: 'none' })
+    return NextResponse.json({ products: [], total: 0, source: 'none' }, { headers: cacheHeaders })
   }
 
   const params = new URLSearchParams({
@@ -132,5 +136,5 @@ export async function GET(request: NextRequest) {
     // Keep fallback total if count request fails.
   }
 
-  return NextResponse.json({ products, total, source: 'live' })
+  return NextResponse.json({ products, total, source: 'live' }, { headers: cacheHeaders })
 }
