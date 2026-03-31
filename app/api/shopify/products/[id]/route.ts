@@ -27,7 +27,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Aucune boutique connectée' }, { status: 404 })
     }
 
-    const { title, body_html, vendor, tags, status, variants, images, metafields_global_title_tag, metafields_global_description_tag } = body
+    const { title, body_html, vendor, tags, status, variants, images, price, metafields_global_title_tag, metafields_global_description_tag } = body
 
     // Build main product payload — metafields handled separately below
     const productPayload: Record<string, unknown> = { id: parseInt(id) }
@@ -43,6 +43,25 @@ export async function PUT(
     const shopifyHeaders = {
       'Content-Type': 'application/json',
       'X-Shopify-Access-Token': shop.access_token,
+    }
+
+    // When price is given (and variants not explicitly supplied), fetch real variant IDs
+    // from Shopify before updating — otherwise Shopify creates a new variant
+    if (price !== undefined && variants === undefined) {
+      try {
+        const varRes = await fetch(`${shopifyBase}/products/${id}.json?fields=id,variants`, {
+          headers: { 'X-Shopify-Access-Token': shop.access_token },
+        })
+        if (varRes.ok) {
+          const varData = await varRes.json()
+          const vlist: any[] = varData.product?.variants || []
+          if (vlist.length > 0) {
+            productPayload.variants = vlist.map((v: any, i: number) =>
+              i === 0 ? { id: v.id, price: String(price) } : { id: v.id }
+            )
+          }
+        }
+      } catch { /* non-blocking */ }
     }
 
     const shopifyRes = await fetch(`${shopifyBase}/products/${id}.json`, {

@@ -108,11 +108,14 @@ export async function POST(request: NextRequest) {
             if (firstVariant?.id) {
               variantPriceUpdate = { id: firstVariant.id, price: newPrice.toFixed(2) }
             } else {
-              const updatedVariants = variants.length
-                ? variants.map((v: any, i: number) =>
-                    i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
-                : [{ price: newPrice.toFixed(2) }]
-              shopifyPayload = { id: shopifyId, variants: updatedVariants }
+              // No variant ID in local DB — fetch from Shopify to get real variant IDs
+              const spRes = await fetch(`${shopifyBase}/products/${shopifyId}.json?fields=id,variants`, { headers: shopifyHeaders })
+              if (spRes.ok) {
+                const spData = await spRes.json()
+                const rv = spData.product?.variants?.[0]
+                if (rv?.id) variantPriceUpdate = { id: rv.id, price: newPrice.toFixed(2) }
+              }
+              if (!variantPriceUpdate) shopifyPayload = { id: shopifyId, variants: [{ price: newPrice.toFixed(2) }] }
             }
             dbUpdate = { price: newPrice }
             break
@@ -124,11 +127,13 @@ export async function POST(request: NextRequest) {
             if (firstVariant?.id) {
               variantPriceUpdate = { id: firstVariant.id, price: newPrice.toFixed(2) }
             } else {
-              const updatedVariants = variants.length
-                ? variants.map((v: any, i: number) =>
-                    i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
-                : [{ price: newPrice.toFixed(2) }]
-              shopifyPayload = { id: shopifyId, variants: updatedVariants }
+              const spRes = await fetch(`${shopifyBase}/products/${shopifyId}.json?fields=id,variants`, { headers: shopifyHeaders })
+              if (spRes.ok) {
+                const spData = await spRes.json()
+                const rv = spData.product?.variants?.[0]
+                if (rv?.id) variantPriceUpdate = { id: rv.id, price: newPrice.toFixed(2) }
+              }
+              if (!variantPriceUpdate) shopifyPayload = { id: shopifyId, variants: [{ price: newPrice.toFixed(2) }] }
             }
             dbUpdate = { price: newPrice }
             break
@@ -140,11 +145,13 @@ export async function POST(request: NextRequest) {
             if (firstVariant?.id) {
               variantPriceUpdate = { id: firstVariant.id, price: newPrice.toFixed(2) }
             } else {
-              const updatedVariants = variants.length
-                ? variants.map((v: any, i: number) =>
-                    i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
-                : [{ price: newPrice.toFixed(2) }]
-              shopifyPayload = { id: shopifyId, variants: updatedVariants }
+              const spRes = await fetch(`${shopifyBase}/products/${shopifyId}.json?fields=id,variants`, { headers: shopifyHeaders })
+              if (spRes.ok) {
+                const spData = await spRes.json()
+                const rv = spData.product?.variants?.[0]
+                if (rv?.id) variantPriceUpdate = { id: rv.id, price: newPrice.toFixed(2) }
+              }
+              if (!variantPriceUpdate) shopifyPayload = { id: shopifyId, variants: [{ price: newPrice.toFixed(2) }] }
             }
             dbUpdate = { price: newPrice }
             break
@@ -198,11 +205,13 @@ export async function POST(request: NextRequest) {
             if (firstVariant2?.id) {
               variantPriceUpdate = { id: firstVariant2.id, price: newPrice2.toFixed(2) }
             } else {
-              const updatedVariants2 = variants.length
-                ? variants.map((v: any, i: number) =>
-                    i === 0 ? { ...v, price: newPrice2.toFixed(2) } : v)
-                : [{ price: newPrice2.toFixed(2) }]
-              shopifyPayload = { id: shopifyId, variants: updatedVariants2 }
+              const spRes2 = await fetch(`${shopifyBase}/products/${shopifyId}.json?fields=id,variants`, { headers: shopifyHeaders })
+              if (spRes2.ok) {
+                const spData2 = await spRes2.json()
+                const rv2 = spData2.product?.variants?.[0]
+                if (rv2?.id) variantPriceUpdate = { id: rv2.id, price: newPrice2.toFixed(2) }
+              }
+              if (!variantPriceUpdate) shopifyPayload = { id: shopifyId, variants: [{ price: newPrice2.toFixed(2) }] }
             }
             dbUpdate = { price: newPrice2 }
             break

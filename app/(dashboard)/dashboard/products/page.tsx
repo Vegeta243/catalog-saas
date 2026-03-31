@@ -704,24 +704,50 @@ export default function ProductsPage() {
       setBulkMsg('Veuillez saisir une valeur'); setBulkMsgOk(false); return
     }
 
-    // Map UI action + priceType to API action string
-    let apiAction = action as string
+    setApplying(true); setBulkMsg('')
+
+    // PRICE ACTIONS: call per-product route which fetches real variant IDs from Shopify
     if (action === 'price') {
-      if (priceType === 'set') apiAction = 'set_price'
-      else if (priceType === 'increase_pct') apiAction = 'increase_price_percent'
-      else if (priceType === 'decrease_pct') apiAction = 'decrease_price_percent'
-    } else if (action === 'tags_add') {
-      apiAction = 'add_tag'
-    } else if (action === 'status') {
-      apiAction = 'set_status'
-    } else if (action === 'title_suffix') {
-      apiAction = 'title_suffix'
+      try {
+        const pctVal = parseFloat(bulkValue)
+        const toProcess = products.filter(p => selectedIds.has(p.shopify_product_id || p.id))
+        let success = 0
+        for (const p of toProcess) {
+          const pid = p.shopify_product_id || p.id
+          const cur = typeof p.price === 'number' ? p.price : Number(p.price || 0)
+          let newPrice: number
+          if (priceType === 'set') newPrice = Math.max(0, parseFloat(bulkValue))
+          else if (priceType === 'increase_pct') newPrice = Math.max(0, Math.round(cur * (1 + pctVal / 100) * 100) / 100)
+          else newPrice = Math.max(0, Math.round(cur * (1 - pctVal / 100) * 100) / 100)
+          if (isNaN(newPrice)) continue
+          const res = await fetch(`/api/shopify/products/${pid}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ price: String(newPrice.toFixed(2)) }),
+          })
+          if (res.ok) success++
+        }
+        setBulkMsg(`${success}/${toProcess.length} produit(s) mis à jour`)
+        setBulkMsgOk(success > 0)
+        setSelectedIds(new Set()); setBulkValue('')
+        await fetchProducts(page, search)
+      } catch (e: any) {
+        setBulkMsg('Erreur réseau: ' + e.message); setBulkMsgOk(false)
+      } finally {
+        setApplying(false)
+        setTimeout(() => setBulkMsg(''), 8000)
+      }
+      return
     }
 
-    // Send shopify IDs directly — no UUID mapping needed
-    const shopifyProductIds = Array.from(selectedIds)
+    // NON-PRICE ACTIONS: use batch bulk endpoint
+    let apiAction = action as string
+    if (action === 'tags_add') apiAction = 'add_tag'
+    else if (action === 'status') apiAction = 'set_status'
+    else if (action === 'title_suffix') apiAction = 'title_suffix'
 
-    setApplying(true); setBulkMsg('')
+    const shopifyProductIds = Array.from(selectedIds)
 
     try {
       const res = await fetch('/api/shopify/products/bulk', {
@@ -737,8 +763,7 @@ export default function ProductsPage() {
       } else {
         const ok = (data.successCount ?? 0) > 0
         setBulkMsg(data.message || (data.successCount + ' produit(s) mis à jour')); setBulkMsgOk(ok)
-        setSelectedIds(new Set())
-        setBulkValue('')
+        setSelectedIds(new Set()); setBulkValue('')
         await fetchProducts(page, search)
       }
     } catch (e: any) {
