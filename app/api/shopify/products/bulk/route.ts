@@ -97,38 +97,55 @@ export async function POST(request: NextRequest) {
 
         let shopifyPayload: Record<string, unknown> = {}
         let dbUpdate: Record<string, unknown> = {}
+        // For price actions, prefer variant-level Shopify API (more reliable, no variant format issues)
+        let variantPriceUpdate: { id: string | number; price: string } | null = null
 
         switch (action) {
           case 'set_price': {
             const newPrice = Math.max(0, Math.round(parseFloat(String(value || '0')) * 100) / 100)
             if (isNaN(newPrice)) throw new Error('Prix invalide')
-            const updatedVariants = variants.length
-              ? variants.map((v: any, i: number) =>
-                  i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
-              : [{ price: newPrice.toFixed(2) }]
-            shopifyPayload = { id: shopifyId, variants: updatedVariants }
+            const firstVariant = variants[0]
+            if (firstVariant?.id) {
+              variantPriceUpdate = { id: firstVariant.id, price: newPrice.toFixed(2) }
+            } else {
+              const updatedVariants = variants.length
+                ? variants.map((v: any, i: number) =>
+                    i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
+                : [{ price: newPrice.toFixed(2) }]
+              shopifyPayload = { id: shopifyId, variants: updatedVariants }
+            }
             dbUpdate = { price: newPrice }
             break
           }
           case 'increase_price_percent': {
             const pct = parseFloat(String(value || '0'))
             const newPrice = Math.max(0, Math.round(currentPrice * (1 + pct / 100) * 100) / 100)
-            const updatedVariants = variants.length
-              ? variants.map((v: any, i: number) =>
-                  i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
-              : [{ price: newPrice.toFixed(2) }]
-            shopifyPayload = { id: shopifyId, variants: updatedVariants }
+            const firstVariant = variants[0]
+            if (firstVariant?.id) {
+              variantPriceUpdate = { id: firstVariant.id, price: newPrice.toFixed(2) }
+            } else {
+              const updatedVariants = variants.length
+                ? variants.map((v: any, i: number) =>
+                    i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
+                : [{ price: newPrice.toFixed(2) }]
+              shopifyPayload = { id: shopifyId, variants: updatedVariants }
+            }
             dbUpdate = { price: newPrice }
             break
           }
           case 'decrease_price_percent': {
             const pct = parseFloat(String(value || '0'))
             const newPrice = Math.max(0, Math.round(currentPrice * (1 - pct / 100) * 100) / 100)
-            const updatedVariants = variants.length
-              ? variants.map((v: any, i: number) =>
-                  i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
-              : [{ price: newPrice.toFixed(2) }]
-            shopifyPayload = { id: shopifyId, variants: updatedVariants }
+            const firstVariant = variants[0]
+            if (firstVariant?.id) {
+              variantPriceUpdate = { id: firstVariant.id, price: newPrice.toFixed(2) }
+            } else {
+              const updatedVariants = variants.length
+                ? variants.map((v: any, i: number) =>
+                    i === 0 ? { ...v, price: newPrice.toFixed(2) } : v)
+                : [{ price: newPrice.toFixed(2) }]
+              shopifyPayload = { id: shopifyId, variants: updatedVariants }
+            }
             dbUpdate = { price: newPrice }
             break
           }
@@ -177,11 +194,16 @@ export async function POST(request: NextRequest) {
           }
           case 'round_99': {
             const newPrice2 = Math.max(0, Math.floor(currentPrice) - 0.01)
-            const updatedVariants2 = variants.length
-              ? variants.map((v: any, i: number) =>
-                  i === 0 ? { ...v, price: newPrice2.toFixed(2) } : v)
-              : [{ price: newPrice2.toFixed(2) }]
-            shopifyPayload = { id: shopifyId, variants: updatedVariants2 }
+            const firstVariant2 = variants[0]
+            if (firstVariant2?.id) {
+              variantPriceUpdate = { id: firstVariant2.id, price: newPrice2.toFixed(2) }
+            } else {
+              const updatedVariants2 = variants.length
+                ? variants.map((v: any, i: number) =>
+                    i === 0 ? { ...v, price: newPrice2.toFixed(2) } : v)
+                : [{ price: newPrice2.toFixed(2) }]
+              shopifyPayload = { id: shopifyId, variants: updatedVariants2 }
+            }
             dbUpdate = { price: newPrice2 }
             break
           }
@@ -189,18 +211,29 @@ export async function POST(request: NextRequest) {
             throw new Error('Action non reconnue: ' + action)
         }
 
-        // Call Shopify REST API
-        const shopifyRes = await fetch(`${shopifyBase}/products/${shopifyId}.json`, {
-          method: 'PUT',
-          headers: shopifyHeaders,
-          body: JSON.stringify({ product: shopifyPayload }),
-        })
-
-        const shopifyData = await shopifyRes.json().catch(() => ({}))
-
-        if (!shopifyRes.ok) {
-          const errMsg = JSON.stringify((shopifyData as any).errors || shopifyData).slice(0, 200)
-          throw new Error(`Shopify ${shopifyRes.status}: ${errMsg}`)
+        // Call Shopify — variant-level PUT for prices (reliable), product-level PUT for other fields
+        if (variantPriceUpdate) {
+          const varRes = await fetch(`${shopifyBase}/variants/${variantPriceUpdate.id}.json`, {
+            method: 'PUT',
+            headers: shopifyHeaders,
+            body: JSON.stringify({ variant: variantPriceUpdate }),
+          })
+          const varData = await varRes.json().catch(() => ({}))
+          if (!varRes.ok) {
+            const errMsg = JSON.stringify((varData as any).errors || varData).slice(0, 200)
+            throw new Error(`Shopify variant ${varRes.status}: ${errMsg}`)
+          }
+        } else if (Object.keys(shopifyPayload).length > 0) {
+          const shopifyRes = await fetch(`${shopifyBase}/products/${shopifyId}.json`, {
+            method: 'PUT',
+            headers: shopifyHeaders,
+            body: JSON.stringify({ product: shopifyPayload }),
+          })
+          const shopifyData = await shopifyRes.json().catch(() => ({}))
+          if (!shopifyRes.ok) {
+            const errMsg = JSON.stringify((shopifyData as any).errors || shopifyData).slice(0, 200)
+            throw new Error(`Shopify ${shopifyRes.status}: ${errMsg}`)
+          }
         }
 
         // Update local DB

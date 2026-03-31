@@ -140,31 +140,56 @@ export default function ImagesPage() {
     e.target.value = ''
   }
 
+  // Process an image URL through Canvas and return base64 JPEG
+  async function processImageToBase64(imgUrl: string): Promise<string> {
+    const proxyUrl = '/api/image-proxy?url=' + encodeURIComponent(imgUrl)
+    const imgResp = await fetch(proxyUrl, { credentials: 'include' })
+    if (!imgResp.ok) throw new Error('Impossible de charger l\'image (proxy)')
+    const blob = await imgResp.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    return new Promise<string>((resolve, reject) => {
+      const img = new window.Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let srcX = 0, srcY = 0
+        let srcW = img.naturalWidth, srcH = img.naturalHeight
+        if (cropEnabled && (cropTop || cropLeft || cropW || cropH)) {
+          srcX = Math.max(0, parseInt(cropLeft || '0'))
+          srcY = Math.max(0, parseInt(cropTop || '0'))
+          srcW = cropW ? Math.min(parseInt(cropW), img.naturalWidth - srcX) : (img.naturalWidth - srcX)
+          srcH = cropH ? Math.min(parseInt(cropH), img.naturalHeight - srcY) : (img.naturalHeight - srcY)
+        }
+        canvas.width = width ? parseInt(width) : srcW
+        canvas.height = height ? parseInt(height) : srcH
+        const ctx = canvas.getContext('2d')!
+        ctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`
+        ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height)
+        URL.revokeObjectURL(objectUrl)
+        resolve(canvas.toDataURL('image/jpeg', 0.92).split(',')[1])
+      }
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Chargement échoué')) }
+      img.src = objectUrl
+    })
+  }
+
   async function applyChanges() {
-    if (!selected) return
+    if (!selected || !currentImgUrl) return
     setSaving(true)
     setSaveMsg('')
     try {
+      const base64Data = await processImageToBase64(currentImgUrl)
       const pid = selected.shopify_product_id || selected.id
-      const res = await fetch('/api/shopify/products/image-transform', {
+      const res = await fetch(`/api/shopify/products/${pid}/image`, {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productIds: [pid],
-          brightness, contrast,
-          width: width || null, height: height || null,
-          cropEnabled,
-          cropTop: cropEnabled ? (cropTop || 0) : undefined,
-          cropLeft: cropEnabled ? (cropLeft || 0) : undefined,
-          cropW: cropEnabled ? (cropW || null) : undefined,
-          cropH: cropEnabled ? (cropH || null) : undefined,
-        })
+        body: JSON.stringify({ imageBase64: base64Data, filename: 'image-editee.jpg' })
       })
       const d = await res.json()
       if (res.ok) {
-        setSaveMsg(d.message || 'Modifications enregistrées')
+        setSaveMsg('✓ Image modifiée et ajoutée à Shopify')
+        await loadProducts()
       } else {
-        setSaveMsg((d as { error?: string }).error || 'Erreur lors de la sauvegarde')
+        setSaveMsg('Erreur: ' + ((d as { error?: string }).error || 'Inconnue'))
       }
     } catch (err: unknown) {
       setSaveMsg('Erreur: ' + (err instanceof Error ? err.message : 'Inconnue'))
@@ -175,29 +200,30 @@ export default function ImagesPage() {
   async function applyToAll() {
     if (!massSelected.size) return
     setMassSaving(true)
-    setMassMsg('')
-    try {
-      const res = await fetch('/api/shopify/products/image-transform', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productIds: Array.from(massSelected),
-          brightness, contrast,
-          width: width || null, height: height || null,
-          cropEnabled,
-          cropTop: cropEnabled ? (cropTop || 0) : undefined,
-          cropLeft: cropEnabled ? (cropLeft || 0) : undefined,
-          cropW: cropEnabled ? (cropW || null) : undefined,
-          cropH: cropEnabled ? (cropH || null) : undefined,
+    setMassMsg('Traitement en cours...')
+    let done = 0, errors = 0
+    const pids = Array.from(massSelected)
+    for (const pid of pids) {
+      try {
+        const product = products.find(p => (p.shopify_product_id || p.id) === pid)
+        if (!product) { errors++; continue }
+        const imgUrl = getFirstImage(product)
+        if (!imgUrl) { errors++; continue }
+        const base64Data = await processImageToBase64(imgUrl)
+        const res = await fetch(`/api/shopify/products/${pid}/image`, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Data, filename: 'image-editee.jpg' })
         })
-      })
-      const d = await res.json()
-      setMassMsg(d.message || (res.ok ? 'Appliqué !' : 'Erreur'))
-    } catch (err: unknown) {
-      setMassMsg('Erreur: ' + (err instanceof Error ? err.message : 'Inconnue'))
+        if (res.ok) done++; else errors++
+      } catch { errors++ }
+      setMassMsg(`Traitement: ${done + errors}/${pids.length}...`)
     }
+    setMassMsg(errors === 0
+      ? `✓ ${done} image${done > 1 ? 's' : ''} modifiée${done > 1 ? 's' : ''} sur Shopify`
+      : `${done} réussi${done > 1 ? 's' : ''}, ${errors} erreur${errors > 1 ? 's' : ''}`)
     setMassSaving(false)
-    setTimeout(() => setMassMsg(''), 6000)
+    setTimeout(() => setMassMsg(''), 8000)
   }
 
   // Sync resize container size → width/height inputs

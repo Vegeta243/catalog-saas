@@ -735,7 +735,8 @@ export default function ProductsPage() {
       if (!res.ok) {
         setBulkMsg(data.error || 'Erreur lors de l\'application'); setBulkMsgOk(false)
       } else {
-        setBulkMsg(data.message || (data.successCount + ' produit(s) mis à jour')); setBulkMsgOk(true)
+        const ok = (data.successCount ?? 0) > 0
+        setBulkMsg(data.message || (data.successCount + ' produit(s) mis à jour')); setBulkMsgOk(ok)
         setSelectedIds(new Set())
         setBulkValue('')
         await fetchProducts(page, search)
