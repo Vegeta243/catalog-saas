@@ -2,16 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Gift, Copy, Check, Share2, Users, Calendar, ChevronRight } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/lib/toast";
 
 interface ReferralStats {
-  referralCode: string;
-  referralUrl: string;
-  totalReferred: number;
+  referral_code: string;
+  referral_url: string;
+  share_text: string;
+  total_referred: number;
   converted: number;
-  monthsEarned: number;
-  pendingRewards: number;
+  referral_earnings: number;
   referrals: Array<{
     email: string;
     status: string;
@@ -31,7 +30,7 @@ export default function ParrainagePage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/referral/stats");
+      const res = await fetch("/api/referral", { credentials: "include", cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setStats(data);
@@ -46,8 +45,8 @@ export default function ParrainagePage() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const copyLink = () => {
-    if (!stats?.referralUrl) return;
-    navigator.clipboard.writeText(stats.referralUrl).then(() => {
+    if (!stats?.referral_url) return;
+    navigator.clipboard.writeText(stats.referral_url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       addToast("Lien copié !", "success");
@@ -55,15 +54,15 @@ export default function ParrainagePage() {
   };
 
   const shareWhatsApp = () => {
-    if (!stats?.referralUrl) return;
-    const text = `Essaie EcomPilot Elite pour optimiser ton catalogue Shopify ! Gère tes produits, imports AliExpress et descriptions IA en 1 clic. Utilise mon lien de parrainage → ${stats.referralUrl}`;
+    if (!stats?.referral_url) return;
+    const text = stats.share_text || `Essaie EcomPilot Elite pour optimiser ton catalogue Shopify ! Utilise mon lien de parrainage → ${stats.referral_url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const shareEmail = () => {
-    if (!stats?.referralUrl) return;
+    if (!stats?.referral_url) return;
     const subject = "Essaie EcomPilot Elite pour ton catalogue Shopify";
-    const body = `Salut,\n\nJe voulais te recommander EcomPilot Elite, un outil super pratique pour optimiser ton catalogue Shopify. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage :\n${stats.referralUrl}\n\nBonne chance !`;
+    const body = `Salut,\n\nJe voulais te recommander EcomPilot Elite, un outil super pratique pour optimiser ton catalogue Shopify. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage :\n${stats.referral_url}\n\nBonne chance !`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -125,11 +124,12 @@ export default function ParrainagePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Filleuls invités", value: stats?.totalReferred ?? 0, color: "#3b82f6" },
+          { label: "Filleuls invités", value: stats?.total_referred ?? 0, color: "#3b82f6" },
           { label: "Convertis", value: stats?.converted ?? 0, color: "#10b981" },
           { label: "Réduction obtenue", value: `${Math.min((stats?.converted ?? 0) * 20, 60)}%`, color: "#f59e0b" },
+          { label: "Gains accumulés", value: `${stats?.referral_earnings ?? 0}€`, color: "#8b5cf6" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold" style={{ color }}>{value}</p>
@@ -143,7 +143,7 @@ export default function ParrainagePage() {
         <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Votre lien de parrainage</h2>
         <div className="flex items-center gap-2">
           <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm font-mono truncate border border-gray-200" style={{ color: "var(--text-secondary)" }}>
-            {stats?.referralUrl || "Chargement…"}
+            {stats?.referral_url || "Chargement…"}
           </div>
           <button onClick={copyLink}
             className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm font-medium text-white transition-colors flex-shrink-0">
@@ -182,6 +182,19 @@ export default function ParrainagePage() {
           </button>
         </div>
       </div>
+
+      {/* Referral code badge */}
+      {stats?.referral_code && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Votre code parrainage</h2>
+          <div className="inline-flex items-center gap-3">
+            <span className="px-5 py-2 bg-blue-50 border-2 border-dashed border-blue-300 rounded-xl text-xl font-extrabold font-mono tracking-widest" style={{ color: "#1d4ed8" }}>
+              {stats.referral_code}
+            </span>
+            <span className="text-xs text-slate-500">Ce code est inclus automatiquement dans votre lien.</span>
+          </div>
+        </div>
+      )}
 
       {/* Referral list */}
       {stats?.referrals && stats.referrals.length > 0 && (
