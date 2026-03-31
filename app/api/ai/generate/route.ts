@@ -156,7 +156,13 @@ Langue : ${language}. Réponds en JSON : {"title":"...","description":"...","key
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un expert en e-commerce francophone. Tu dois TOUJOURS répondre UNIQUEMENT en français, sans aucune exception. N'utilise JAMAIS de mots anglais, espagnols ou dans une autre langue que le français. Tous tes textes (titres, descriptions, tags, méta-titres, méta-descriptions) doivent être intégralement rédigés en français."
+          },
+          { role: "user", content: `IMPORTANT : Réponds uniquement en français.\n\n${prompt}` }
+        ],
         temperature: 0.7,
         max_tokens: 1200, // Increased for 220+ word descriptions
       }),
