@@ -332,6 +332,7 @@ function BulkAIModal({
 
         {/* ── Step 2: Preview ── */}
         {step === 'preview' && (
+          <>
           <div className="aiBody">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <div>
@@ -416,8 +417,10 @@ function BulkAIModal({
               })}
             </div>
 
+          </div>
+          <div className="aiFooter">
             {publishing && (
-              <div style={{ marginTop: 14 }}>
+              <div style={{ marginBottom: 10, width: '100%' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ color: "var(--text-secondary)", fontSize: 13, fontWeight: 600 }}>Publication...</span>
                   <span style={{ color: '#059669', fontSize: 13, fontWeight: 700 }}>{pubProgress}%</span>
@@ -427,8 +430,7 @@ function BulkAIModal({
                 </div>
               </div>
             )}
-
-            <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button className="aiPrimaryBtn" onClick={handlePublish} disabled={publishing || enabledCount === 0}
                 style={{ flex: 1, minWidth: 200, background: '#059669' }}>
                 {publishing ? 'Publication...' : '🚀 Publier ' + enabledCount + ' produit' + (enabledCount > 1 ? 's' : '') + ' sur Shopify'}
@@ -438,6 +440,7 @@ function BulkAIModal({
               </button>
             </div>
           </div>
+          </>
         )}
 
         {/* ── Step 3: Done ── */}
@@ -502,6 +505,7 @@ function BulkAIModal({
         .aiStep.done .aiStepLabel { color: #374151; font-weight: 600; }
         .aiStepLine { flex: 1; height: 1px; background: #e5e7eb; margin: 0 8px; min-width: 20px; }
         .aiBody { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px 24px; }
+        .aiFooter { flex-shrink: 0; padding: 16px 24px; border-top: 1px solid #e5e7eb; background: #fff; }
         .aiSectionLabel { color: #374151; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 10px; }
         .aiFieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         @media (min-width: 480px) { .aiFieldGrid { grid-template-columns: repeat(3, 1fr); } }
@@ -511,7 +515,7 @@ function BulkAIModal({
         .aiFieldIcon { font-size: 17px; flex-shrink: 0; }
         .aiFieldName { color: #374151; font-size: 12px; font-weight: 600; flex: 1; line-height: 1.3; }
         .aiFieldCheck { color: #2563eb; font-size: 14px; font-weight: 700; }
-        .previewList { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px; }
+        .previewList { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px; }
         .previewCard { border: 1.5px solid #e5e7eb; border-radius: 10px; overflow: hidden; transition: opacity 0.15s; }
         .previewCard.disabled { opacity: 0.45; }
         .previewCardHead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; background: #f9fafb; }
