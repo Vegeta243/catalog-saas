@@ -38,8 +38,8 @@ export default function ImagesPage() {
   const [selectedImgIdx, setSelectedImgIdx] = useState(0)
   const [brightness, setBrightness] = useState(100)
   const [contrast, setContrast] = useState(100)
-  const [width, setWidth] = useState('')
-  const [height, setHeight] = useState('')
+  const [width, setWidth] = useState('800')
+  const [height, setHeight] = useState('800')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -225,6 +225,7 @@ export default function ImagesPage() {
       : `${done} réussi${done > 1 ? 's' : ''}, ${errors} erreur${errors > 1 ? 's' : ''}`)
     setMassSaving(false)
     setMassSelected(new Set())
+    setMassMode(false)
     setTimeout(() => setMassMsg(''), 8000)
   }
 
@@ -307,6 +308,16 @@ export default function ImagesPage() {
                   ↺ Reset
                 </button>
               )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '5px 10px', border: '1px solid #bfdbfe' }}>
+                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>L</span>
+                <input type="number" min="1" value={width} onChange={e => setWidth(e.target.value)}
+                  style={{ width: '60px', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '2px 4px', fontSize: '11px', textAlign: 'center' }} />
+                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600 }}>×</span>
+                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>H</span>
+                <input type="number" min="1" value={height} onChange={e => setHeight(e.target.value)}
+                  style={{ width: '60px', border: '1px solid #bfdbfe', borderRadius: '4px', padding: '2px 4px', fontSize: '11px', textAlign: 'center' }} />
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>px</span>
+              </div>
               <button
                 onClick={() => setMassSelected(new Set(products.map(p => p.shopify_product_id || p.id)))}
                 style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px' }}>
