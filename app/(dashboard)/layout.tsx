@@ -14,7 +14,6 @@ import {
   Settings,
   HelpCircle,
   Bell,
-  Zap,
   User,
   Sparkles,
   Clock,
@@ -23,9 +22,7 @@ import {
   Coins,
   Menu,
   X,
-  CalendarDays,
   Eye,
-  ListChecks,
   TrendingUp,
   Gift,
   Search,
@@ -59,14 +56,7 @@ const NAV_SECTIONS = [
       { href: '/dashboard/images', label: 'Éditeur d\'images', icon: ImageIcon },
     ],
   },
-  {
-    label: "AUTOMATISATION",
-    items: [
-      { href: '/dashboard/automation', label: 'Automatisations', icon: Zap },
-      { href: '/dashboard/calendrier', label: 'Calendrier', icon: CalendarDays },
-      { href: '/dashboard/taches', label: 'Mes tâches', icon: ListChecks },
-    ],
-  },
+
   {
     label: "ANALYSE",
     items: [
@@ -271,8 +261,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const LOCKED_WITH_PLAN: Record<string, string> = {
-    '/dashboard/calendrier': 'Starter+',
-    '/dashboard/automation': 'Starter+',
     '/dashboard/concurrence': 'Pro+',
   };
 

@@ -631,53 +631,59 @@ export default function ProductsPage() {
   }
 
   async function applyBulk() {
-    if (!selectedIds.size || (action !== 'status' && !bulkValue.trim())) return
-    setApplying(true); setBulkMsg('')
-    let success = 0, fail = 0
-
-    for (const pid of Array.from(selectedIds)) {
-      const product = products.find(p => (p.shopify_product_id || p.id) === pid)
-      if (!product) continue
-
-      let payload: any = {}
-      if (action === 'price') {
-        const v = parseFloat(bulkValue)
-        let newPrice = typeof product.price === 'number' ? product.price : 0
-        if (priceType === 'set') newPrice = v
-        else if (priceType === 'increase_pct') newPrice = newPrice * (1 + v / 100)
-        else if (priceType === 'decrease_pct') newPrice = newPrice * (1 - v / 100)
-        newPrice = Math.max(0, Math.round(newPrice * 100) / 100)
-        const variants = asVariants(product.variants)
-        payload = {
-          variants: variants.length
-            ? variants.map((variant: any, i: number) =>
-                i === 0 ? { ...variant, price: newPrice.toFixed(2) } : variant)
-            : [{ price: newPrice.toFixed(2) }],
-        }
-      } else if (action === 'tags_add') {
-        const current = typeof product.tags === 'string' ? product.tags : ''
-        payload = { tags: current ? current + ',' + bulkValue : bulkValue }
-      } else if (action === 'status') {
-        payload = { status: bulkValue }
-      } else if (action === 'title_suffix') {
-        payload = { title: product.title + ' ' + bulkValue }
-      }
-
-      try {
-        const res = await fetch('/api/shopify/products/' + pid, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-        res.ok ? success++ : fail++
-      } catch { fail++ }
-      await new Promise(r => setTimeout(r, 150))
+    if (!selectedIds.size) return
+    if (action !== 'status' && !bulkValue.trim()) {
+      setBulkMsg('Veuillez saisir une valeur'); setBulkMsgOk(false); return
     }
 
-    setBulkMsg(success + ' produit(s) mis à jour' + (fail > 0 ? ', ' + fail + ' échec(s)' : ''))
-    setBulkMsgOk(fail === 0)
-    setApplying(false)
-    setTimeout(() => setBulkMsg(''), 7000)
+    // Map UI action + priceType to API action string
+    let apiAction = action as string
+    if (action === 'price') {
+      if (priceType === 'set') apiAction = 'set_price'
+      else if (priceType === 'increase_pct') apiAction = 'increase_price_percent'
+      else if (priceType === 'decrease_pct') apiAction = 'decrease_price_percent'
+    } else if (action === 'tags_add') {
+      apiAction = 'add_tag'
+    } else if (action === 'status') {
+      apiAction = 'set_status'
+    } else if (action === 'title_suffix') {
+      apiAction = 'title_suffix'
+    }
+
+    // Resolve local DB ids from selectedIds (which hold shopify_product_id || id)
+    const productIds = Array.from(selectedIds)
+      .map(sid => products.find(p => (p.shopify_product_id || p.id) === sid)?.id)
+      .filter((id): id is string => Boolean(id))
+
+    if (productIds.length === 0) {
+      setBulkMsg('Produits introuvables'); setBulkMsgOk(false); return
+    }
+
+    setApplying(true); setBulkMsg('')
+
+    try {
+      const res = await fetch('/api/shopify/products/bulk', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds, action: apiAction, value: bulkValue }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        setBulkMsg(data.error || 'Erreur lors de l\'application'); setBulkMsgOk(false)
+      } else {
+        setBulkMsg(data.message || data.successCount + ' produit(s) mis à jour'); setBulkMsgOk(true)
+        setSelectedIds(new Set())
+        setBulkValue('')
+        await fetchProducts(page, search)
+      }
+    } catch (e: any) {
+      setBulkMsg('Erreur réseau: ' + e.message); setBulkMsgOk(false)
+    } finally {
+      setApplying(false)
+      setTimeout(() => setBulkMsg(''), 8000)
+    }
   }
 
   function openEdit(p: Product) {
