@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import GuideBanner from '@/components/GuideBanner'
 
 // ─── Filter definitions ────────────────────────────────────────
 const FILTERS = [
@@ -270,6 +271,7 @@ type RunRes = { ok: boolean; msg: string; count?: number }
 
 export default function AutomationPage() {
   const [autos, setAutos] = useState<Auto[]>([])
+  const [guideVisible, setGuideVisible] = useState(true)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
   const [screen, setScreen] = useState<'list' | 'pick' | 'config'>('list')
@@ -304,6 +306,7 @@ export default function AutomationPage() {
   }
 
   function pick(t: TypeItem) {
+    setGuideVisible(false)
     setPicked(t)
     setFname(t.name)
     const cfg: Record<string, unknown> = {}
@@ -316,6 +319,7 @@ export default function AutomationPage() {
   }
 
   async function save() {
+    setGuideVisible(false)
     if (!fname.trim() || !picked) { setSaveErr('Nom requis'); return }
     setSaving(true); setSaveErr('')
     try {
@@ -336,6 +340,7 @@ export default function AutomationPage() {
   }
 
   async function toggle(id: string, cur: boolean) {
+    setGuideVisible(false)
     setAutos(p => p.map(a => a.id === id ? { ...a, is_active: !cur } : a))
     const res = await fetch('/api/automations', {
       method: 'PATCH', credentials: 'include',
@@ -346,6 +351,7 @@ export default function AutomationPage() {
   }
 
   async function del(id: string) {
+    setGuideVisible(false)
     if (!confirm('Supprimer cette automatisation ?')) return
     setAutos(p => p.filter(a => a.id !== id))
     await fetch('/api/automations', {
@@ -356,6 +362,7 @@ export default function AutomationPage() {
   }
 
   async function run(id: string) {
+    setGuideVisible(false)
     setRunId(id)
     setRunRes(p => ({ ...p, [id]: { ok: true, msg: 'Exécution en cours...' } }))
     try {
@@ -439,6 +446,13 @@ export default function AutomationPage() {
             <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>{TYPES.length} automatisations disponibles</p>
           </div>
         </div>
+        <GuideBanner
+          visible={guideVisible}
+          icon="i"
+          title="Automatisations"
+          text="Créez des règles automatiques qui s'appliquent à votre catalogue — modification de prix en lot, nettoyage de tags, audit d'images. Chaque automatisation peut être planifiée ou déclenchée manuellement."
+          onClose={() => setGuideVisible(false)}
+        />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap: '12px' }}>
           {TYPES.map(t => (
             <button key={t.id} onClick={() => pick(t)}
@@ -490,6 +504,14 @@ export default function AutomationPage() {
               <p style={{ color: '#64748b', fontSize: '13px', margin: '2px 0 0' }}>Étape 2/2 — Configuration</p>
             </div>
           </div>
+
+          <GuideBanner
+            visible={guideVisible}
+            icon="i"
+            title="Automatisations"
+            text="Créez des règles automatiques qui s'appliquent à votre catalogue — modification de prix en lot, nettoyage de tags, audit d'images. Chaque automatisation peut être planifiée ou déclenchée manuellement."
+            onClose={() => setGuideVisible(false)}
+          />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(300px,100%),1fr))', gap: '16px', alignItems: 'start' }}>
             {/* Left: form */}
@@ -609,6 +631,14 @@ export default function AutomationPage() {
             + Nouvelle automatisation
           </button>
         </div>
+
+        <GuideBanner
+          visible={guideVisible}
+          icon="i"
+          title="Automatisations"
+          text="Créez des règles automatiques qui s'appliquent à votre catalogue — modification de prix en lot, nettoyage de tags, audit d'images. Chaque automatisation peut être planifiée ou déclenchée manuellement."
+          onClose={() => setGuideVisible(false)}
+        />
 
         {/* Stats */}
         {autos.length > 0 && !loading && (

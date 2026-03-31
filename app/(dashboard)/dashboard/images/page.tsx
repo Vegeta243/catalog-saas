@@ -1,5 +1,6 @@
 ﻿'use client'
 import { useState, useEffect, useRef } from 'react'
+import GuideBanner from '@/components/GuideBanner'
 import ProductDetailsModal from '@/components/ProductDetailsModal'
 
 type Product = {
@@ -37,6 +38,7 @@ export default function ImagesPage() {
   const [syncing, setSyncing] = useState(false)
   const [selected, setSelected] = useState<Product | null>(null)
   const [detailProduct, setDetailProduct] = useState<Product | null>(null)
+  const [guideVisible, setGuideVisible] = useState(true)
   const [selectedImgIdx, setSelectedImgIdx] = useState(0)
   const [brightness, setBrightness] = useState(100)
   const [contrast, setContrast] = useState(100)
@@ -92,6 +94,7 @@ export default function ImagesPage() {
   }
 
   function selectProduct(p: Product) {
+    setGuideVisible(false)
     setSelected(p)
     setSelectedImgIdx(0)
     setCropEnabled(false)
@@ -103,6 +106,7 @@ export default function ImagesPage() {
   }
 
   function toggleMassSelect(id: string) {
+    setGuideVisible(false)
     const next = new Set(massSelected)
     next.has(id) ? next.delete(id) : next.add(id)
     setMassSelected(next)
@@ -332,6 +336,14 @@ export default function ImagesPage() {
             </button>
           </div>
         </div>
+
+        <GuideBanner
+          visible={guideVisible}
+          icon="i"
+          title="Éditeur d'images"
+          text={'Cochez un ou plusieurs produits pour modifier leurs images en masse — redimensionner, ajuster la luminosité et le contraste. L\'aperçu avant/après se met à jour en temps réel. Cliquez sur "Appliquer" pour envoyer les modifications sur Shopify.'}
+          onClose={() => setGuideVisible(false)}
+        />
 
         {/* Mass mode bar */}
         {massMode && (

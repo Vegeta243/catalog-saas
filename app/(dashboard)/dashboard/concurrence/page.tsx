@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import GuideBanner from '@/components/GuideBanner'
 import {
   Eye, Plus, Trash2, RefreshCw, TrendingDown, TrendingUp,
   AlertTriangle, CheckCircle, Package, Tag, Star, ExternalLink,
@@ -121,6 +122,7 @@ export default function ConcurrencePage() {
   const [selected, setSelected] = useState<Competitor | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [guideVisible, setGuideVisible] = useState(true)
   const [newName, setNewName] = useState('')
   const [newUrl, setNewUrl] = useState('')
   const [isAdding, setIsAdding] = useState(false)
@@ -233,6 +235,7 @@ export default function ConcurrencePage() {
   }
 
   const handleAdd = async () => {
+    setGuideVisible(false)
     if (!newName || !newUrl) return
     setIsAdding(true)
     try {
@@ -260,6 +263,7 @@ export default function ConcurrencePage() {
   }
 
   const handleAnalyze = async (competitor: Competitor) => {
+    setGuideVisible(false)
     setAnalyzingId(competitor.id)
     try {
       const res = await fetch('/api/concurrence/analyze', {
@@ -383,6 +387,7 @@ export default function ConcurrencePage() {
   }
 
   const selectCompetitor = (c: Competitor) => {
+    setGuideVisible(false)
     setSelected(c)
     setActiveTab('overview')
     setCompScore(null)
@@ -500,6 +505,16 @@ export default function ConcurrencePage() {
 
       {/* ── MAIN AREA ── */}
       <div className="flex-1 overflow-y-auto bg-gray-50 flex flex-col min-w-0">
+
+        <div className="p-4 md:p-6 pb-0">
+          <GuideBanner
+            visible={guideVisible}
+            icon="i"
+            title="Analyse concurrence"
+            text="Entrez l'URL d'une boutique Shopify concurrente pour comparer ses prix, son catalogue et ses mots-clés avec les vôtres. Vos stats de boutique sont affichées automatiquement en haut de page."
+            onClose={() => setGuideVisible(false)}
+          />
+        </div>
 
         {/* Mobile header bar */}
         <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 md:hidden">

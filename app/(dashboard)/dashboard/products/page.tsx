@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
+import GuideBanner from '@/components/GuideBanner'
 import ProductDetailsModal from '@/components/ProductDetailsModal'
 
 type Product = {
@@ -619,6 +620,7 @@ export default function ProductsPage() {
   const [showAIModal, setShowAIModal] = useState(false)
 
   const [detailProduct, setDetailProduct] = useState<Product | null>(null)
+  const [guideVisible, setGuideVisible] = useState(true)
 
   // View mode
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
@@ -711,12 +713,14 @@ export default function ProductsPage() {
   }
 
   function toggleSelect(id: string) {
+    setGuideVisible(false)
     const next = new Set(selectedIds)
     next.has(id) ? next.delete(id) : next.add(id)
     setSelectedIds(next)
   }
 
   function toggleSelectAll() {
+    setGuideVisible(false)
     if (allSelected) setSelectedIds(new Set())
     else setSelectedIds(new Set(allIds))
   }
@@ -875,6 +879,7 @@ export default function ProductsPage() {
   }
 
   function openEdit(p: Product) {
+    setGuideVisible(false)
     setEditProduct(p); setSaveMsg('')
     const variants = asVariants(p.variants)
     const firstVariant = variants[0] || {}
@@ -890,6 +895,7 @@ export default function ProductsPage() {
   }
 
   function openDetail(p: Product) {
+    setGuideVisible(false)
     setDetailProduct(p)
   }
 
@@ -968,6 +974,14 @@ export default function ProductsPage() {
           </button>
         </div>
       </div>
+
+      <GuideBanner
+        visible={guideVisible}
+        icon="i"
+        title="Modifier en masse"
+        text={'Cochez plusieurs produits pour les modifier simultanément — prix, titres, descriptions. Cliquez sur un produit pour voir tous ses détails. Utilisez "Générer avec l\'IA" pour optimiser le référencement de vos fiches en français.'}
+        onClose={() => setGuideVisible(false)}
+      />
 
       {/* ── No shop ── */}
       {hasShop === false && (
@@ -1145,6 +1159,7 @@ export default function ProductsPage() {
                   <div
                     key={id}
                     className={'productCard' + (isSel ? ' selected' : '')}
+                    onMouseDown={() => setGuideVisible(false)}
                     onClick={(e) => {
                       if ((e.target as HTMLElement).closest('.cardCheck')) return
                       openDetail(p)
@@ -1201,6 +1216,7 @@ export default function ProductsPage() {
                   <div
                     key={id}
                     className={'listRow' + (isSel ? ' selected' : '')}
+                    onMouseDown={() => setGuideVisible(false)}
                     onClick={(e) => {
                       if ((e.target as HTMLElement).closest('.cardCheck') || (e.target as HTMLElement).closest('input[type="checkbox"]')) return
                       openDetail(p)

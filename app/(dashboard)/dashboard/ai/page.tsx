@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import GuideBanner from '@/components/GuideBanner'
 import ProductDetailsModal from '@/components/ProductDetailsModal'
 import {
   Sparkles, RefreshCw, CheckCircle2, Wand2, Tag, FileText, ArrowRight,
@@ -85,6 +86,7 @@ export default function AIPage() {
   const { addToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const [guideVisible, setGuideVisible] = useState(true);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [scoreFilter, setScoreFilter] = useState<"all" | "low" | "medium" | "high">("all");
@@ -144,6 +146,7 @@ export default function AIPage() {
   }, [products]);
 
   const generateForProduct = async (product: Product, mode: "full" | "title" | "tags" = "full") => {
+    setGuideVisible(false)
     setGenerating(product.id);
     try {
       const res = await fetch("/api/ai/generate", {
@@ -160,6 +163,7 @@ export default function AIPage() {
   };
 
   const generateAndApply = async (product: Product) => {
+    setGuideVisible(false)
     if (!confirm(`Générer et appliquer directement le contenu IA pour « ${product.title} » ?\nCette action modifie immédiatement votre fiche Shopify.`)) return;
     setGenerating(product.id);
     try {
@@ -210,6 +214,7 @@ export default function AIPage() {
   };
 
   const applyGenerated = async (productId: string, fields?: string[]) => {
+    setGuideVisible(false)
     const content = generatedContent[productId];
     if (!content) return;
     setGenerating(productId);
@@ -255,6 +260,7 @@ export default function AIPage() {
   };
 
   const handleMassGenerate = async () => {
+    setGuideVisible(false)
     if (selected.length === 0) return;
     setMassMode(true);
     setMassProgress({ current: 0, total: selected.length });
@@ -282,6 +288,7 @@ export default function AIPage() {
   };
 
   const handleMassApply = async () => {
+    setGuideVisible(false)
     // Build preview items for human-in-the-loop
     const ids = Object.keys(generatedContent);
     const items: AIPreviewItem[] = ids.map((id) => {
@@ -470,6 +477,14 @@ export default function AIPage() {
         </div>
       </div>
 
+      <GuideBanner
+        visible={guideVisible}
+        icon="i"
+        title="Optimisation IA"
+        text={'Sélectionnez des produits puis cliquez sur "Générer avec l\'IA". L\'IA réécrira automatiquement les titres, descriptions et tags en français optimisé pour le SEO. Vous pourrez vérifier et modifier chaque résultat avant de publier.'}
+        onClose={() => setGuideVisible(false)}
+      />
+
       {/* Upsell notice when below 80% tasks remaining */}
       {(() => {
         const total = PLAN_TASKS[plan] || 100;
@@ -557,11 +572,15 @@ export default function AIPage() {
                 className={`bg-white rounded-xl border ${isSelected ? "border-violet-300 ring-2 ring-violet-100" : "border-gray-200"} overflow-hidden transition-all`}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).closest('button')) return
+                  setGuideVisible(false)
                   setDetailProduct(product)
                 }}
                 style={{ cursor: 'pointer' }}>
                 <div className="flex items-center gap-4 p-4">
-                  <button onClick={() => setSelected((p) => p.includes(product.id) ? p.filter((i) => i !== product.id) : [...p, product.id])}
+                  <button onClick={() => {
+                    setGuideVisible(false)
+                    setSelected((p) => p.includes(product.id) ? p.filter((i) => i !== product.id) : [...p, product.id])
+                  }}
                     className={`w-5 h-5 rounded border-2 flex-shrink-0 ${isSelected ? "bg-violet-600 border-violet-600" : "border-gray-300"} flex items-center justify-center`}>
                     {isSelected && <CheckCircle2 className="w-3 h-3" style={{ color: "#fff" }} />}
                   </button>
