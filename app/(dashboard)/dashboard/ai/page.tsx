@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import ProductDetailsModal from '@/components/ProductDetailsModal'
 import {
   Sparkles, RefreshCw, CheckCircle2, Wand2, Tag, FileText, ArrowRight,
   Search, X, BarChart3, TrendingUp, Eye, ChevronDown, ChevronUp, Loader2,
@@ -83,6 +84,7 @@ function ScoreBadge({ score, size = "sm" }: { score: number; size?: "sm" | "lg" 
 export default function AIPage() {
   const { addToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [scoreFilter, setScoreFilter] = useState<"all" | "low" | "medium" | "high">("all");
@@ -550,7 +552,14 @@ export default function AIPage() {
             const isExpanded = expandedId === product.id;
 
             return (
-              <div key={product.id} className={`bg-white rounded-xl border ${isSelected ? "border-violet-300 ring-2 ring-violet-100" : "border-gray-200"} overflow-hidden transition-all`}>
+              <div
+                key={product.id}
+                className={`bg-white rounded-xl border ${isSelected ? "border-violet-300 ring-2 ring-violet-100" : "border-gray-200"} overflow-hidden transition-all`}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest('button')) return
+                  setDetailProduct(product)
+                }}
+                style={{ cursor: 'pointer' }}>
                 <div className="flex items-center gap-4 p-4">
                   <button onClick={() => setSelected((p) => p.includes(product.id) ? p.filter((i) => i !== product.id) : [...p, product.id])}
                     className={`w-5 h-5 rounded border-2 flex-shrink-0 ${isSelected ? "bg-violet-600 border-violet-600" : "border-gray-300"} flex items-center justify-center`}>
@@ -668,6 +677,12 @@ export default function AIPage() {
           loading={applyingPreview}
         />
       )}
+
+      <ProductDetailsModal
+        open={!!detailProduct}
+        product={detailProduct}
+        onClose={() => setDetailProduct(null)}
+      />
     </div>
     </QuotaGate>
   );

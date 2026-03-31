@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
+import ProductDetailsModal from '@/components/ProductDetailsModal'
 
 type Product = {
   id: string
@@ -10,6 +11,9 @@ type Product = {
   body_html?: string
   description?: string
   vendor?: string
+  product_type?: string
+  handle?: string
+  shop_domain?: string
   price?: number
   compare_at_price?: number | null
   images?: unknown
@@ -580,6 +584,8 @@ export default function ProductsPage() {
   const [editState, setEditState] = useState<EditState | null>(null)
   const [showAIModal, setShowAIModal] = useState(false)
 
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null)
+
   // View mode
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
@@ -806,6 +812,10 @@ export default function ProductsPage() {
       tags: p.tags || '',
       vendor: p.vendor || '',
     })
+  }
+
+  function openDetail(p: Product) {
+    setDetailProduct(p)
   }
 
   function closeModal() { setEditProduct(null); setEditState(null); setSaveMsg('') }
@@ -1045,7 +1055,14 @@ export default function ProductsPage() {
                 const image = asImageUrls(p.images)[0]
                 const priceNum = typeof p.price === 'number' ? p.price : Number(p.price || 0)
                 return (
-                  <div key={id} className={'productCard' + (isSel ? ' selected' : '')}>
+                  <div
+                    key={id}
+                    className={'productCard' + (isSel ? ' selected' : '')}
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).closest('.cardCheck')) return
+                      openDetail(p)
+                    }}
+                  >
                     {/* Checkbox overlay */}
                     <div
                       className={'cardCheck' + (isSel ? ' on' : '')}
@@ -1059,7 +1076,7 @@ export default function ProductsPage() {
                     </div>
 
                     {/* Image */}
-                    <div className="thumbWrap" onClick={() => openEdit(p)}>
+                    <div className="thumbWrap">
                       {image && (
                         <img
                           src={image} alt={p.title} className="thumb"
@@ -1070,7 +1087,7 @@ export default function ProductsPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="cardInfo" onClick={() => openEdit(p)}>
+                    <div className="cardInfo">
                       <p className="prodTitle" title={p.title}>{p.title}</p>
                       {p.vendor && <p className="prodVendor">{p.vendor}</p>}
                       <p className="prodPrice">
@@ -1094,7 +1111,13 @@ export default function ProductsPage() {
                 const statusLabel = p.status === 'active' ? 'Actif' : p.status === 'draft' ? 'Brouillon' : p.status === 'archived' ? 'Archivé' : p.status || '—'
                 const statusColor = p.status === 'active' ? { bg: '#dcfce7', color: '#15803d' } : p.status === 'draft' ? { bg: '#f3f4f6', color: '#6b7280' } : { bg: '#fef3c7', color: '#b45309' }
                 return (
-                  <div key={id} className={'listRow' + (isSel ? ' selected' : '')} onClick={() => openEdit(p)}>
+                  <div
+                    key={id}
+                    className={'listRow' + (isSel ? ' selected' : '')}
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).closest('.cardCheck') || (e.target as HTMLElement).closest('input[type="checkbox"]')) return
+                      openDetail(p)
+                    }}>
                     {/* Checkbox */}
                     <div
                       className={'cardCheck' + (isSel ? ' on' : '')}
@@ -1155,6 +1178,16 @@ export default function ProductsPage() {
           onPublishDone={() => fetchProducts(page, search)}
         />
       )}
+
+      <ProductDetailsModal
+        open={!!detailProduct}
+        product={detailProduct}
+        onClose={() => setDetailProduct(null)}
+        onEdit={(product) => {
+          setDetailProduct(null)
+          openEdit(product as Product)
+        }}
+      />
 
       {/* ── Edit modal ── */}
       {editProduct && editState && (

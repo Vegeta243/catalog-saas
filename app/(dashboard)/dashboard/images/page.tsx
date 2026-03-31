@@ -1,5 +1,6 @@
 ﻿'use client'
 import { useState, useEffect, useRef } from 'react'
+import ProductDetailsModal from '@/components/ProductDetailsModal'
 
 type Product = {
   id: string
@@ -35,6 +36,7 @@ export default function ImagesPage() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [selected, setSelected] = useState<Product | null>(null)
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null)
   const [selectedImgIdx, setSelectedImgIdx] = useState(0)
   const [brightness, setBrightness] = useState(100)
   const [contrast, setContrast] = useState(100)
@@ -528,7 +530,14 @@ export default function ImagesPage() {
                   const pid = p.shopify_product_id || p.id
                   const isMassSel = massSelected.has(pid)
                   return (
-                    <div key={p.id} onClick={() => massMode ? toggleMassSelect(pid) : selectProduct(p)}
+                    <div key={p.id} onClick={() => {
+                      if (massMode) {
+                        toggleMassSelect(pid)
+                        return
+                      }
+                      selectProduct(p)
+                      setDetailProduct(p)
+                    }}
                       style={{ ...S.card, cursor: 'pointer', overflow: 'hidden', position: 'relative',
                         borderColor: massMode ? (isMassSel ? '#2563eb' : '#e2e8f0') : (isSel ? '#2563eb' : '#e2e8f0'),
                         borderWidth: (isSel || isMassSel) ? '2px' : '1px',
@@ -839,6 +848,12 @@ export default function ImagesPage() {
             </div>
           )}
         </div>
+
+        <ProductDetailsModal
+          open={!!detailProduct}
+          product={detailProduct}
+          onClose={() => setDetailProduct(null)}
+        />
       </div>
     </div>
   )
