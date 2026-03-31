@@ -581,7 +581,7 @@ export default function ProductsPage() {
   const [showAIModal, setShowAIModal] = useState(false)
 
   // View mode
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   const allIds = products.map(p => p.shopify_product_id || p.id)
   const allSelected = selectedIds.size > 0 && selectedIds.size === products.length
