@@ -954,22 +954,7 @@ export default function ProductsPage() {
                 </span>
               </div>
 
-              {/* Tabs */}
-              <div style={{ display: 'flex', gap: '3px', padding: '3px', background: '#f1f5f9', borderRadius: '8px' }}>
-                {([['edit', '✏️ Modifier les données'], ['images', '🖼️ Images en masse']] as const).map(([id, label]) => (
-                  <button key={id} onClick={() => setBulkTab(id)} style={{
-                    flex: 1, padding: '6px 12px', borderRadius: '6px', border: 'none',
-                    background: bulkTab === id ? '#ffffff' : 'transparent',
-                    color: '#0f172a', fontSize: '13px', fontWeight: bulkTab === id ? 600 : 400,
-                    cursor: 'pointer', boxShadow: bulkTab === id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                    transition: 'all 0.15s',
-                  }}>{label}</button>
-                ))}
-              </div>
-
-              {/* Edit tab */}
-              {bulkTab === 'edit' && (
-                <div className="bulkControls">
+              <div className="bulkControls">
                   {/* Action type */}
                   <select value={action} onChange={e => setAction(e.target.value as any)} style={selStyle}>
                     <option value="price">Modifier le prix</option>
@@ -1019,81 +1004,14 @@ export default function ProductsPage() {
                     ✕ Annuler
                   </button>
                 </div>
-              )}
 
-              {bulkMsg && bulkTab === 'edit' && (
+              {bulkMsg && (
                 <div style={{ width: '100%', color: bulkMsgOk ? '#059669' : '#dc2626', fontSize: 13, fontWeight: 600, marginTop: 4 }}>
                   {bulkMsg}
                 </div>
               )}
 
-              {/* Images tab */}
-              {bulkTab === 'images' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <p style={{ color: '#64748b', fontSize: 13, margin: 0 }}>
-                    Remplacez l&apos;image principale de <strong>{selectedIds.size}</strong> produit(s) — chargez un fichier ou entrez une URL.
-                  </p>
 
-                  {/* File OR URL chooser */}
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '2 1 200px' }}>
-                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>📁 Fichier image</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleBulkImgFile}
-                        style={{ ...inputStyle, padding: '6px 10px', cursor: 'pointer' }}
-                      />
-                    </div>
-                    <div style={{ color: '#94a3b8', fontSize: 12, alignSelf: 'center', paddingBottom: 4 }}>— ou —</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '3 1 220px' }}>
-                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>🔗 URL de l&apos;image</label>
-                      <input
-                        type="url"
-                        value={bulkImgUrl}
-                        onChange={e => { setBulkImgUrl(e.target.value); if (e.target.value) { setBulkImgFile(null); setBulkImgPreview('') } }}
-                        placeholder="https://exemple.com/image.jpg"
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Preview */}
-                  {(bulkImgPreview || bulkImgUrl) && (
-                    <img
-                      src={bulkImgPreview || bulkImgUrl}
-                      alt="Aperçu"
-                      style={{ maxHeight: 120, maxWidth: 200, objectFit: 'contain', borderRadius: 8, border: '1px solid #e2e8f0' }}
-                    />
-                  )}
-
-                  {/* Progress */}
-                  {bulkImgLoading && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ flex: 1, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: bulkImgProgress + '%', background: '#2563eb', borderRadius: 3, transition: 'width 0.3s' }} />
-                      </div>
-                      <span style={{ color: '#64748b', fontSize: 12, flexShrink: 0 }}>{bulkImgProgress}% en cours...</span>
-                    </div>
-                  )}
-
-                  {bulkImgMsg && (
-                    <div style={{ color: bulkImgOk ? '#059669' : '#dc2626', fontSize: 13, fontWeight: 600 }}>
-                      {bulkImgMsg}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={bulkApplyImages} disabled={bulkImgLoading || (!bulkImgFile && !bulkImgUrl.trim())}
-                      className="primaryBtn" style={{ padding: '7px 16px', fontSize: 13, borderRadius: 8 }}>
-                      {bulkImgLoading ? 'Application en cours...' : `🖼️ Appliquer à ${selectedIds.size} produit(s)`}
-                    </button>
-                    <button onClick={clearSelection} className="ghostBtn" style={{ padding: '7px 12px', fontSize: 13 }}>
-                      ✕ Annuler
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
