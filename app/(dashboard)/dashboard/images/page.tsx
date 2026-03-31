@@ -51,6 +51,13 @@ export default function ImagesPage() {
   const [massSaving, setMassSaving] = useState(false)
   const [massMsg, setMassMsg] = useState('')
 
+  // Crop
+  const [cropEnabled, setCropEnabled] = useState(false)
+  const [cropTop, setCropTop] = useState('')
+  const [cropLeft, setCropLeft] = useState('')
+  const [cropW, setCropW] = useState('')
+  const [cropH, setCropH] = useState('')
+
   // Resize handle container ref
   const resizeContainerRef = useRef<HTMLDivElement>(null)
 
@@ -87,6 +94,11 @@ export default function ImagesPage() {
     setContrast(100)
     setWidth('')
     setHeight('')
+    setCropEnabled(false)
+    setCropTop('')
+    setCropLeft('')
+    setCropW('')
+    setCropH('')
     setSaveMsg('')
   }
 
@@ -134,21 +146,24 @@ export default function ImagesPage() {
     setSaveMsg('')
     try {
       const pid = selected.shopify_product_id || selected.id
-      const res = await fetch(`/api/shopify/products/${pid}`, {
-        method: 'PUT', credentials: 'include',
+      const res = await fetch('/api/shopify/products/image-transform', {
+        method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          metafields: [{
-            namespace: 'ecompilot', key: 'image_settings',
-            value: JSON.stringify({ brightness, contrast, width: width || null, height: height || null }),
-            type: 'json'
-          }]
+          productIds: [pid],
+          brightness, contrast,
+          width: width || null, height: height || null,
+          cropEnabled,
+          cropTop: cropEnabled ? (cropTop || 0) : undefined,
+          cropLeft: cropEnabled ? (cropLeft || 0) : undefined,
+          cropW: cropEnabled ? (cropW || null) : undefined,
+          cropH: cropEnabled ? (cropH || null) : undefined,
         })
       })
+      const d = await res.json()
       if (res.ok) {
-        setSaveMsg('Modifications enregistrées')
+        setSaveMsg(d.message || 'Modifications enregistrées')
       } else {
-        const d = await res.json()
         setSaveMsg((d as { error?: string }).error || 'Erreur lors de la sauvegarde')
       }
     } catch (err: unknown) {
@@ -161,30 +176,31 @@ export default function ImagesPage() {
     if (!massSelected.size) return
     setMassSaving(true)
     setMassMsg('')
-    let ok = 0, fail = 0
-    for (const pid of massSelected) {
-      try {
-        const res = await fetch(`/api/shopify/products/${pid}`, {
-          method: 'PUT', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metafields: [{
-              namespace: 'ecompilot', key: 'image_settings',
-              value: JSON.stringify({ brightness, contrast, width: width || null, height: height || null }),
-              type: 'json'
-            }]
-          })
+    try {
+      const res = await fetch('/api/shopify/products/image-transform', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productIds: Array.from(massSelected),
+          brightness, contrast,
+          width: width || null, height: height || null,
+          cropEnabled,
+          cropTop: cropEnabled ? (cropTop || 0) : undefined,
+          cropLeft: cropEnabled ? (cropLeft || 0) : undefined,
+          cropW: cropEnabled ? (cropW || null) : undefined,
+          cropH: cropEnabled ? (cropH || null) : undefined,
         })
-        res.ok ? ok++ : fail++
-      } catch { fail++ }
-      await new Promise(r => setTimeout(r, 100))
+      })
+      const d = await res.json()
+      setMassMsg(d.message || (res.ok ? 'Appliqué !' : 'Erreur'))
+    } catch (err: unknown) {
+      setMassMsg('Erreur: ' + (err instanceof Error ? err.message : 'Inconnue'))
     }
-    setMassMsg(`${ok} produit(s) mis Ã  jour${fail > 0 ? `, ${fail} échec(s)` : ''}`)
     setMassSaving(false)
     setTimeout(() => setMassMsg(''), 6000)
   }
 
-  // Sync resize container size â†’ width/height inputs
+  // Sync resize container size → width/height inputs
   function handleResizeEnd() {
     const el = resizeContainerRef.current
     if (!el) return
@@ -192,7 +208,7 @@ export default function ImagesPage() {
     setHeight(String(el.offsetHeight))
   }
 
-  // Sync manual inputs â†’ container size
+  // Sync manual inputs → container size
   useEffect(() => {
     const el = resizeContainerRef.current
     if (!el) return
@@ -229,7 +245,7 @@ export default function ImagesPage() {
             <button
               onClick={() => { setMassMode(!massMode); setMassSelected(new Set()) }}
               style={{ ...S.btnSec, background: massMode ? '#eff6ff' : '#f8fafc', color: massMode ? '#2563eb' : '#334155', borderColor: massMode ? '#bfdbfe' : '#e2e8f0' }}>
-              {massMode ? 'âœ• Quitter le mode masse' : 'âŠž Mode masse'}
+              {massMode ? '✕ Quitter le mode masse' : '⊞ Mode masse'}
             </button>
             <button onClick={syncProducts} disabled={syncing} style={{ ...S.btnSec, opacity: syncing ? 0.6 : 1 }}>
               {syncing ? 'Synchronisation...' : 'Synchroniser'}
@@ -241,7 +257,7 @@ export default function ImagesPage() {
         {massMode && (
           <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
             <span style={{ color: '#1d4ed8', fontSize: '14px', fontWeight: 700 }}>
-              {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sélectionné{massSelected.size !== 1 ? 's' : ''} "” Appliquer les mêmes modifications
+              {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sélectionné{massSelected.size !== 1 ? 's' : ''} — Appliquer les mêmes modifications
             </span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <button
@@ -252,7 +268,7 @@ export default function ImagesPage() {
               {massSelected.size > 0 && (
                 <button onClick={applyToAll} disabled={massSaving}
                   style={{ ...S.btn, fontSize: '12px', padding: '6px 14px', opacity: massSaving ? 0.6 : 1 }}>
-                  {massSaving ? 'Application...' : `Appliquer Ã  ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}`}
+                  {massSaving ? 'Application...' : `Appliquer à ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}`}
                 </button>
               )}
             </div>
@@ -326,7 +342,7 @@ export default function ImagesPage() {
                           {p.title}
                         </p>
                         <p style={{ color: '#16a34a', fontSize: '13px', fontWeight: 700, margin: 0 }}>
-                          {p.price > 0 ? p.price.toFixed(2) + 'â‚¬' : '"”'}
+                          {p.price > 0 ? p.price.toFixed(2) + '€' : '—'}
                         </p>
                       </div>
                     </div>
@@ -341,7 +357,7 @@ export default function ImagesPage() {
             <div style={{ ...S.card, padding: '20px', position: 'sticky', top: '20px', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                 <p style={{ color: '#0f172a', fontSize: '14px', fontWeight: 700, margin: 0 }}>Modifier les images</p>
-                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '18px', padding: 0, lineHeight: 1 }}>âœ•</button>
+                <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '18px', padding: 0, lineHeight: 1 }}>✕</button>
               </div>
               <p style={{ color: '#64748b', fontSize: '12px', margin: '0 0 14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {selected.title}
@@ -417,7 +433,7 @@ export default function ImagesPage() {
               {/* Controls */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
                 <div>
-                  <label style={S.lbl}>Luminosité "” {brightness}%</label>
+                  <label style={S.lbl}>Luminosité — {brightness}%</label>
                   <input type="range" min="0" max="200" value={brightness}
                     onChange={e => setBrightness(parseInt(e.target.value))}
                     style={{ width: '100%', accentColor: '#2563eb', cursor: 'pointer' }} />
@@ -428,7 +444,7 @@ export default function ImagesPage() {
                 </div>
 
                 <div>
-                  <label style={S.lbl}>Contraste "” {contrast}%</label>
+                  <label style={S.lbl}>Contraste — {contrast}%</label>
                   <input type="range" min="0" max="200" value={contrast}
                     onChange={e => setContrast(parseInt(e.target.value))}
                     style={{ width: '100%', accentColor: '#2563eb', cursor: 'pointer' }} />
@@ -446,7 +462,33 @@ export default function ImagesPage() {
                 )}
 
                 <div>
-                  <label style={S.lbl}>Dimensions (px) "” sync avec l&apos;aperçu</label>
+                  <label style={S.lbl}>Format prédéfini</label>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {[
+                      { label: 'Carré', w: '1000', h: '1000' },
+                      { label: 'Portrait', w: '800', h: '1000' },
+                      { label: 'Paysage', w: '1600', h: '900' },
+                      { label: 'Libre', w: '', h: '' },
+                    ].map(preset => {
+                      const active = preset.label === 'Libre'
+                        ? width === '' && height === ''
+                        : width === preset.w && height === preset.h;
+                      return (
+                        <button key={preset.label}
+                          onClick={() => { setWidth(preset.w); setHeight(preset.h) }}
+                          style={{ ...S.btnSec, fontSize: '12px', padding: '4px 10px',
+                            background: active ? '#eff6ff' : '#f8fafc',
+                            color: active ? '#2563eb' : '#334155',
+                            borderColor: active ? '#bfdbfe' : '#e2e8f0' }}>
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={S.lbl}>Dimensions (px) — sync avec l&apos;aperçu</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <label style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Largeur</label>
@@ -459,6 +501,34 @@ export default function ImagesPage() {
                         onChange={e => setHeight(e.target.value)} style={S.inp} />
                     </div>
                   </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <label style={{ ...S.lbl, marginBottom: 0 }}>Recadrage (crop)</label>
+                    <button onClick={() => setCropEnabled(!cropEnabled)}
+                      style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+                        background: cropEnabled ? '#2563eb' : '#e2e8f0',
+                        color: cropEnabled ? '#fff' : '#64748b', fontWeight: 600 }}>
+                      {cropEnabled ? 'Activé' : 'Désactivé'}
+                    </button>
+                  </div>
+                  {cropEnabled && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      {[
+                        { label: 'Top (px)', val: cropTop, set: setCropTop },
+                        { label: 'Left (px)', val: cropLeft, set: setCropLeft },
+                        { label: 'Largeur', val: cropW, set: setCropW },
+                        { label: 'Hauteur', val: cropH, set: setCropH },
+                      ].map(f => (
+                        <div key={f.label}>
+                          <label style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginBottom: '4px' }}>{f.label}</label>
+                          <input type="number" min="0" placeholder="0" value={f.val}
+                            onChange={e => f.set(e.target.value)} style={S.inp} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -481,7 +551,7 @@ export default function ImagesPage() {
                 <a href={'https://admin.shopify.com/products/' + (selected.shopify_product_id || selected.id)}
                   target="_blank" rel="noopener noreferrer"
                   style={{ color: '#2563eb', fontSize: '12px', textDecoration: 'none', fontWeight: 400 }}>
-                  Voir sur Shopify Admin â†—
+                  Voir sur Shopify Admin ↗
                 </a>
               </p>
             </div>

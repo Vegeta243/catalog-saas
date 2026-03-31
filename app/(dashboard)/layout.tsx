@@ -260,10 +260,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-  const LOCKED_WITH_PLAN: Record<string, string> = {
-    '/dashboard/concurrence': 'Pro+',
-  };
-
   return (
     <UserProvider>
       <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--surface-primary)' }}>
@@ -299,23 +295,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {section.items.map((item) => {
                   const isActive = pathname === item.href;
                   const Icon = item.icon;
-                  const requiredPlan = plan === 'free' ? LOCKED_WITH_PLAN[item.href] : undefined;
-                  if (requiredPlan) {
-                    const badgeColor = requiredPlan === 'Pro+' ? { bg: '#7c3aed', text: '#fff' } : { bg: '#0ea5e9', text: '#fff' };
-                    return (
-                      <div key={item.href}
-                        title={`Disponible à partir du plan ${requiredPlan}`}
-                        style={{ ...styles.navItem, opacity: 0.6, cursor: 'not-allowed', userSelect: 'none' as const }}>
-                        <Icon className="w-5 h-5" style={{ flexShrink: 0 }} />
-                        {!sidebarCollapsed && <span style={{ fontSize: '14px', fontWeight: '500', flex: 1 }}>{item.label}</span>}
-                        {!sidebarCollapsed && (
-                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '9999px', background: badgeColor.bg, color: badgeColor.text, lineHeight: '16px' }}>
-                            {requiredPlan}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
                   return (
                     <Link
                       key={item.href}
@@ -590,21 +569,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div key={section.label} style={{ marginBottom: '24px' }}>
                   <div style={styles.navLabel}>{section.label}</div>
                   {section.items.map((item) => {
-                    const mobileRequiredPlan = plan === 'free' ? LOCKED_WITH_PLAN[item.href] : undefined;
-                    if (mobileRequiredPlan) {
-                      const badgeColor = mobileRequiredPlan === 'Pro+' ? { bg: '#7c3aed', text: '#fff' } : { bg: '#0ea5e9', text: '#fff' };
-                      return (
-                        <div key={item.href}
-                          title={`Disponible à partir du plan ${mobileRequiredPlan}`}
-                          style={{ ...styles.navItem, display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', opacity: 0.6, cursor: 'not-allowed', userSelect: 'none' as const, borderRadius: '12px', marginBottom: '4px' }}>
-                          <item.icon className="w-5 h-5" />
-                          <span style={{ fontSize: '14px', fontWeight: '500', flex: 1 }}>{item.label}</span>
-                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '9999px', background: badgeColor.bg, color: badgeColor.text, lineHeight: '16px' }}>
-                            {mobileRequiredPlan}
-                          </span>
-                        </div>
-                      );
-                    }
                     return (
                       <Link
                         key={item.href}
