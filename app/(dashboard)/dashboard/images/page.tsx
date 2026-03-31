@@ -173,9 +173,10 @@ export default function ImagesPage() {
   }
 
   async function applyChanges() {
-    if (!selected || !currentImgUrl) return
+    if (!selected) { setSaveMsg('Sélectionnez un produit'); return }
+    if (!currentImgUrl) { setSaveMsg('Erreur : ce produit n\'a pas d\'image à modifier'); return }
     setSaving(true)
-    setSaveMsg('')
+    setSaveMsg('Traitement de l\'image en cours...')
     try {
       const base64Data = await processImageToBase64(currentImgUrl)
       const pid = selected.shopify_product_id || selected.id
@@ -291,12 +292,10 @@ export default function ImagesPage() {
                 style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px' }}>
                 Tout sélectionner
               </button>
-              {massSelected.size > 0 && (
-                <button onClick={applyToAll} disabled={massSaving}
-                  style={{ ...S.btn, fontSize: '12px', padding: '6px 14px', opacity: massSaving ? 0.6 : 1 }}>
-                  {massSaving ? 'Application...' : `Appliquer à ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}`}
-                </button>
-              )}
+              <button onClick={applyToAll} disabled={massSaving || massSelected.size === 0}
+                style={{ ...S.btn, fontSize: '12px', padding: '6px 14px', opacity: (massSaving || massSelected.size === 0) ? 0.5 : 1 }}>
+                {massSaving ? 'Application...' : massSelected.size > 0 ? `Appliquer à ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}` : 'Appliquer (0 sélectionné)'}
+              </button>
             </div>
             {massMsg && (
               <span style={{ width: '100%', color: massMsg.includes('échec') ? '#dc2626' : '#15803d', fontSize: '13px', fontWeight: 600 }}>
