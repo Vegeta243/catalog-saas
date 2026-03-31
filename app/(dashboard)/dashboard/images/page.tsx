@@ -224,6 +224,7 @@ export default function ImagesPage() {
       ? `✓ ${done} image${done > 1 ? 's' : ''} modifiée${done > 1 ? 's' : ''} sur Shopify`
       : `${done} réussi${done > 1 ? 's' : ''}, ${errors} erreur${errors > 1 ? 's' : ''}`)
     setMassSaving(false)
+    setMassSelected(new Set())
     setTimeout(() => setMassMsg(''), 8000)
   }
 

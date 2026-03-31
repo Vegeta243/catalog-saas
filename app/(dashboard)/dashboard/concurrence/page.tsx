@@ -126,6 +126,8 @@ export default function ConcurrencePage() {
   const [newAlertMethod, setNewAlertMethod] = useState('email')
   const [newAlertThreshold, setNewAlertThreshold] = useState('')
   const [compScore, setCompScore] = useState<CompetitiveScore>(null)
+  const [myStats, setMyStats] = useState<{ total: number; avgPrice: number; minPrice: number; maxPrice: number } | null>(null)
+  const [myStatsLoading, setMyStatsLoading] = useState(false)
 
   const { addToast } = useToast()
   useEffect(() => { document.title = "Concurrence | EcomPilot"; }, []);
@@ -142,7 +144,25 @@ export default function ConcurrencePage() {
     setIsLoading(false)
   }, [])
 
+  const fetchMyStats = useCallback(async () => {
+    setMyStatsLoading(true)
+    try {
+      const res = await fetch('/api/shopify/products?limit=250')
+      const data = await res.json()
+      const prods: { price: number }[] = data.products || []
+      const prices = prods.map(p => p.price).filter(p => p > 0)
+      setMyStats({
+        total: data.total || prods.length,
+        avgPrice: prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0,
+        minPrice: prices.length > 0 ? Math.min(...prices) : 0,
+        maxPrice: prices.length > 0 ? Math.max(...prices) : 0,
+      })
+    } catch { /* silent */ }
+    setMyStatsLoading(false)
+  }, [])
+
   useEffect(() => { fetchCompetitors() }, [fetchCompetitors])
+  useEffect(() => { fetchMyStats() }, [fetchMyStats])
 
   useEffect(() => {
     if (!selected) return
@@ -477,24 +497,49 @@ export default function ConcurrencePage() {
 
         {!selected ? (
           /* Empty state */
-          <div className="flex flex-col items-center justify-center flex-1 text-center px-8 py-16">
-            <Eye className="w-16 h-16 mb-4" style={{ color: '#d1d5db' }} />
-            <h3 className="text-xl font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Analyse concurrentielle</h3>
-            <p className="max-w-md text-sm" style={{ color: "var(--text-tertiary)" }}>
-              Sélectionnez un concurrent dans la liste pour voir les résultats.
-            </p>
-            {competitors.length === 0 && (
-              <button onClick={() => setShowAddModal(true)}
-                className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 text-sm">
-                + Ajouter mon premier concurrent
-              </button>
-            )}
-            {competitors.length > 0 && (
-              <button onClick={() => setShowSidebar(true)}
-                className="mt-4 text-blue-600 text-sm flex items-center gap-1 md:hidden">
-                <Eye className="w-4 h-4" /> Voir la liste
-              </button>
-            )}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            {/* Ma boutique */}
+            <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+              <h3 className="font-semibold mb-4 flex items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
+                <Package className="w-4 h-4 text-blue-500" /> Ma boutique
+              </h3>
+              {myStatsLoading ? (
+                <div className="text-center py-4 text-sm text-gray-400">Chargement...</div>
+              ) : myStats ? (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { label: 'Produits', value: String(myStats.total), icon: <Package className="w-4 h-4" style={{ color: '#2563eb' }} /> },
+                    { label: 'Prix moyen', value: myStats.avgPrice > 0 ? `${myStats.avgPrice.toFixed(2)}€` : 'N/A', icon: <Tag className="w-4 h-4" style={{ color: '#7c3aed' }} /> },
+                    { label: 'Prix min', value: myStats.minPrice > 0 ? `${myStats.minPrice.toFixed(2)}€` : 'N/A', icon: <TrendingDown className="w-4 h-4" style={{ color: '#059669' }} /> },
+                    { label: 'Prix max', value: myStats.maxPrice > 0 ? `${myStats.maxPrice.toFixed(2)}€` : 'N/A', icon: <TrendingUp className="w-4 h-4" style={{ color: '#ef4444' }} /> },
+                  ].map((kpi, i) => (
+                    <div key={i} className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-1">{kpi.icon}<span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{kpi.label}</span></div>
+                      <p className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{kpi.value}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="flex flex-col items-center justify-center text-center px-8 py-8">
+              <Eye className="w-16 h-16 mb-4" style={{ color: '#d1d5db' }} />
+              <h3 className="text-xl font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Analyse concurrentielle</h3>
+              <p className="max-w-md text-sm" style={{ color: "var(--text-tertiary)" }}>
+                Sélectionnez un concurrent dans la liste pour voir les résultats.
+              </p>
+              {competitors.length === 0 && (
+                <button onClick={() => setShowAddModal(true)}
+                  className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 text-sm">
+                  + Ajouter mon premier concurrent
+                </button>
+              )}
+              {competitors.length > 0 && (
+                <button onClick={() => setShowSidebar(true)}
+                  className="mt-4 text-blue-600 text-sm flex items-center gap-1 md:hidden">
+                  <Eye className="w-4 h-4" /> Voir la liste
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <>
@@ -551,6 +596,34 @@ export default function ConcurrencePage() {
                 {/* TAB: OVERVIEW */}
                 {activeTab === 'overview' && (
                   <div className="p-4 md:p-6 space-y-5">
+                    {/* Ma boutique vs Concurrent */}
+                    {myStats && (
+                      <div className="bg-white border border-gray-200 rounded-xl p-5">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
+                          <Package className="w-4 h-4 text-blue-500" /> Comparaison avec ma boutique
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-blue-50 rounded-xl p-4">
+                            <div className="text-xs font-bold mb-3 text-blue-600">Ma boutique</div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Produits</span><span className="font-bold" style={{ color: "var(--text-primary)" }}>{myStats.total}</span></div>
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Prix moyen</span><span className="font-bold" style={{ color: "var(--text-primary)" }}>{myStats.avgPrice > 0 ? `${myStats.avgPrice.toFixed(2)}€` : '—'}</span></div>
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Prix min</span><span className="font-bold" style={{ color: "#059669" }}>{myStats.minPrice > 0 ? `${myStats.minPrice.toFixed(2)}€` : '—'}</span></div>
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Prix max</span><span className="font-bold" style={{ color: "#ef4444" }}>{myStats.maxPrice > 0 ? `${myStats.maxPrice.toFixed(2)}€` : '—'}</span></div>
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-4">
+                            <div className="text-xs font-bold mb-3 text-gray-500">{selected.name}</div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Produits</span><span className="font-bold" style={{ color: "var(--text-primary)" }}>{selected.snapshot?.products_found ?? '—'}</span></div>
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Prix moyen</span><span className="font-bold" style={{ color: "var(--text-primary)" }}>{selected.snapshot?.avg_price ? `${selected.snapshot.avg_price.toFixed(2)}€` : '—'}</span></div>
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Prix min</span><span className="font-bold" style={{ color: "#059669" }}>—</span></div>
+                              <div className="flex justify-between text-xs"><span style={{ color: "var(--text-tertiary)" }}>Promos</span><span className="font-bold" style={{ color: selected.snapshot?.promo_detected ? '#ef4444' : '#059669' }}>{selected.snapshot?.promo_detected ? 'Actives' : 'Aucune'}</span></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {compScore && (
                       <div className="rounded-xl p-5 border"
                         style={{ backgroundColor: THREAT_COLORS[compScore.threat_level].bg, borderColor: THREAT_COLORS[compScore.threat_level].border }}>

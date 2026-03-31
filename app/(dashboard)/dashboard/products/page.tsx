@@ -501,7 +501,7 @@ function BulkAIModal({
         .aiStep.done .aiStepNum { background: #059669; color: white; }
         .aiStep.done .aiStepLabel { color: #374151; font-weight: 600; }
         .aiStepLine { flex: 1; height: 1px; background: #e5e7eb; margin: 0 8px; min-width: 20px; }
-        .aiBody { flex: 1; overflow-y: auto; padding: 20px 24px 24px; }
+        .aiBody { flex: 1; overflow-y: auto; min-height: 0; padding: 20px 24px 24px; }
         .aiSectionLabel { color: #374151; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 10px; }
         .aiFieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         @media (min-width: 480px) { .aiFieldGrid { grid-template-columns: repeat(3, 1fr); } }
