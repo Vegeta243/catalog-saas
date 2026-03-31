@@ -12,13 +12,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { productIds, action, value } = body
+    const { productIds, shopifyProductIds, action, value } = body
 
-    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
-      return NextResponse.json({ error: 'Aucun produit sélectionné' }, { status: 400 })
-    }
-    if (!action) {
-      return NextResponse.json({ error: 'Action manquante' }, { status: 400 })
+    // Accept either local UUIDs (productIds) or Shopify IDs (shopifyProductIds)
+    const hasIds = (shopifyProductIds?.length ?? 0) > 0 || (productIds?.length ?? 0) > 0
+    if (!hasIds || !action) {
+      return NextResponse.json({ error: !action ? 'Action manquante' : 'Aucun produit sélectionné' }, { status: 400 })
     }
 
     // Get shop credentials
@@ -47,12 +46,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Identifiants boutique manquants' }, { status: 400 })
     }
 
-    // Fetch products from local DB by local id
-    const { data: dbProducts, error: prodErr } = await supabase
+    // Fetch products from local DB — prefer shopify_product_id lookup to avoid UUID mapping issues
+    let dbQuery = supabase
       .from('shopify_products')
       .select('id, shopify_product_id, title, price, tags, status, vendor, body_html, variants')
       .eq('user_id', user.id)
-      .in('id', productIds)
+
+    if (shopifyProductIds?.length > 0) {
+      dbQuery = dbQuery.in('shopify_product_id', shopifyProductIds.map(String))
+    } else {
+      dbQuery = dbQuery.in('id', productIds)
+    }
+
+    const { data: dbProducts, error: prodErr } = await dbQuery
 
     if (prodErr || !dbProducts || dbProducts.length === 0) {
       return NextResponse.json({ error: 'Produits introuvables en base' }, { status: 404 })

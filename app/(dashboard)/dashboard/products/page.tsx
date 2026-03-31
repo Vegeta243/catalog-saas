@@ -561,16 +561,15 @@ export default function ProductsPage() {
   const [bulkMsg, setBulkMsg] = useState('')
   const [bulkMsgOk, setBulkMsgOk] = useState(true)
 
-  // Bulk image resize
+  // Bulk image replace
   const [bulkTab, setBulkTab] = useState<'edit' | 'images'>('edit')
-  const [imgW, setImgW] = useState('800')
-  const [imgH, setImgH] = useState('800')
-  const [imgMode, setImgMode] = useState('crop_center')
-  const [imgQuality, setImgQuality] = useState(85)
-  const [resizing, setResizing] = useState(false)
-  const [resizeProgress, setResizeProgress] = useState(0)
-  const [resizeMsg, setResizeMsg] = useState('')
-  const [resizeMsgOk, setResizeMsgOk] = useState(true)
+  const [bulkImgFile, setBulkImgFile] = useState<File | null>(null)
+  const [bulkImgPreview, setBulkImgPreview] = useState('')
+  const [bulkImgUrl, setBulkImgUrl] = useState('')
+  const [bulkImgLoading, setBulkImgLoading] = useState(false)
+  const [bulkImgProgress, setBulkImgProgress] = useState(0)
+  const [bulkImgMsg, setBulkImgMsg] = useState('')
+  const [bulkImgOk, setBulkImgOk] = useState(true)
 
   // Edit modal
   const [editProduct, setEditProduct] = useState<Product | null>(null)
@@ -641,32 +640,66 @@ export default function ProductsPage() {
     setSelectedIds(new Set()); setBulkValue(''); setBulkMsg('')
   }
 
-  async function bulkResizeImages() {
+  function handleBulkImgFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBulkImgFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setBulkImgPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+    setBulkImgUrl('')
+  }
+
+  async function bulkApplyImages() {
     const toProcess = products.filter(p => selectedIds.has(p.shopify_product_id || p.id))
-    if (!toProcess.length) { setResizeMsg('Sélectionnez des produits'); setResizeMsgOk(false); return }
-    setResizing(true); setResizeProgress(0); setResizeMsg(''); setResizeMsgOk(true)
-    let done = 0
+    if (!toProcess.length) { setBulkImgMsg('Sélectionnez des produits'); setBulkImgOk(false); return }
+    if (!bulkImgFile && !bulkImgUrl.trim()) {
+      setBulkImgMsg('Sélectionnez une image ou entrez une URL'); setBulkImgOk(false); return
+    }
+
+    let base64Data = ''
+    let fileName = 'product-image.jpg'
+    if (bulkImgFile) {
+      base64Data = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (e) => resolve((e.target?.result as string).split(',')[1])
+        reader.readAsDataURL(bulkImgFile!)
+      })
+      fileName = bulkImgFile.name
+    }
+
+    setBulkImgLoading(true); setBulkImgProgress(0); setBulkImgMsg(''); setBulkImgOk(true)
+    let done = 0; let errors = 0
     for (const p of toProcess) {
       const pid = p.shopify_product_id || p.id
       try {
-        await fetch('/api/shopify/products/' + pid + '/resize-images', {
-          method: 'POST',
-          credentials: 'include',
+        const body = base64Data
+          ? { imageBase64: base64Data, filename: fileName }
+          : { imageUrl: bulkImgUrl.trim() }
+        const res = await fetch('/api/shopify/products/' + pid + '/image', {
+          method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ width: parseInt(imgW) || 800, height: parseInt(imgH) || 800, mode: imgMode, quality: imgQuality }),
+          body: JSON.stringify(body),
         })
-      } catch { /* ignore per-product errors */ }
+        if (!res.ok) errors++
+      } catch { errors++ }
       done++
-      setResizeProgress(Math.round((done / toProcess.length) * 100))
+      setBulkImgProgress(Math.round((done / toProcess.length) * 100))
     }
-    setResizing(false)
-    setResizeMsg(done + ' produit(s) traité(s) — images redimensionnées en ' + imgW + '×' + imgH + 'px')
-    setResizeMsgOk(true)
-    setTimeout(() => setResizeMsg(''), 8000)
+    setBulkImgLoading(false)
+    setBulkImgMsg(`${done - errors}/${done} image(s) appliquée(s)`)
+    setBulkImgOk(errors === 0)
+    if (errors === 0) {
+      setBulkImgFile(null); setBulkImgPreview(''); setBulkImgUrl('')
+      setTimeout(() => setBulkImgMsg(''), 8000)
+    }
   }
 
   async function applyBulk() {
     if (!selectedIds.size) return
+    if (action === 'status' && !bulkValue) {
+      setBulkMsg('Choisissez un statut'); setBulkMsgOk(false); return
+    }
     if (action !== 'status' && !bulkValue.trim()) {
       setBulkMsg('Veuillez saisir une valeur'); setBulkMsgOk(false); return
     }
@@ -685,14 +718,8 @@ export default function ProductsPage() {
       apiAction = 'title_suffix'
     }
 
-    // Resolve local DB ids from selectedIds (which hold shopify_product_id || id)
-    const productIds = Array.from(selectedIds)
-      .map(sid => products.find(p => (p.shopify_product_id || p.id) === sid)?.id)
-      .filter((id): id is string => Boolean(id))
-
-    if (productIds.length === 0) {
-      setBulkMsg('Produits introuvables'); setBulkMsgOk(false); return
-    }
+    // Send shopify IDs directly — no UUID mapping needed
+    const shopifyProductIds = Array.from(selectedIds)
 
     setApplying(true); setBulkMsg('')
 
@@ -701,14 +728,14 @@ export default function ProductsPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productIds, action: apiAction, value: bulkValue }),
+        body: JSON.stringify({ shopifyProductIds, action: apiAction, value: bulkValue }),
       })
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
         setBulkMsg(data.error || 'Erreur lors de l\'application'); setBulkMsgOk(false)
       } else {
-        setBulkMsg(data.message || data.successCount + ' produit(s) mis à jour'); setBulkMsgOk(true)
+        setBulkMsg(data.message || (data.successCount + ' produit(s) mis à jour')); setBulkMsgOk(true)
         setSelectedIds(new Set())
         setBulkValue('')
         await fetchProducts(page, search)
@@ -959,54 +986,62 @@ export default function ProductsPage() {
               {bulkTab === 'images' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <p style={{ color: '#64748b', fontSize: 13, margin: 0 }}>
-                    Redimensionnez les images de <strong>{selectedIds.size}</strong> produit(s) sélectionné(s).
-                    Fonctionne dans les deux sens (crop ou étirement).
+                    Remplacez l&apos;image principale de <strong>{selectedIds.size}</strong> produit(s) — chargez un fichier ou entrez une URL.
                   </p>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 80px', minWidth: 80 }}>
-                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Largeur (px)</label>
-                      <input type="number" value={imgW} onChange={e => setImgW(e.target.value)} min="50" max="3000"
-                        style={{ ...selStyle, width: '100%' }} placeholder="800" />
+
+                  {/* File OR URL chooser */}
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '2 1 200px' }}>
+                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>📁 Fichier image</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleBulkImgFile}
+                        style={{ ...inputStyle, padding: '6px 10px', cursor: 'pointer' }}
+                      />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 80px', minWidth: 80 }}>
-                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Hauteur (px)</label>
-                      <input type="number" value={imgH} onChange={e => setImgH(e.target.value)} min="50" max="3000"
-                        style={{ ...selStyle, width: '100%' }} placeholder="800" />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '2 1 130px', minWidth: 130 }}>
-                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Mode</label>
-                      <select value={imgMode} onChange={e => setImgMode(e.target.value)} style={{ ...selStyle, width: '100%' }}>
-                        <option value="crop_center">Recadrer au centre</option>
-                        <option value="stretch">Étirer (distorsion)</option>
-                        <option value="contain">Contenir avec marges</option>
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '2 1 130px', minWidth: 130 }}>
-                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Qualité — {imgQuality}%</label>
-                      <input type="range" min="40" max="100" value={imgQuality} onChange={e => setImgQuality(parseInt(e.target.value))}
-                        style={{ width: '100%', accentColor: '#2563eb', marginTop: 4 }} />
+                    <div style={{ color: '#94a3b8', fontSize: 12, alignSelf: 'center', paddingBottom: 4 }}>— ou —</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '3 1 220px' }}>
+                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>🔗 URL de l&apos;image</label>
+                      <input
+                        type="url"
+                        value={bulkImgUrl}
+                        onChange={e => { setBulkImgUrl(e.target.value); if (e.target.value) { setBulkImgFile(null); setBulkImgPreview('') } }}
+                        placeholder="https://exemple.com/image.jpg"
+                        style={inputStyle}
+                      />
                     </div>
                   </div>
 
-                  {resizing && (
+                  {/* Preview */}
+                  {(bulkImgPreview || bulkImgUrl) && (
+                    <img
+                      src={bulkImgPreview || bulkImgUrl}
+                      alt="Aperçu"
+                      style={{ maxHeight: 120, maxWidth: 200, objectFit: 'contain', borderRadius: 8, border: '1px solid #e2e8f0' }}
+                    />
+                  )}
+
+                  {/* Progress */}
+                  {bulkImgLoading && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{ flex: 1, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: resizeProgress + '%', background: '#2563eb', borderRadius: 3, transition: 'width 0.3s' }} />
+                        <div style={{ height: '100%', width: bulkImgProgress + '%', background: '#2563eb', borderRadius: 3, transition: 'width 0.3s' }} />
                       </div>
-                      <span style={{ color: '#64748b', fontSize: 12, flexShrink: 0 }}>{resizeProgress}% — Traitement...</span>
+                      <span style={{ color: '#64748b', fontSize: 12, flexShrink: 0 }}>{bulkImgProgress}% en cours...</span>
                     </div>
                   )}
 
-                  {resizeMsg && (
-                    <div style={{ color: resizeMsgOk ? '#059669' : '#dc2626', fontSize: 13, fontWeight: 600 }}>
-                      {resizeMsg}
+                  {bulkImgMsg && (
+                    <div style={{ color: bulkImgOk ? '#059669' : '#dc2626', fontSize: 13, fontWeight: 600 }}>
+                      {bulkImgMsg}
                     </div>
                   )}
 
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={bulkResizeImages} disabled={resizing}
+                    <button onClick={bulkApplyImages} disabled={bulkImgLoading || (!bulkImgFile && !bulkImgUrl.trim())}
                       className="primaryBtn" style={{ padding: '7px 16px', fontSize: 13, borderRadius: 8 }}>
-                      {resizing ? 'Redimensionnement...' : '🔄 Redimensionner ' + selectedIds.size + ' produit(s)'}
+                      {bulkImgLoading ? 'Application en cours...' : `🖼️ Appliquer à ${selectedIds.size} produit(s)`}
                     </button>
                     <button onClick={clearSelection} className="ghostBtn" style={{ padding: '7px 12px', fontSize: 13 }}>
                       ✕ Annuler

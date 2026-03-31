@@ -11,8 +11,8 @@ export async function POST(
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
     const { id } = await params
-    const { imageBase64, filename } = await request.json()
-    if (!imageBase64) return NextResponse.json({ error: 'Image requise' }, { status: 400 })
+    const { imageBase64, filename, imageUrl } = await request.json()
+    if (!imageBase64 && !imageUrl) return NextResponse.json({ error: 'Image requise (base64 ou URL)' }, { status: 400 })
 
     const { data: shops } = await supabase.from('shops').select('*')
       .eq('user_id', user.id).eq('is_active', true).limit(1)
@@ -29,7 +29,9 @@ export async function POST(
       {
         method: 'POST',
         headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: { attachment: imageBase64, filename: filename || 'product-image.jpg' } })
+        body: JSON.stringify({ image: imageBase64
+          ? { attachment: imageBase64, filename: filename || 'product-image.jpg' }
+          : { src: imageUrl } })
       }
     )
     const data = await res.json()
