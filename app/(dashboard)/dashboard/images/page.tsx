@@ -440,6 +440,14 @@ export default function ImagesPage() {
               const previewUrl = firstProduct ? getFirstImage(firstProduct) : null
               return (
                 <div style={{ marginBottom: '20px' }}>
+                  {/* Caption explaining scope */}
+                  {massSelected.size > 0 && (
+                    <div style={{ padding: '9px 12px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', marginBottom: '12px' }}>
+                      <p style={{ margin: 0, color: '#0369a1', fontSize: '12px', fontWeight: 600 }}>
+                        📌 Aperçu sur la 1re image sélectionnée — ces réglages s&apos;appliqueront à <strong>toutes les images</strong> des {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sélectionné{massSelected.size !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  )}
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, marginBottom: '10px' }}>Aperçu du résultat</div>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                     {/* BEFORE */}
