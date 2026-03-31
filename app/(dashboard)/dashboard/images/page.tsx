@@ -286,7 +286,26 @@ export default function ImagesPage() {
             <span style={{ color: '#1d4ed8', fontSize: '14px', fontWeight: 700 }}>
               {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sélectionné{massSelected.size !== 1 ? 's' : ''} — Appliquer les mêmes modifications
             </span>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Compact adjustment controls visible directly in mass bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '5px 10px', border: '1px solid #bfdbfe' }}>
+                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>Lum. {brightness}%</span>
+                <input type="range" min="0" max="200" value={brightness}
+                  onChange={e => setBrightness(parseInt(e.target.value))}
+                  style={{ width: '70px', accentColor: '#2563eb', cursor: 'pointer' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '5px 10px', border: '1px solid #bfdbfe' }}>
+                <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600, whiteSpace: 'nowrap' }}>Cont. {contrast}%</span>
+                <input type="range" min="0" max="200" value={contrast}
+                  onChange={e => setContrast(parseInt(e.target.value))}
+                  style={{ width: '70px', accentColor: '#2563eb', cursor: 'pointer' }} />
+              </div>
+              {(brightness !== 100 || contrast !== 100) && (
+                <button onClick={() => { setBrightness(100); setContrast(100) }}
+                  style={{ ...S.btnSec, fontSize: '11px', padding: '4px 8px', color: '#64748b' }}>
+                  ↺ Reset
+                </button>
+              )}
               <button
                 onClick={() => setMassSelected(new Set(products.map(p => p.shopify_product_id || p.id)))}
                 style={{ ...S.btnSec, fontSize: '12px', padding: '5px 10px' }}>

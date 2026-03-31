@@ -78,6 +78,17 @@ export async function PUT(
 
     const result = await shopifyRes.json()
 
+    // Write updated price back to Supabase so fetchProducts (cache) reflects the change
+    if (price !== undefined) {
+      try {
+        await supabase
+          .from('shopify_products')
+          .update({ price: parseFloat(String(price)), updated_at: new Date().toISOString() })
+          .eq('shopify_product_id', id)
+          .eq('user_id', user.id)
+      } catch { /* non-blocking — Shopify already updated */ }
+    }
+
     // Handle SEO metafields via the Metafields API (not inline on product)
     const seoFields: { key: string; value: string; type: string }[] = []
     if (metafields_global_title_tag !== undefined && metafields_global_title_tag !== '')
