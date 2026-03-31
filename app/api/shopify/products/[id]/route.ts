@@ -19,12 +19,24 @@ export async function PUT(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const { data: shopRows, error: shopError } = await supabase
+    // Resolve exact shop for this product (avoids wrong shop when user has multiple active shops)
+    const { data: productRow } = await supabase
+      .from('shopify_products')
+      .select('shop_domain')
+      .eq('shopify_product_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    console.log('Product row shop_domain:', productRow?.shop_domain ?? 'NOT FOUND IN DB')
+
+    const shopBaseQuery = supabase
       .from('shops')
       .select('shop_domain, access_token')
       .eq('user_id', user.id)
       .eq('is_active', true)
-      .limit(1)
+
+    const { data: shopRows, error: shopError } = productRow?.shop_domain
+      ? await shopBaseQuery.eq('shop_domain', productRow.shop_domain).limit(1)
+      : await shopBaseQuery.limit(1)
 
     const shop = shopRows?.[0]
     console.log('Shop found:', shop?.shop_domain ?? 'NONE', shopError?.message ?? 'no error')
