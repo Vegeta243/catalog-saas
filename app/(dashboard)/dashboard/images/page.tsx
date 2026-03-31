@@ -309,6 +309,7 @@ export default function ImagesPage() {
 
   const selectedImages = selected ? getImages(selected) : []
   const currentImgUrl = selectedImages[selectedImgIdx] || ''
+  const selectedProductIds = [...massSelected]
 
   return (
     <div style={S.page}>
@@ -442,14 +443,18 @@ export default function ImagesPage() {
               const previewUrl = firstProduct ? getFirstImage(firstProduct) : null
               return (
                 <div style={{ marginBottom: '20px' }}>
-                  {/* Caption explaining scope */}
-                  {massSelected.size > 0 && (
-                    <div style={{ padding: '9px 12px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', marginBottom: '12px' }}>
-                      <p style={{ margin: 0, color: '#0369a1', fontSize: '12px', fontWeight: 600 }}>
-                        📌 Aperçu sur la 1re image sélectionnée — ces réglages s&apos;appliqueront à <strong>toutes les images</strong> des {massSelected.size} produit{massSelected.size !== 1 ? 's' : ''} sélectionné{massSelected.size !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  )}
+                  <div style={{
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: '8px',
+                    padding: '10px 14px',
+                    marginBottom: '12px',
+                    fontSize: '13px',
+                    color: '#1d4ed8',
+                    fontWeight: 500,
+                  }}>
+                    Aperçu sur la 1re image sélectionnée — ces réglages s&apos;appliqueront à toutes les images des {selectedProductIds.length} produit(s) sélectionné(s)
+                  </div>
                   <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, marginBottom: '10px' }}>Aperçu du résultat</div>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                     {/* BEFORE */}
@@ -471,7 +476,7 @@ export default function ImagesPage() {
                       <div style={{ fontSize: '11px', color: '#2563eb', marginBottom: '6px', textAlign: 'center', fontWeight: 600 }}>Après</div>
                       <div style={{ width: '100%', aspectRatio: '1', background: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', border: '2px solid #2563eb', position: 'relative' }}>
                         {previewUrl ? (
-                          <img src={previewUrl} alt="Après" style={{ width: '100%', height: '100%', objectFit: resizeMode === 'contain' ? 'contain' : resizeMode === 'cover' ? 'cover' : 'fill', filter: `brightness(${brightness}%) contrast(${contrast}%)`, transition: 'all 0.2s ease' }} />
+                          <img src={previewUrl} alt="Après" style={{ width: '100%', height: '100%', objectFit: resizeMode === 'contain' ? 'contain' : resizeMode === 'cover' ? 'cover' : 'fill', filter: `brightness(${brightness}%) contrast(${contrast}%)`, transition: 'filter 0.15s ease' }} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '12px' }}>Aucune image</div>
                         )}
@@ -498,7 +503,9 @@ export default function ImagesPage() {
               </button>
               <button onClick={handleBulkApply} disabled={isApplying || massSelected.size === 0}
                 style={{ ...S.btn, fontSize: '12px', padding: '6px 14px', opacity: (isApplying || massSelected.size === 0) ? 0.5 : 1 }}>
-                {isApplying ? 'Application...' : massSelected.size > 0 ? `Appliquer à ${massSelected.size} produit${massSelected.size !== 1 ? 's' : ''}` : 'Appliquer (0 sélectionné)'}
+                {isApplying
+                  ? 'Application en cours...'
+                  : `Appliquer à ${selectedProductIds.length} produit(s) — ${width || '800'}×${height || '800'}px`}
               </button>
             </div>
 
