@@ -4,23 +4,29 @@ import { useState, useEffect, useCallback } from "react";
 import { Gift, Copy, Check, Share2, Users, Calendar, ChevronRight } from "lucide-react";
 import { useToast } from "@/lib/toast";
 
-interface ReferralStats {
-  referral_code: string;
-  referral_url: string;
-  share_text: string;
-  total_referred: number;
-  converted: number;
-  referral_earnings: number;
+interface ReferralData {
+  code: string;
+  referralUrl: string;
+  shareText: string;
+  stats: {
+    total: number;
+    converted: number;
+    pending: number;
+    rewardPerReferral: string;
+    earnings: number;
+  };
   referrals: Array<{
-    email: string;
+    id: string;
     status: string;
-    created_at: string;
+    createdAt: string;
+    convertedAt?: string;
+    email: string | null;
   }>;
 }
 
 export default function ParrainagePage() {
   const { addToast } = useToast();
-  const [stats, setStats] = useState<ReferralStats | null>(null);
+  const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -32,8 +38,8 @@ export default function ParrainagePage() {
     try {
       const res = await fetch("/api/referral", { credentials: "include", cache: "no-store" });
       if (res.ok) {
-        const data = await res.json();
-        setStats(data);
+        const d = await res.json();
+        setData(d);
       }
     } catch {
       // ignore
@@ -45,8 +51,8 @@ export default function ParrainagePage() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const copyLink = () => {
-    if (!stats?.referral_url) return;
-    navigator.clipboard.writeText(stats.referral_url).then(() => {
+    if (!data?.referralUrl) return;
+    navigator.clipboard.writeText(data.referralUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       addToast("Lien copié !", "success");
@@ -54,15 +60,15 @@ export default function ParrainagePage() {
   };
 
   const shareWhatsApp = () => {
-    if (!stats?.referral_url) return;
-    const text = stats.share_text || `Essaie EcomPilot Elite pour optimiser ton catalogue Shopify ! Utilise mon lien de parrainage → ${stats.referral_url}`;
+    if (!data?.referralUrl) return;
+    const text = data.shareText || `Essaie EcomPilot Elite pour optimiser ton catalogue Shopify ! Utilise mon lien de parrainage → ${data.referralUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const shareEmail = () => {
-    if (!stats?.referral_url) return;
+    if (!data?.referralUrl) return;
     const subject = "Essaie EcomPilot Elite pour ton catalogue Shopify";
-    const body = `Salut,\n\nJe voulais te recommander EcomPilot Elite, un outil super pratique pour optimiser ton catalogue Shopify. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage :\n${stats.referral_url}\n\nBonne chance !`;
+    const body = `Salut,\n\nJe voulais te recommander EcomPilot Elite, un outil super pratique pour optimiser ton catalogue Shopify. Il génère des descriptions IA, importe des produits AliExpress en 1 clic, et bien plus.\n\nUtilise mon lien de parrainage :\n${data.referralUrl}\n\nBonne chance !`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
@@ -126,10 +132,10 @@ export default function ParrainagePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Filleuls invités", value: stats?.total_referred ?? 0, color: "#3b82f6" },
-          { label: "Convertis", value: stats?.converted ?? 0, color: "#10b981" },
-          { label: "Réduction obtenue", value: `${Math.min((stats?.converted ?? 0) * 20, 60)}%`, color: "#f59e0b" },
-          { label: "Gains accumulés", value: `${stats?.referral_earnings ?? 0}€`, color: "#8b5cf6" },
+          { label: "Filleuls invités", value: data?.stats.total ?? 0, color: "#3b82f6" },
+          { label: "Convertis", value: data?.stats.converted ?? 0, color: "#10b981" },
+          { label: "Réduction obtenue", value: `${Math.min((data?.stats.converted ?? 0) * 20, 60)}%`, color: "#f59e0b" },
+          { label: "Gains accumulés", value: `${data?.stats.earnings ?? 0}€`, color: "#8b5cf6" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
             <p className="text-2xl font-bold" style={{ color }}>{value}</p>
@@ -143,7 +149,7 @@ export default function ParrainagePage() {
         <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Votre lien de parrainage</h2>
         <div className="flex items-center gap-2">
           <div className="flex-1 px-3 py-2.5 bg-gray-50 rounded-xl text-sm font-mono truncate border border-gray-200" style={{ color: "var(--text-secondary)" }}>
-            {stats?.referral_url || "Chargement…"}
+            {data?.referralUrl || "Chargement…"}
           </div>
           <button onClick={copyLink}
             className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm font-medium text-white transition-colors flex-shrink-0">
@@ -184,12 +190,12 @@ export default function ParrainagePage() {
       </div>
 
       {/* Referral code badge */}
-      {stats?.referral_code && (
+      {data?.code && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--text-primary)" }}>Votre code parrainage</h2>
           <div className="inline-flex items-center gap-3">
             <span className="px-5 py-2 bg-blue-50 border-2 border-dashed border-blue-300 rounded-xl text-xl font-extrabold font-mono tracking-widest" style={{ color: "#1d4ed8" }}>
-              {stats.referral_code}
+              {data.code}
             </span>
             <span className="text-xs text-slate-500">Ce code est inclus automatiquement dans votre lien.</span>
           </div>
@@ -197,19 +203,21 @@ export default function ParrainagePage() {
       )}
 
       {/* Referral list */}
-      {stats?.referrals && stats.referrals.length > 0 && (
+      {data?.referrals && data.referrals.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
-            <Users className="w-4 h-4" /> Mes filleuls
+            <Users className="w-4 h-4" /> Mes filleuls ({data.referrals.length})
           </h2>
           <div className="space-y-2">
-            {stats.referrals.map((r, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+            {data.referrals.map((r) => (
+              <div key={r.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{r.email}</p>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                    {r.email || 'Inscrit via votre lien'}
+                  </p>
                   <p className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "var(--text-tertiary)" }}>
                     <Calendar className="w-3 h-3" />
-                    {new Date(r.created_at).toLocaleDateString("fr-FR")}
+                    {new Date(r.createdAt).toLocaleDateString("fr-FR")}
                   </p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -217,7 +225,7 @@ export default function ParrainagePage() {
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-700"
                 }`}>
-                  {r.status === "converted" ? " Converti" : "⏳ En attente"}
+                  {r.status === "converted" ? "✓ Converti" : "⏳ En attente"}
                 </span>
               </div>
             ))}

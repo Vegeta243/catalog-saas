@@ -561,6 +561,17 @@ export default function ProductsPage() {
   const [bulkMsg, setBulkMsg] = useState('')
   const [bulkMsgOk, setBulkMsgOk] = useState(true)
 
+  // Bulk image resize
+  const [bulkTab, setBulkTab] = useState<'edit' | 'images'>('edit')
+  const [imgW, setImgW] = useState('800')
+  const [imgH, setImgH] = useState('800')
+  const [imgMode, setImgMode] = useState('crop_center')
+  const [imgQuality, setImgQuality] = useState(85)
+  const [resizing, setResizing] = useState(false)
+  const [resizeProgress, setResizeProgress] = useState(0)
+  const [resizeMsg, setResizeMsg] = useState('')
+  const [resizeMsgOk, setResizeMsgOk] = useState(true)
+
   // Edit modal
   const [editProduct, setEditProduct] = useState<Product | null>(null)
   const [editState, setEditState] = useState<EditState | null>(null)
@@ -628,6 +639,30 @@ export default function ProductsPage() {
 
   function clearSelection() {
     setSelectedIds(new Set()); setBulkValue(''); setBulkMsg('')
+  }
+
+  async function bulkResizeImages() {
+    const toProcess = products.filter(p => selectedIds.has(p.shopify_product_id || p.id))
+    if (!toProcess.length) { setResizeMsg('Sélectionnez des produits'); setResizeMsgOk(false); return }
+    setResizing(true); setResizeProgress(0); setResizeMsg(''); setResizeMsgOk(true)
+    let done = 0
+    for (const p of toProcess) {
+      const pid = p.shopify_product_id || p.id
+      try {
+        await fetch('/api/shopify/products/' + pid + '/resize-images', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ width: parseInt(imgW) || 800, height: parseInt(imgH) || 800, mode: imgMode, quality: imgQuality }),
+        })
+      } catch { /* ignore per-product errors */ }
+      done++
+      setResizeProgress(Math.round((done / toProcess.length) * 100))
+    }
+    setResizing(false)
+    setResizeMsg(done + ' produit(s) traité(s) — images redimensionnées en ' + imgW + '×' + imgH + 'px')
+    setResizeMsgOk(true)
+    setTimeout(() => setResizeMsg(''), 8000)
   }
 
   async function applyBulk() {
@@ -827,6 +862,7 @@ export default function ProductsPage() {
           {/* ── Bulk action bar (appears when items selected) ── */}
           {selectedIds.size > 0 && (
             <div className="bulkBar">
+              {/* Header: count + AI button */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, width: '100%' }}>
                 <span className="bulkCount">
                   {selectedIds.size} produit{selectedIds.size > 1 ? 's' : ''} sélectionné{selectedIds.size > 1 ? 's' : ''}
@@ -846,60 +882,136 @@ export default function ProductsPage() {
                 </span>
               </div>
 
-              <div className="bulkControls">
-                {/* Action type */}
-                <select value={action} onChange={e => setAction(e.target.value as any)} style={selStyle}>
-                  <option value="price">Modifier le prix</option>
-                  <option value="tags_add">Ajouter des tags</option>
-                  <option value="status">Changer le statut</option>
-                  <option value="title_suffix">Ajouter au titre</option>
-                </select>
-
-                {/* Price sub-type */}
-                {action === 'price' && (
-                  <select value={priceType} onChange={e => setPriceType(e.target.value as any)} style={selStyle}>
-                    <option value="set">Fixer à (€)</option>
-                    <option value="increase_pct">Augmenter (%)</option>
-                    <option value="decrease_pct">Réduire (%)</option>
-                  </select>
-                )}
-
-                {/* Value input/select */}
-                {action === 'status' ? (
-                  <select value={bulkValue} onChange={e => setBulkValue(e.target.value)} style={selStyle}>
-                    <option value="">Choisir...</option>
-                    <option value="active">Actif</option>
-                    <option value="draft">Brouillon</option>
-                    <option value="archived">Archivé</option>
-                  </select>
-                ) : (
-                  <input
-                    type={action === 'price' ? 'number' : 'text'}
-                    value={bulkValue}
-                    onChange={e => setBulkValue(e.target.value)}
-                    placeholder={action === 'price' ? (priceType === 'set' ? 'Prix...' : '%...') : action === 'tags_add' ? 'Tags...' : 'Texte...'}
-                    style={{ ...selStyle, width: 120 }}
-                    min={action === 'price' ? '0' : undefined}
-                    step={action === 'price' ? '0.01' : undefined}
-                  />
-                )}
-
-                <button
-                  onClick={applyBulk}
-                  disabled={applying || !bulkReady}
-                  className="primaryBtn"
-                  style={{ padding: '7px 16px', fontSize: 13, borderRadius: 8 }}
-                >
-                  {applying ? 'Application...' : 'Appliquer'}
-                </button>
-                <button onClick={clearSelection} className="ghostBtn" style={{ padding: '7px 12px', fontSize: 13 }}>
-                  ✕ Annuler
-                </button>
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '3px', padding: '3px', background: '#f1f5f9', borderRadius: '8px' }}>
+                {([['edit', '✏️ Modifier les données'], ['images', '🖼️ Images en masse']] as const).map(([id, label]) => (
+                  <button key={id} onClick={() => setBulkTab(id)} style={{
+                    flex: 1, padding: '6px 12px', borderRadius: '6px', border: 'none',
+                    background: bulkTab === id ? '#ffffff' : 'transparent',
+                    color: '#0f172a', fontSize: '13px', fontWeight: bulkTab === id ? 600 : 400,
+                    cursor: 'pointer', boxShadow: bulkTab === id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    transition: 'all 0.15s',
+                  }}>{label}</button>
+                ))}
               </div>
 
-              {bulkMsg && (
+              {/* Edit tab */}
+              {bulkTab === 'edit' && (
+                <div className="bulkControls">
+                  {/* Action type */}
+                  <select value={action} onChange={e => setAction(e.target.value as any)} style={selStyle}>
+                    <option value="price">Modifier le prix</option>
+                    <option value="tags_add">Ajouter des tags</option>
+                    <option value="status">Changer le statut</option>
+                    <option value="title_suffix">Ajouter au titre</option>
+                  </select>
+
+                  {/* Price sub-type */}
+                  {action === 'price' && (
+                    <select value={priceType} onChange={e => setPriceType(e.target.value as any)} style={selStyle}>
+                      <option value="set">Fixer à (€)</option>
+                      <option value="increase_pct">Augmenter (%)</option>
+                      <option value="decrease_pct">Réduire (%)</option>
+                    </select>
+                  )}
+
+                  {/* Value input/select */}
+                  {action === 'status' ? (
+                    <select value={bulkValue} onChange={e => setBulkValue(e.target.value)} style={selStyle}>
+                      <option value="">Choisir...</option>
+                      <option value="active">Actif</option>
+                      <option value="draft">Brouillon</option>
+                      <option value="archived">Archivé</option>
+                    </select>
+                  ) : (
+                    <input
+                      type={action === 'price' ? 'number' : 'text'}
+                      value={bulkValue}
+                      onChange={e => setBulkValue(e.target.value)}
+                      placeholder={action === 'price' ? (priceType === 'set' ? 'Prix...' : '%...') : action === 'tags_add' ? 'Tags...' : 'Texte...'}
+                      style={{ ...selStyle, width: 120 }}
+                      min={action === 'price' ? '0' : undefined}
+                      step={action === 'price' ? '0.01' : undefined}
+                    />
+                  )}
+
+                  <button
+                    onClick={applyBulk}
+                    disabled={applying || !bulkReady}
+                    className="primaryBtn"
+                    style={{ padding: '7px 16px', fontSize: 13, borderRadius: 8 }}
+                  >
+                    {applying ? 'Application...' : 'Appliquer'}
+                  </button>
+                  <button onClick={clearSelection} className="ghostBtn" style={{ padding: '7px 12px', fontSize: 13 }}>
+                    ✕ Annuler
+                  </button>
+                </div>
+              )}
+
+              {bulkMsg && bulkTab === 'edit' && (
                 <div style={{ width: '100%', color: bulkMsgOk ? '#059669' : '#dc2626', fontSize: 13, fontWeight: 600, marginTop: 4 }}>
                   {bulkMsg}
+                </div>
+              )}
+
+              {/* Images tab */}
+              {bulkTab === 'images' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <p style={{ color: '#64748b', fontSize: 13, margin: 0 }}>
+                    Redimensionnez les images de <strong>{selectedIds.size}</strong> produit(s) sélectionné(s).
+                    Fonctionne dans les deux sens (crop ou étirement).
+                  </p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 80px', minWidth: 80 }}>
+                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Largeur (px)</label>
+                      <input type="number" value={imgW} onChange={e => setImgW(e.target.value)} min="50" max="3000"
+                        style={{ ...selStyle, width: '100%' }} placeholder="800" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 80px', minWidth: 80 }}>
+                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Hauteur (px)</label>
+                      <input type="number" value={imgH} onChange={e => setImgH(e.target.value)} min="50" max="3000"
+                        style={{ ...selStyle, width: '100%' }} placeholder="800" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '2 1 130px', minWidth: 130 }}>
+                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Mode</label>
+                      <select value={imgMode} onChange={e => setImgMode(e.target.value)} style={{ ...selStyle, width: '100%' }}>
+                        <option value="crop_center">Recadrer au centre</option>
+                        <option value="stretch">Étirer (distorsion)</option>
+                        <option value="contain">Contenir avec marges</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '2 1 130px', minWidth: 130 }}>
+                      <label style={{ color: '#334155', fontSize: 12, fontWeight: 600 }}>Qualité — {imgQuality}%</label>
+                      <input type="range" min="40" max="100" value={imgQuality} onChange={e => setImgQuality(parseInt(e.target.value))}
+                        style={{ width: '100%', accentColor: '#2563eb', marginTop: 4 }} />
+                    </div>
+                  </div>
+
+                  {resizing && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ flex: 1, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: resizeProgress + '%', background: '#2563eb', borderRadius: 3, transition: 'width 0.3s' }} />
+                      </div>
+                      <span style={{ color: '#64748b', fontSize: 12, flexShrink: 0 }}>{resizeProgress}% — Traitement...</span>
+                    </div>
+                  )}
+
+                  {resizeMsg && (
+                    <div style={{ color: resizeMsgOk ? '#059669' : '#dc2626', fontSize: 13, fontWeight: 600 }}>
+                      {resizeMsg}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={bulkResizeImages} disabled={resizing}
+                      className="primaryBtn" style={{ padding: '7px 16px', fontSize: 13, borderRadius: 8 }}>
+                      {resizing ? 'Redimensionnement...' : '🔄 Redimensionner ' + selectedIds.size + ' produit(s)'}
+                    </button>
+                    <button onClick={clearSelection} className="ghostBtn" style={{ padding: '7px 12px', fontSize: 13 }}>
+                      ✕ Annuler
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

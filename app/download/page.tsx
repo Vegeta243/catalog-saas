@@ -176,7 +176,7 @@ export default function DownloadPage() {
             </div>
 
             <a href="/dashboard" style={{
-              display: 'block', width: '100%', padding: '14px', background: '#0f172a',
+              display: 'block', width: '100%', padding: '14px', background: '#2563eb',
               color: '#fff', textDecoration: 'none', borderRadius: '12px',
               fontWeight: 700, fontSize: '14px', textAlign: 'center', boxSizing: 'border-box',
             }}>
