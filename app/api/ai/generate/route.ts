@@ -10,6 +10,17 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500)
 }
 
+function stripAllHtml(text: string): string {
+  return text
+    .replace(/<\/?[^>]+(>|$)/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s{3,}/g, '\n\n')
+    .trim()
+}
+
 function plainTextToHtml(text: string): string {
   return text
     .split('\n\n')
@@ -127,20 +138,20 @@ export async function POST(req: Request) {
       tags: mode !== 'title',
     }
 
-    const systemPrompt = `Tu es un expert SEO e-commerce francophone spécialisé dans le dropshipping.
+    const systemPrompt = `Tu es un expert en e-commerce francophone.
 
-RÈGLES ABSOLUES :
-1. Réponds UNIQUEMENT en français. Zéro mot anglais sauf noms de marques inévitables.
-2. Traduis tout titre ou nom de produit anglais en français naturel.
-3. N'utilise JAMAIS de balises HTML : interdit d'écrire <ul>, <li>, <strong>, <br>, <p> ou toute autre balise.
-4. Le texte doit être du texte brut avec des retours à la ligne simples si besoin.
-5. Les titres et descriptions doivent être optimisés SEO NATURELLEMENT — jamais en l'écrivant explicitement.
-   Cela signifie : utiliser les vrais mots-clés que les acheteurs français tapent sur Google,
-   pas des phrases comme "Édition Premium Optimisée SEO".
-6. Un bon titre SEO ressemble à : "Snowboard Freestyle Homme 155cm — Planche Carving Débutant"
-   PAS à : "The Collection Snowboard: Hydrogen — Édition Premium Optimisée SEO"
-7. Une bonne description parle des bénéfices concrets, des matériaux, de l'utilisation,
-   sans jamais mentionner "SEO", "optimisé", "premium" comme buzzwords vides.`
+RÈGLES STRICTES — VIOLATION = RÉPONSE INVALIDE :
+1. Langue : FRANÇAIS UNIQUEMENT. Zéro mot anglais sauf noms techniques inévitables.
+2. Interdiction absolue de ces mots dans les titres ET descriptions :
+   "SEO", "Optimisé", "Optimisée", "Premium", "Edition", "Édition", "Elite",
+   "High Quality", "Best Seller", "Top Produit", "Incontournable"
+3. Titres : décrire le produit concrètement comme un vrai vendeur français.
+   BON : "Snowboard Freestyle 155cm pour Débutants — Planche Légère"
+   MAUVAIS : "Collection Snowboard Hydrogen — Édition Premium"
+4. Descriptions : texte brut UNIQUEMENT.
+   INTERDIT : <ul> <li> <strong> <p> <br> ou toute balise HTML.
+   AUTORISÉ : texte normal avec des sauts de ligne.
+5. Tags : mots-clés que les acheteurs français tapent réellement sur Google.`
 
     const userPrompt = `Produit à optimiser :
 Titre actuel : ${product.title}
@@ -183,6 +194,10 @@ Réponds UNIQUEMENT en JSON valide sans markdown :
     } catch {
       result = { description: content };
     }
+
+    // Strip any HTML tags the model may have generated despite instructions
+    if (result.description) result.description = stripAllHtml(result.description)
+    if (result.title) result.title = stripAllHtml(result.title)
 
     // Cache the result
     aiCache.set(cacheKey, result);

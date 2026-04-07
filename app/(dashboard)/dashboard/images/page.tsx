@@ -533,7 +533,17 @@ export default function ImagesPage() {
 
           {/* Product grid */}
           <div>
-            {loading && <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>Chargement...</div>}
+            {loading && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(160px,100%), 1fr))', gap: '12px', padding: '4px 0' }}>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px' }}>
+                    <div className="skeleton" style={{ width: '100%', paddingBottom: '100%', marginBottom: '10px' }} />
+                    <div className="skeleton" style={{ height: '13px', width: '75%', marginBottom: '6px' }} />
+                    <div className="skeleton" style={{ height: '13px', width: '45%' }} />
+                  </div>
+                ))}
+              </div>
+            )}
             {!loading && products.length === 0 && (
               <div style={{ ...S.card, padding: '48px', textAlign: 'center' }}>
                 <p style={{ color: '#0f172a', fontSize: '15px', fontWeight: 600, margin: '0 0 8px' }}>Aucun produit</p>

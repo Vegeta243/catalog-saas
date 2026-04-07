@@ -441,7 +441,14 @@ export default function ConcurrencePage() {
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12 text-sm" style={{ color: "var(--text-tertiary)" }}>Chargement...</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px' }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+                  <div className="skeleton" style={{ height: '14px', width: '60%', marginBottom: '10px' }} />
+                  <div className="skeleton" style={{ height: '24px', width: '40%' }} />
+                </div>
+              ))}
+            </div>
           ) : competitors.length === 0 ? (
             <div className="text-center py-12 px-4">
               <Eye className="w-8 h-8 mx-auto mb-3" style={{ color: '#d1d5db' }} />

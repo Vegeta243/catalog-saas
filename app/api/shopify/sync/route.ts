@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export const maxDuration = 60
@@ -15,12 +16,23 @@ export async function POST(_request: NextRequest) {
     return NextResponse.json({ error: 'Non autorise' }, { status: 401 })
   }
 
-  const { data: shops, error: shopErr } = await supabase
+  // Read active shop domain from cookie
+  const cookieStore = await cookies()
+  const activeShopDomain = cookieStore.get('active_shop_domain')?.value || null
+
+  let shopBaseQuery = supabase
     .from('shops')
     .select('*')
     .eq('user_id', user.id)
     .eq('is_active', true)
-    .limit(1)
+
+  if (activeShopDomain) {
+    shopBaseQuery = shopBaseQuery.eq('shop_domain', activeShopDomain)
+  }
+
+  const { data: shops, error: shopErr } = await shopBaseQuery.limit(1)
+
+  console.log('[SYNC] Using shop:', shops?.[0]?.shop_domain, '(active cookie:', activeShopDomain, ')')
 
   if (shopErr) {
     console.error('[sync] shop query error:', shopErr.message)

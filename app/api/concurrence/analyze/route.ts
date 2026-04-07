@@ -91,28 +91,67 @@ export async function POST(request: NextRequest) {
       product_type: string;
       tags: string[];
       variants: { price: string }[];
+      images?: { src: string }[];
+      published_at?: string;
     };
     let shopifyProducts: ShopifyProduct[] = [];
+    let pagesScanned = 0;
     let shopifyCollections: string[] = [];
     try {
       const baseUrl = new URL(competitor.url).origin;
       const ua = "Mozilla/5.0 (compatible; EcomPilotBot/1.0)";
 
-      // Sequential pagination — up to 10 pages (2500 products)
+      // Cursor-based pagination (Shopify standard) — fallback to page-based
       let allProducts: ShopifyProduct[] = [];
-      let page = 1;
-      let hasMore = true;
-      while (hasMore && page <= 10) {
+      let pageInfo: string | null = null;
+      let iteration = 0;
+      const MAX_ITERATIONS = 20; // up to 5000 products
+
+      do {
+        iteration++;
+        const productsUrl = pageInfo
+          ? `${baseUrl}/products.json?limit=250&page_info=${pageInfo}`
+          : `${baseUrl}/products.json?limit=250`;
+
+        let res: Response;
         try {
-          const res = await fetch(`${baseUrl}/products.json?limit=250&page=${page}`, { headers: { "User-Agent": ua } });
-          if (!res.ok) break;
-          const d = await res.json() as { products?: ShopifyProduct[] };
-          const batch = d.products || [];
-          allProducts = allProducts.concat(batch);
-          if (batch.length < 250) hasMore = false;
-          else page++;
-        } catch { break; }
-      }
+          res = await fetch(productsUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Accept': 'application/json',
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+        } catch (fetchErr: any) {
+          console.log('[ANALYZE] Fetch error on iteration', iteration, fetchErr.message);
+          break;
+        }
+
+        if (!res.ok) {
+          console.log('[ANALYZE] HTTP error:', res.status, 'on iteration', iteration);
+          break;
+        }
+
+        const data = await res.json() as { products?: ShopifyProduct[] };
+        const batch = data.products || [];
+        allProducts = allProducts.concat(batch);
+
+        console.log('[ANALYZE] Iteration', iteration, '— got', batch.length, 'products, total:', allProducts.length);
+
+        // Check Link header for next cursor
+        const linkHeader = res.headers.get('Link') || res.headers.get('link') || '';
+        const nextMatch = linkHeader.match(/<[^>]*page_info=([^&>]+)[^>]*>;\s*rel="next"/);
+
+        if (nextMatch) {
+          pageInfo = nextMatch[1];
+        } else {
+          pageInfo = null;
+          break; // no next page
+        }
+      } while (pageInfo && iteration < MAX_ITERATIONS);
+
+      pagesScanned = iteration;
+      console.log('[ANALYZE] Total products fetched:', allProducts.length, 'in', iteration, 'iterations');
       shopifyProducts = allProducts;
 
       const colRes = await fetch(`${baseUrl}/collections.json?limit=100`, { headers: { "User-Agent": ua } })
@@ -166,12 +205,11 @@ export async function POST(request: NextRequest) {
       : null;
 
     // Price distribution buckets
-    const priceBuckets = { under10: 0, "10to30": 0, "30to60": 0, "60to100": 0, over100: 0 };
+    const priceBuckets = { under20: 0, from20to50: 0, from50to100: 0, over100: 0 };
     for (const p of allPrices) {
-      if (p < 10) priceBuckets.under10++;
-      else if (p < 30) priceBuckets["10to30"]++;
-      else if (p < 60) priceBuckets["30to60"]++;
-      else if (p < 100) priceBuckets["60to100"]++;
+      if (p < 20) priceBuckets.under20++;
+      else if (p < 50) priceBuckets.from20to50++;
+      else if (p < 100) priceBuckets.from50to100++;
       else priceBuckets.over100++;
     }
 
@@ -247,6 +285,21 @@ export async function POST(request: NextRequest) {
       h1_count: $("h1").length,
     };
 
+    // Extended stats from raw Shopify API products
+    const withMultipleImages = shopifyProducts.filter(p => p.images && p.images.length >= 3).length;
+    const topExpensive = shopifyProducts
+      .map(p => ({
+        title: p.title,
+        price: Math.max(...(p.variants || []).map((v: { price: string }) => parseFloat(v.price || '0')))
+      }))
+      .sort((a, b) => b.price - a.price)
+      .slice(0, 5);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentProducts = shopifyProducts.filter(p => {
+      if (!p.published_at) return false;
+      return new Date(p.published_at) > thirtyDaysAgo;
+    }).length;
+
     // AI insights — generate 8 recommendations with richer context
     let insights: string[] = [];
     try {
@@ -309,6 +362,10 @@ export async function POST(request: NextRequest) {
           price_distribution: priceBuckets,
           promo_detected, shipping_info, avg_rating, review_count,
           social, payment, seo, insights, fetch_error: fetchError,
+          with_multiple_images: withMultipleImages,
+          top_expensive: topExpensive,
+          recent_products: recentProducts,
+          pages_scanned: pagesScanned,
         },
       }),
       supabase.from("competitors").update({ last_analyzed_at: new Date().toISOString() }).eq("id", competitor_id),
@@ -341,6 +398,11 @@ export async function POST(request: NextRequest) {
       product_types: productTypes,
       collections: shopifyCollections,
       price_distribution: priceBuckets,
+      with_multiple_images: withMultipleImages,
+      top_expensive: topExpensive,
+      recent_products: recentProducts,
+      pages_scanned: pagesScanned,
+      scan_complete: true,
     });
   }
 
