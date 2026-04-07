@@ -386,7 +386,7 @@ export default function AIPage() {
                 <div className="space-y-3">
                   <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Titre</p><p className="text-sm" style={{ color: "var(--text-primary)" }}>{previewProduct.title}</p></div>
                   <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Description</p>
-                    {previewProduct.body_html ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: previewProduct.body_html }} />
+                    {previewProduct.body_html ? <div className="text-sm" style={{ color: "var(--text-secondary)", whiteSpace: 'pre-wrap' }}>{(previewProduct.body_html || '').replace(/<[^>]*>/g, ' ').replace(/\s{2,}/g, ' ').trim()}</div>
                       : <p className="text-sm italic" style={{ color: "var(--text-tertiary)" }}>Aucune description</p>}
                   </div>
                   <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Tags</p><p className="text-xs" style={{ color: "var(--text-secondary)" }}>{previewProduct.tags || "Aucun"}</p></div>
@@ -401,7 +401,7 @@ export default function AIPage() {
                   <div className="space-y-3">
                     <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Titre</p><p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{previewContent.title || previewProduct.title}</p></div>
                     <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Description</p>
-                      {previewContent.description ? <div className="text-sm prose prose-sm max-w-none" style={{ color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: previewContent.description }} />
+                      {previewContent.description ? <div className="text-sm" style={{ color: "var(--text-secondary)", whiteSpace: 'pre-wrap' }}>{(previewContent.description || '').replace(/<[^>]*>/g, ' ').replace(/\s{2,}/g, ' ').trim()}</div>
                         : <p className="text-sm italic" style={{ color: "var(--text-tertiary)" }}>Non générée</p>}
                     </div>
                     <div><p className="text-[11px] font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Mots-clés</p><p className="text-xs" style={{ color: "var(--text-secondary)" }}>{previewContent.keywords || "—"}</p></div>
@@ -689,7 +689,7 @@ export default function AIPage() {
                               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b5cf6" }}>Description complète</p>
                               <button onClick={() => applyGenerated(product.id, ["description"])} className="text-[10px] px-2 py-0.5 bg-violet-600 rounded font-medium" style={{ color: "#fff" }}>Appliquer</button>
                             </div>
-                            <div className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }} dangerouslySetInnerHTML={{ __html: gen.description }} />
+                            <div className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)", whiteSpace: 'pre-wrap' }}>{(gen.description || '').replace(/<[^>]*>/g, ' ').replace(/\s{2,}/g, ' ').trim()}</div>
                           </div>
                         )}
                         {gen.meta_description && (

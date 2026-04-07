@@ -21,6 +21,25 @@ function stripAllHtml(text: string): string {
     .trim()
 }
 
+const BANNED_WORDS_REGEX = /\b(SEO|Optimis[\u00e9\u00e8e]e?s?|Premium|[E\u00c9\u00e9]ditions?|[Ee]lites?|High\s+Quality|Best\s+Seller|Top\s+Produit|Incontournable|Hydrogen|Oxygen|Collection|The\s)/gi
+
+function cleanTitle(title: string): string {
+  return title
+    .replace(BANNED_WORDS_REGEX, '')
+    .replace(/\s*\u2014\s*\u2014/g, ' \u2014')
+    .replace(/:\s*\u2014/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^[\s:\u2014]+|[\s:\u2014]+$/g, '')
+    .trim()
+}
+
+function cleanDescription(text: string): string {
+  return stripAllHtml(text)
+    .replace(/\b(SEO|[Oo]ptimis[\u00e9e]e?\s*(SEO)?|Premium\s+Optimis[\u00e9e]|Top\s+Produit)\b/gi, '')
+    .replace(/\s{3,}/g, '\n\n')
+    .trim()
+}
+
 function plainTextToHtml(text: string): string {
   return text
     .split('\n\n')
@@ -74,6 +93,10 @@ export async function POST(req: Request) {
     const cacheKey = aiCacheKey(product.id || product.title, mode || "full", language);
     const cached = aiCache.get<Record<string, string>>(cacheKey);
     if (cached) {
+      // Clean cached results that may have been generated before the fix
+      if (cached.title) cached.title = cleanTitle(stripAllHtml(cached.title))
+      if (cached.description) cached.description = cleanDescription(cached.description)
+      if (cached.metaTitle) cached.metaTitle = cleanTitle(stripAllHtml(cached.metaTitle))
       return NextResponse.json({ success: true, cached: true, ...cached });
     }
 
@@ -138,46 +161,70 @@ export async function POST(req: Request) {
       tags: mode !== 'title',
     }
 
-    const systemPrompt = `Tu es un expert en e-commerce francophone.
+    const systemPrompt = `Tu es un rédacteur e-commerce francophone expert.
 
-RÈGLES STRICTES — VIOLATION = RÉPONSE INVALIDE :
-1. Langue : FRANÇAIS UNIQUEMENT. Zéro mot anglais sauf noms techniques inévitables.
-2. Interdiction absolue de ces mots dans les titres ET descriptions :
-   "SEO", "Optimisé", "Optimisée", "Premium", "Edition", "Édition", "Elite",
-   "High Quality", "Best Seller", "Top Produit", "Incontournable"
-3. Titres : décrire le produit concrètement comme un vrai vendeur français.
-   BON : "Snowboard Freestyle 155cm pour Débutants — Planche Légère"
-   MAUVAIS : "Collection Snowboard Hydrogen — Édition Premium"
-4. Descriptions : texte brut UNIQUEMENT.
-   INTERDIT : <ul> <li> <strong> <p> <br> ou toute balise HTML.
-   AUTORISÉ : texte normal avec des sauts de ligne.
-5. Tags : mots-clés que les acheteurs français tapent réellement sur Google.`
+RÈGLE 1 — INTERDIT ABSOLU (violation = réponse rejetée) :
+Ces mots ne doivent JAMAIS apparaître dans tes réponses :
+SEO, Optimisé, Optimisée, Optimiser, Premium, Édition, Edition, Elite,
+High Quality, Best Seller, Top Produit, Incontournable, Collection (seul),
+"qualité supérieure" comme phrase vide.
 
-    const userPrompt = `Produit à optimiser :
-Titre actuel : ${product.title}
-Description actuelle : ${stripHtml(product.body_html || '')}
+RÈGLE 2 — LANGUE : Français uniquement. Traduis tout nom anglais en français naturel.
+
+RÈGLE 3 — FORMAT DESCRIPTION : Texte brut uniquement.
+INTERDIT : <ul> <li> <strong> <p> <br> <em> ou toute balise HTML.
+
+RÈGLE 4 — TITRES : Décris concrètement le produit.
+Format : [Type produit] [Caractéristique principale] — [Usage ou public]
+Exemple : "Snowboard Freestyle 155cm — Planche Légère pour Débutants"
+
+RÈGLE 5 — JSON uniquement en réponse. Aucun texte hors du JSON.`
+
+    const userPrompt = `Tu vas créer du contenu NOUVEAU pour ce produit.
+L'ancien titre et l'ancienne description sont donnés UNIQUEMENT pour comprendre ce qu'est le produit.
+Tu ne dois PAS conserver la structure, les mots, ni le style de l'ancien contenu.
+
+PRODUIT (contexte uniquement — ne pas réutiliser ces mots) :
+Ancien titre (IGNORE la formulation, retiens seulement ce que c'est) : ${product.title}
+Description existante (IGNORE le texte, retiens seulement les caractéristiques) : ${stripHtml(product.body_html || '').slice(0, 300)}
 Tags actuels : ${product.tags || 'aucun'}
 Prix : ${product.price}€
 
-Génère en français :
-${options.title ? `- TITRE : 50-70 caractères, mots-clés naturels que les acheteurs cherchent sur Google.fr, PAS de mention "SEO" ou "Premium Optimisé" dans le titre` : ''}
-${options.description ? `- DESCRIPTION : 200-350 mots en texte brut (ZÉRO balise HTML), paragraphes séparés par \\n\\n, parle des avantages concrets, matériaux, pour qui c'est fait, pourquoi l'acheter` : ''}
-${options.tags ? `- TAGS : 8-12 mots-clés français séparés par des virgules, ce que les acheteurs tapent vraiment` : ''}
+CE QUE TU DOIS GÉNÉRER (tout en français) :
+${options.title ? `
+TITRE (obligatoire) :
+- Entre 45 et 65 caractères
+- Décrit concrètement CE QUE C'EST : type de produit + caractéristique principale + usage ou public cible
+- Exemple BON : "Snowboard Freestyle 155cm — Planche Légère pour Débutants"
+- Exemple MAUVAIS : "Collection Snowboard — Édition Carving"
+- INTERDIT dans le titre : SEO, Optimisé, Premium, Édition, Edition, Elite, Collection, The, Hydrogen, Oxygen (noms de modèles anglais)
+` : ''}
+${options.description ? `
+DESCRIPTION (obligatoire) :
+- 200 à 350 mots
+- Texte brut UNIQUEMENT — ZÉRO balise HTML, ZÉRO <ul>, ZÉRO <li>, ZÉRO <strong>
+- Paragraphes séparés par une ligne vide
+- Parle des bénéfices concrets, pour qui c'est, comment l'utiliser
+- INTERDIT : SEO, Optimisé, Premium, Édition, "qualité supérieure" comme buzzword vide
+` : ''}
+${options.tags ? `
+TAGS (obligatoire) :
+- 8 à 12 mots-clés français séparés par des virgules
+- Mots que les vrais acheteurs tapent sur Google
+` : ''}
 
-RAPPEL : Texte brut uniquement. Aucune balise HTML. Tout en français.
-
-Réponds UNIQUEMENT en JSON valide sans markdown :
+Réponds UNIQUEMENT en JSON valide sans markdown ni explication :
 {
   ${options.title ? '"title": "...",' : ''}
   ${options.description ? '"description": "...",' : ''}
   ${options.tags ? '"tags": "..."' : ''}
 }`
 
-    // Use gpt-4o-mini by default (10x cheaper than gpt-4o)
+    // Use gpt-4o for higher instruction-following accuracy
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.6,
+      model: 'gpt-4o',
+      temperature: 0.5,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -195,9 +242,11 @@ Réponds UNIQUEMENT en JSON valide sans markdown :
       result = { description: content };
     }
 
-    // Strip any HTML tags the model may have generated despite instructions
-    if (result.description) result.description = stripAllHtml(result.description)
-    if (result.title) result.title = stripAllHtml(result.title)
+    // Strip HTML and banned words from all text fields
+    if (result.title) result.title = cleanTitle(stripAllHtml(result.title))
+    if (result.description) result.description = cleanDescription(result.description)
+    if (result.metaTitle) result.metaTitle = cleanTitle(stripAllHtml(result.metaTitle))
+    if (result.tags) result.tags = result.tags.replace(/<[^>]*>/g, '').trim()
 
     // Cache the result
     aiCache.set(cacheKey, result);

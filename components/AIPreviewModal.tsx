@@ -44,8 +44,11 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
   };
 
   const startEdit = (field: string, value: string) => {
+    const cleanValue = field === 'description'
+      ? value.replace(/<[^>]*>/g, '').replace(/\s{2,}/g, ' ').trim()
+      : value
     setEditingField(field);
-    setEditValue(value);
+    setEditValue(cleanValue);
   };
 
   const saveEdit = () => {
