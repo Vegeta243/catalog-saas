@@ -6,6 +6,18 @@ import { getCreditCost } from "@/lib/credits";
 import { createClient } from "@/lib/supabase/server";
 import { logAction } from "@/lib/log-action";
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500)
+}
+
+function plainTextToHtml(text: string): string {
+  return text
+    .split('\n\n')
+    .filter(Boolean)
+    .map(p => `<p>${p.trim()}</p>`)
+    .join('')
+}
+
 export async function POST(req: Request) {
   try {
     const { product, mode, language = "fr" } = await req.json();
@@ -98,7 +110,7 @@ export async function POST(req: Request) {
         mockResult.tags = buildTags(base);
       } else {
         mockResult.title = buildTitle(base);
-        mockResult.description = `<ul><li><strong>Fabrication soignée</strong> — ${base} est conçu pour répondre aux exigences les plus élevées. Chaque détail est pensé pour vous offrir une expérience durable et agréable au quotidien.</li><li><strong>Design contemporain</strong> — Lignes épurées et matériaux de choix : un produit qui s'intègre naturellement dans votre environnement et séduit dès le premier regard.</li><li><strong>Expédition rapide</strong> — Commandez aujourd'hui et recevez votre colis sous 48 à 72 heures en France métropolitaine. Numéro de suivi fourni automatiquement.</li><li><strong>Retour sans souci</strong> — Vous disposez de 30 jours pour retourner votre article si vous n'êtes pas entièrement satisfait. Simple et sans condition.</li><li><strong>Équipe disponible</strong> — Notre service client est joignable du lundi au vendredi pour répondre à toutes vos questions et vous accompagner.</li></ul>`;
+        mockResult.description = `Fabrication soignée — ${base} est conçu pour répondre aux exigences les plus élevées. Chaque détail est pensé pour vous offrir une expérience durable et agréable au quotidien.\n\nDesign contemporain — Lignes épurées et matériaux de choix : un produit qui s'intègre naturellement dans votre environnement et séduit dès le premier regard.\n\nExpédition rapide — Commandez aujourd'hui et recevez votre colis sous 48 à 72 heures en France métropolitaine. Numéro de suivi fourni automatiquement.\n\nRetour sans souci — Vous disposez de 30 jours pour retourner votre article si vous n'êtes pas entièrement satisfait. Simple et sans condition.\n\nÉquipe disponible — Notre service client est joignable du lundi au vendredi pour répondre à toutes vos questions et vous accompagner.`;
         mockResult.keywords = buildTags(base);
         mockResult.meta_description = `Découvrez ${base}. Livraison rapide sous 48-72h. Retour sous 30 jours. Commandez maintenant.`.slice(0, 160);
       }
@@ -115,41 +127,39 @@ export async function POST(req: Request) {
       tags: mode !== 'title',
     }
 
-    const systemPrompt = `Tu es un expert en e-commerce francophone spécialisé dans le dropshipping.
+    const systemPrompt = `Tu es un expert SEO e-commerce francophone spécialisé dans le dropshipping.
 
-RÈGLES ABSOLUES — SANS EXCEPTION :
-1. Tu réponds UNIQUEMENT en français. Zéro mot anglais, zéro mot dans une autre langue.
-2. Si le produit a un nom anglais, tu le TRADUIS en français naturel adapté au marché français.
-3. Tu ne gardes JAMAIS un mot anglais même s'il semble "international" (ex: "snowboard" → "snowboard" est acceptable car mot intégré en français, mais "The Collection" → "La Collection").
-4. Les titres doivent être accrocheurs, naturels en français, optimisés SEO pour Google.fr.
-5. Les descriptions doivent être persuasives, en français courant, sans anglicismes.
-6. Les tags doivent être des mots-clés français que les acheteurs français tapent sur Google.
+RÈGLES ABSOLUES :
+1. Réponds UNIQUEMENT en français. Zéro mot anglais sauf noms de marques inévitables.
+2. Traduis tout titre ou nom de produit anglais en français naturel.
+3. N'utilise JAMAIS de balises HTML : interdit d'écrire <ul>, <li>, <strong>, <br>, <p> ou toute autre balise.
+4. Le texte doit être du texte brut avec des retours à la ligne simples si besoin.
+5. Les titres et descriptions doivent être optimisés SEO NATURELLEMENT — jamais en l'écrivant explicitement.
+   Cela signifie : utiliser les vrais mots-clés que les acheteurs français tapent sur Google,
+   pas des phrases comme "Édition Premium Optimisée SEO".
+6. Un bon titre SEO ressemble à : "Snowboard Freestyle Homme 155cm — Planche Carving Débutant"
+   PAS à : "The Collection Snowboard: Hydrogen — Édition Premium Optimisée SEO"
+7. Une bonne description parle des bénéfices concrets, des matériaux, de l'utilisation,
+   sans jamais mentionner "SEO", "optimisé", "premium" comme buzzwords vides.`
 
-TRADUCTIONS AUTOMATIQUES :
-- "The [X]" → "Le/La [X traduit]"
-- "Edition" → "Édition"  
-- "Premium" → "Premium" (acceptable)
-- "Collection" → "Collection" (acceptable)
-- Tous les autres mots anglais → traduction française`
-
-    const userPrompt = `INSTRUCTION PRIORITAIRE : Ta réponse doit être ENTIÈREMENT en français. Traduis tout ce qui est en anglais.
-
-Produit à optimiser :
+    const userPrompt = `Produit à optimiser :
 Titre actuel : ${product.title}
-Description actuelle : ${product.body_html || 'Aucune description'}
-Tags actuels : ${product.tags || 'Aucun'}
+Description actuelle : ${stripHtml(product.body_html || '')}
+Tags actuels : ${product.tags || 'aucun'}
 Prix : ${product.price}€
 
 Génère en français :
-${options.title ? '- Un titre optimisé SEO en français (50-70 caractères)' : ''}
-${options.description ? '- Une description persuasive en français (300-500 mots)' : ''}
-${options.tags ? '- 8 à 12 tags en français séparés par des virgules' : ''}
+${options.title ? `- TITRE : 50-70 caractères, mots-clés naturels que les acheteurs cherchent sur Google.fr, PAS de mention "SEO" ou "Premium Optimisé" dans le titre` : ''}
+${options.description ? `- DESCRIPTION : 200-350 mots en texte brut (ZÉRO balise HTML), paragraphes séparés par \\n\\n, parle des avantages concrets, matériaux, pour qui c'est fait, pourquoi l'acheter` : ''}
+${options.tags ? `- TAGS : 8-12 mots-clés français séparés par des virgules, ce que les acheteurs tapent vraiment` : ''}
 
-Réponds UNIQUEMENT en JSON sans markdown :
+RAPPEL : Texte brut uniquement. Aucune balise HTML. Tout en français.
+
+Réponds UNIQUEMENT en JSON valide sans markdown :
 {
-  ${options.title ? '"title": "titre en français",' : ''}
-  ${options.description ? '"description": "description en français",' : ''}
-  ${options.tags ? '"tags": "tag1, tag2, tag3"' : ''}
+  ${options.title ? '"title": "...",' : ''}
+  ${options.description ? '"description": "...",' : ''}
+  ${options.tags ? '"tags": "..."' : ''}
 }`
 
     // Use gpt-4o-mini by default (10x cheaper than gpt-4o)

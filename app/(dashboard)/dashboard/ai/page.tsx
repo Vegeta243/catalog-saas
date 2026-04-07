@@ -82,6 +82,14 @@ function ScoreBadge({ score, size = "sm" }: { score: number; size?: "sm" | "lg" 
   return <span className={`${cls} rounded-full ${bg}`} style={{ color }}>{label} {score}%</span>;
 }
 
+function plainTextToHtml(text: string): string {
+  return text
+    .split('\n\n')
+    .filter(Boolean)
+    .map(p => `<p>${p.trim()}</p>`)
+    .join('')
+}
+
 export default function AIPage() {
   const { addToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
@@ -97,6 +105,8 @@ export default function AIPage() {
   const [tasksUsed, setTasksUsed] = useState(0);
   const [massMode, setMassMode] = useState(false);
   const [massProgress, setMassProgress] = useState({ current: 0, total: 0 });
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishProgress, setPublishProgress] = useState({ current: 0, total: 0 });
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -178,7 +188,7 @@ export default function AIPage() {
           data.title && fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ productIds: [product.id], field: "title", value: data.title }) }),
           data.description && fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productIds: [product.id], field: "body_html", value: data.description }) }),
+            body: JSON.stringify({ productIds: [product.id], field: "body_html", value: plainTextToHtml(data.description) }) }),
           (data.keywords || data.tags) && fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ productIds: [product.id], field: "tags", value: data.keywords || data.tags }) }),
         ] as Promise<Response>[])
@@ -221,7 +231,7 @@ export default function AIPage() {
     try {
       const toApply = fields || ["title", "description", "tags"];
       await Promise.all(toApply.map(async (field) => {
-        const value = field === "title" ? content.title : field === "description" ? content.description : (content.keywords || content.tags);
+        const value = field === "title" ? content.title : field === "description" ? (content.description ? plainTextToHtml(content.description) : undefined) : (content.keywords || content.tags);
         if (!value) return;
         const apiField = field === "description" ? "body_html" : field === "tags" ? "tags" : field;
         await fetch("/api/shopify/bulk-edit", { method: "PUT", headers: { "Content-Type": "application/json" },
@@ -318,15 +328,18 @@ export default function AIPage() {
   };
 
   const handlePreviewApply = async (acceptedItems: AIPreviewItem[]) => {
-    setApplyingPreview(true);
-    await Promise.all(acceptedItems.map(async (item) => {
+    setIsPublishing(true);
+    setPublishProgress({ current: 0, total: acceptedItems.length });
+    let successCount = 0;
+    for (let i = 0; i < acceptedItems.length; i++) {
+      const item = acceptedItems[i];
+      setPublishProgress({ current: i + 1, total: acceptedItems.length });
       const id = String(item.id);
       const updates: string[] = [];
       if (item.suggested.title) updates.push("title");
       if (item.suggested.description) updates.push("description");
       if (item.suggested.tags) updates.push("tags");
       if (item.suggested.meta_description) updates.push("meta_description");
-      // Update generatedContent with possibly edited values
       setGeneratedContent((prev) => ({
         ...prev,
         [id]: {
@@ -336,9 +349,14 @@ export default function AIPage() {
           meta_description: item.suggested.meta_description,
         },
       }));
-      await applyGenerated(id, updates);
-    }));
-    addToast(`${acceptedItems.length} produit${acceptedItems.length > 1 ? "s" : ""} optimisé${acceptedItems.length > 1 ? "s" : ""}`, "success");
+      try {
+        await applyGenerated(id, updates);
+        successCount++;
+      } catch { /* continue */ }
+    }
+    setIsPublishing(false);
+    setPublishProgress({ current: 0, total: 0 });
+    addToast(`${successCount}/${acceptedItems.length} produit${acceptedItems.length > 1 ? "s" : ""} optimisé${acceptedItems.length > 1 ? "s" : ""}`, "success");
     setShowPreviewModal(false);
     setApplyingPreview(false);
     setSelected([]);
@@ -502,6 +520,20 @@ export default function AIPage() {
           </div>
         );
       })()}
+
+      {/* Publish progress bar */}
+      {isPublishing && publishProgress.total > 0 && (
+        <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium" style={{ color: '#065f46' }}>Publication en cours...</span>
+            <span className="text-sm font-bold" style={{ color: '#059669' }}>{publishProgress.current}/{publishProgress.total}</span>
+          </div>
+          <div className="w-full bg-emerald-100 rounded-full h-2.5">
+            <div className="bg-emerald-500 h-2.5 rounded-full transition-all duration-300"
+              style={{ width: `${publishProgress.total > 0 ? (publishProgress.current / publishProgress.total) * 100 : 0}%` }} />
+          </div>
+        </div>
+      )}
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
