@@ -67,20 +67,14 @@ function sanitizeResult(result: Record<string, string>): Record<string, string> 
     return s.replace(/\s{2,}/g, " ").trim()
   }
   if (result.title) result.title = sloganStrip(htmlStrip(result.title))
-  if (result.description) result.description = htmlStrip(result.description)
+  if (result.description) result.description = sloganStrip(htmlStrip(result.description))
   if (result.metaTitle) result.metaTitle = sloganStrip(htmlStrip(result.metaTitle))
-  if (result.metaDescription) result.metaDescription = htmlStrip(result.metaDescription)
+  if (result.metaDescription) result.metaDescription = sloganStrip(htmlStrip(result.metaDescription))
   if (result.tags) result.tags = htmlStrip(result.tags)
   return result
 }
 
-function plainTextToHtml(text: string): string {
-  return text
-    .split('\n\n')
-    .filter(Boolean)
-    .map(p => `<p>${p.trim()}</p>`)
-    .join('')
-}
+const CACHE_VERSION = "v3"
 
 export async function POST(req: Request) {
   try {
@@ -123,8 +117,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check cache — bump CACHE_VERSION to bust stale entries
-    const CACHE_VERSION = "v3"
+    // Check cache — CACHE_VERSION at module level busts stale entries
     const cacheKey = `${CACHE_VERSION}_${aiCacheKey(product.id || product.title, mode || "full", language)}`;
     const cached = aiCache.get<Record<string, string>>(cacheKey);
     if (cached) {
@@ -175,9 +168,9 @@ export async function POST(req: Request) {
         mockResult.tags = buildTags(base);
       } else {
         mockResult.title = buildTitle(base);
-        mockResult.description = `Fabrication soignée — ${base} est conçu pour répondre aux exigences les plus élevées. Chaque détail est pensé pour vous offrir une expérience durable et agréable au quotidien.\n\nDesign contemporain — Lignes épurées et matériaux de choix : un produit qui s'intègre naturellement dans votre environnement et séduit dès le premier regard.\n\nExpédition rapide — Commandez aujourd'hui et recevez votre colis sous 48 à 72 heures en France métropolitaine. Numéro de suivi fourni automatiquement.\n\nRetour sans souci — Vous disposez de 30 jours pour retourner votre article si vous n'êtes pas entièrement satisfait. Simple et sans condition.\n\nÉquipe disponible — Notre service client est joignable du lundi au vendredi pour répondre à toutes vos questions et vous accompagner.`;
+        mockResult.description = `${base} est conçu pour répondre aux besoins des utilisateurs exigeants. Chaque détail a été pensé pour allier confort, durabilité et praticité au quotidien.\n\nSes lignes épurées et ses matériaux soigneusement sélectionnés lui permettent de s'intégrer naturellement dans n'importe quel environnement, que ce soit à la maison ou en déplacement.\n\nIdéal pour un usage régulier, il convient aussi bien aux débutants qui cherchent un premier équipement fiable qu'aux utilisateurs avancés qui souhaitent un produit performant sur la durée.\n\nSa prise en main est immédiate : aucun réglage complexe, aucun outil requis. Il suffit de le déballer et de l'utiliser directement.\n\nBien entretenu, ce produit vous accompagnera pendant des années. Consultez notre FAQ pour toute question sur l'entretien ou la compatibilité avec vos équipements existants.`;
         mockResult.keywords = buildTags(base);
-        mockResult.meta_description = `Découvrez ${base}. Livraison rapide sous 48-72h. Retour sous 30 jours. Commandez maintenant.`.slice(0, 160);
+        mockResult.meta_description = `Découvrez ${base}. Conçu pour durer, facile à utiliser, adapté à tous les profils. Commandez maintenant.`.slice(0, 160);
       }
       // Consume tasks even in demo mode
       if (taskCost > 0) {
@@ -231,7 +224,7 @@ TITRE :
 - Exemple BON : "Planche de Snowboard Débutant 150cm — Stable et Légère"
 - INTERDIT dans le titre : "Livraison rapide", "24h", "Satisfait ou remboursé", tout slogan commercial
 - INTERDIT dans le titre : SEO, Optimisé, Premium, Édition, Elite, Collection, The
-- Décris UNIQUEMENT ce qu"est le produit physiquement — pas comment il est livré ni ses avantages marketing
+- Décris UNIQUEMENT ce qu'est le produit physiquement — pas comment il est livré ni ses avantages marketing
 ` : ''}
 ${options.description ? `
 DESCRIPTION (obligatoire) :
