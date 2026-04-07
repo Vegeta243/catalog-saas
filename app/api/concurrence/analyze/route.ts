@@ -97,25 +97,29 @@ export async function POST(request: NextRequest) {
     try {
       const baseUrl = new URL(competitor.url).origin;
       const ua = "Mozilla/5.0 (compatible; EcomPilotBot/1.0)";
-      const [p1Res, p2Res, p3Res, colRes] = await Promise.allSettled([
-        fetch(`${baseUrl}/products.json?limit=250`, { headers: { "User-Agent": ua } }),
-        fetch(`${baseUrl}/products.json?limit=250&page=2`, { headers: { "User-Agent": ua } }),
-        fetch(`${baseUrl}/products.json?limit=250&page=3`, { headers: { "User-Agent": ua } }),
-        fetch(`${baseUrl}/collections.json?limit=100`, { headers: { "User-Agent": ua } }),
-      ]);
-      const parseProductsJson = async (r: PromiseSettledResult<Response>) => {
-        if (r.status !== "fulfilled" || !r.value.ok) return [];
-        try {
-          const d = await r.value.json() as { products?: ShopifyProduct[] };
-          return d.products || [];
-        } catch { return []; }
-      };
-      const [page1, page2, page3] = await Promise.all([parseProductsJson(p1Res), parseProductsJson(p2Res), parseProductsJson(p3Res)]);
-      shopifyProducts = [...page1, ...page2, ...page3];
 
-      if (colRes.status === "fulfilled" && colRes.value.ok) {
+      // Sequential pagination — up to 10 pages (2500 products)
+      let allProducts: ShopifyProduct[] = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore && page <= 10) {
         try {
-          const cd = await colRes.value.json() as { collections?: { title: string }[] };
+          const res = await fetch(`${baseUrl}/products.json?limit=250&page=${page}`, { headers: { "User-Agent": ua } });
+          if (!res.ok) break;
+          const d = await res.json() as { products?: ShopifyProduct[] };
+          const batch = d.products || [];
+          allProducts = allProducts.concat(batch);
+          if (batch.length < 250) hasMore = false;
+          else page++;
+        } catch { break; }
+      }
+      shopifyProducts = allProducts;
+
+      const colRes = await fetch(`${baseUrl}/collections.json?limit=100`, { headers: { "User-Agent": ua } })
+        .catch(() => null);
+      if (colRes && colRes.ok) {
+        try {
+          const cd = await colRes.json() as { collections?: { title: string }[] };
           shopifyCollections = (cd.collections || []).map((c) => c.title).filter(Boolean).slice(0, 50);
         } catch { /* silent */ }
       }

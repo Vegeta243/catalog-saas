@@ -600,7 +600,7 @@ export default function ConcurrencePage() {
             )}
             <div className="flex flex-col items-center justify-center text-center px-8 py-8">
               <Eye className="w-16 h-16 mb-4" style={{ color: '#d1d5db' }} />
-              <h3 className="text-xl font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Analyse concurrentielle</h3>
+              <h3 className="text-base font-semibold mb-2" style={{ color: "var(--text-secondary)" }}>Analyse concurrentielle</h3>
               <p className="max-w-md text-sm" style={{ color: "var(--text-tertiary)" }}>
                 Sélectionnez un concurrent dans la liste pour voir les résultats.
               </p>
