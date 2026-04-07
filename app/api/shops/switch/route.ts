@@ -26,15 +26,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Boutique introuvable' }, { status: 404 })
   }
 
-  // Persist active shop domain to users table
-  try {
-    await supabase
-      .from('users')
-      .update({ active_shop_domain: shop_domain })
-      .eq('id', user.id)
-  } catch {
-    // Column may not exist yet — ignore silently
-  }
-
-  return NextResponse.json({ ok: true, shop_domain })
+  // Set active shop via cookie (server-side, no DB migration needed)
+  const response = NextResponse.json({ ok: true, shop_domain })
+  response.cookies.set('active_shop_domain', shop_domain, {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    secure: process.env.NODE_ENV === 'production',
+  })
+  return response
 }
+

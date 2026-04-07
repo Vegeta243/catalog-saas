@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export const maxDuration = 30
@@ -25,16 +26,9 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * limit
 
   try {
-    // Read user's active shop domain for filtering
-    let activeShopDomain: string | null = null
-    try {
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('active_shop_domain')
-        .eq('id', user.id)
-        .single()
-      activeShopDomain = userRow?.active_shop_domain ?? null
-    } catch { /* column may not exist yet */ }
+    // Read user's active shop domain from cookie
+    const cookieStore = await cookies()
+    const activeShopDomain = cookieStore.get('active_shop_domain')?.value || null
 
     let q = supabase
       .from('shopify_products')
@@ -69,16 +63,9 @@ export async function GET(request: NextRequest) {
     console.warn('[products] cache error:', cacheErr.message)
   }
 
-  // Read active shop domain for Shopify API fallback
-  let activeShopDomainFallback: string | null = null
-  try {
-    const { data: userRow } = await supabase
-      .from('users')
-      .select('active_shop_domain')
-      .eq('id', user.id)
-      .single()
-    activeShopDomainFallback = userRow?.active_shop_domain ?? null
-  } catch { /* ignore */ }
+  // Read active shop domain from cookie for Shopify API fallback
+  const cookieStore2 = await cookies()
+  const activeShopDomainFallback = cookieStore2.get('active_shop_domain')?.value || null
 
   const shopQuery = supabase
     .from('shops')
