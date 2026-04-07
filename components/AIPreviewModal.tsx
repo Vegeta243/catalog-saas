@@ -49,6 +49,7 @@ export default function AIPreviewModal({ items: initialItems, onApply, onClose, 
       : value
     setEditingField(field);
     setEditValue(cleanValue);
+
   };
 
   const saveEdit = () => {

@@ -1,30 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 44" fill="none">
-  <!-- Icon: E-shape with lightning bolt -->
-  <rect width="40" height="40" x="0" y="2" rx="10" fill="#2563EB"/>
-  <!-- E letter bars -->
-  <rect x="10" y="10" width="20" height="4" rx="2" fill="white"/>
-  <rect x="10" y="18" width="15" height="4" rx="2" fill="white"/>
-  <rect x="10" y="26" width="20" height="4" rx="2" fill="white"/>
-  <!-- Lightning bolt overlay -->
-  <path d="M23 9 L17 21 L22 21 L16 33 L28 18 L22 18 Z" fill="#93C5FD" opacity="0.9"/>
-  
-  <!-- Wordmark -->
-  <text x="52" y="27" 
-    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-    font-weight="800" 
-    font-size="20" 
-    letter-spacing="-0.5"
-    fill="#111827">Ecom</text>
-  <text x="104" y="27" 
-    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-    font-weight="800" 
-    font-size="20" 
-    letter-spacing="-0.5"
-    fill="#2563EB">Pilot</text>
-  <text x="53" y="38" 
-    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-    font-weight="600" 
-    font-size="8" 
-    letter-spacing="4"
-    fill="#6B7280">ELITE</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#2563eb"/>
+  <text x="50" y="62" font-family="system-ui,-apple-system,sans-serif" font-size="54" font-weight="800" fill="white" text-anchor="middle">E</text>
+  <polyline points="62,28 74,16 74,26 84,16" fill="none" stroke="#93c5fd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

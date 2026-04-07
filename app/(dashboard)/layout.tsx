@@ -278,8 +278,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar */}
         <aside style={{ ...styles.sidebar, ...(sidebarCollapsed ? styles.sidebarCollapsed : {}) }} className="hidden lg:block">
           <div style={styles.sidebarHeader}>
-            <Link href="/dashboard" style={styles.logo}>
-              EcomPilot
+            <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '8px', background: '#2563eb', color: '#fff', fontWeight: '800', fontSize: '18px', flexShrink: 0 }}>E</span>
+              <span style={{ fontSize: '18px', fontWeight: '700', color: '#2563eb' }}>EcomPilot</span>
             </Link>
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -572,7 +573,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               overflowY: 'auto',
             }} onClick={e => e.stopPropagation()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <Link href="/dashboard" style={styles.logo}>EcomPilot</Link>
+                <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '8px', background: '#2563eb', color: '#fff', fontWeight: '800', fontSize: '18px', flexShrink: 0 }}>E</span>
+                  <span style={{ fontSize: '18px', fontWeight: '700', color: '#2563eb' }}>EcomPilot</span>
+                </Link>
                 <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                   <X className="w-6 h-6" />
                 </button>
