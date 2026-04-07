@@ -95,10 +95,23 @@ function ShopsContent() {
     setLoading(false);
   };
 
-  const setActiveShop = (id: string) => {
+  const setActiveShop = async (id: string) => {
+    const shop = shops.find((s) => s.id === id);
+    if (!shop) return;
     setActiveShopId(id);
     localStorage.setItem("ecompilot_active_shop", id);
+    // Clear cached products so the new shop's products are fetched fresh
+    localStorage.removeItem("products_cache");
     setShowSwitcher(false);
+    // Persist active shop domain to DB
+    try {
+      await fetch("/api/shops/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shop_domain: shop.shop_domain }),
+      });
+    } catch { /* ignore */ }
+    addToast(`Boutique active : ${shop.shop_name || shop.shop_domain}`, "success");
   };
 
   const handleConnect = async () => {

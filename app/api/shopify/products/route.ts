@@ -25,12 +25,27 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * limit
 
   try {
+    // Read user's active shop domain for filtering
+    let activeShopDomain: string | null = null
+    try {
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('active_shop_domain')
+        .eq('id', user.id)
+        .single()
+      activeShopDomain = userRow?.active_shop_domain ?? null
+    } catch { /* column may not exist yet */ }
+
     let q = supabase
       .from('shopify_products')
       .select('*', { count: 'exact' })
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
+
+    if (activeShopDomain) {
+      q = q.eq('shop_domain', activeShopDomain)
+    }
 
     if (search) {
       q = q.ilike('title', `%${search}%`)
@@ -54,12 +69,25 @@ export async function GET(request: NextRequest) {
     console.warn('[products] cache error:', cacheErr.message)
   }
 
-  const { data: shops } = await supabase
+  // Read active shop domain for Shopify API fallback
+  let activeShopDomainFallback: string | null = null
+  try {
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('active_shop_domain')
+      .eq('id', user.id)
+      .single()
+    activeShopDomainFallback = userRow?.active_shop_domain ?? null
+  } catch { /* ignore */ }
+
+  const shopQuery = supabase
     .from('shops')
     .select('*')
     .eq('user_id', user.id)
     .eq('is_active', true)
-    .limit(1)
+  const { data: shops } = activeShopDomainFallback
+    ? await shopQuery.eq('shop_domain', activeShopDomainFallback).limit(1)
+    : await shopQuery.limit(1)
 
   const shop = shops?.[0] as Record<string, unknown> | undefined
   if (!shop) {
