@@ -21,15 +21,28 @@ function stripAllHtml(text: string): string {
     .trim()
 }
 
-const BANNED_WORDS_REGEX = /\b(SEO|Optimis[\u00e9\u00e8e]e?s?|Premium|[E\u00c9\u00e9]ditions?|[Ee]lites?|High\s+Quality|Best\s+Seller|Top\s+Produit|Incontournable|Hydrogen|Oxygen|Collection|The\s)/gi
+const BANNED_TITLE_PHRASES = [
+  /livraison\s+rapide(\s+\d+h)?/gi,
+  /livraison\s+\d+h/gi,
+  /exp[eé]di[eé]\s+en\s+\d+h/gi,
+  /satisfait\s+ou\s+rembours[eée]/gi,
+  /qualit[eée]\s+sup[eée]rieure/gi,
+  /meilleur\s+prix/gi,
+  /top\s+qualit[eée]/gi,
+  /\b(SEO|Optimis[\u00e9\u00e8e]e?s?|Premium|[E\u00c9\u00e9]ditions?|[Ee]lites?|High\s+Quality|Best\s+Seller|Top\s+Produit|Incontournable|Hydrogen|Oxygen|Collection|The\s)\b/gi,
+]
 
 function cleanTitle(title: string): string {
-  return title
-    .replace(BANNED_WORDS_REGEX, '')
-    .replace(/\s*\u2014\s*\u2014/g, ' \u2014')
-    .replace(/:\s*\u2014/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/^[\s:\u2014]+|[\s:\u2014]+$/g, '')
+  let clean = stripAllHtml(title)
+  for (const pattern of BANNED_TITLE_PHRASES) {
+    clean = clean.replace(pattern, "")
+  }
+  return clean
+    .replace(/\s*—\s*—/g, " —")
+    .replace(/\s*—\s*$/g, "")
+    .replace(/^\s*—\s*/g, "")
+    .replace(/:\s*—/g, ":")
+    .replace(/\s{2,}/g, " ")
     .trim()
 }
 
@@ -38,6 +51,27 @@ function cleanDescription(text: string): string {
     .replace(/\b(SEO|[Oo]ptimis[\u00e9e]e?\s*(SEO)?|Premium\s+Optimis[\u00e9e]|Top\s+Produit)\b/gi, '')
     .replace(/\s{3,}/g, '\n\n')
     .trim()
+}
+
+function sanitizeResult(result: Record<string, string>): Record<string, string> {
+  if (!result) return result
+  const htmlStrip = (s: string) => s
+    .replace(/<\/?[^>]+(>|$)/gi, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s{2,}/g, "\n\n")
+    .trim()
+  const sloganStrip = (s: string) => {
+    for (const pattern of BANNED_TITLE_PHRASES) {
+      s = s.replace(new RegExp(pattern.source, pattern.flags), "")
+    }
+    return s.replace(/\s{2,}/g, " ").trim()
+  }
+  if (result.title) result.title = sloganStrip(htmlStrip(result.title))
+  if (result.description) result.description = htmlStrip(result.description)
+  if (result.metaTitle) result.metaTitle = sloganStrip(htmlStrip(result.metaTitle))
+  if (result.metaDescription) result.metaDescription = htmlStrip(result.metaDescription)
+  if (result.tags) result.tags = htmlStrip(result.tags)
+  return result
 }
 
 function plainTextToHtml(text: string): string {
@@ -89,15 +123,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check cache
-    const cacheKey = aiCacheKey(product.id || product.title, mode || "full", language);
+    // Check cache — bump CACHE_VERSION to bust stale entries
+    const CACHE_VERSION = "v3"
+    const cacheKey = `${CACHE_VERSION}_${aiCacheKey(product.id || product.title, mode || "full", language)}`;
     const cached = aiCache.get<Record<string, string>>(cacheKey);
     if (cached) {
-      // Clean cached results that may have been generated before the fix
-      if (cached.title) cached.title = cleanTitle(stripAllHtml(cached.title))
-      if (cached.description) cached.description = cleanDescription(cached.description)
-      if (cached.metaTitle) cached.metaTitle = cleanTitle(stripAllHtml(cached.metaTitle))
-      return NextResponse.json({ success: true, cached: true, ...cached });
+      return NextResponse.json({ success: true, cached: true, ...sanitizeResult(cached) });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -152,7 +183,7 @@ export async function POST(req: Request) {
       if (taskCost > 0) {
         await supabase.rpc("increment_actions", { p_user_id: user.id, p_count: taskCost });
       }
-      return NextResponse.json({ success: true, demo: true, taskCost, ...mockResult });
+      return NextResponse.json({ success: true, demo: true, taskCost, ...sanitizeResult(mockResult) });
     }
 
     const options = {
@@ -161,24 +192,25 @@ export async function POST(req: Request) {
       tags: mode !== 'title',
     }
 
-    const systemPrompt = `Tu es un rédacteur e-commerce francophone expert.
+    const systemPrompt = `Tu es un rédacteur e-commerce francophone expert en SEO naturel.
 
-RÈGLE 1 — INTERDIT ABSOLU (violation = réponse rejetée) :
-Ces mots ne doivent JAMAIS apparaître dans tes réponses :
-SEO, Optimisé, Optimisée, Optimiser, Premium, Édition, Edition, Elite,
-High Quality, Best Seller, Top Produit, Incontournable, Collection (seul),
-"qualité supérieure" comme phrase vide.
+RÈGLE 1 — INTERDIT ABSOLU dans les titres et descriptions (violation = réponse rejetée) :
+Mots et phrases interdits : SEO, Optimisé, Optimisée, Premium, Édition, Edition, Elite,
+High Quality, Best Seller, Top Produit, Incontournable, "Livraison rapide",
+"Livraison 24h", "Satisfait ou remboursé", "Qualité supérieure", "Meilleur prix"
 
-RÈGLE 2 — LANGUE : Français uniquement. Traduis tout nom anglais en français naturel.
+RÈGLE 2 — LANGUE : Français uniquement.
 
-RÈGLE 3 — FORMAT DESCRIPTION : Texte brut uniquement.
-INTERDIT : <ul> <li> <strong> <p> <br> <em> ou toute balise HTML.
+RÈGLE 3 — DESCRIPTIONS : Texte brut UNIQUEMENT.
+INTERDIT ABSOLU : <ul> <li> <strong> <p> <br> <em> <h1> <h2> ou toute balise HTML.
+Le texte doit être des phrases normales séparées par des sauts de ligne.
+Si tu génères une balise HTML, ta réponse sera INVALIDE.
 
-RÈGLE 4 — TITRES : Décris concrètement le produit.
-Format : [Type produit] [Caractéristique principale] — [Usage ou public]
-Exemple : "Snowboard Freestyle 155cm — Planche Légère pour Débutants"
+RÈGLE 4 — TITRES SEO naturel :
+Un bon titre SEO décrit le produit physiquement pour que Google comprenne ce que c'est.
+Il n'est PAS un slogan publicitaire.
 
-RÈGLE 5 — JSON uniquement en réponse. Aucun texte hors du JSON.`
+RÈGLE 5 — JSON uniquement. Aucun texte hors du JSON.`
 
     const userPrompt = `Tu vas créer du contenu NOUVEAU pour ce produit.
 L'ancien titre et l'ancienne description sont donnés UNIQUEMENT pour comprendre ce qu'est le produit.
@@ -192,12 +224,14 @@ Prix : ${product.price}€
 
 CE QUE TU DOIS GÉNÉRER (tout en français) :
 ${options.title ? `
-TITRE (obligatoire) :
+TITRE :
 - Entre 45 et 65 caractères
-- Décrit concrètement CE QUE C'EST : type de produit + caractéristique principale + usage ou public cible
-- Exemple BON : "Snowboard Freestyle 155cm — Planche Légère pour Débutants"
-- Exemple MAUVAIS : "Collection Snowboard — Édition Carving"
-- INTERDIT dans le titre : SEO, Optimisé, Premium, Édition, Edition, Elite, Collection, The, Hydrogen, Oxygen (noms de modèles anglais)
+- Format : [Type de produit exact] [Caractéristique mesurable] — [Usage concret ou public]
+- Exemple BON : "Snowboard All-Mountain 158cm Homme — Carving et Freestyle"
+- Exemple BON : "Planche de Snowboard Débutant 150cm — Stable et Légère"
+- INTERDIT dans le titre : "Livraison rapide", "24h", "Satisfait ou remboursé", tout slogan commercial
+- INTERDIT dans le titre : SEO, Optimisé, Premium, Édition, Elite, Collection, The
+- Décris UNIQUEMENT ce qu"est le produit physiquement — pas comment il est livré ni ses avantages marketing
 ` : ''}
 ${options.description ? `
 DESCRIPTION (obligatoire) :
@@ -242,14 +276,11 @@ Réponds UNIQUEMENT en JSON valide sans markdown ni explication :
       result = { description: content };
     }
 
-    // Strip HTML and banned words from all text fields
-    if (result.title) result.title = cleanTitle(stripAllHtml(result.title))
-    if (result.description) result.description = cleanDescription(result.description)
-    if (result.metaTitle) result.metaTitle = cleanTitle(stripAllHtml(result.metaTitle))
-    if (result.tags) result.tags = result.tags.replace(/<[^>]*>/g, '').trim()
+    // Nuclear sanitize — strip HTML and slogans from every field
+    const sanitized = sanitizeResult(result)
 
-    // Cache the result
-    aiCache.set(cacheKey, result);
+    // Cache the sanitized result
+    aiCache.set(cacheKey, sanitized);
 
     // Consume tasks after successful generation
     if (taskCost > 0) {
@@ -262,14 +293,14 @@ Réponds UNIQUEMENT en JSON valide sans markdown ni explication :
       description: `Titre IA — 1 produit`,
       productsCount: 1,
       creditsUsed: taskCost,
-      details: { model: "gpt-4o-mini", mode: mode || "full" },
+      details: { model: "gpt-4o", mode: mode || "full" },
     });
 
     return NextResponse.json({
       success: true,
       taskCost,
       remaining: userData ? Math.max(0, userData.actions_limit - userData.actions_used - taskCost) : undefined,
-      ...result,
+      ...sanitized,
       ...getRateLimitHeaders(rateResult),
     });
   } catch (error) {
