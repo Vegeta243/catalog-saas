@@ -158,6 +158,13 @@ function computeProfit(
   return { breakdown, netProfit, netMarginPct, breakEvenPrice };
 }
 
+const SHOPIFY_PLAN_COSTS: Record<string, { monthly: number; txFee: number }> = {
+  'Basic': { monthly: 32, txFee: 2.0 },
+  'Shopify': { monthly: 92, txFee: 1.0 },
+  'Advanced': { monthly: 399, txFee: 0.5 },
+  'Plus': { monthly: 2300, txFee: 0.15 },
+};
+
 export default function RentabilitePage() {
   const { addToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
@@ -169,6 +176,9 @@ export default function RentabilitePage() {
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [savingCost, setSavingCost] = useState(false);
   const [simulationQty, setSimulationQty] = useState(100);
+  const [supplierCosts, setSupplierCosts] = useState<Record<string, number>>({});
+  const [selectedPlan, setSelectedPlan] = useState<string>('Basic');
+  const [savingAllCosts, setSavingAllCosts] = useState(false);
 
   useEffect(() => { document.title = "Rentabilité | EcomPilot"; }, []);
 
@@ -204,6 +214,8 @@ export default function RentabilitePage() {
           .maybeSingle();
 
         if (settingsData) {
+          const plan = Object.entries(SHOPIFY_PLAN_COSTS).find(([, v]) => v.monthly === Number(settingsData.shopify_plan_monthly))?.[0] || 'Basic';
+          setSelectedPlan(plan);
           setSettings({
             shopify_plan_monthly: Number(settingsData.shopify_plan_monthly) || DEFAULT_SETTINGS.shopify_plan_monthly,
             shopify_transaction_fee_pct: Number(settingsData.shopify_transaction_fee_pct) || DEFAULT_SETTINGS.shopify_transaction_fee_pct,
@@ -226,6 +238,28 @@ export default function RentabilitePage() {
     };
     loadSettings();
   }, []);
+
+  // Load all product costs at once for the table
+  useEffect(() => {
+    if (products.length === 0) return;
+    const loadAllCosts = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from('product_costs')
+          .select('shopify_product_id, cost_price')
+          .eq('user_id', user.id);
+        if (data) {
+          const map: Record<string, number> = {};
+          data.forEach((row: { shopify_product_id: string; cost_price: number }) => { map[row.shopify_product_id] = Number(row.cost_price); });
+          setSupplierCosts(map);
+        }
+      } catch { /* silent */ }
+    };
+    loadAllCosts();
+  }, [products]);
 
   // Load saved cost when product changes
   useEffect(() => {
@@ -268,6 +302,29 @@ export default function RentabilitePage() {
     } finally {
       setSavingCost(false);
     }
+  };
+
+  const saveAllCosts = async () => {
+    setSavingAllCosts(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error();
+      const rows = Object.entries(supplierCosts)
+        .filter(([, v]) => v > 0)
+        .map(([shopify_product_id, cost_price]) => ({
+          user_id: user.id,
+          shopify_product_id,
+          product_title: products.find((p) => p.id === shopify_product_id)?.title || '',
+          cost_price,
+          updated_at: new Date().toISOString(),
+        }));
+      if (rows.length > 0) {
+        await supabase.from('product_costs').upsert(rows, { onConflict: 'user_id,shopify_product_id' });
+      }
+      addToast(`${rows.length} coûts sauvegardés`, 'success');
+    } catch { addToast('Erreur lors de la sauvegarde', 'error'); }
+    finally { setSavingAllCosts(false); }
   };
 
   const filteredProducts = products.filter((p) =>
@@ -316,6 +373,149 @@ export default function RentabilitePage() {
         )}
       </div>
 
+      {/* Section 1 — Config rapide */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6">
+        <h2 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Calculator className="w-4 h-4 text-blue-500" /> Configuration des coûts
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div>
+            <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>Plan Shopify</label>
+            <select
+              value={selectedPlan}
+              onChange={(e) => {
+                const plan = e.target.value;
+                setSelectedPlan(plan);
+                const costs = SHOPIFY_PLAN_COSTS[plan];
+                if (costs) setSettings((s) => ({ ...s, shopify_plan_monthly: costs.monthly, shopify_transaction_fee_pct: costs.txFee }));
+              }}
+              className="w-full px-2 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {Object.entries(SHOPIFY_PLAN_COSTS).map(([name, c]) => (
+                <option key={name} value={name}>{name} — {c.monthly}€/mois</option>
+              ))}
+            </select>
+          </div>
+          {[
+            { label: 'TVA (%)', key: 'vat_rate_pct' as keyof ProfitSettings },
+            { label: 'Impôts (%)', key: 'income_tax_rate_pct' as keyof ProfitSettings },
+            { label: 'Pub (%CA)', key: 'avg_ad_spend_pct' as keyof ProfitSettings },
+            { label: 'Livraison (€)', key: 'avg_shipping_cost' as keyof ProfitSettings },
+            { label: 'Paiement (%)', key: 'payment_processing_fee_pct' as keyof ProfitSettings },
+          ].map(({ label, key }) => (
+            <div key={key}>
+              <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>{label}</label>
+              <input
+                type="number"
+                value={settings[key] as number}
+                onChange={(e) => setSettings((s) => ({ ...s, [key]: parseFloat(e.target.value) || 0 }))}
+                min="0" step="0.1"
+                className="w-full px-2 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                style={{ color: 'var(--text-primary)' }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section 2 — Tableau tous les produits */}
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Rentabilité par produit</h2>
+          <button
+            onClick={saveAllCosts}
+            disabled={savingAllCosts || loadingProducts}
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-xs font-semibold"
+            style={{ color: '#fff' }}
+          >
+            <Save className="w-3.5 h-3.5" />
+            {savingAllCosts ? 'Sauvegarde...' : 'Sauvegarder les coûts'}
+          </button>
+        </div>
+        {loadingProducts ? (
+          <div className="p-8 text-center">
+            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" style={{ color: 'var(--text-tertiary)' }} />
+            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Chargement…</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="p-8 text-center">
+            <Package className="w-8 h-8 mx-auto mb-2" style={{ color: '#cbd5e1' }} />
+            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Aucun produit. <Link href="/dashboard/shops" className="text-blue-600 hover:underline">Connecter votre boutique</Link></p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {['Produit', 'Prix vente', 'Coût fournisseur', 'Marge brute', 'Marge nette', 'Seuil rentab.', 'Statut'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold" style={{ color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => {
+                  const sp = parseFloat(product.price) || 0;
+                  const cost = supplierCosts[product.id] || 0;
+                  const { netProfit, netMarginPct, breakEvenPrice } = computeProfit(sp, cost, settings);
+                  const grossMarginPct = sp > 0 ? ((sp - cost) / sp) * 100 : 0;
+                  const statusColor = netMarginPct >= 20 ? '#059669' : netMarginPct >= 0 ? '#d97706' : '#dc2626';
+                  const statusBg = netMarginPct >= 20 ? '#ecfdf5' : netMarginPct >= 0 ? '#fffbeb' : '#fef2f2';
+                  const statusLabel = netMarginPct >= 20 ? 'Rentable' : netMarginPct >= 0 ? 'Limite' : 'Déficit';
+                  return (
+                    <tr key={product.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => { setSelectedProduct(product); setCostPrice(String(cost || '')); }}
+                          className="text-sm font-medium text-left hover:text-blue-600 transition-colors max-w-[200px] truncate block"
+                          style={{ color: 'var(--text-primary)' }}
+                          title={product.title}
+                        >
+                          {product.title}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-bold tabular-nums" style={{ color: '#059669', whiteSpace: 'nowrap' }}>
+                        {sp > 0 ? `${sp.toFixed(2)}€` : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="number"
+                          value={supplierCosts[product.id] ?? ''}
+                          onChange={(e) => setSupplierCosts((prev) => ({ ...prev, [product.id]: parseFloat(e.target.value) || 0 }))}
+                          placeholder="0.00"
+                          min="0" step="0.01"
+                          className="w-24 px-2 py-1.5 border border-gray-200 rounded-lg text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold tabular-nums" style={{ color: grossMarginPct >= 50 ? '#059669' : grossMarginPct >= 30 ? '#d97706' : '#dc2626', whiteSpace: 'nowrap' }}>
+                        {cost > 0 && sp > 0 ? `${grossMarginPct.toFixed(1)}%` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold tabular-nums" style={{ color: statusColor, whiteSpace: 'nowrap' }}>
+                        {cost > 0 && sp > 0 ? `${netMarginPct.toFixed(1)}%` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm tabular-nums" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        {cost > 0 ? `${breakEvenPrice.toFixed(2)}€` : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {cost > 0 && sp > 0 ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ color: statusColor, backgroundColor: statusBg }}>
+                            {statusLabel}
+                          </span>
+                        ) : (
+                          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Coût manquant</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Section 3 — Détail par produit */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Product list */}
         <div className="lg:col-span-2 space-y-3">
