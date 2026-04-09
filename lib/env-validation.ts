@@ -59,11 +59,9 @@ export function validateEnv(): void {
   const missing = REQUIRED_VARS.filter(k => !process.env[k]);
   if (missing.length > 0) {
     const msg = `[ENV] Missing required environment variables: ${missing.join(', ')}`;
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(msg);
-    } else {
-      console.warn(msg);
-    }
+    // Log but never throw — a throw here crashes every page in the app.
+    // Individual routes/features must handle their own missing-env-var cases.
+    console.error(msg);
   }
 
   // ── Recommended vars ─────────────────────────────────────────────────────

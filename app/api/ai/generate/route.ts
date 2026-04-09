@@ -136,10 +136,10 @@ export async function POST(req: Request) {
         const suffixes = [
           " — Collection 2026, découvrez nos prix exclusifs",
           " | Référence incontournable à prix imbattable",
-          " — Le choix des e-commerçants, expédié en 24h",
+          " — Le choix des e-commerçants, qualité garantie",
           " | Profitez de notre sélection du moment",
           " — Conçu pour durer, testé par nos clients",
-          " | Disponible maintenant, expédition rapide",
+          " | Disponible maintenant, commande en 1 clic",
         ];
         for (const s of suffixes) {
           const c = t + s;

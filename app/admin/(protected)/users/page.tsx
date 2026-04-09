@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { ImpersonateButton } from "./ImpersonateButton";
+import { PlanDropdown } from "./PlanDropdown";
 
 function getAdminClient() {
   return createClient(
@@ -276,17 +277,5 @@ export default async function AdminUsersPage({
   );
 }
 
-function PlanDropdown({ userId, currentPlan }: { userId: string; currentPlan: string }) {
-  const plans = ["free", "starter", "pro", "scale"];
-  return (
-    <form action={`/api/admin/users/${userId}/plan`} method="POST" className="inline">
-      <select name="plan" defaultValue={currentPlan}
-        onChange={(e) => (e.target.closest("form") as HTMLFormElement)?.requestSubmit()}
-        className="text-[10px] px-1 py-1 border border-gray-200 rounded bg-white cursor-pointer"
-        style={{ color: "#64748b" }}>
-        {plans.map(p => <option key={p} value={p}>{p}</option>)}
-      </select>
-    </form>
-  );
-}
+
 
